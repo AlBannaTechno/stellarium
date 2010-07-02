@@ -93,6 +93,10 @@ Q_IMPORT_PLUGIN(Oculars)
 Q_IMPORT_PLUGIN(TelescopeControl)
 #endif
 
+#ifdef USE_STATIC_PLUGIN_PRINTSKY
+Q_IMPORT_PLUGIN(PrintSky)
+#endif
+
 // Initialize static variables
 StelMainGraphicsView* StelMainGraphicsView::singleton = NULL;
 

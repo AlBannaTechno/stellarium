@@ -65,6 +65,10 @@ public:
 	StelScriptMgr& getScriptMgr() {return *scriptMgr;}
 #endif
 
+	//! Return the QGLWidget encapsulating the Stellarium main sky view.
+	//! Use its layout if you want to rendering OpenGL Graphics.
+	StelQGLWidget* getStelQGLWidget() {return glWidget;}
+
 public slots:
 
 	///////////////////////////////////////////////////////////////////////////

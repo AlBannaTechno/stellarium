@@ -134,6 +134,7 @@ SET(USE_PLUGIN_OCULARS 1 CACHE BOOL "Define whether the Oculars plugin should be
 SET(USE_PLUGIN_SVMT 0 CACHE BOOL "Define whether the SVMT plugin should be created.")
 SET(USE_PLUGIN_TEXTUSERINTERFACE 1 CACHE BOOL "Define whether the TextUserInterface plugin should be created.")
 SET(USE_PLUGIN_VIRGO 0 CACHE BOOL "Define whether the VirGO plugin should be created.")
+SET(USE_PLUGIN_PRINTSKY 1 CACHE BOOL "Define wheter the PrintSky plugin should be created.")
 
 ########## Static plugins need to define includes and libraries
 ########## for the compilation of Stellarium itself
