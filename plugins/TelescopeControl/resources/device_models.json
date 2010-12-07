@@ -1,5 +1,5 @@
 {
-	"version": "0.2.2",
+	"version": "0.3.0",
 	"list" :
 	[
 		{
@@ -48,6 +48,12 @@
 			"name" : "Sky-Watcher SynScan AZ GOTO",
 			"description" : "The Sky-Watcher SynScan AZ GOTO mount used in a number of telescope models.",
 			"server" : "TelescopeServerNexStar",
+			"default_delay" : 500000
+		},
+		{
+			"name" : "StellarCAT ServoCAT",
+			"description" : "StellarCAT's ServoCAT GOTO kit.",
+			"server" : "TelescopeServerServoCat",
 			"default_delay" : 500000
 		}
 	]

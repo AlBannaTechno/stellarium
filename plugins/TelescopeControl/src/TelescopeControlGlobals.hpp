@@ -82,7 +82,7 @@ namespace TelescopeControlGlobals {
 	#endif
 	
 	//! List of the telescope servers that don't need external executables
-	const QStringList EMBEDDED_TELESCOPE_SERVERS = QString("TelescopeServerDummy TelescopeServerLx200 TelescopeServerNexStar").split(' ', QString::SkipEmptyParts);
+	const QStringList EMBEDDED_TELESCOPE_SERVERS = QString("TelescopeServerDummy TelescopeServerLx200 TelescopeServerNexStar TelescopeServerServoCat").split(' ', QString::SkipEmptyParts);
 };
 
 #endif //_TELESCOPE_CONTROL_GLOBALS_

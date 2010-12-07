@@ -2,7 +2,7 @@
  * Stellarium Telescope Control Plug-in
  * 
  * Copyright (C) 2006 Johannes Gajdosik
- * Copyright (C) 2009 Bogdan Marinov
+ * Copyright (C) 2009-2010 Bogdan Marinov
  * 
  * This module was originally written by Johannes Gajdosik in 2006
  * as a core module of Stellarium. In 2009 it was significantly extended with
@@ -26,6 +26,7 @@
 #include "TelescopeClient.hpp"
 #include "TelescopeClientDirectLx200.hpp"
 #include "TelescopeClientDirectNexStar.hpp"
+#include "TelescopeClientDirectServoCat.hpp"
 #include "StelUtils.hpp"
 #include "StelTranslator.hpp"
 #include "StelCore.hpp"
@@ -100,6 +101,10 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 	else if (type == "TelescopeServerNexStar")
 	{
 		newTelescope= new TelescopeClientDirectNexStar(name, params, eq);
+	}
+	else if (type == "TelescopeServerServoCat")
+	{
+		newTelescope= new TelescopeClientDirectServoCat(name, params, eq);
 	}
 	else
 	{
