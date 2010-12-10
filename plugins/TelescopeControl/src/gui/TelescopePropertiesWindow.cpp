@@ -19,8 +19,8 @@
 */
 
 #include "Dialog.hpp"
-#include "ui_telescopeConfigurationDialog.h"
-#include "TelescopeConfigurationDialog.hpp"
+#include "ui_telescopePropertiesWindow.h"
+#include "TelescopePropertiesWindow.hpp"
 #include "TelescopeControl.hpp"
 #include "StelApp.hpp"
 #include "StelCore.hpp"
@@ -34,9 +34,9 @@
 #include <QFrame>
 #include <QTimer>
 
-TelescopeConfigurationDialog::TelescopeConfigurationDialog()
+TelescopePropertiesWindow::TelescopePropertiesWindow()
 {
-	ui = new Ui_telescopeConfigurationDialog;
+	ui = new Ui_widgetTelescopeProperties;
 	
 	telescopeManager = GETSTELMODULE(TelescopeControl);
 
@@ -50,7 +50,7 @@ TelescopeConfigurationDialog::TelescopeConfigurationDialog()
 	#endif
 }
 
-TelescopeConfigurationDialog::~TelescopeConfigurationDialog()
+TelescopePropertiesWindow::~TelescopePropertiesWindow()
 {	
 	delete ui;
 	
@@ -60,14 +60,14 @@ TelescopeConfigurationDialog::~TelescopeConfigurationDialog()
 	delete serialPortValidator;
 }
 
-void TelescopeConfigurationDialog::languageChanged()
+void TelescopePropertiesWindow::languageChanged()
 {
 	if (dialog)
 		ui->retranslateUi(dialog);
 }
 
 // Initialize the dialog widgets and connect the signals/slots
-void TelescopeConfigurationDialog::createDialogContent()
+void TelescopePropertiesWindow::createDialogContent()
 {
 	ui->setupUi(dialog);
 	
@@ -93,7 +93,7 @@ void TelescopeConfigurationDialog::createDialogContent()
 }
 
 //Set the configuration panel in a predictable state
-void TelescopeConfigurationDialog::initConfigurationDialog()
+void TelescopePropertiesWindow::initConfigurationDialog()
 {
 	//Reusing code used in both methods that call this one
 	deviceModelNames = telescopeManager->getDeviceModels().keys();
@@ -129,7 +129,7 @@ void TelescopeConfigurationDialog::initConfigurationDialog()
 	ui->lineEditCircleList->clear();
 }
 
-void TelescopeConfigurationDialog::initNewTelescopeConfiguration(int slot)
+void TelescopePropertiesWindow::initNewTelescopeConfiguration(int slot)
 {
 	configuredSlot = slot;
 	initConfigurationDialog();
@@ -152,7 +152,7 @@ void TelescopeConfigurationDialog::initNewTelescopeConfiguration(int slot)
 	ui->doubleSpinBoxTelescopeDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 }
 
-void TelescopeConfigurationDialog::initExistingTelescopeConfiguration(int slot)
+void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 {
 	configuredSlot = slot;
 	initConfigurationDialog();
@@ -235,7 +235,7 @@ void TelescopeConfigurationDialog::initExistingTelescopeConfiguration(int slot)
 	ui->checkBoxConnectAtStartup->setChecked(connectAtStartup);
 }
 
-void TelescopeConfigurationDialog::toggleTypeLocal(bool isChecked)
+void TelescopePropertiesWindow::toggleTypeLocal(bool isChecked)
 {
 	if(isChecked)
 	{
@@ -258,7 +258,7 @@ void TelescopeConfigurationDialog::toggleTypeLocal(bool isChecked)
 	}
 }
 
-void TelescopeConfigurationDialog::toggleTypeConnection(bool isChecked)
+void TelescopePropertiesWindow::toggleTypeConnection(bool isChecked)
 {
 	if(isChecked)
 	{
@@ -276,7 +276,7 @@ void TelescopeConfigurationDialog::toggleTypeConnection(bool isChecked)
 	}
 }
 
-void TelescopeConfigurationDialog::toggleTypeVirtual(bool isChecked)
+void TelescopePropertiesWindow::toggleTypeVirtual(bool isChecked)
 {
 	//TODO: This really should be done in the GUI
 	ui->groupBoxDeviceSettings->setEnabled(!isChecked);
@@ -285,7 +285,7 @@ void TelescopeConfigurationDialog::toggleTypeVirtual(bool isChecked)
 	ui->scrollArea->ensureWidgetVisible(ui->groupBoxTelescopeProperties);
 }
 
-void TelescopeConfigurationDialog::buttonSavePressed()
+void TelescopePropertiesWindow::buttonSavePressed()
 {
 	//Main telescope properties
 	QString name = ui->lineEditTelescopeName->text().trimmed();
@@ -354,12 +354,12 @@ void TelescopeConfigurationDialog::buttonSavePressed()
 	emit changesSaved(name, type);
 }
 
-void TelescopeConfigurationDialog::buttonDiscardPressed()
+void TelescopePropertiesWindow::buttonDiscardPressed()
 {
 	emit changesDiscarded();
 }
 
-void TelescopeConfigurationDialog::deviceModelSelected(const QString& deviceModelName)
+void TelescopePropertiesWindow::deviceModelSelected(const QString& deviceModelName)
 {
 	ui->labelDeviceModelDescription->setText(telescopeManager->getDeviceModels().value(deviceModelName).description);
 	ui->doubleSpinBoxTelescopeDelay->setValue(SECONDS_FROM_MICROSECONDS(telescopeManager->getDeviceModels().value(deviceModelName).defaultDelay));

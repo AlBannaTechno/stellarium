@@ -26,9 +26,9 @@
 #include "StelLocaleMgr.hpp"
 #include "StelStyle.hpp"
 #include "TelescopeControl.hpp"
-#include "TelescopeConfigurationDialog.hpp"
-#include "TelescopeDialog.hpp"
-#include "ui_telescopeDialog.h"
+#include "TelescopePropertiesWindow.hpp"
+#include "TelescopeControlConfigurationWindow.hpp"
+#include "ui_telescopeControlConfigurationWindow.h"
 #include "StelGui.hpp"
 #include <QDebug>
 #include <QFrame>
@@ -43,9 +43,9 @@
 using namespace TelescopeControlGlobals;
 
 
-TelescopeDialog::TelescopeDialog()
+TelescopeControlConfigurationWindow::TelescopeControlConfigurationWindow()
 {
-	ui = new Ui_telescopeDialogForm;
+	ui = new Ui_widgetTelescopeControlConfiguration;
 	
 	//TODO: Fix this - it's in the same plugin
 	telescopeManager = GETSTELMODULE(TelescopeControl);
@@ -62,21 +62,21 @@ TelescopeDialog::TelescopeDialog()
 	telescopeCount = 0;
 }
 
-TelescopeDialog::~TelescopeDialog()
+TelescopeControlConfigurationWindow::~TelescopeControlConfigurationWindow()
 {	
 	delete ui;
 	
 	delete telescopeListModel;
 }
 
-void TelescopeDialog::languageChanged()
+void TelescopeControlConfigurationWindow::languageChanged()
 {
 	if (dialog)
 		ui->retranslateUi(dialog);
 }
 
 // Initialize the dialog widgets and connect the signals/slots
-void TelescopeDialog::createDialogContent()
+void TelescopeControlConfigurationWindow::createDialogContent()
 {
 	ui->setupUi(dialog);
 	
@@ -108,8 +108,8 @@ void TelescopeDialog::createDialogContent()
 	connect(ui->pushButtonPickExecutablesDirectory, SIGNAL(clicked()), this, SLOT(buttonBrowseServerDirectoryPressed()));
 	
 	//In other dialogs:
-	connect(&configurationDialog, SIGNAL(changesDiscarded()), this, SLOT(discardChanges()));
-	connect(&configurationDialog, SIGNAL(changesSaved(QString, ConnectionType)), this, SLOT(saveChanges(QString, ConnectionType)));
+	connect(&propertiesWindow, SIGNAL(changesDiscarded()), this, SLOT(discardChanges()));
+	connect(&propertiesWindow, SIGNAL(changesSaved(QString, ConnectionType)), this, SLOT(saveChanges(QString, ConnectionType)));
 	
 	//Initialize the style
 	updateStyle();
@@ -281,7 +281,7 @@ void TelescopeDialog::createDialogContent()
 	updateTimer->start(200);
 }
 
-void TelescopeDialog::toggleReticles(int state)
+void TelescopeControlConfigurationWindow::toggleReticles(int state)
 {
 	if(state == Qt::Checked)
 	{
@@ -293,7 +293,7 @@ void TelescopeDialog::toggleReticles(int state)
 	}
 }
 
-void TelescopeDialog::toggleLabels(int state)
+void TelescopeControlConfigurationWindow::toggleLabels(int state)
 {
 	if(state == Qt::Checked)
 	{
@@ -305,7 +305,7 @@ void TelescopeDialog::toggleLabels(int state)
 	}
 }
 
-void TelescopeDialog::toggleCircles(int state)
+void TelescopeControlConfigurationWindow::toggleCircles(int state)
 {
 	if(state == Qt::Checked)
 	{
@@ -317,7 +317,7 @@ void TelescopeDialog::toggleCircles(int state)
 	}
 }
 
-void TelescopeDialog::selectTelecope(const QModelIndex & index)
+void TelescopeControlConfigurationWindow::selectTelecope(const QModelIndex & index)
 {
 	//Extract selected item index
 	int selectedSlot = telescopeListModel->data( telescopeListModel->index(index.row(),0) ).toInt();
@@ -327,7 +327,7 @@ void TelescopeDialog::selectTelecope(const QModelIndex & index)
 	ui->pushButtonRemove->setEnabled(true);
 }
 
-void TelescopeDialog::configureTelescope(const QModelIndex & currentIndex)
+void TelescopeControlConfigurationWindow::configureTelescope(const QModelIndex & currentIndex)
 {
 	configuredTelescopeIsNew = false;
 	configuredSlot = telescopeListModel->data( telescopeListModel->index(currentIndex.row(), ColumnSlot) ).toInt();
@@ -349,12 +349,12 @@ void TelescopeDialog::configureTelescope(const QModelIndex & currentIndex)
 	telescopeListModel->setData(telescopeListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnStatus), statusString[telescopeStatus[configuredSlot]], Qt::DisplayRole);
 	
 	setVisible(false);
-	configurationDialog.setVisible(true); //This should be called first to actually create the dialog content
+	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
 	
-	configurationDialog.initExistingTelescopeConfiguration(configuredSlot);
+	propertiesWindow.initExistingTelescopeConfiguration(configuredSlot);
 }
 
-void TelescopeDialog::buttonChangeStatusPressed()
+void TelescopeControlConfigurationWindow::buttonChangeStatusPressed()
 {
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
@@ -406,13 +406,13 @@ void TelescopeDialog::buttonChangeStatusPressed()
 	telescopeListModel->setData(telescopeListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnStatus), statusString[telescopeStatus[selectedSlot]], Qt::DisplayRole);
 }
 
-void TelescopeDialog::buttonConfigurePressed()
+void TelescopeControlConfigurationWindow::buttonConfigurePressed()
 {
 	if(ui->telescopeTreeView->currentIndex().isValid())
 		configureTelescope(ui->telescopeTreeView->currentIndex());
 }
 
-void TelescopeDialog::buttonAddPressed()
+void TelescopeControlConfigurationWindow::buttonAddPressed()
 {
 	if(telescopeCount >= SLOT_COUNT)
 		return;
@@ -428,11 +428,11 @@ void TelescopeDialog::buttonAddPressed()
 	}
 	
 	setVisible(false);
-	configurationDialog.setVisible(true); //This should be called first to actually create the dialog content
-	configurationDialog.initNewTelescopeConfiguration(configuredSlot);
+	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
+	propertiesWindow.initNewTelescopeConfiguration(configuredSlot);
 }
 
-void TelescopeDialog::buttonRemovePressed()
+void TelescopeControlConfigurationWindow::buttonRemovePressed()
 {
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
@@ -496,7 +496,7 @@ void TelescopeDialog::buttonRemovePressed()
 	}
 }
 
-void TelescopeDialog::saveChanges(QString name, ConnectionType type)
+void TelescopeControlConfigurationWindow::saveChanges(QString name, ConnectionType type)
 {
 	//Save the changes to file
 	telescopeManager->saveTelescopes();
@@ -577,13 +577,13 @@ void TelescopeDialog::saveChanges(QString name, ConnectionType type)
 	}
 	
 	configuredTelescopeIsNew = false;
-	configurationDialog.setVisible(false);
+	propertiesWindow.setVisible(false);
 	setVisible(true);//Brings the current window to the foreground
 }
 
-void TelescopeDialog::discardChanges()
+void TelescopeControlConfigurationWindow::discardChanges()
 {
-	configurationDialog.setVisible(false);
+	propertiesWindow.setVisible(false);
 	setVisible(true);//Brings the current window to the foreground
 	
 	if (telescopeCount >= SLOT_COUNT)
@@ -594,7 +594,7 @@ void TelescopeDialog::discardChanges()
 	configuredTelescopeIsNew = false;
 }
 
-void TelescopeDialog::updateTelescopeStates()
+void TelescopeControlConfigurationWindow::updateTelescopeStates()
 {
 	if(telescopeCount == 0)
 		return;
@@ -632,7 +632,7 @@ void TelescopeDialog::updateTelescopeStates()
 	}
 }
 
-void TelescopeDialog::updateStatusButtonForSlot(int selectedSlot)
+void TelescopeControlConfigurationWindow::updateStatusButtonForSlot(int selectedSlot)
 {
 	if(telescopeType[selectedSlot] != ConnectionInternal)
 	{
@@ -673,31 +673,31 @@ void TelescopeDialog::updateStatusButtonForSlot(int selectedSlot)
 	}
 }
 
-void TelescopeDialog::setStatusButtonToStart()
+void TelescopeControlConfigurationWindow::setStatusButtonToStart()
 {
 	ui->pushButtonChangeStatus->setText("Start");
 	ui->pushButtonChangeStatus->setToolTip("Start the selected local telescope");
 }
 
-void TelescopeDialog::setStatusButtonToStop()
+void TelescopeControlConfigurationWindow::setStatusButtonToStop()
 {
 	ui->pushButtonChangeStatus->setText("Stop");
 	ui->pushButtonChangeStatus->setToolTip("Stop the selected local telescope");
 }
 
-void TelescopeDialog::setStatusButtonToConnect()
+void TelescopeControlConfigurationWindow::setStatusButtonToConnect()
 {
 	ui->pushButtonChangeStatus->setText("Connect");
 	ui->pushButtonChangeStatus->setToolTip("Connect to the selected telescope");
 }
 
-void TelescopeDialog::setStatusButtonToDisconnect()
+void TelescopeControlConfigurationWindow::setStatusButtonToDisconnect()
 {
 	ui->pushButtonChangeStatus->setText("Disconnect");
 	ui->pushButtonChangeStatus->setToolTip("Disconnect from the selected telescope");
 }
 
-void TelescopeDialog::updateStyle()
+void TelescopeControlConfigurationWindow::updateStyle()
 {
 	if (dialog)
 	{
@@ -708,12 +708,12 @@ void TelescopeDialog::updateStyle()
 	}
 }
 
-void TelescopeDialog::checkBoxUseExecutablesToggled(bool useExecutables)
+void TelescopeControlConfigurationWindow::checkBoxUseExecutablesToggled(bool useExecutables)
 {
 	telescopeManager->setFlagUseServerExecutables(useExecutables);
 }
 
-void TelescopeDialog::buttonBrowseServerDirectoryPressed()
+void TelescopeControlConfigurationWindow::buttonBrowseServerDirectoryPressed()
 {
 	QString newPath = QFileDialog::getExistingDirectory (0, QString("Select a directory"), telescopeManager->getServerExecutablesDirectoryPath());
 	//TODO: Validation? Directory exists and contains servers?

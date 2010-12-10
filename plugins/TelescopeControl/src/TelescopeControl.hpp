@@ -53,8 +53,8 @@ class StelObject;
 class StelPainter;
 class StelProjector;
 class TelescopeClient;
-class TelescopeDialog;
-class SlewDialog;
+class TelescopeControlConfigurationWindow;
+class SlewWindow;
 
 using namespace TelescopeControlGlobals;
 
@@ -261,8 +261,8 @@ private:
 	QString serverExecutablesDirectoryPath;
 	
 	//GUI
-	TelescopeDialog * telescopeDialog;
-	SlewDialog * slewDialog;
+	TelescopeControlConfigurationWindow * configurationWindow;
+	SlewWindow * slewWindow;
 	
 	//! Used internally. Checks if the argument is a valid slot number.
 	bool isValidSlotNumber(int slot);

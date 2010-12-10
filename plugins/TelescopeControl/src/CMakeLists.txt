@@ -18,12 +18,12 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClientDirectNexStar.cpp
   TelescopeControl.hpp
   TelescopeControl.cpp
-  gui/SlewDialog.hpp
-  gui/SlewDialog.cpp
-  gui/TelescopeDialog.hpp
-  gui/TelescopeDialog.cpp
-  gui/TelescopeConfigurationDialog.hpp
-  gui/TelescopeConfigurationDialog.cpp
+  gui/SlewWindow.hpp
+  gui/SlewWindow.cpp
+  gui/TelescopeControlConfigurationWindow.hpp
+  gui/TelescopeControlConfigurationWindow.cpp
+  gui/TelescopePropertiesWindow.hpp
+  gui/TelescopePropertiesWindow.cpp
   gui/StelDialogTelescopeControl.hpp
   gui/StelDialogTelescopeControl.cpp
   servers/LogFile.hpp
@@ -48,9 +48,9 @@ SET(TelescopeControl_SRCS
 
 # Add here all the .ui files
 SET(TelescopeControl_UIS
-  gui/slewDialog.ui
-  gui/telescopeDialog.ui
-  gui/telescopeConfigurationDialog.ui)
+  gui/slewWindow.ui
+  gui/telescopeControlConfigurationWindow.ui
+  gui/telescopePropertiesWindow.ui)
 
 QT4_WRAP_UI(TelescopeControl_UIS_H ${TelescopeControl_UIS})
 
@@ -62,9 +62,9 @@ QT4_ADD_RESOURCES(TelescopeControl_RES_CXX ${TelescopeControl_RES})
 # that is, all the headers with SIGNAL/SLOTS/PLUGIN_INTERFACE etc..
 SET(TelescopeControl_MOC_HDRS
   gui/StelDialogTelescopeControl.hpp
-  gui/TelescopeConfigurationDialog.hpp
-  gui/TelescopeDialog.hpp
-  gui/SlewDialog.hpp
+  gui/TelescopePropertiesWindow.hpp
+  gui/TelescopeControlConfigurationWindow.hpp
+  gui/SlewWindow.hpp
   TelescopeControl.hpp
   clients/TelescopeClient.hpp
   clients/TelescopeClientDirectLx200.hpp

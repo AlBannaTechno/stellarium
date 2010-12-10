@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
  
-#ifndef _SLEWDIALOG_HPP_
-#define _SLEWDIALOG_HPP_
+#ifndef _SLEW_WINDOW_HPP_
+#define _SLEW_WINDOW_HPP_
 
 #include <QObject>
 #include <QHash>
@@ -29,24 +29,24 @@
 //#include "StelDialog.hpp"
 #include "StelDialogTelescopeControl.hpp"
 
-class Ui_slewDialog;
+class Ui_widgetSlew;
 class TelescopeControl;
 
-class SlewDialog : public StelDialogTelescopeControl
+class SlewWindow : public StelDialogTelescopeControl
 {
 	Q_OBJECT
 public:
-	SlewDialog();
-	virtual ~SlewDialog();
+	SlewWindow();
+	virtual ~SlewWindow();
 	void languageChanged();
 	
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();
-	Ui_slewDialog* ui;
+	Ui_widgetSlew* ui;
 	
 private slots:
-	//! shows the configuration dialog of the plug-in (i.e. TelescopeDialog)
+	//! shows the configuration dialog of the plug-in
 	void showConfiguration();
 
 	//! reads the fields and slews a telescope
@@ -81,4 +81,4 @@ private:
 	void updateTelescopeControls();
 };
 
-#endif // _SLEWDIALOG_
+#endif // _SLEW_WINDOW_

@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
  
-#ifndef _TELESCOPECONFIGURATIONDIALOG_HPP_
-#define _TELESCOPECONFIGURATIONDIALOG_HPP_
+#ifndef _TELESCOPE_PROPERTIES_WINDOW_HPP_
+#define _TELESCOPE_PROPERTIES_WINDOW_HPP_
 
 #include <QObject>
 #include <QHash>
@@ -31,16 +31,16 @@
 
 using namespace TelescopeControlGlobals;
 
-class Ui_telescopeConfigurationDialog;
+class Ui_widgetTelescopeProperties;
 class TelescopeControl;
 struct StelStyle;
 
-class TelescopeConfigurationDialog : public StelDialogTelescopeControl
+class TelescopePropertiesWindow : public StelDialogTelescopeControl
 {
 	Q_OBJECT
 public:
-	TelescopeConfigurationDialog();
-	virtual ~TelescopeConfigurationDialog();
+	TelescopePropertiesWindow();
+	virtual ~TelescopePropertiesWindow();
 	void languageChanged();
 	
 	void initExistingTelescopeConfiguration(int slot);
@@ -49,7 +49,7 @@ public:
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();
-	Ui_telescopeConfigurationDialog* ui;
+	Ui_widgetTelescopeProperties* ui;
 	
 private:
 	void initConfigurationDialog();
@@ -81,4 +81,4 @@ private:
 	TelescopeControl * telescopeManager;
 };
 
-#endif // _TELESCOPECONFIGURATIONDIALOG_
+#endif // _TELESCOPE_PROPERTIES_WINDOW_

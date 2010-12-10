@@ -1,3 +1,15 @@
+[0.3.0]
+
+
+[0.2.2]
+Added internationalization of some strings.
+Fixed malformed serial port names on Windows (LP: #596167)
+Fixed telescope being dropped from the list if it is set to start at startup but
+fails to do it. (LP: #608533)
+Added manual override for equinox/epoch. (LP: #608544)
+Removed the custom plug-in style sheet (tab styles are central now).
+Code refactoring and cleanup. (InterpolatedPosition class, etc.)
+
 [0.2.1]
 Code cleanup and refactoring.
 Changed the layout of the telescope configuration window.

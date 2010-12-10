@@ -28,34 +28,34 @@
 #include "StelUtils.hpp"
 #include "VecMath.hpp"
 #include "TelescopeControl.hpp"
-#include "SlewDialog.hpp"
-#include "ui_slewDialog.h"
+#include "SlewWindow.hpp"
+#include "ui_slewWindow.h"
 
 #include <QDebug>
 
 using namespace TelescopeControlGlobals;
 
 
-SlewDialog::SlewDialog()
+SlewWindow::SlewWindow()
 {
-	ui = new Ui_slewDialog;
+	ui = new Ui_widgetSlew;
 	
 	//TODO: Fix this - it's in the same plugin
 	telescopeManager = GETSTELMODULE(TelescopeControl);
 }
 
-SlewDialog::~SlewDialog()
+SlewWindow::~SlewWindow()
 {	
 	delete ui;
 }
 
-void SlewDialog::languageChanged()
+void SlewWindow::languageChanged()
 {
 	if (dialog)
 		ui->retranslateUi(dialog);
 }
 
-void SlewDialog::createDialogContent()
+void SlewWindow::createDialogContent()
 {
 	ui->setupUi(dialog);
 	
@@ -78,34 +78,34 @@ void SlewDialog::createDialogContent()
 	updateTelescopeList();
 }
 
-void SlewDialog::showConfiguration()
+void SlewWindow::showConfiguration()
 {
 	//Hack to work around having no direct way to do display the window
 	telescopeManager->configureGui(true);
 }
 
-void SlewDialog::setFormatHMS(bool set)
+void SlewWindow::setFormatHMS(bool set)
 {
 	if (!set) return;
 	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::HMSLetters);
 	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DMSLetters);
 }
 
-void SlewDialog::setFormatDMS(bool set)
+void SlewWindow::setFormatDMS(bool set)
 {
 	if (!set) return;
 	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::DMSLetters);
 	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DMSLetters);
 }
 
-void SlewDialog::setFormatDecimal(bool set)
+void SlewWindow::setFormatDecimal(bool set)
 {
 	if (!set) return;
 	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::DecimalDeg);
 	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DecimalDeg);
 }
 
-void SlewDialog::updateTelescopeList()
+void SlewWindow::updateTelescopeList()
 {
 	connectedSlotsByName.clear();
 	ui->comboBoxTelescope->clear();
@@ -121,7 +121,7 @@ void SlewDialog::updateTelescopeList()
 	updateTelescopeControls();
 }
 
-void SlewDialog::updateTelescopeControls()
+void SlewWindow::updateTelescopeControls()
 {
 	bool connectedTelescopeAvailable = !connectedSlotsByName.isEmpty();
 	ui->groupBoxSlew->setVisible(connectedTelescopeAvailable);
@@ -130,7 +130,7 @@ void SlewDialog::updateTelescopeControls()
 		ui->comboBoxTelescope->setCurrentIndex(0);
 }
 
-void SlewDialog::addTelescope(int slot, QString name)
+void SlewWindow::addTelescope(int slot, QString name)
 {
 	if (slot <=0 || name.isEmpty())
 		return;
@@ -141,7 +141,7 @@ void SlewDialog::addTelescope(int slot, QString name)
 	updateTelescopeControls();
 }
 
-void SlewDialog::removeTelescope(int slot)
+void SlewWindow::removeTelescope(int slot)
 {
 	if (slot <= 0)
 		return;
@@ -166,7 +166,7 @@ void SlewDialog::removeTelescope(int slot)
 	updateTelescopeControls();
 }
 
-void SlewDialog::slew()
+void SlewWindow::slew()
 {
 	double radiansRA = ui->spinBoxRA->valueRadians();
 	double radiansDec = ui->spinBoxDec->valueRadians();

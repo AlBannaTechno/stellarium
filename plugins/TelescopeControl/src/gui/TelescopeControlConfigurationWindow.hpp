@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
  
-#ifndef _TELESCOPEDIALOG_HPP_
-#define _TELESCOPEDIALOG_HPP_
+#ifndef _TELESCOPE_CONTROL_CONFIGURATION_WINDOW_HPP_
+#define _TELESCOPE_CONTROL_CONFIGURATION_WINDOW_HPP_
 
 #include <QObject>
 #include <QHash>
@@ -30,27 +30,27 @@
 //#include "StelDialog.hpp"
 #include "StelDialogTelescopeControl.hpp"
 #include "TelescopeControlGlobals.hpp"
-#include "TelescopeConfigurationDialog.hpp"
+#include "TelescopePropertiesWindow.hpp"
 
 using namespace TelescopeControlGlobals;
 
-class Ui_telescopeDialogForm;
-class TelescopeConfigurationDialog;
+class Ui_widgetTelescopeControlConfiguration;
+class TelescopePropertiesWindow;
 class TelescopeControl;
 
-class TelescopeDialog : public StelDialogTelescopeControl
+class TelescopeControlConfigurationWindow : public StelDialogTelescopeControl
 {
 	Q_OBJECT
 public:
-	TelescopeDialog();
-	virtual ~TelescopeDialog();
+	TelescopeControlConfigurationWindow();
+	virtual ~TelescopeControlConfigurationWindow();
 	void languageChanged();
 	void updateStyle();
 	
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();
-	Ui_telescopeDialogForm* ui;
+	Ui_widgetTelescopeControlConfiguration* ui;
 	
 private:
 	//! Update the text and the tooltip of the ChangeStatus button
@@ -106,7 +106,7 @@ private:
 	};
 	
 	QHash<int, QString> statusString;
-	TelescopeConfigurationDialog configurationDialog;
+	TelescopePropertiesWindow propertiesWindow;
 	
 	QStandardItemModel * telescopeListModel;
 	
@@ -120,4 +120,4 @@ private:
 	bool configuredTelescopeIsNew;
 };
 
-#endif // _TELESCOPEDIALOG_
+#endif // _TELESCOPE_CONTROL_CONFIGURATION_WINDOW_

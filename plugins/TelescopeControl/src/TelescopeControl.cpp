@@ -27,8 +27,8 @@
 
 #include "TelescopeControl.hpp"
 #include "TelescopeClient.hpp"
-#include "TelescopeDialog.hpp"
-#include "SlewDialog.hpp"
+#include "TelescopeControlConfigurationWindow.hpp"
+#include "SlewWindow.hpp"
 #include "LogFile.hpp"
 
 #include "StelApp.hpp"
@@ -166,13 +166,13 @@ void TelescopeControl::init()
 		}
 	
 		//Create and initialize dialog windows
-		telescopeDialog = new TelescopeDialog();
-		slewDialog = new SlewDialog();
+		configurationWindow = new TelescopeControlConfigurationWindow();
+		slewWindow = new SlewWindow();
 		
 		//TODO: Think of a better keyboard shortcut
 		gui->addGuiActions("actionShow_Slew_Window", N_("Move a telescope to a given set of coordinates"), "Ctrl+0", group, true, false);
-		connect(gui->getGuiActions("actionShow_Slew_Window"), SIGNAL(toggled(bool)), slewDialog, SLOT(setVisible(bool)));
-		connect(slewDialog, SIGNAL(visibleChanged(bool)), gui->getGuiActions("actionShow_Slew_Window"), SLOT(setChecked(bool)));
+		connect(gui->getGuiActions("actionShow_Slew_Window"), SIGNAL(toggled(bool)), slewWindow, SLOT(setVisible(bool)));
+		connect(slewWindow, SIGNAL(visibleChanged(bool)), gui->getGuiActions("actionShow_Slew_Window"), SLOT(setChecked(bool)));
 		
 		//Create toolbar button
 		pixmapHover =	new QPixmap(":/graphicGui/glow32x32.png");
@@ -295,7 +295,7 @@ void TelescopeControl::setStelStyle(const QString& section)
 		setCircleColor(circleNormalColor);
 	}
 
-	telescopeDialog->updateStyle();
+	configurationWindow->updateStyle();
 }
 
 double TelescopeControl::getCallOrder(StelModuleActionName actionName) const
@@ -374,7 +374,7 @@ bool TelescopeControl::configureGui(bool show)
 {
 	if(show)
 	{
-		telescopeDialog->setVisible(true);
+		configurationWindow->setVisible(true);
 	}
 
 	return true;
