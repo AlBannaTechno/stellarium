@@ -92,6 +92,9 @@ TelescopeControl::TelescopeControl()
 	connectionTypeNames.insert(ConnectionInternal, "internal");
 	connectionTypeNames.insert(ConnectionLocal, "local");
 	connectionTypeNames.insert(ConnectionRemote, "remote");
+
+	configurationWindow = NULL;
+	slewWindow = NULL;
 }
 
 TelescopeControl::~TelescopeControl()
@@ -196,24 +199,20 @@ void TelescopeControl::init()
 
 void TelescopeControl::deinit()
 {
+	//Close the interface
+	if (configurationWindow != NULL)
+	{
+		configurationWindow->close();
+		delete configurationWindow;
+	}
+	if (slewWindow != NULL)
+	{
+		slewWindow->close();
+		delete slewWindow;
+	}
+
 	//Destroy all clients first in order to avoid displaying a TCP error
 	deleteAllTelescopes();
-
-	QHash<int, QProcess*>::const_iterator iterator = telescopeServerProcess.constBegin();
-	while(iterator != telescopeServerProcess.constEnd())
-	{
-		int slotNumber = iterator.key();
-		#ifdef Q_OS_WIN32
-		telescopeServerProcess[slotNumber]->close();
-		#else
-		telescopeServerProcess[slotNumber]->terminate();
-		#endif
-		telescopeServerProcess[slotNumber]->waitForFinished();
-		delete telescopeServerProcess[slotNumber];
-		qDebug() << "TelescopeControl::deinit(): Server process at slot" << slotNumber << "terminated successfully.";
-
-		++iterator;
-	}
 
 	//TODO: Decide if it should be saved on change
 	//Save the configuration on exit
@@ -498,41 +497,6 @@ bool TelescopeControl::isConnectedClientAtSlot(int slotNumber)
 		return false;
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-// Methods for managing telescope server process objects
-//
-
-void TelescopeControl::loadTelescopeServerExecutables(void)
-{
-	telescopeServers = QStringList();
-
-	//TODO: I don't like how this turned out
-	if(serverExecutablesDirectoryPath.isEmpty())
-		return;
-
-	//As StelFileMgr is quite limited, use Qt's handy methods (I love Qt!)
-	//Get all executable files with names beginning with "TelescopeServer" in this directory
-	QDir serverDirectory(serverExecutablesDirectoryPath);
-	if(!serverDirectory.exists())
-	{
-		qWarning() << "TelescopeControl: No telescope server directory has been found.";
-		return;
-	}
-	QList<QFileInfo> telescopeServerExecutables = serverDirectory.entryInfoList(QStringList("TelescopeServer*"), (QDir::Files|QDir::Executable|QDir::CaseSensitive), QDir::Name);
-	if(!telescopeServerExecutables.isEmpty())
-	{
-		foreach(QFileInfo telescopeServerExecutable, telescopeServerExecutables)
-			telescopeServers.append(telescopeServerExecutable.baseName());//This strips the ".exe" suffix on Windows
-	}
-	else
-	{
-		qWarning() << "TelescopeControl: No telescope server executables found in"
-				   << serverExecutablesDirectoryPath;
-	}
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // Methods for reading from and writing to the configuration file
 
@@ -563,31 +527,6 @@ void TelescopeControl::loadConfiguration()
 	circleNormalColor = StelUtils::strToVec3f(settings->value("color_telescope_circles", "0.6,0.4,0").toString());
 	circleNightColor = StelUtils::strToVec3f(settings->value("night_color_telescope_circles", "0.5,0,0").toString());
 
-	//Load server executables flag and directory
-	useServerExecutables = settings->value("flag_use_server_executables", false).toBool();
-	serverExecutablesDirectoryPath = settings->value("server_executables_path").toString();
-
-	//If no directory is specified in the configuration file, try to find the default one
-	if(serverExecutablesDirectoryPath.isEmpty() || !QDir(serverExecutablesDirectoryPath).exists())
-	{
-		//Find out if the default server directory exists
-		QString serverDirectoryPath;
-		try
-		{
-			serverDirectoryPath = StelFileMgr::findFile("servers", StelFileMgr::Directory);
-		}
-		catch(std::runtime_error &e)
-		{
-			//qDebug() << "TelescopeControl: No telescope servers directory detected.";
-			useServerExecutables = false;
-			serverDirectoryPath = StelFileMgr::getUserDir() + "/servers";
-		}
-		if(!serverDirectoryPath.isEmpty())
-		{
-			serverExecutablesDirectoryPath = serverDirectoryPath;
-		}
-	}
-
 	//Load logging flag
 	useTelescopeServerLogs = settings->value("flag_enable_telescope_logs", false).toBool();
 
@@ -614,16 +553,10 @@ void TelescopeControl::saveConfiguration()
 	settings->setValue("color_telescope_circles", QString("%1,%2,%3").arg(circleNormalColor[0], 0, 'f', 2).arg(circleNormalColor[1], 0, 'f', 2).arg(circleNormalColor[2], 0, 'f', 2));
 	settings->setValue("night_color_telescope_circles", QString("%1,%2,%3").arg(circleNightColor[0], 0, 'f', 2).arg(circleNightColor[1], 0, 'f', 2).arg(circleNightColor[2], 0, 'f', 2));
 
-	//Save telescope server executables flag and directory
-	settings->setValue("flag_use_server_executables", useServerExecutables);
-	if(useServerExecutables)
-	{
-		settings->setValue("server_executables_path", serverExecutablesDirectoryPath);
-	}
-	else
-	{
-		settings->remove("server_executables_path");
-	}
+	//If telescope server executables flag and directory are
+	//specified, remove them
+	settings->remove("flag_use_server_executables");
+	settings->remove("server_executables_path");
 
 	//Save logging flag
 	settings->setValue("flag_enable_telescope_logs", useTelescopeServerLogs);
@@ -869,37 +802,14 @@ void TelescopeControl::loadTelescopes()
 			{
 				if (connectionType == ConnectionInternal)
 				{
-					//Use a sever if necessary
-					if(deviceModels[deviceModelName].useExecutable)
+					addLogAtSlot(slot);
+					logAtSlot(slot);
+					if(!startClientAtSlot(slot, connectionType, name, equinox, QString(), 0, delay, internalCircles, deviceModelName, portSerial))
 					{
-						if(startClientAtSlot(slot, connectionType, name, equinox, hostName, portTCP, delay, internalCircles))
-						{
-
-							if(!startServerAtSlot(slot, deviceModelName, portTCP, portSerial))
-							{
-								stopClientAtSlot(slot);
-								qDebug() << "TelescopeControl: Unable to launch a telescope server at slot" << slot;
-							}
-						}
-						else
-						{
-							qDebug() << "TelescopeControl: Unable to create a telescope client at slot" << slot;
-							//Unnecessary due to if-else construction;
-							//also, causes bug #608533
-							//continue;
-						}
-					}
-					else
-					{
-						addLogAtSlot(slot);
-						logAtSlot(slot);
-						if(!startClientAtSlot(slot, connectionType, name, equinox, QString(), 0, delay, internalCircles, deviceModelName, portSerial))
-						{
-							qDebug() << "TelescopeControl: Unable to create a telescope client at slot" << slot;
-							//Unnecessary due to if-else construction;
-							//also, causes bug #608533
-							//continue;
-						}
+						qDebug() << "TelescopeControl: Unable to create a telescope client at slot" << slot;
+						//Unnecessary due to if-else construction;
+						//also, causes bug #608533
+						//continue;
 					}
 				}
 				else
@@ -1064,30 +974,12 @@ bool TelescopeControl::startTelescopeAtSlot(int slot)
 
 	if(connectionType == ConnectionInternal && !deviceModelName.isEmpty())
 	{
-		if(deviceModels[deviceModelName].useExecutable)
+		addLogAtSlot(slot);
+		logAtSlot(slot);
+		if (startClientAtSlot(slot, connectionType, name, equinox, QString(), 0, delay, circles, deviceModelName, portSerial))
 		{
-			if (startClientAtSlot(slot, connectionType, name, equinox, host, portTCP, delay, circles))
-			{
-				if(!startServerAtSlot(slot, deviceModelName, portTCP, portSerial))
-				{
-					//If a server can't be started, remove the client too
-					stopClientAtSlot(slot);
-					return false;
-				}
-
-				emit clientConnected(slot, name);
-				return true;
-			}
-		}
-		else
-		{
-			addLogAtSlot(slot);
-			logAtSlot(slot);
-			if (startClientAtSlot(slot, connectionType, name, equinox, QString(), 0, delay, circles, deviceModelName, portSerial))
-			{
-				emit clientConnected(slot, name);
-				return true;
-			}
+			emit clientConnected(slot, name);
+			return true;
 		}
 	}
 	else
@@ -1107,16 +999,6 @@ bool TelescopeControl::stopTelescopeAtSlot(int slot)
 	//Validation
 	if(!isValidSlotNumber(slot))
 		return false;
-
-	//If there is a server...
-	if(telescopeServerProcess.contains(slot))
-	{
-		if(!stopServerAtSlot(slot))
-		{
-			//TODO: Add debug
-			return false;
-		}
-	}
 
 	return stopClientAtSlot(slot);
 }
@@ -1152,87 +1034,6 @@ bool TelescopeControl::isValidPort(uint port)
 bool TelescopeControl::isValidDelay(int delay)
 {
 	return (delay > 0 && delay <= MICROSECONDS_FROM_SECONDS(10));
-}
-
-bool TelescopeControl::startServerAtSlot(int slotNumber, QString deviceModelName, int portTCP, QString portSerial)
-{
-	//Validate
-	if(!isValidSlotNumber(slotNumber) || !isValidPort(portTCP))
-		return false;
-	//TODO: Validate the serial port? (Is this method going to be public?)
-
-	if(!deviceModels.contains(deviceModelName))
-	{
-		//TODO: Add debug
-		return false;
-	}
-
-	QString slotName = QString::number(slotNumber);
-	QString serverName = deviceModels.value(deviceModelName).server;
-
-	if (telescopeServers.contains(serverName))
-	{
-		QString serverExecutablePath;
-		//Is the try/catch really necessary?
-		try
-		{
-			serverExecutablePath = StelFileMgr::findFile(serverExecutablesDirectoryPath + TELESCOPE_SERVER_PATH.arg(serverName), StelFileMgr::File);
-		}
-		catch (std::runtime_error& e)
-		{
-			qDebug() << "TelescopeControl: Error starting telescope server: Can't find executable:" << serverExecutablePath;
-			return false;
-		}
-
-		#ifdef Q_OS_WIN32
-		QString serialPortName;
-		if(portSerial.right(portSerial.size() - SERIAL_PORT_PREFIX.size()).toInt() > 9)
-			serialPortName = "\\\\.\\" + portSerial;//"\\.\COMxx", not sure if it will work
-		else
-			serialPortName = portSerial;
-		#else
-		QString serialPortName = portSerial;
-		#endif //Q_OS_WIN32
-		QStringList serverArguments;
-		serverArguments << QString::number(portTCP) << serialPortName;
-		if(useTelescopeServerLogs)
-			serverArguments << QString(StelFileMgr::getUserDir() + "/log_TelescopeServer" + slotName + ".txt");
-
-		qDebug() << "TelescopeControl: Starting tellescope server at slot" << slotName << "with path" << serverExecutablePath << "and arguments" << serverArguments.join(" ");
-
-		//Starting the new process
-		telescopeServerProcess.insert(slotNumber, new QProcess());
-		//telescopeServerProcess[slotNumber]->setStandardOutputFile(StelFileMgr::getUserDir() + "/log_TelescopeServer" + slotName + ".txt");//In case the server does not accept logfiles
-		telescopeServerProcess[slotNumber]->start(serverExecutablePath, serverArguments);
-		//return telescopeServerProcess[slotNumber]->waitForStarted();
-
-		//The server is supposed to start immediately
-		return true;
-	}
-	else
-		qDebug() << "TelescopeControl: Error starting telescope server: No such server found:" << serverName;
-
-	return false;
-}
-
-bool TelescopeControl::stopServerAtSlot(int slotNumber)
-{
-	//Validate
-	if(!isValidSlotNumber(slotNumber) || !telescopeServerProcess.contains(slotNumber))
-		return false;
-
-	//Stop/close the process
-	#ifdef Q_OS_WIN32
-	telescopeServerProcess[slotNumber]->close();
-	#else
-	telescopeServerProcess[slotNumber]->terminate();
-	#endif //Q_OS_WIN32
-	telescopeServerProcess[slotNumber]->waitForFinished();
-
-	delete telescopeServerProcess[slotNumber];
-	telescopeServerProcess.remove(slotNumber);
-
-	return true;
 }
 
 bool TelescopeControl::startClientAtSlot(int slotNumber, ConnectionType connectionType, QString name, QString equinox, QString host, int portTCP, int delay, QList<double> circles, QString deviceModelName, QString portSerial)
@@ -1387,15 +1188,6 @@ void TelescopeControl::loadDeviceModels()
 		return;
 	}
 
-	//Compile a list of the available telescope server executables
-	loadTelescopeServerExecutables();
-	if(telescopeServers.isEmpty())
-	{
-		//deviceModels = QHash<QString, DeviceModel>();
-		//return;
-		qWarning() << "TelescopeControl: Only embedded telescope servers are available.";
-	}
-
 	//Clear the list of device models - it may not be empty.
 	deviceModels.clear();
 
@@ -1422,48 +1214,25 @@ void TelescopeControl::loadDeviceModels()
 
 		//Telescope server
 		QString server = model.value("server").toString();
-		//The default behaviour is to use embedded servers:
-		bool useExecutable = false;
 		if(server.isEmpty())
 		{
 			qWarning() << "TelescopeControl: Skipping device model: No server specified for" << name;
 			continue;
 		}
-		if(useServerExecutables)
+
+		if(!EMBEDDED_TELESCOPE_SERVERS.contains(server))
 		{
-			if(telescopeServers.contains(server))
-			{
-				qDebug() << "TelescopeControl: Using telescope server executable for" << name;
-				useExecutable = true;
-			}
-			else if(EMBEDDED_TELESCOPE_SERVERS.contains(server))
-			{
-				qWarning() << "TelescopeControl: No external telescope server executable found for" << name;
-				qWarning() << "TelescopeControl: Using embedded telescope server" << server << "for" << name;
-				useExecutable = false;
-			}
-			else
-			{
-				qWarning() << "TelescopeControl: Skipping device model: No server" << server << "found for" << name;
-				continue;
-			}
+			qWarning() << "TelescopeControl: Skipping device model: No server" << server << "found for" << name;
+			continue;
 		}
-		else
-		{
-			if(!EMBEDDED_TELESCOPE_SERVERS.contains(server))
-			{
-				qWarning() << "TelescopeControl: Skipping device model: No server" << server << "found for" << name;
-				continue;
-			}
-			//else: everything is OK, using embedded server
-		}
+		//else: everything is OK, using embedded server
 		
 		//Description and default connection delay
 		QString description = model.value("description", "No description is available.").toString();
 		int delay = model.value("default_delay", DEFAULT_DELAY).toInt();
 		
 		//Add this to the main list
-		DeviceModel newDeviceModel = {name, description, server, delay, useExecutable};
+		DeviceModel newDeviceModel = {name, description, server, delay};
 		deviceModels.insert(name, newDeviceModel);
 		//qDebug() << "TelescopeControl: Adding device model:" << name << description << server << delay;
 	}
@@ -1502,47 +1271,6 @@ bool TelescopeControl::restoreDeviceModelsListTo(QString deviceModelsListPath)
 
 	qDebug() << "TelescopeControl: The default device models list has been copied to" << deviceModelsListPath;
 	return true;
-}
-
-const QString& TelescopeControl::getServerExecutablesDirectoryPath()
-{
-	return serverExecutablesDirectoryPath;
-}
-
-bool TelescopeControl::setServerExecutablesDirectoryPath(const QString& newPath)
-{
-	//TODO: Reuse code.
-	QDir newServerDirectory(newPath);
-	if(!newServerDirectory.exists())
-	{
-		qWarning() << "TelescopeControl: Can't find such a directory:" << newPath;
-		return false;
-	}
-	QList<QFileInfo> telescopeServerExecutables = newServerDirectory.entryInfoList(QStringList("TelescopeServer*"), (QDir::Files|QDir::Executable|QDir::CaseSensitive), QDir::Name);
-	if(telescopeServerExecutables.isEmpty())
-	{
-		qWarning() << "TelescopeControl: No telescope server executables found in"
-				   << serverExecutablesDirectoryPath;
-		return false;
-	}
-
-	//If everything is fine...
-	serverExecutablesDirectoryPath = newPath;
-
-	stopAllTelescopes();
-	loadDeviceModels();
-	return true;
-}
-
-void TelescopeControl::setFlagUseServerExecutables(bool useExecutables)
-{
-	//If the new value is the same as the old, no action is required
-	if(useServerExecutables == useExecutables)
-		return;
-
-	useServerExecutables = useExecutables;
-	stopAllTelescopes();
-	loadDeviceModels();
 }
 
 void TelescopeControl::addLogAtSlot(int slot)

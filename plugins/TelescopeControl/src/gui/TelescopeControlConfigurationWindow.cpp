@@ -100,13 +100,6 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	
 	connect(ui->checkBoxEnableLogs, SIGNAL(toggled(bool)), telescopeManager, SLOT(setFlagUseTelescopeServerLogs(bool)));
 	
-	connect(ui->checkBoxUseExecutables, SIGNAL(toggled(bool)), ui->labelExecutablesDirectory, SLOT(setEnabled(bool)));
-	connect(ui->checkBoxUseExecutables, SIGNAL(toggled(bool)), ui->lineEditExecutablesDirectory, SLOT(setEnabled(bool)));
-	connect(ui->checkBoxUseExecutables, SIGNAL(toggled(bool)), ui->pushButtonPickExecutablesDirectory, SLOT(setEnabled(bool)));
-	connect(ui->checkBoxUseExecutables, SIGNAL(toggled(bool)), this, SLOT(checkBoxUseExecutablesToggled(bool)));
-	
-	connect(ui->pushButtonPickExecutablesDirectory, SIGNAL(clicked()), this, SLOT(buttonBrowseServerDirectoryPressed()));
-	
 	//In other dialogs:
 	connect(&propertiesWindow, SIGNAL(changesDiscarded()), this, SLOT(discardChanges()));
 	connect(&propertiesWindow, SIGNAL(changesSaved(QString, ConnectionType)), this, SLOT(saveChanges(QString, ConnectionType)));
@@ -254,10 +247,6 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	ui->checkBoxLabels->setChecked(telescopeManager->getFlagTelescopeLabels());
 	ui->checkBoxCircles->setChecked(telescopeManager->getFlagTelescopeCircles());
 	ui->checkBoxEnableLogs->setChecked(telescopeManager->getFlagUseTelescopeServerLogs());
-	
-	//Telescope server directory
-	ui->checkBoxUseExecutables->setChecked(telescopeManager->getFlagUseServerExecutables());
-	ui->lineEditExecutablesDirectory->setText(telescopeManager->getServerExecutablesDirectoryPath());
 	
 	//About page
 	//TODO: Expand
@@ -705,22 +694,5 @@ void TelescopeControlConfigurationWindow::updateStyle()
 		Q_ASSERT(gui);
 		QString style(gui->getStelStyle().htmlStyleSheet);
 		ui->textBrowserAbout->document()->setDefaultStyleSheet(style);
-	}
-}
-
-void TelescopeControlConfigurationWindow::checkBoxUseExecutablesToggled(bool useExecutables)
-{
-	telescopeManager->setFlagUseServerExecutables(useExecutables);
-}
-
-void TelescopeControlConfigurationWindow::buttonBrowseServerDirectoryPressed()
-{
-	QString newPath = QFileDialog::getExistingDirectory (0, QString("Select a directory"), telescopeManager->getServerExecutablesDirectoryPath());
-	//TODO: Validation? Directory exists and contains servers?
-	if(!newPath.isEmpty())
-	{
-		ui->lineEditExecutablesDirectory->setText(newPath);
-		telescopeManager->setServerExecutablesDirectoryPath(newPath);
-		telescopeManager->setFlagUseServerExecutables(true);
 	}
 }

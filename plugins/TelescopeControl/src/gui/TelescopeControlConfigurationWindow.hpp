@@ -67,9 +67,6 @@ private slots:
 	void buttonAddPressed(void);
 	void buttonRemovePressed(void);
 	
-	void checkBoxUseExecutablesToggled(bool);
-	void buttonBrowseServerDirectoryPressed(void);
-	
 	//! Slot for receiving information from TelescopeConfigurationDialog
 	void saveChanges(QString name, ConnectionType type);
 	//! Slot for receiving information from TelescopeConfigurationDialog

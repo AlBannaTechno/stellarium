@@ -63,7 +63,6 @@ namespace TelescopeControlGlobals {
 		QString description;
 		QString server;
 		int defaultDelay;
-		bool useExecutable;
 	};
 	
 		

@@ -139,13 +139,6 @@ public:
 	//! Returns a list of the currently connected clients
 	QHash<int, QString> getConnectedClientsNames();
 	
-	bool getFlagUseServerExecutables() {return useServerExecutables;}
-	//! Forces a call of loadDeviceModels(). Stops all active telescopes.
-	void setFlagUseServerExecutables(bool b);
-	const QString& getServerExecutablesDirectoryPath();
-	//! Forces a call of loadDeviceModels(). Stops all active telescopes.
-	bool setServerExecutablesDirectoryPath(const QString& newPath);
-	
 	bool getFlagUseTelescopeServerLogs () {return useTelescopeServerLogs;}
 
 public slots:
@@ -245,8 +238,6 @@ private:
 	
 	//! Contains the initialized telescope client objects representing the telescopes that Stellarium is connected to or attempting to connect to.
 	QMap<int, TelescopeClientP> telescopeClients;
-	//! Contains QProcess objects of the currently running telescope server processes that have been launched by Stellarium.
-	QHash<int, QProcess*> telescopeServerProcess;
 	QStringList telescopeServers;
 	QVariantMap telescopeDescriptions;
 	QHash<QString, DeviceModel> deviceModels;
@@ -257,9 +248,6 @@ private:
 	QHash<int, QFile*> telescopeServerLogFiles;
 	QHash<int, QTextStream*> telescopeServerLogStreams;
 	
-	bool useServerExecutables;
-	QString serverExecutablesDirectoryPath;
-	
 	//GUI
 	TelescopeControlConfigurationWindow * configurationWindow;
 	SlewWindow * slewWindow;
@@ -268,14 +256,6 @@ private:
 	bool isValidSlotNumber(int slot);
 	bool isValidPort(uint port);
 	bool isValidDelay(int delay);
-	
-	//! Start the telescope server defined for a given slot in a new QProcess
-	//! @param slot the slot number
-	//! @param serverName the short form of the server name (e.g. "Dummy" for "TelescopeServerDummy")
-	//! @param tcpPort TCP slot the server should listen to
-	bool startServerAtSlot(int slot, QString serverName, int tcpPort, QString serialPort);
-	//! Stop the telescope server at a given slot, terminating the process
-	bool stopServerAtSlot(int slot);
 
 	//! A wrapper for TelescopeClient::create(). Used internally by loadTelescopes() and startTelescopeAtSlot(). Does not perform any validation on its arguments.
 	bool startClientAtSlot(int slot, ConnectionType connectionType, QString name, QString equinox, QString host, int portTCP, int delay, QList<double> circles, QString serverName = QString(), QString portSerial = QString());
@@ -283,10 +263,7 @@ private:
 	//! Returns true if the TelescopeClient at this slot has been stopped successfully or doesn't exist
 	bool stopClientAtSlot(int slot);
 	
-	//! Compile a list of the executables in the /servers folder
-	void loadTelescopeServerExecutables();
-	
-	//! Loads the list of supported telescope models. Calls loadTelescopeServerExecutables() internally.
+	//! Loads the list of supported telescope models.
 	void loadDeviceModels();
 	
 	//! Copies the default device_models.json to the given destination
