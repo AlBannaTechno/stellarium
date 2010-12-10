@@ -85,10 +85,12 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	
 	//Connect: sender, signal, receiver, method
 	//Page: Telescopes
-	connect(ui->pushButtonChangeStatus, SIGNAL(clicked()), this, SLOT(buttonChangeStatusPressed()));
-	connect(ui->pushButtonConfigure, SIGNAL(clicked()), this, SLOT(buttonConfigurePressed()));
-	connect(ui->pushButtonAdd, SIGNAL(clicked()), this, SLOT(buttonAddPressed()));
-	connect(ui->pushButtonRemove, SIGNAL(clicked()), this, SLOT(buttonRemovePressed()));
+	connect(ui->pushButtonChangeStatus, SIGNAL(clicked()), this, SLOT(changeSelectedConnectionStatus()));
+	connect(ui->pushButtonConfigure, SIGNAL(clicked()), this, SLOT(configureSelectedConnection()));
+	connect(ui->pushButtonRemove, SIGNAL(clicked()), this, SLOT(removeSelectedConnection()));
+
+	connect(ui->pushButtonNewStellarium, SIGNAL(clicked()), this, SLOT(createNewStellariumTelescope()));
+	connect(ui->pushButtonNewVirtual, SIGNAL(clicked()), this, SLOT(createNewVirtualTelescope()));
 	
 	connect(ui->telescopeTreeView, SIGNAL(clicked (const QModelIndex &)), this, SLOT(selectTelecope(const QModelIndex &)));
 	//connect(ui->telescopeTreeView, SIGNAL(activated (const QModelIndex &)), this, SLOT(configureTelescope(const QModelIndex &)));
@@ -232,7 +234,7 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 		ui->pushButtonChangeStatus->setEnabled(false);
 		ui->pushButtonConfigure->setEnabled(false);
 		ui->pushButtonRemove->setEnabled(false);
-		ui->pushButtonAdd->setFocus();
+		ui->pushButtonNewStellarium->setFocus();
 		if(telescopeManager->getDeviceModels().isEmpty())
 			ui->labelWarning->setText(LABEL_TEXT_NO_DEVICE_MODELS);
 		else
@@ -240,7 +242,7 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	}
 	
 	if(telescopeCount >= SLOT_COUNT)
-		ui->pushButtonAdd->setEnabled(false);
+		ui->frameNewButtons->setEnabled(false);
 	
 	//Checkboxes
 	ui->checkBoxReticles->setChecked(telescopeManager->getFlagTelescopeReticles());
@@ -343,7 +345,7 @@ void TelescopeControlConfigurationWindow::configureTelescope(const QModelIndex &
 	propertiesWindow.initExistingTelescopeConfiguration(configuredSlot);
 }
 
-void TelescopeControlConfigurationWindow::buttonChangeStatusPressed()
+void TelescopeControlConfigurationWindow::changeSelectedConnectionStatus()
 {
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
@@ -395,33 +397,39 @@ void TelescopeControlConfigurationWindow::buttonChangeStatusPressed()
 	telescopeListModel->setData(telescopeListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnStatus), statusString[telescopeStatus[selectedSlot]], Qt::DisplayRole);
 }
 
-void TelescopeControlConfigurationWindow::buttonConfigurePressed()
+void TelescopeControlConfigurationWindow::configureSelectedConnection()
 {
 	if(ui->telescopeTreeView->currentIndex().isValid())
 		configureTelescope(ui->telescopeTreeView->currentIndex());
 }
 
-void TelescopeControlConfigurationWindow::buttonAddPressed()
+void TelescopeControlConfigurationWindow::createNewStellariumTelescope()
 {
 	if(telescopeCount >= SLOT_COUNT)
 		return;
 	
 	configuredTelescopeIsNew = true;
-	
-	//Find the first unoccupied slot (there is at least one)
-	for (configuredSlot = MIN_SLOT_NUMBER; configuredSlot < SLOT_NUMBER_LIMIT; configuredSlot++)
-	{
-		//configuredSlot = (i+1)%SLOT_COUNT;
-		if(telescopeStatus[configuredSlot] == StatusNA)
-			break;
-	}
+	configuredSlot = findFirstUnoccupiedSlot();
 	
 	setVisible(false);
 	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
-	propertiesWindow.initNewTelescopeConfiguration(configuredSlot);
+	propertiesWindow.initNewStellariumTelescope(configuredSlot);
 }
 
-void TelescopeControlConfigurationWindow::buttonRemovePressed()
+void TelescopeControlConfigurationWindow::createNewVirtualTelescope()
+{
+	if(telescopeCount >= SLOT_COUNT)
+		return;
+
+	configuredTelescopeIsNew = true;
+	configuredSlot = findFirstUnoccupiedSlot();
+
+	setVisible(false);
+	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
+	propertiesWindow.initNewVirtualTelescope(configuredSlot);
+}
+
+void TelescopeControlConfigurationWindow::removeSelectedConnection()
 {
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
@@ -462,7 +470,7 @@ void TelescopeControlConfigurationWindow::buttonRemovePressed()
 	
 	//If there are less than the maximal number of telescopes now, new ones can be added
 	if(telescopeCount < SLOT_COUNT)
-		ui->pushButtonAdd->setEnabled(true);
+		ui->frameNewButtons->setEnabled(true);
 	
 	//If there are no telescopes left, disable some buttons
 	if(telescopeCount == 0)
@@ -541,7 +549,7 @@ void TelescopeControlConfigurationWindow::saveChanges(QString name, ConnectionTy
 	
 	//Can't add more telescopes if they have reached the maximum number
 	if (telescopeCount >= SLOT_COUNT)
-		ui->pushButtonAdd->setEnabled(false);
+		ui->frameNewButtons->setEnabled(false);
 	
 	//
 	if (telescopeCount == 0)
@@ -576,7 +584,7 @@ void TelescopeControlConfigurationWindow::discardChanges()
 	setVisible(true);//Brings the current window to the foreground
 	
 	if (telescopeCount >= SLOT_COUNT)
-		ui->pushButtonAdd->setEnabled(false);
+		ui->frameNewButtons->setEnabled(false);
 	if (telescopeCount == 0)
 		ui->pushButtonRemove->setEnabled(false);
 	
@@ -684,6 +692,18 @@ void TelescopeControlConfigurationWindow::setStatusButtonToDisconnect()
 {
 	ui->pushButtonChangeStatus->setText("Disconnect");
 	ui->pushButtonChangeStatus->setToolTip("Disconnect from the selected telescope");
+}
+
+int TelescopeControlConfigurationWindow::findFirstUnoccupiedSlot()
+{
+	//Find the first unoccupied slot (there is at least one)
+	for (int i = MIN_SLOT_NUMBER; i < SLOT_NUMBER_LIMIT; i++)
+	{
+		//configuredSlot = (i+1)%SLOT_COUNT;
+		if(telescopeStatus[i] == StatusNA)
+			return i;
+	}
+	return -1;
 }
 
 void TelescopeControlConfigurationWindow::updateStyle()

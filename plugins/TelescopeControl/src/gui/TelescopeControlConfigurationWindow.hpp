@@ -60,12 +60,15 @@ private:
 	void setStatusButtonToStop();
 	void setStatusButtonToConnect();
 	void setStatusButtonToDisconnect();
+
+	int findFirstUnoccupiedSlot();
 	
 private slots:
-	void buttonChangeStatusPressed(void);
-	void buttonConfigurePressed(void);
-	void buttonAddPressed(void);
-	void buttonRemovePressed(void);
+	void changeSelectedConnectionStatus();
+	void configureSelectedConnection();
+	void removeSelectedConnection();
+	void createNewStellariumTelescope();
+	void createNewVirtualTelescope();
 	
 	//! Slot for receiving information from TelescopeConfigurationDialog
 	void saveChanges(QString name, ConnectionType type);

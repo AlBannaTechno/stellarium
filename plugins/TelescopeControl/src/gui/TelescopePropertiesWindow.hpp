@@ -44,7 +44,8 @@ public:
 	void languageChanged();
 	
 	void initExistingTelescopeConfiguration(int slot);
-	void initNewTelescopeConfiguration(int slot);
+	void initNewStellariumTelescope(int slot);
+	void initNewVirtualTelescope(int slot);
 	
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots

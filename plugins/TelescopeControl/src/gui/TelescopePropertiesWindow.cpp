@@ -100,22 +100,24 @@ void TelescopePropertiesWindow::initConfigurationDialog()
 	
 	//Type
 	ui->radioButtonTelescopeLocal->setEnabled(true);
+	ui->groupBoxType->setVisible(true);
+
+	ui->groupBoxVirtualTelescope->setVisible(false);
 	
-	//Name
+	//Telescope properties
 	ui->lineEditTelescopeName->clear();
-
-	//Equinox
+	ui->labelEquinox->setVisible(false);
+	ui->frameEquinox->setVisible(false);
+	ui->frameDelay->setVisible(true);
 	ui->radioButtonJ2000->setChecked(true);
-
-	//Connect at startup
 	ui->checkBoxConnectAtStartup->setChecked(false);
 	
-	//Serial port
+	//Device settings
+	ui->groupBoxDeviceSettings->setVisible(true);
 	ui->lineEditSerialPort->clear();
 	ui->lineEditSerialPort->setCompleter(new QCompleter(SERIAL_PORT_NAMES, this));
 	ui->lineEditSerialPort->setText(SERIAL_PORT_NAMES.value(0));
-	
-	//Populating the list of available devices
+	//Populate the list of available devices
 	ui->comboBoxDeviceModel->clear();
 	if (!deviceModelNames.isEmpty())
 	{
@@ -123,17 +125,20 @@ void TelescopePropertiesWindow::initConfigurationDialog()
 		ui->comboBoxDeviceModel->addItems(deviceModelNames);
 	}
 	ui->comboBoxDeviceModel->setCurrentIndex(0);
+
+	//Connection settings
+	ui->groupBoxConnectionSettings->setVisible(true);
 	
 	//FOV circles
 	ui->checkBoxCircles->setChecked(false);
 	ui->lineEditCircleList->clear();
 }
 
-void TelescopePropertiesWindow::initNewTelescopeConfiguration(int slot)
+void TelescopePropertiesWindow::initNewStellariumTelescope(int slot)
 {
 	configuredSlot = slot;
 	initConfigurationDialog();
-	ui->stelWindowTitle->setText("Add New Telescope");
+	ui->stelWindowTitle->setText("New Stellarium Telescope");
 	ui->lineEditTelescopeName->setText(QString("New Telescope %1").arg(QString::number(configuredSlot)));
 	
 	if(deviceModelNames.isEmpty())
@@ -150,6 +155,23 @@ void TelescopePropertiesWindow::initNewTelescopeConfiguration(int slot)
 	}
 	
 	ui->doubleSpinBoxTelescopeDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
+}
+
+void TelescopePropertiesWindow::initNewVirtualTelescope(int slot)
+{
+	configuredSlot = slot;
+	initConfigurationDialog();
+	ui->stelWindowTitle->setText("New Simulated Telescope");
+	ui->lineEditTelescopeName->setText(QString("New Telescope %1").arg(QString::number(configuredSlot)));
+
+	ui->radioButtonTelescopeVirtual->setChecked(true);
+	ui->groupBoxType->setVisible(false);
+	ui->groupBoxVirtualTelescope->setVisible(true);
+	ui->groupBoxDeviceSettings->setVisible(false);
+	ui->groupBoxConnectionSettings->setVisible(false);
+	ui->labelEquinox->setVisible(false);
+	ui->frameEquinox->setVisible(false);
+	ui->frameDelay->setVisible(false);
 }
 
 void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
