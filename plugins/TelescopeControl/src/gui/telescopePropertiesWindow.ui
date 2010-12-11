@@ -537,9 +537,6 @@ Increase this value if the reticle is skipping.</string>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
             </property>
-            <property name="textFormat">
-             <enum>Qt::PlainText</enum>
-            </property>
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>

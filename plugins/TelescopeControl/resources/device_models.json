@@ -28,7 +28,7 @@
 		},
 		{
 			"name" : "Wildcard Innovations Argo Navis (Meade mode)",
-			"description" : "Wildcard Innovations' Argo Navis DTC in Meade LX200 emulation mode.",
+			"description" : "Wildcard Innovations' Argo Navis DTC in Meade LX200 emulation mode (<tt>SETUP SERIAL</tt>, then <tt>STARTUP=meade</tt> and <tt>BAUD=9600</tt>).",
 			"server" : "TelescopeServerLx200",
 			"default_delay" : 500000
 		},
