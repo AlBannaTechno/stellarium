@@ -1,5 +1,9 @@
 <p>A more complete and up-to-date documentation for this plug-in can be found on the <a href="http://www.stellarium.org/wiki/index.php/Telescope_Control">Telescope Control</a> page in the Stellarium Wiki.</p>
 
+<p><span style="color: red; font-weight: bolder;">WARNING: Stellarium CANNOT prevent your telescope from being pointed at the Sun.</span></p>
+<ul><li>Never point your telescope at the Sun without a proper solar filter installed. The powerful light amplified by the telescope WILL cause irreversible damage to your eyes and/or your equipment.</li>
+<li>Even if you don't do it deliberately, a slew during daylight hours may cause your telescope to point at the sun on its way to the given destination, so it is strongly recommended to avoid using the telescope control feature before sunset without appropriate protection.</li></ul>
+
 <h3>Contents</h3>
 <ul>
 <li><a href="#Abilities_and_limitations">Abilities and limitations</a></li>
@@ -24,9 +28,6 @@
 <h3><a name="Abilities_and_limitations"/>Abilities and limitations</h3>
 <p>This plug-in allows Stellarium to send only "<b>slew</b>" ("go to") commands to the device and to receive its current position. It cannot issue any other commands, so users should be aware of the possibility for mount collisions and similar situations. (To abort a slew, you can start another one to a safe position.)</p>
 <p>As of the current version, this plug-in doesn't allow satellite tracking, and is not very suitable for lunar or planetary observations.</p>
-<p><span style="color: red; font-weight: bolder;">WARNING: Stellarium CANNOT prevent your telescope from being pointed at the Sun.</span></p>
-<ul><li>Never point your telescope at the Sun without a proper solar filter installed. The powerful light amplified by the telescope WILL cause irreversible damage to your eyes and/or your equipment.</li>
-<li>Even if you don't do it deliberately, a slew during daylight hours may cause your telescope to point at the sun on its way to the given destination, so it is strongly recommended to avoid using the telescope control feature before sunset without appropriate protection.</li></ul>
 <p><a href="#top"><small>[Back to top]</small></a><br/></p>
 
 <h3><a name="originalfeature"/>The original telescope control feature</h3>
