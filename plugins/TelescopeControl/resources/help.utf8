@@ -19,7 +19,6 @@
 <li><a href="#devices">Supported devices</a></li>
 <li><a href="#virtual_telescope">Virtual telescope</a></li>
 <li><a href="#authors">Authors</a></li>
-<li><a href="#copyright">Copyright</a></li>
 </ul>
 
 <h3><a name="Abilities_and_limitations"/>Abilities and limitations</h3>
@@ -155,17 +154,3 @@
 </ul>
 <p>See also the AUTHORS files of Stellarium and the Stellarium telescope servers.</p>
 <p><a href="#top"><small>[Back to top]</small></a><br/></p>
-
-<h3><a name="copyright"/>Copyright</h3>
-<p>Telescope Control, a plug-in for Stellarium</p>
-<p>Copyright &copy; 2006 Johannes Gajdosik, Michael Heinz</p>
-<p>Copyright &copy; 2009-2010 Bogdan Marinov</p>
-<p>This plug-in is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</p>
-<p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.</p>
-<p>You should have received a copy of the GNU General Public License along with this program; if not, write to:</p>
-<address>Free Software Foundation, Inc.<br/>
-51 Franklin Street, Fifth Floor<br/>
-Boston, MA  02110-1301, USA</address>
-<p><a href="http://www.fsf.org">http://www.fsf.org/</a></p>
-<p><a href="#top"><small>[Back to top]</small></a><br/></p>
-

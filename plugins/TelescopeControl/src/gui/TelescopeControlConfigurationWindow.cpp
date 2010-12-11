@@ -255,15 +255,30 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	QString htmlPage = "<html><head></head><body>";
 	htmlPage += "<h2>Stellarium Telescope Control Plug-in</h2>";
 	htmlPage += "<h3>Version " + QString(PLUGIN_VERSION) + "</h3>";
+	htmlPage += "<p>Copyright &copy; 2006 Johannes Gajdosik, Michael Heinz</p>";
+	htmlPage += "<p>Copyright &copy; 2009-2010 Bogdan Marinov</p>"
+				"<p>This plug-in is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</p>"
+				"<p>This plug-in is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.</p>"
+				"<p>You should have received a copy of the GNU General Public License along with this program; if not, write to:</p>"
+				"<address>Free Software Foundation, Inc.<br/>"
+				"51 Franklin Street, Fifth Floor<br/>"
+				"Boston, MA  02110-1301, USA</address>"
+				"<p><a href=\"http://www.fsf.org\">http://www.fsf.org/</a></p>";
+	htmlPage += "</body></html>";
+	ui->textBrowserAbout->setHtml(htmlPage);
+
+	htmlPage = "<html><head></head><body>";
 	QFile helpFile(":/telescopeControl/help.utf8");
 	helpFile.open(QFile::ReadOnly | QFile::Text);
 	htmlPage += helpFile.readAll();
 	helpFile.close();
 	htmlPage += "</body></html>";
-	ui->textBrowserAbout->setHtml(htmlPage);
+	ui->textBrowserHelp->setHtml(htmlPage);
+
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 	Q_ASSERT(gui);
 	ui->textBrowserAbout->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
+	ui->textBrowserHelp->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 	
 	//Everything must be initialized by now, start the updateTimer
 	//TODO: Find if it's possible to run it only when the dialog is visible
@@ -714,5 +729,6 @@ void TelescopeControlConfigurationWindow::updateStyle()
 		Q_ASSERT(gui);
 		QString style(gui->getStelStyle().htmlStyleSheet);
 		ui->textBrowserAbout->document()->setDefaultStyleSheet(style);
+		ui->textBrowserHelp->document()->setDefaultStyleSheet(style);
 	}
 }

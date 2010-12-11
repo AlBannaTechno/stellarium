@@ -548,17 +548,27 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabAbout">
+     <widget class="QWidget" name="tabHelp">
       <attribute name="title">
        <string>Help</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
-        <widget class="QTextBrowser" name="textBrowserAbout">
+        <widget class="QTextBrowser" name="textBrowserHelp">
          <property name="openExternalLinks">
           <bool>true</bool>
          </property>
         </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabAbout">
+      <attribute name="title">
+       <string>About</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QTextBrowser" name="textBrowserAbout"/>
        </item>
       </layout>
      </widget>
@@ -586,7 +596,7 @@
   <tabstop>checkBoxReticles</tabstop>
   <tabstop>checkBoxCircles</tabstop>
   <tabstop>checkBoxEnableLogs</tabstop>
-  <tabstop>textBrowserAbout</tabstop>
+  <tabstop>textBrowserHelp</tabstop>
  </tabstops>
  <resources>
   <include location="../../../../data/gui/guiRes.qrc"/>
