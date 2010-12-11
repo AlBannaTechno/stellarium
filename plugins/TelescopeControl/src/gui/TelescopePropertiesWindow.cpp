@@ -164,14 +164,11 @@ void TelescopePropertiesWindow::initNewVirtualTelescope(int slot)
 	ui->stelWindowTitle->setText("New Simulated Telescope");
 	ui->lineEditTelescopeName->setText(QString("New Telescope %1").arg(QString::number(configuredSlot)));
 
-	ui->radioButtonTelescopeVirtual->setChecked(true);
+	if (ui->radioButtonTelescopeVirtual->isChecked())
+		toggleTypeVirtual(true);
+	else
+		ui->radioButtonTelescopeVirtual->setChecked(true);
 	ui->groupBoxType->setVisible(false);
-	ui->groupBoxVirtualTelescope->setVisible(true);
-	ui->groupBoxDeviceSettings->setVisible(false);
-	ui->groupBoxConnectionSettings->setVisible(false);
-	ui->labelEquinox->setVisible(false);
-	ui->frameEquinox->setVisible(false);
-	ui->frameDelay->setVisible(false);
 }
 
 void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
@@ -227,7 +224,10 @@ void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 	}
 	else
 	{
-		ui->radioButtonTelescopeVirtual->setChecked(true);
+		if (ui->radioButtonTelescopeVirtual->isChecked())
+			toggleTypeVirtual(true);
+		else
+			ui->radioButtonTelescopeVirtual->setChecked(true);
 	}
 
 	//Equinox
@@ -301,10 +301,15 @@ void TelescopePropertiesWindow::toggleTypeConnection(bool isChecked)
 void TelescopePropertiesWindow::toggleTypeVirtual(bool isChecked)
 {
 	//TODO: This really should be done in the GUI
-	ui->groupBoxDeviceSettings->setEnabled(!isChecked);
-	ui->groupBoxConnectionSettings->setEnabled(!isChecked);
+	ui->groupBoxVirtualTelescope->setVisible(isChecked);
+	ui->groupBoxDeviceSettings->setVisible(!isChecked);
+	ui->groupBoxConnectionSettings->setVisible(!isChecked);
+	ui->labelEquinox->setVisible(!isChecked);
+	ui->frameEquinox->setVisible(!isChecked);
+	ui->frameDelay->setVisible(!isChecked);
 
-	ui->scrollArea->ensureWidgetVisible(ui->groupBoxTelescopeProperties);
+	if (isChecked)
+		ui->scrollArea->ensureWidgetVisible(ui->groupBoxVirtualTelescope);
 }
 
 void TelescopePropertiesWindow::buttonSavePressed()
