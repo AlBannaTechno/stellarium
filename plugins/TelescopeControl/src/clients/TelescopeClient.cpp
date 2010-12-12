@@ -26,6 +26,9 @@
 #include "TelescopeClient.hpp"
 #include "TelescopeClientDirectLx200.hpp"
 #include "TelescopeClientDirectNexStar.hpp"
+#ifdef Q_OS_WIN32
+#include "TelescopeClientAscom.hpp"
+#endif
 #include "StelUtils.hpp"
 #include "StelTranslator.hpp"
 #include "StelCore.hpp"
@@ -95,12 +98,18 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 	}
 	else if (type == "TelescopeServerLx200") //BM: One of the rare occasions of painless extension
 	{
-		newTelescope= new TelescopeClientDirectLx200(name, params, eq);
+		newTelescope = new TelescopeClientDirectLx200(name, params, eq);
 	}
 	else if (type == "TelescopeServerNexStar")
 	{
-		newTelescope= new TelescopeClientDirectNexStar(name, params, eq);
+		newTelescope = new TelescopeClientDirectNexStar(name, params, eq);
 	}
+#ifdef Q_OS_WIN32
+	else if (type == "TelescopeServerAscom")
+	{
+		newTelescope = new TelescopeClientAscom(name, params, eq);
+	}
+#endif
 	else
 	{
 		qWarning() << "WARNING - unknown telescope type" << type << "- not creating a telescope object for url" << url;

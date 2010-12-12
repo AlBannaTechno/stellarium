@@ -1,7 +1,9 @@
 
 INCLUDE_DIRECTORIES(
   ${CMAKE_BINARY_DIR}
-  ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src/gui ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src/servers
+  ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src
+  ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src/gui
+  ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src/servers
   . gui clients servers)
 
 LINK_DIRECTORIES(/src)
@@ -46,6 +48,13 @@ SET(TelescopeControl_SRCS
   servers/NexStarCommand.cpp
   )
 
+IF(WIN32)
+  SET(TelescopeControl_SRCS
+    ${TelescopeControl_SRCS}
+	clients/TelescopeClientAscom.hpp
+	clients/TelescopeClientAscom.cpp)
+ENDIF(WIN32)
+
 # Add here all the .ui files
 SET(TelescopeControl_UIS
   gui/slewWindow.ui
@@ -70,6 +79,12 @@ SET(TelescopeControl_MOC_HDRS
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectNexStar.hpp
   )
+
+IF(WIN32)
+  SET(TelescopeControl_MOC_HDRS
+    ${TelescopeControl_MOC_HDRS}
+	clients/TelescopeClientAscom.hpp)
+ENDIF(WIN32)
 
 # After this call, TelescopeControl_MOC_SRCS = moc_TelescopeControl.cxx
 QT4_WRAP_CPP(TelescopeControl_MOC_SRCS ${TelescopeControl_MOC_HDRS})

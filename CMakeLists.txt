@@ -160,6 +160,10 @@ IF (BUILD_STATIC_PLUGINS)
 	  DOC "cfitsio link options")
 	SET(QT_USE_QTXML TRUE) # For VirGO we also need QtXml module
   ENDIF()
+
+  IF (USE_PLUGIN_TELESCOPECONTROL)
+    SET(QT_USE_QAXCONTAINER TRUE) # This needs to be compiled in advance
+  ENDIF()
 ENDIF()
 
 # Custom target used to manage dependencies of stellarium -> Static plugins
