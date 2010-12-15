@@ -25,6 +25,10 @@
 #include <QHash>
 #include <QIntValidator>
 #include <QStringList>
+#ifdef Q_OS_WIN32
+#include <QAxObject>
+#endif
+
 //#include "StelDialog.hpp"
 #include "StelDialogTelescopeControl.hpp"
 #include "TelescopeControlGlobals.hpp"
@@ -46,6 +50,9 @@ public:
 	void initExistingTelescopeConfiguration(int slot);
 	void initNewStellariumTelescope(int slot);
 	void initNewVirtualTelescope(int slot);
+#ifdef Q_OS_WIN32
+	void initNewAscomTelescope(int slot);
+#endif
 	
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
@@ -59,11 +66,19 @@ private slots:
 	void buttonSavePressed();
 	void buttonDiscardPressed();
 	
-	void toggleTypeLocal(bool);
+	void toggleTypeLocalNative(bool);
+#ifdef Q_OS_WIN32
+	void toggleTypeLocalAscom(bool);
+#endif
 	void toggleTypeConnection(bool);
 	void toggleTypeVirtual(bool);
 	
 	void deviceModelSelected(const QString&);
+
+#ifdef Q_OS_WIN32
+	void showAscomSelector();
+	void showAscomDeviceSetup();
+#endif
 
 signals:
 	void changesSaved(QString name, ConnectionType type);
@@ -80,6 +95,11 @@ private:
 	int configuredSlot;
 	
 	TelescopeControl * telescopeManager;
+
+#ifdef Q_OS_WIN32
+	QString ascomDriverObjectId;
+	QAxObject ascomHelper;
+#endif
 };
 
 #endif // _TELESCOPE_PROPERTIES_WINDOW_

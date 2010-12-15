@@ -91,6 +91,9 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 
 	connect(ui->pushButtonNewStellarium, SIGNAL(clicked()), this, SLOT(createNewStellariumTelescope()));
 	connect(ui->pushButtonNewVirtual, SIGNAL(clicked()), this, SLOT(createNewVirtualTelescope()));
+#ifdef Q_OS_WIN32
+	connect(ui->pushButtonNewAscom, SIGNAL(clicked()), this, SLOT(createNewAscomTelescope()));
+#endif
 	
 	connect(ui->telescopeTreeView, SIGNAL(clicked (const QModelIndex &)), this, SLOT(selectTelecope(const QModelIndex &)));
 	//connect(ui->telescopeTreeView, SIGNAL(activated (const QModelIndex &)), this, SLOT(configureTelescope(const QModelIndex &)));
@@ -467,6 +470,21 @@ void TelescopeControlConfigurationWindow::createNewVirtualTelescope()
 	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
 	propertiesWindow.initNewVirtualTelescope(configuredSlot);
 }
+
+#ifdef Q_OS_WIN32
+void TelescopeControlConfigurationWindow::createNewAscomTelescope()
+{
+	if (telescopeCount >= SLOT_COUNT)
+		return;
+
+	configuredTelescopeIsNew = true;
+	configuredSlot = findFirstUnoccupiedSlot();
+
+	setVisible(false);
+	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
+	propertiesWindow.initNewAscomTelescope(configuredSlot);
+}
+#endif
 
 void TelescopeControlConfigurationWindow::removeSelectedConnection()
 {

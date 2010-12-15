@@ -151,7 +151,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QRadioButton" name="radioButtonTelescopeLocal">
+       <widget class="QRadioButton" name="radioButtonTelescopeLocalNative">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -168,10 +168,17 @@
          <string>A telescope connected to this computer via a serial port and controlled directly by Stellarium.</string>
         </property>
         <property name="text">
-         <string>Stellarium, directly through a serial port</string>
+         <string>Stellarium, directly through a serial port, with Stellarium's drivers</string>
         </property>
         <property name="checked">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButtonTelescopeLocalAscom">
+        <property name="text">
+         <string>Stellarium, directly through a serial port, with an ASCOM driver</string>
         </property>
        </widget>
       </item>
@@ -228,9 +235,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-251</y>
         <width>381</width>
-        <height>476</height>
+        <height>564</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayoutScrollArea">
@@ -421,6 +428,50 @@ Increase this value if the reticle is skipping.</string>
             </property>
             <property name="text">
              <string>Start/connect at startup</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBoxAscomSettings">
+         <property name="title">
+          <string>ASCOM settings</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayoutAscom">
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="labelAscomSelect">
+            <property name="text">
+             <string>Select device:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayoutAscomSelect">
+            <item>
+             <widget class="QLineEdit" name="lineEditAscomControlId">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonAscomSelect">
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonAscomDeviceSetup">
+            <property name="text">
+             <string>Device setup...</string>
             </property>
            </widget>
           </item>
@@ -741,13 +792,19 @@ Increase this value if the reticle is skipping.</string>
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>radioButtonTelescopeLocal</tabstop>
+  <tabstop>radioButtonTelescopeLocalNative</tabstop>
+  <tabstop>radioButtonTelescopeLocalAscom</tabstop>
   <tabstop>radioButtonTelescopeConnection</tabstop>
   <tabstop>radioButtonTelescopeVirtual</tabstop>
   <tabstop>scrollArea</tabstop>
   <tabstop>lineEditTelescopeName</tabstop>
   <tabstop>doubleSpinBoxTelescopeDelay</tabstop>
+  <tabstop>radioButtonJ2000</tabstop>
+  <tabstop>radioButtonJNow</tabstop>
   <tabstop>checkBoxConnectAtStartup</tabstop>
+  <tabstop>pushButtonAscomSelect</tabstop>
+  <tabstop>lineEditAscomControlId</tabstop>
+  <tabstop>pushButtonAscomDeviceSetup</tabstop>
   <tabstop>lineEditSerialPort</tabstop>
   <tabstop>comboBoxDeviceModel</tabstop>
   <tabstop>lineEditHostName</tabstop>

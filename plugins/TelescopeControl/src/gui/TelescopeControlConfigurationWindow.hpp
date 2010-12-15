@@ -69,6 +69,9 @@ private slots:
 	void removeSelectedConnection();
 	void createNewStellariumTelescope();
 	void createNewVirtualTelescope();
+#ifdef Q_OS_WIN32
+	void createNewAscomTelescope();
+#endif
 	
 	//! Slot for receiving information from TelescopeConfigurationDialog
 	void saveChanges(QString name, ConnectionType type);

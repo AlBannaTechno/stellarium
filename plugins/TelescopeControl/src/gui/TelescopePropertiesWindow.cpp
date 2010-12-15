@@ -76,14 +76,22 @@ void TelescopePropertiesWindow::createDialogContent()
 	connect(dialog, SIGNAL(rejected()), this, SLOT(buttonDiscardPressed()));
 	
 	//Connect: sender, signal, receiver, member
-	connect(ui->radioButtonTelescopeLocal, SIGNAL(toggled(bool)), this, SLOT(toggleTypeLocal(bool)));
+	connect(ui->radioButtonTelescopeLocalNative, SIGNAL(toggled(bool)), this, SLOT(toggleTypeLocalNative(bool)));
 	connect(ui->radioButtonTelescopeConnection, SIGNAL(toggled(bool)), this, SLOT(toggleTypeConnection(bool)));
 	connect(ui->radioButtonTelescopeVirtual, SIGNAL(toggled(bool)), this, SLOT(toggleTypeVirtual(bool)));
+#ifdef Q_OS_WIN32
+	connect(ui->radioButtonTelescopeLocalAscom, SIGNAL(toggled(bool)), this, SLOT(toggleTypeLocalAscom(bool)));
+#endif
 	
 	connect(ui->pushButtonSave, SIGNAL(clicked()), this, SLOT(buttonSavePressed()));
 	connect(ui->pushButtonDiscard, SIGNAL(clicked()), this, SLOT(buttonDiscardPressed()));
 	
 	connect(ui->comboBoxDeviceModel, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(deviceModelSelected(const QString&)));
+
+#ifdef Q_OS_WIN32
+	connect(ui->pushButtonAscomSelect, SIGNAL(clicked()), this, SLOT(showAscomSelector()));
+	connect(ui->pushButtonAscomDeviceSetup, SIGNAL(clicked()), this, SLOT(showAscomDeviceSetup()));
+#endif
 	
 	//Setting validators
 	ui->lineEditTelescopeName->setValidator(telescopeNameValidator);
@@ -99,7 +107,7 @@ void TelescopePropertiesWindow::initConfigurationDialog()
 	deviceModelNames = telescopeManager->getDeviceModels().keys();
 	
 	//Type
-	ui->radioButtonTelescopeLocal->setEnabled(true);
+	ui->radioButtonTelescopeLocalNative->setEnabled(true);
 	ui->groupBoxType->setVisible(true);
 
 	ui->groupBoxVirtualTelescope->setVisible(false);
@@ -132,6 +140,15 @@ void TelescopePropertiesWindow::initConfigurationDialog()
 	//FOV circles
 	ui->checkBoxCircles->setChecked(false);
 	ui->lineEditCircleList->clear();
+
+	//ASCOM GUI
+#ifdef Q_OS_WIN32
+	if (!telescopeManager->canUseAscom())
+#endif
+	{
+		ui->radioButtonTelescopeLocalAscom->setVisible(false);
+		ui->groupBoxAscomSettings->setVisible(false);
+	}
 }
 
 void TelescopePropertiesWindow::initNewStellariumTelescope(int slot)
@@ -143,15 +160,15 @@ void TelescopePropertiesWindow::initNewStellariumTelescope(int slot)
 	
 	if(deviceModelNames.isEmpty())
 	{
-		ui->radioButtonTelescopeLocal->setEnabled(false);
+		ui->radioButtonTelescopeLocalNative->setEnabled(false);
 		ui->radioButtonTelescopeConnection->setChecked(true);
 		toggleTypeConnection(true);//Not called if the button is already checked
 	}
 	else
 	{
-		ui->radioButtonTelescopeLocal->setEnabled(true);
-		ui->radioButtonTelescopeLocal->setChecked(true);
-		toggleTypeLocal(true);//Not called if the button is already checked
+		ui->radioButtonTelescopeLocalNative->setEnabled(true);
+		ui->radioButtonTelescopeLocalNative->setChecked(true);
+		toggleTypeLocalNative(true);//Not called if the button is already checked
 	}
 	
 	ui->doubleSpinBoxTelescopeDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
@@ -170,6 +187,28 @@ void TelescopePropertiesWindow::initNewVirtualTelescope(int slot)
 		ui->radioButtonTelescopeVirtual->setChecked(true);
 	ui->groupBoxType->setVisible(false);
 }
+
+#ifdef Q_OS_WIN32
+void TelescopePropertiesWindow::initNewAscomTelescope(int slot)
+{
+	if (!telescopeManager->canUseAscom())
+	{
+		emit changesDiscarded();
+		return;
+	}
+
+	configuredSlot = slot;
+	initConfigurationDialog();
+	ui->stelWindowTitle->setText("New ASCOM Telescope");
+	ui->lineEditTelescopeName->setText(QString("New Telescope %1").arg(QString::number(configuredSlot)));
+
+	if (ui->radioButtonTelescopeLocalAscom->isChecked())
+		toggleTypeLocalAscom(true);
+	else
+		ui->radioButtonTelescopeLocalAscom->setChecked(true);
+	ui->groupBoxType->setVisible(false);
+}
+#endif
 
 void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 {
@@ -198,7 +237,7 @@ void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 	
 	if(!deviceModelName.isEmpty())
 	{
-		ui->radioButtonTelescopeLocal->setChecked(true);
+		ui->radioButtonTelescopeLocalNative->setChecked(true);
 		
 		ui->lineEditHostName->setText("localhost");//TODO: Remove magic word!
 		
@@ -257,7 +296,7 @@ void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 	ui->checkBoxConnectAtStartup->setChecked(connectAtStartup);
 }
 
-void TelescopePropertiesWindow::toggleTypeLocal(bool isChecked)
+void TelescopePropertiesWindow::toggleTypeLocalNative(bool isChecked)
 {
 	if(isChecked)
 	{
@@ -312,6 +351,22 @@ void TelescopePropertiesWindow::toggleTypeVirtual(bool isChecked)
 		ui->scrollArea->ensureWidgetVisible(ui->groupBoxVirtualTelescope);
 }
 
+#ifdef Q_OS_WIN32
+void TelescopePropertiesWindow::toggleTypeLocalAscom(bool isChecked)
+{
+	if (isChecked && !telescopeManager->canUseAscom())
+		return;
+
+	ui->groupBoxAscomSettings->setVisible(isChecked);
+	ui->groupBoxDeviceSettings->setVisible(!isChecked);
+	ui->groupBoxConnectionSettings->setVisible(!isChecked);
+	ui->frameDelay->setVisible(!isChecked);
+
+	if (isChecked)
+		ui->scrollArea->ensureWidgetVisible(ui->groupBoxAscomSettings);
+}
+#endif Q_OS_WIN32
+
 void TelescopePropertiesWindow::buttonSavePressed()
 {
 	//Main telescope properties
@@ -354,7 +409,7 @@ void TelescopePropertiesWindow::buttonSavePressed()
 	//Type and server properties
 	//TODO: When adding, check for success!
 	ConnectionType type = ConnectionNA;
-	if(ui->radioButtonTelescopeLocal->isChecked())
+	if(ui->radioButtonTelescopeLocalNative->isChecked())
 	{
 		//Read the serial port
 		QString serialPortName = ui->lineEditSerialPort->text();
@@ -391,3 +446,39 @@ void TelescopePropertiesWindow::deviceModelSelected(const QString& deviceModelNa
 	ui->labelDeviceModelDescription->setText(telescopeManager->getDeviceModels().value(deviceModelName).description);
 	ui->doubleSpinBoxTelescopeDelay->setValue(SECONDS_FROM_MICROSECONDS(telescopeManager->getDeviceModels().value(deviceModelName).defaultDelay));
 }
+
+#ifdef Q_OS_WIN32
+void TelescopePropertiesWindow::showAscomSelector()
+{
+	if (!telescopeManager->canUseAscom())
+		return;
+
+	if (ascomHelper.isNull() || ascomHelper.control().isEmpty())
+	{
+		if (!ascomHelper.setControl("DriverHelper.Chooser"))
+		{
+			emit changesDiscarded();
+			return;
+		}
+	}
+
+	//TODO: Switch to windowed mode
+	ascomDriverObjectId = ascomHelper.dynamicCall("Choose(const QString&)", ascomDriverObjectId).toString();
+	ui->lineEditAscomControlId->setText(ascomDriverObjectId);
+}
+
+void TelescopePropertiesWindow::showAscomDeviceSetup()
+{
+	if (!telescopeManager->canUseAscom() || ascomDriverObjectId.isEmpty())
+		return;
+
+	QAxObject ascomDriver(this);
+	if (!ascomDriver.setControl(ascomDriverObjectId))
+	{
+		ascomDriverObjectId.clear();
+		return;
+	}
+	ascomDriver.dynamicCall("SetupDialog()");
+}
+
+#endif
