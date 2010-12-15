@@ -98,7 +98,6 @@ private:
 
 #ifdef Q_OS_WIN32
 	QString ascomDriverObjectId;
-	QAxObject ascomHelper;
 #endif
 };
 

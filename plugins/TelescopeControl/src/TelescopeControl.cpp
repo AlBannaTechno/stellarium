@@ -1336,8 +1336,8 @@ bool TelescopeControl::checkIfAscomIsInstalled()
 	//Try to detect the ASCOM platform by trying to use the Helper
 	//control. (If it doesn't exist, Stellarium's ASCOM support
 	//has no way of selecting ASCOM drivers anyway.)
-	QAxObject ascomHelper;
-	if (ascomHelper.setControl("DriverHelper.Chooser"))
+	QAxObject ascomChooser;
+	if (ascomChooser.setControl("DriverHelper.Chooser"))
 		return true;
 	else
 		return false;

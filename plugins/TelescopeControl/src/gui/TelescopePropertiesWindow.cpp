@@ -365,7 +365,7 @@ void TelescopePropertiesWindow::toggleTypeLocalAscom(bool isChecked)
 	if (isChecked)
 		ui->scrollArea->ensureWidgetVisible(ui->groupBoxAscomSettings);
 }
-#endif Q_OS_WIN32
+#endif
 
 void TelescopePropertiesWindow::buttonSavePressed()
 {
@@ -453,17 +453,15 @@ void TelescopePropertiesWindow::showAscomSelector()
 	if (!telescopeManager->canUseAscom())
 		return;
 
-	if (ascomHelper.isNull() || ascomHelper.control().isEmpty())
+	QAxObject ascomChooser(this);
+	if (!ascomChooser.setControl("DriverHelper.Chooser"))
 	{
-		if (!ascomHelper.setControl("DriverHelper.Chooser"))
-		{
-			emit changesDiscarded();
-			return;
-		}
+		emit changesDiscarded();
+		return;
 	}
 
 	//TODO: Switch to windowed mode
-	ascomDriverObjectId = ascomHelper.dynamicCall("Choose(const QString&)", ascomDriverObjectId).toString();
+	ascomDriverObjectId = ascomChooser.dynamicCall("Choose(const QString&)", ascomDriverObjectId).toString();
 	ui->lineEditAscomControlId->setText(ascomDriverObjectId);
 }
 
@@ -480,5 +478,4 @@ void TelescopePropertiesWindow::showAscomDeviceSetup()
 	}
 	ascomDriver.dynamicCall("SetupDialog()");
 }
-
 #endif
