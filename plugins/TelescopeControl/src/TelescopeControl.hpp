@@ -141,6 +141,10 @@ public:
 	
 	bool getFlagUseTelescopeServerLogs () {return useTelescopeServerLogs;}
 
+#ifdef Q_OS_WIN32
+	bool canUseAscom() const {return ascomPlatformIsInstalled;}
+#endif
+
 public slots:
 	//! Set display flag for telescope reticles
 	void setFlagTelescopeReticles(bool b) {reticleFader = b;}
@@ -273,6 +277,11 @@ private:
 	void addLogAtSlot(int slot);
 	void logAtSlot(int slot);
 	void removeLogAtSlot(int slot);
+
+#ifdef Q_OS_WIN32
+	bool ascomPlatformIsInstalled;
+	bool checkIfAscomIsInstalled();
+#endif
 };
 
 

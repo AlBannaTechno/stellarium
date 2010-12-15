@@ -362,6 +362,44 @@
                   </property>
                  </widget>
                 </item>
+                <item>
+                 <widget class="QFrame" name="frameAscomButtons">
+                  <layout class="QVBoxLayout" name="verticalLayoutAscomButton">
+                   <property name="margin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QPushButton" name="pushButtonNewAscom">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>Add an ASCOM telescope connection...</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="labelAscomNotice">
+                     <property name="text">
+                      <string>Stellarium could not find the ASCOM platform on this computer.</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
                </layout>
               </widget>
              </item>
@@ -534,6 +572,28 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBoxAscom">
+         <property name="title">
+          <string>ASCOM</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="checkBoxEnableWindowed">
+            <property name="text">
+             <string>Switch to windowed mode when opening ASCOM dialogs</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -592,11 +652,14 @@
   <tabstop>pushButtonRemove</tabstop>
   <tabstop>pushButtonNewVirtual</tabstop>
   <tabstop>pushButtonNewStellarium</tabstop>
+  <tabstop>pushButtonNewAscom</tabstop>
   <tabstop>checkBoxLabels</tabstop>
   <tabstop>checkBoxReticles</tabstop>
   <tabstop>checkBoxCircles</tabstop>
   <tabstop>checkBoxEnableLogs</tabstop>
+  <tabstop>checkBoxEnableWindowed</tabstop>
   <tabstop>textBrowserHelp</tabstop>
+  <tabstop>textBrowserAbout</tabstop>
  </tabstops>
  <resources>
   <include location="../../../../data/gui/guiRes.qrc"/>

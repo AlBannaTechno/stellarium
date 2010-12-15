@@ -108,6 +108,17 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	
 	//Initialize the style
 	updateStyle();
+
+	//Deal with the ASCOM-specific fields
+#ifdef Q_OS_WIN32
+	if (telescopeManager->canUseAscom())
+		ui->labelAscomNotice->setVisible(false);
+	else
+		ui->pushButtonNewAscom->setEnabled(false);
+#else
+	ui->frameAscomButtons->setVisible(false);
+	ui->groupBoxAscom->setVisible(false);
+#endif
 	
 	//Initializing the list of telescopes
 	telescopeListModel->setColumnCount(ColumnCount);

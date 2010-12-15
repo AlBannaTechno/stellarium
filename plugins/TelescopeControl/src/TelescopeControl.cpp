@@ -55,6 +55,9 @@
 #include <QSettings>
 #include <QString>
 #include <QStringList>
+#ifdef Q_OS_WIN32
+#include <QAxObject>
+#endif
 
 #include <QDebug>
 
@@ -95,6 +98,8 @@ TelescopeControl::TelescopeControl()
 
 	configurationWindow = NULL;
 	slewWindow = NULL;
+
+	ascomPlatformIsInstalled = false;
 }
 
 TelescopeControl::~TelescopeControl()
@@ -120,6 +125,12 @@ void TelescopeControl::init()
 		QString moduleDirectoryPath = StelFileMgr::getUserDir() + "/modules/TelescopeControl";
 		if(!StelFileMgr::exists(moduleDirectoryPath))
 			StelFileMgr::mkDir(moduleDirectoryPath);
+
+#ifdef Q_OS_WIN32
+	//This should be done before loading the device models and before
+	//initializing the windows, as they rely on canUseAscom()
+	ascomPlatformIsInstalled = checkIfAscomIsInstalled();
+#endif
 		
 		//Load the device models
 		loadDeviceModels();
@@ -1316,3 +1327,19 @@ void TelescopeControl::logAtSlot(int slot)
 	if(telescopeServerLogStreams.contains(slot))
 		log_file = telescopeServerLogStreams.value(slot);
 }
+
+#ifdef Q_OS_WIN32
+bool TelescopeControl::checkIfAscomIsInstalled()
+{
+	//Try to detect the ASCOM platform by trying to use the Helper
+	//control. (If it doesn't exist, Stellarium's ASCOM support
+	//has no way of selecting ASCOM drivers anyway.)
+	QAxObject ascomHelper;
+	if (ascomHelper.setControl("DriverHelper.Chooser"))
+		return true;
+	else
+		return false;
+	//TODO: I hope that the QAxObject is de-initialized when
+	//the flow of control leaves its scope, i.e. this function body.
+}
+#endif
