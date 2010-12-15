@@ -99,7 +99,9 @@ TelescopeControl::TelescopeControl()
 	configurationWindow = NULL;
 	slewWindow = NULL;
 
+#ifdef Q_OS_WIN32
 	ascomPlatformIsInstalled = false;
+#endif
 }
 
 TelescopeControl::~TelescopeControl()
