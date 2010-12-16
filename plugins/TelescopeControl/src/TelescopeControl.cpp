@@ -215,12 +215,10 @@ void TelescopeControl::deinit()
 	//Close the interface
 	if (configurationWindow != NULL)
 	{
-		configurationWindow->setVisible(false);
 		delete configurationWindow;
 	}
 	if (slewWindow != NULL)
 	{
-		slewWindow->setVisible(false);
 		delete slewWindow;
 	}
 

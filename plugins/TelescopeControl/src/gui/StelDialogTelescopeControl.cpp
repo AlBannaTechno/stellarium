@@ -20,7 +20,6 @@
 
 #include "StelDialogTelescopeControl.hpp"
 #include "StelMainGraphicsView.hpp"
-#include "StelMainWindow.hpp"
 
 #include <QDebug>
 #include <QDialog>
@@ -39,7 +38,7 @@ class CustomProxy : public QGraphicsProxyWidget
 		{
 		}
 	protected:
-		
+
 		virtual bool event(QEvent* event)
 		{
 			if (event->type()==QEvent::WindowDeactivate)
@@ -54,7 +53,7 @@ class CustomProxy : public QGraphicsProxyWidget
 		}
 };
 
-StelDialogTelescopeControl::StelDialogTelescopeControl() : dialog(NULL)
+StelDialogTelescopeControl::StelDialogTelescopeControl(QObject* parent) : QObject(parent), dialog(NULL)
 {
 }
 
@@ -70,11 +69,16 @@ void StelDialogTelescopeControl::close()
 	((QGraphicsWidget*)StelMainGraphicsView::getInstance().getStelAppGraphicsWidget())->setFocus(Qt::OtherFocusReason);
 }
 
+bool StelDialogTelescopeControl::visible() const
+{
+	return dialog!=NULL && dialog->isVisible();
+}
+
 void StelDialogTelescopeControl::setVisible(bool v)
 {
-	if (v) 
+	if (v)
 	{
-		QSize screenSize = StelMainWindow::getInstance().size();
+		QSize screenSize = StelMainGraphicsView::getInstance().size();
 		if (dialog)
 		{
 			dialog->show();
@@ -107,7 +111,7 @@ void StelDialogTelescopeControl::setVisible(bool v)
 		proxy->setWindowFrameMargins(2,0,2,2);
 
 		// The caching is buggy on all platforms with Qt 4.5.2
-		proxy->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+		proxy->setCacheMode(QGraphicsItem::ItemCoordinateCache);
 
 		proxy->setZValue(100);
 		StelMainGraphicsView::getInstance().scene()->setActiveWindow(proxy);
