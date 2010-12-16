@@ -14,6 +14,9 @@ SET(TelescopeControl_SRCS
   clients/InterpolatedPosition.cpp
   clients/TelescopeClient.hpp
   clients/TelescopeClient.cpp
+  clients/TelescopeClientDummy.hpp
+  clients/TelescopeClientTCP.hpp
+  clients/TelescopeClientTCP.cpp
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectLx200.cpp
   clients/TelescopeClientDirectNexStar.hpp
@@ -76,6 +79,8 @@ SET(TelescopeControl_MOC_HDRS
   gui/SlewWindow.hpp
   TelescopeControl.hpp
   clients/TelescopeClient.hpp
+  clients/TelescopeClientDummy.hpp
+  clients/TelescopeClientTCP.hpp
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectNexStar.hpp
   )

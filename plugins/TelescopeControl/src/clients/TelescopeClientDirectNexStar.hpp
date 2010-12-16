@@ -24,8 +24,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#ifndef _TELESCOPE_CLIENT_DIRECT_NEXSTAR_
-#define _TELESCOPE_CLIENT_DIRECT_NEXSTAR_
+#ifndef _TELESCOPE_CLIENT_DIRECT_NEXSTAR_HPP_
+#define _TELESCOPE_CLIENT_DIRECT_NEXSTAR_HPP_
 
 #include <QObject>
 #include <QString>
@@ -99,4 +99,4 @@ private:
 	long long int next_pos_time;
 };
 
-#endif //_TELESCOPE_CLIENT_DIRECT_LX200_
+#endif //_TELESCOPE_CLIENT_DIRECT_NEXSTAR_HPP_

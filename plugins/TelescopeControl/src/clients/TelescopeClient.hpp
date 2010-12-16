@@ -2,7 +2,7 @@
  * Stellarium Telescope Control Plug-in
  * 
  * Copyright (C) 2006 Johannes Gajdosik
- * Copyright (C) 2009 Bogdan Marinov
+ * Copyright (C) 2009-2010 Bogdan Marinov
  * 
  * This module was originally written by Johannes Gajdosik in 2006
  * as a core module of Stellarium. In 2009 it was significantly extended with
@@ -23,21 +23,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#ifndef _TELESCOPE_HPP_
-#define _TELESCOPE_HPP_
+#ifndef _TELESCOPE_CLIENT_HPP_
+#define _TELESCOPE_CLIENT_HPP_
 
-#include <QHostAddress>
-#include <QHostInfo>
 #include <QList>
 #include <QString>
-#include <QTcpSocket>
 #include <QObject>
 
 #include "StelApp.hpp"
 #include "StelCore.hpp" //Needed for getting StelNavigator instances
 #include "StelObject.hpp"
 #include "StelNavigator.hpp"
-#include "InterpolatedPosition.hpp"
 
 qint64 getNow(void);
 
@@ -97,110 +93,4 @@ private:
 	QList<double> oculars; // fov of the oculars
 };
 
-//! Example Telescope class. A physical telescope does not exist.
-//! This can be used as a starting point for implementing a derived
-//! Telescope class.
-//! This class used to be called TelescopeDummy, but it had to be renamed
-//! in order to resolve a compiler/linker conflict with the identically named
-//! TelescopeDummy class in Stellarium's main code.
-class TelescopeClientDummy : public TelescopeClient
-{
-public:
-	TelescopeClientDummy(const QString &name, const QString &) : TelescopeClient(name)
-	{
-		desired_pos[0] = XYZ[0] = 1.0;
-		desired_pos[1] = XYZ[1] = 0.0;
-		desired_pos[2] = XYZ[2] = 0.0;
-	}
-	~TelescopeClientDummy(void) {}
-	bool isConnected(void) const
-	{
-		return true;
-	}
-	bool prepareCommunication(void)
-	{
-		XYZ = XYZ * 31.0 + desired_pos;
-		const double lq = XYZ.lengthSquared();
-		if (lq > 0.0)
-			XYZ *= (1.0/sqrt(lq));
-		else
-			XYZ = desired_pos;
-		return true;
-	}
-	void telescopeGoto(const Vec3d &j2000Pos)
-	{
-		desired_pos = j2000Pos;
-		desired_pos.normalize();
-	}
-	bool hasKnownPosition(void) const
-	{
-		return true;
-	}
-	Vec3d getJ2000EquatorialPos(const StelNavigator*) const
-	{
-		return XYZ;
-	}
-	
-private:
-	Vec3d XYZ; // j2000 position
-	Vec3d desired_pos;
-};
-
-//! This TelescopeClient class can controll a telescope by communicating
-//! to a server process ("telescope server") via 
-//! the "Stellarium telescope control protocol" over TCP/IP.
-//! The "Stellarium telescope control protocol" is specified in a seperate
-//! document along with the telescope server software.
-class TelescopeTCP : public TelescopeClient
-{
-	Q_OBJECT
-public:
-	TelescopeTCP(const QString &name, const QString &params, Equinox eq = EquinoxJ2000);
-	~TelescopeTCP(void)
-	{
-		hangup();
-	}
-	bool isConnected(void) const
-	{
-		//return (tcpSocket->isValid() && !wait_for_connection_establishment);
-		return (tcpSocket->state() == QAbstractSocket::ConnectedState);
-	}
-	
-private:
-	Vec3d getJ2000EquatorialPos(const StelNavigator *nav=0) const;
-	bool prepareCommunication();
-	void performCommunication();
-	void telescopeGoto(const Vec3d &j2000Pos);
-	bool isInitialized(void) const
-	{
-		return (!address.isNull());
-	}
-	void performReading(void);
-	void performWriting(void);
-	
-private:
-	void hangup(void);
-	QHostAddress address;
-	unsigned int port;
-	QTcpSocket * tcpSocket;
-	bool wait_for_connection_establishment;
-	qint64 end_of_timeout;
-	char readBuffer[120];
-	char *readBufferEnd;
-	char writeBuffer[120];
-	char *writeBufferEnd;
-	int time_delay;
-
-	InterpolatedPosition interpolatedPosition;
-	virtual bool hasKnownPosition(void) const
-	{
-		return interpolatedPosition.isKnown();
-	}
-
-	Equinox equinox;
-	
-private slots:
-	void socketFailed(QAbstractSocket::SocketError socketError);
-};
-
-#endif // _TELESCOPE_HPP_
+#endif // _TELESCOPE_CLIENT_HPP_

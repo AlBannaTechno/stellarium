@@ -16,12 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _TELESCOPE_CLIENT_ASCOM_
-#define _TELESCOPE_CLIENT_ASCOM_
+#ifndef _TELESCOPE_CLIENT_ASCOM_HPP_
+#define _TELESCOPE_CLIENT_ASCOM_HPP_
 
 #include "TelescopeClient.hpp"
+#include "InterpolatedPosition.hpp"
 
-#include <ActiveQt/QAxObject>
+#include <QAxObject>
 #include <QObject>
 #include <QString>
 
@@ -48,8 +49,10 @@ private:
 
 	Equinox equinox;
 
-	//! Qt wrapper around the ASCOM device driver COM object
+	//! Qt wrapper around the ASCOM device driver COM object.
 	QAxObject * driver;
+	//! String identifier of the ASCOM driver object.
+	QString driverId;
 };
 
-#endif //_TELESCOPE_CLIENT_ASCOM_
+#endif //_TELESCOPE_CLIENT_ASCOM_HPP_
