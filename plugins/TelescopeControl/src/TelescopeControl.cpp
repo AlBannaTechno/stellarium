@@ -27,6 +27,13 @@
 
 #include "TelescopeControl.hpp"
 #include "TelescopeClient.hpp"
+#include "TelescopeClientDummy.hpp"
+#include "TelescopeClientTCP.hpp"
+#include "TelescopeClientDirectLx200.hpp"
+#include "TelescopeClientDirectNexStar.hpp"
+#ifdef Q_OS_WIN32
+#include "TelescopeClientAscom.hpp"
+#endif
 #include "TelescopeControlConfigurationWindow.hpp"
 #include "SlewWindow.hpp"
 #include "LogFile.hpp"
@@ -737,6 +744,11 @@ void TelescopeControl::loadTelescopes()
 					map.remove(key);
 					continue;
 				}
+				else
+				{
+					//TODO: This is a temporary hack!
+					map.insert("type", deviceModels.value(deviceModelName).server);
+				}
 
 				if(portSerial.isEmpty() || !portSerial.startsWith(SERIAL_PORT_PREFIX))
 				{
@@ -815,7 +827,7 @@ void TelescopeControl::loadTelescopes()
 				{
 					addLogAtSlot(slot);
 					logAtSlot(slot);
-					if(!startClientAtSlot(slot, connectionType, name, equinox, QString(), 0, delay, internalCircles, deviceModelName, portSerial))
+					if(!startClientAtSlot(slot, map.value(key).toMap()))
 					{
 						qDebug() << "TelescopeControl: Unable to create a telescope client at slot" << slot;
 						//Unnecessary due to if-else construction;
@@ -825,7 +837,7 @@ void TelescopeControl::loadTelescopes()
 				}
 				else
 				{
-					if(!startClientAtSlot(slot, connectionType, name, equinox, hostName, portTCP, delay, internalCircles))
+					if(!startClientAtSlot(slot, map.value(key).toMap()))
 					{
 						qDebug() << "TelescopeControl: Unable to create a telescope client at slot" << slot;
 						//Unnecessary due to if-else construction;
@@ -950,6 +962,14 @@ bool TelescopeControl::getTelescopeAtSlot(int slot, ConnectionType& connectionTy
 	return true;
 }
 
+const QVariantMap TelescopeControl::getTelescopeAtSlot(int slot) const
+{
+	//Validation
+	if(!isValidSlotNumber(slot))
+		return QVariantMap();
+
+	return telescopeDescriptions.value(QString::number(slot)).toMap();
+}
 
 bool TelescopeControl::removeTelescopeAtSlot(int slot)
 {
@@ -967,27 +987,29 @@ bool TelescopeControl::startTelescopeAtSlot(int slot)
 		return false;
 
 	//Read the telescope properties
-	QString name;
-	QString equinox;
-	QString host;
-	ConnectionType connectionType;
-	int portTCP;
-	int delay;
-	bool connectAtStartup;
-	QList<double> circles;
-	QString deviceModelName;
-	QString portSerial;
-	if(!getTelescopeAtSlot(slot, connectionType, name, equinox, host, portTCP, delay, connectAtStartup, circles, deviceModelName, portSerial))
+	const QVariantMap properties = getTelescopeAtSlot(slot);
+	if(properties.isEmpty())
 	{
 		//TODO: Add debug
 		return false;
 	}
 
+	//TODO: Rework this? Send the whole thing instead of the name?
+	QString name = properties.value("name").toString();
+	if (name.isEmpty())
+		return false;
+	QString typeString = properties.value("connection").toString();
+	if (typeString.isEmpty())
+		return false;
+	ConnectionType connectionType =
+			(typeString == "internal") ? ConnectionInternal : ConnectionRemote;
+	QString deviceModelName = properties.value("device_model").toString();
+
 	if(connectionType == ConnectionInternal && !deviceModelName.isEmpty())
 	{
 		addLogAtSlot(slot);
 		logAtSlot(slot);
-		if (startClientAtSlot(slot, connectionType, name, equinox, QString(), 0, delay, circles, deviceModelName, portSerial))
+		if (startClientAtSlot(slot, properties))
 		{
 			emit clientConnected(slot, name);
 			return true;
@@ -995,7 +1017,7 @@ bool TelescopeControl::startTelescopeAtSlot(int slot)
 	}
 	else
 	{
-		if (startClientAtSlot(slot, connectionType, name, equinox, host, portTCP, delay, circles))
+		if (startClientAtSlot(slot, properties))
 		{
 			emit clientConnected(slot, name);
 			return true;
@@ -1031,7 +1053,7 @@ bool TelescopeControl::stopAllTelescopes()
 	return allStoppedSuccessfully;
 }
 
-bool TelescopeControl::isValidSlotNumber(int slot)
+bool TelescopeControl::isValidSlotNumber(int slot) const
 {
 	return ((slot < MIN_SLOT_NUMBER || slot >  MAX_SLOT_NUMBER) ? false : true);
 }
@@ -1047,58 +1069,127 @@ bool TelescopeControl::isValidDelay(int delay)
 	return (delay > 0 && delay <= MICROSECONDS_FROM_SECONDS(10));
 }
 
-bool TelescopeControl::startClientAtSlot(int slotNumber, ConnectionType connectionType, QString name, QString equinox, QString host, int portTCP, int delay, QList<double> circles, QString deviceModelName, QString portSerial)
+bool TelescopeControl::startClientAtSlot(int slot, const QVariantMap &properties)
 {
 	//Validation
-	if(!isValidSlotNumber(slotNumber))
+	if(!isValidSlotNumber(slot))
 		return false;
 
 	//Check if it's not already running
 	//Should it return, or should it remove the old one and proceed?
-	if(telescopeClients.contains(slotNumber))
+	if(telescopeClients.contains(slot))
 	{
-		//TODO: Add debug. Update logic?
+		qDebug() << "A client already exists at slot" << slot;
 		return false;
 	}
 
-	QString initString;
-	switch (connectionType)
-	{
-	case ConnectionVirtual:
-		initString = QString("%1:%2:%3").arg(name, "TelescopeServerDummy", "J2000");
-		break;
-
-	case ConnectionInternal:
-		if(!deviceModelName.isEmpty() && !portSerial.isEmpty())
-			initString = QString("%1:%2:%3:%4:%5").arg(name, deviceModels[deviceModelName].server, equinox, portSerial, QString::number(delay));
-		break;
-
-	case ConnectionLocal:
-		if (isValidPort(portTCP))
-			initString = QString("%1:TCP:%2:%3:%4:%5").arg(name, equinox, "localhost", QString::number(portTCP), QString::number(delay));
-		break;
-
-	case ConnectionRemote:
-	default:
-		if (isValidPort(portTCP) && !host.isEmpty())
-			initString = QString("%1:TCP:%2:%3:%4:%5").arg(name, equinox, host, QString::number(portTCP), QString::number(delay));
-	}
-
-	//qDebug() << "initString:" << initString;
-
-	TelescopeClient* newTelescope = TelescopeClient::create(initString);
+	TelescopeClient* newTelescope = createClient(properties);
 	if (newTelescope)
 	{
-		//Add FOV circles to the client if there are any specified
-		if(!circles.isEmpty() && circles.size() <= MAX_CIRCLE_COUNT)
-			for (int i = 0; i < circles.size(); ++i)
-				newTelescope->addOcular(circles[i]);
-
-		telescopeClients.insert(slotNumber, TelescopeClientP(newTelescope));
+		telescopeClients.insert(slot, TelescopeClientP(newTelescope));
 		return true;
 	}
 
 	return false;
+}
+
+TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
+{
+	TelescopeClient * newTelescope = 0;
+
+	if (properties.isEmpty())
+		return newTelescope;
+
+	//At least two values should exist: name and connection type
+	QString name = properties.value("name").toString();
+	if (name.isEmpty())
+		return newTelescope;
+	//TODO: Better client type system. Must discern "local/remote" and the
+	//protocol used.
+	QString connectionType = properties.value("connection").toString();
+	if (connectionType.isEmpty())
+		return newTelescope;
+
+	int delay = properties.value("delay", DEFAULT_DELAY).toInt();
+	QString equinoxString = properties.value("equinox", "J2000").toString();
+	Equinox equinox = (equinoxString == "JNow") ? EquinoxJNow : EquinoxJ2000;
+
+	QString parameters;
+	if (connectionType == "virtual")
+	{
+		newTelescope = new TelescopeClientDummy(name, "");
+	}
+	else if (connectionType == "local" || connectionType == "remote")
+	{
+		//The only difference is that "local" is missing the "host_name" value
+		QString host = properties.value("host_name", "localhost").toString();
+		int port = properties.value("tcp_port").toInt();
+		parameters = QString("%1:%2:%3").arg(host).arg(port).arg(delay);
+		newTelescope = new TelescopeTCP(name, parameters, equinox);
+	}
+	else if (connectionType == "internal")
+	{
+		//"device_model" is used for presentation purposes only
+		QString type = properties.value("type").toString();
+		if (type.isEmpty())
+			return newTelescope;
+		QString serialDevice = properties.value("serial_port").toString();
+
+		//TODO: Change type names when the whole mechanism depends on it.
+		if (type == "Lx200")
+		{
+			parameters = QString("%1:%2").arg(serialDevice).arg(delay);
+			newTelescope = new TelescopeClientDirectLx200(name, parameters, equinox);
+		}
+		else if (type == "NexStar")
+		{
+			parameters = QString("%1:%2").arg(serialDevice).arg(delay);
+			newTelescope = new TelescopeClientDirectNexStar(name, parameters, equinox);
+		}
+#ifdef Q_OS_WIN32
+		else if (type == "Ascom")
+		{
+			QString ascomDriverObjectId = properties.value("driverId").toString();
+			if (ascomDriverObjectId.isEmpty())
+				return newTelescope;
+
+			parameters = QString("%1:%2").arg(ascomDriverObjectId).arg(delay);
+			newTelescope = new TelescopeClientAscom(name, parameters, equinox);
+		}
+#endif
+		else
+		{
+			qWarning() << "TelescopeControl: Unknown protocol type:" << type;
+		}
+	}
+	else
+	{
+		qWarning() << "TelescopeControl: unable to create a client of type"
+				<< connectionType;
+		qDebug() << "Additional parameters are:";
+		foreach (QString key, properties.keys())
+		{
+			qDebug() << key << "=" << properties.value(key);
+		}
+	}
+
+	//if (newTelescope && !newTelescope->isInitialized())
+	if (!newTelescope)//TODO: Decide what to do with this procedure and where to put isInitialized
+	{
+		qDebug() << "TelescopeClient::create(): Unable to create a telescope client.";
+		delete newTelescope;
+		newTelescope = 0;
+	}
+
+	//Read and add FOV circles
+	QVariantList circleList = properties.value("circles").toList();
+	if(!circleList.isEmpty() && circleList.size() <= MAX_CIRCLE_COUNT)
+	{
+		for(int i = 0; i < circleList.size(); i++)
+			newTelescope->addOcular(circleList.value(i, -1.0).toDouble());
+	}
+
+	return newTelescope;
 }
 
 bool TelescopeControl::stopClientAtSlot(int slotNumber)

@@ -61,7 +61,7 @@ using namespace TelescopeControlGlobals;
 typedef QSharedPointer<TelescopeClient> TelescopeClientP;
 
 //! This class manages the controlling of one or more telescopes by one
-//! instance of the stellarium program. "Controlling a telescope"
+//! instance of the Stellarium program. "Controlling a telescope"
 //! means receiving position information from the telescope
 //! and sending GOTO commands to the telescope.
 //! No esoteric features like motor focus, electric heating and such.
@@ -121,6 +121,7 @@ public:
 	bool addTelescopeAtSlot(int slot, ConnectionType connectionType, QString name, QString equinox, QString host = QString("localhost"), int portTCP = DEFAULT_TCP_PORT, int delay = DEFAULT_DELAY, bool connectAtStartup = false, QList<double> circles = QList<double>(), QString serverName = QString(), QString portSerial = QString());
 	//! Retrieves a telescope description. Returns false if the slot is empty. Returns empty serverName and portSerial if the description contains no server.
 	bool getTelescopeAtSlot(int slot, ConnectionType& connectionType, QString& name, QString& equinox, QString& host, int& portTCP, int& delay, bool& connectAtStartup, QList<double>& circles, QString& serverName, QString& portSerial);
+	const QVariantMap getTelescopeAtSlot(int slot) const;
 	//! Removes info from the tree. Should it include stopTelescopeAtSlot()?
 	bool removeTelescopeAtSlot(int slot);
 	
@@ -257,21 +258,31 @@ private:
 	SlewWindow * slewWindow;
 	
 	//! Used internally. Checks if the argument is a valid slot number.
-	bool isValidSlotNumber(int slot);
+	bool isValidSlotNumber(int slot) const;
 	bool isValidPort(uint port);
 	bool isValidDelay(int delay);
 
+
 	//! A wrapper for TelescopeClient::create(). Used internally by loadTelescopes() and startTelescopeAtSlot(). Does not perform any validation on its arguments.
 	bool startClientAtSlot(int slot, ConnectionType connectionType, QString name, QString equinox, QString host, int portTCP, int delay, QList<double> circles, QString serverName = QString(), QString portSerial = QString());
+
+	//! TODO: Do away with this?
+	bool startClientAtSlot(int slot, const QVariantMap& properties);
+
+	//! Creates a client object belonging to a subclass of TelescopeClient.
+	//! Replaces TelescopeClient::create().
+	//! \returns a base class pointer to the client object.
+	TelescopeClient* createClient(const QVariantMap& properties);
 	
-	//! Returns true if the TelescopeClient at this slot has been stopped successfully or doesn't exist
+	//! Returns true if the client has been stopped successfully or doesn't exist.
 	bool stopClientAtSlot(int slot);
 	
+
 	//! Loads the list of supported telescope models.
 	void loadDeviceModels();
 	
 	//! Copies the default device_models.json to the given destination
-	//! @returns true if the file has been copied successfully
+	//! \returns true if the file has been copied successfully
 	bool restoreDeviceModelsListTo(QString deviceModelsListPath);
 	
 	void addLogAtSlot(int slot);

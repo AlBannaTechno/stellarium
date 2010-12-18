@@ -86,8 +86,7 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 
 	TelescopeClient * newTelescope = 0;
 	
-	//if (type == "Dummy")
-	if (type == "TelescopeServerDummy")
+	if (type == "Dummy")
 	{
 		newTelescope = new TelescopeClientDummy(name, params);
 	}
@@ -95,16 +94,16 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 	{
 		newTelescope = new TelescopeTCP(name, params, eq);
 	}
-	else if (type == "TelescopeServerLx200") //BM: One of the rare occasions of painless extension
+	else if (type == "Lx200") //BM: One of the rare occasions of painless extension
 	{
 		newTelescope = new TelescopeClientDirectLx200(name, params, eq);
 	}
-	else if (type == "TelescopeServerNexStar")
+	else if (type == "NexStar")
 	{
 		newTelescope = new TelescopeClientDirectNexStar(name, params, eq);
 	}
 #ifdef Q_OS_WIN32
-	else if (type == "TelescopeServerAscom")
+	else if (type == "Ascom")
 	{
 		newTelescope = new TelescopeClientAscom(name, params, eq);
 	}
@@ -121,6 +120,11 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 		newTelescope = 0;
 	}
 	return newTelescope;
+}
+
+TelescopeClient* TelescopeClient::create(const QVariantMap &telescopeProperties)
+{
+	//
 }
 
 

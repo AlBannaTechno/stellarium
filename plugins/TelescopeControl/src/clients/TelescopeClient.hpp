@@ -50,7 +50,10 @@ class TelescopeClient : public QObject, public StelObject
 {
 	Q_OBJECT
 public:
-	static TelescopeClient *create(const QString &url);
+	static TelescopeClient* create(const QString& url);
+	//! creates a TelescopeClient subclass object from a JSON node.
+	//! The node should be in the format used in the telescopes.json file.
+	static TelescopeClient* create(const QVariantMap& jsonNode);
 	virtual ~TelescopeClient(void) {}
 	
 	// Method inherited from StelObject

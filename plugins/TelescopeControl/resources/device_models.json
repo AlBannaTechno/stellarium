@@ -5,49 +5,49 @@
 		{
 			"name" : "Meade AutoStar compatible",
 			"description" : "Any telescope or telescope mount compatible with Meade's AutoStar controller.",
-			"server" : "TelescopeServerLx200",
+			"server" : "Lx200",
 			"default_delay" : 500000
 		},
 		{
 			"name" : "Meade LX200 (compatible)",
 			"description" : "Any telescope or telescope mount compatible with Meade LX200.",
-			"server" : "TelescopeServerLx200",
+			"server" : "Lx200",
 			"default_delay" : 500000
 		},
 		{
 			"name" : "Meade ETX70 (#494 Autostar, #506 CCS)",
 			"description" : "Meade's ETX70 with the #494 Autostar controller and the #506 Connector Cable Set.",
-			"server" : "TelescopeServerLx200",
+			"server" : "Lx200",
 			"default_delay" : 1500000
 		},
 		{
 			"name" : "Losmandy G-11",
 			"description" : "Losmandy's G-11 telescope mount.",
-			"server" : "TelescopeServerLx200",
+			"server" : "Lx200",
 			"default_delay" : 500000
 		},
 		{
 			"name" : "Wildcard Innovations Argo Navis (Meade mode)",
 			"description" : "Wildcard Innovations' Argo Navis DTC in Meade LX200 emulation mode (<tt>SETUP SERIAL</tt>, then <tt>STARTUP=meade</tt> and <tt>BAUD=9600</tt>).",
-			"server" : "TelescopeServerLx200",
+			"server" : "Lx200",
 			"default_delay" : 500000
 		},
 		{
 			"name" : "Celestron NexStar (compatible)",
 			"description" : "Any telescope or telescope mount compatible with Celestron NexStar.",
-			"server" : "TelescopeServerNexStar",
+			"server" : "NexStar",
 			"default_delay" : 500000
 		},
 		{
 			"name" : "Sky-Watcher SynScan (version 3 or later)",
 			"description" : "Any Sky-Watcher mount that uses version 3 or later of the SynScan hand controller.",
-			"server" : "TelescopeServerNexStar",
+			"server" : "NexStar",
 			"default_delay" : 500000
 		},
 		{
 			"name" : "Sky-Watcher SynScan AZ GOTO",
 			"description" : "The Sky-Watcher SynScan AZ GOTO mount used in a number of telescope models.",
-			"server" : "TelescopeServerNexStar",
+			"server" : "NexStar",
 			"default_delay" : 500000
 		}
 	]
