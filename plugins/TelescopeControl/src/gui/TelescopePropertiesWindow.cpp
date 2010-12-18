@@ -374,65 +374,97 @@ void TelescopePropertiesWindow::buttonSavePressed()
 	QString name = ui->lineEditTelescopeName->text().trimmed();
 	if(name.isEmpty())
 		return;
-	QString host = ui->lineEditHostName->text();
-	if(host.isEmpty())//TODO: Validate host
-		return;
-	
-	int delay = MICROSECONDS_FROM_SECONDS(ui->doubleSpinBoxTelescopeDelay->value());
-	int portTCP = ui->spinBoxTCPPort->value();
+
+	QVariantMap newTelescopeProperties;
+	newTelescopeProperties.insert("name", name);
+
 	bool connectAtStartup = ui->checkBoxConnectAtStartup->isChecked();
-	
+	newTelescopeProperties.insert("connect_at_startup", connectAtStartup);
+
 	//Circles
-	//TODO: This will change if there is a validator for that field
-	QList<double> circles;
-	QString rawCircles = ui->lineEditCircleList->text().trimmed();
-	QStringList circleStrings;
-	if(ui->checkBoxCircles->isChecked() && !(rawCircles.isEmpty()))
+	QString rawCirclesString = ui->lineEditCircleList->text().trimmed();
+	QStringList rawFovCircles;
+	if(ui->checkBoxCircles->isChecked() && !(rawCirclesString.isEmpty()))
 	{
-		circleStrings = rawCircles.simplified().remove(' ').split(',', QString::SkipEmptyParts);
-		circleStrings.removeDuplicates();
-		circleStrings.sort();
+		rawFovCircles = rawCirclesString.simplified().remove(' ').split(',', QString::SkipEmptyParts);
+		rawFovCircles.removeDuplicates();
+		rawFovCircles.sort();
 		
-		for(int i = 0; i < circleStrings.size(); i++)
+		QString fovCircles;
+		for(int i = 0; i < rawFovCircles.size(); i++)
 		{
 			if(i >= MAX_CIRCLE_COUNT)
 				break;
-			double circle = circleStrings.at(i).toDouble();
+			double circle = rawFovCircles.at(i).toDouble();
 			if(circle > 0.0)
-				circles.append(circle);
+				fovCircles.append(QString::number(circle));
 		}
+		if (!fovCircles.isEmpty())
+			newTelescopeProperties.insert("circles", fovCircles);
 	}
-
-	QString equinox("J2000");
-	if (ui->radioButtonJNow->isChecked())
-		equinox = "JNow";
 	
 	//Type and server properties
 	//TODO: When adding, check for success!
 	ConnectionType type = ConnectionNA;
+	QString connection = "virtual";
+
+	if (ui->radioButtonTelescopeVirtual->isChecked())
+	{
+		type = ConnectionVirtual;
+	}
+	else
+	{
+		//All other client types require equinox information.
+		QString equinox("J2000");
+		if (ui->radioButtonJNow->isChecked())
+			equinox = "JNow";
+		newTelescopeProperties.insert("equinox", equinox);
+
+		int delay = MICROSECONDS_FROM_SECONDS(ui->doubleSpinBoxTelescopeDelay->value());
+		newTelescopeProperties.insert("delay", delay);
+
+		int tcpPort = ui->spinBoxTCPPort->value();
+		newTelescopeProperties.insert("tcp_port", tcpPort);
+	}
+
 	if(ui->radioButtonTelescopeLocalNative->isChecked())
 	{
 		//Read the serial port
 		QString serialPortName = ui->lineEditSerialPort->text();
 		if(!serialPortName.startsWith(SERIAL_PORT_PREFIX))
 			return;//TODO: Add more validation!
+		newTelescopeProperties.insert("serial_port", serialPortName);
 		
 		type = ConnectionInternal;
-		telescopeManager->addTelescopeAtSlot(configuredSlot, type, name, equinox, host, portTCP, delay, connectAtStartup, circles, ui->comboBoxDeviceModel->currentText(), serialPortName);
+		connection = "internal";
+
+		QString deviceModel = ui->comboBoxDeviceModel->currentText();
+		newTelescopeProperties.insert("device_model", deviceModel);
+
+		QString type = telescopeManager->getDeviceModels().value(deviceModel).server;
+		newTelescopeProperties.insert("type", type);
 	}
-	else if (ui->radioButtonTelescopeConnection->isChecked())
+
+	if (ui->radioButtonTelescopeConnection->isChecked())
 	{
-		if(host == "localhost")
+		QString hostName = ui->lineEditHostName->text().trimmed();
+		if(hostName.isEmpty())//TODO: Validate host
+			return;
+		if(hostName == "localhost")
+		{
 			type = ConnectionLocal;
+			connection = "local";
+		}
 		else
+		{
 			type = ConnectionRemote;
-		telescopeManager->addTelescopeAtSlot(configuredSlot, type, name, equinox, host, portTCP, delay, connectAtStartup, circles);
+			connection = "remote";
+			newTelescopeProperties.insert("host_name", hostName);
+		}
 	}
-	else if (ui->radioButtonTelescopeVirtual->isChecked())
-	{
-		type = ConnectionVirtual;
-		telescopeManager->addTelescopeAtSlot(configuredSlot, type, name, equinox, QString(), portTCP, delay, connectAtStartup, circles);
-	}
+
+	newTelescopeProperties.insert("connection", connection);
+	telescopeManager->addTelescopeAtSlot(configuredSlot, newTelescopeProperties);
 	
 	emit changesSaved(name, type);
 }

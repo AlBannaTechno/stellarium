@@ -865,59 +865,91 @@ void TelescopeControl::loadTelescopes()
 	telescopeDescriptions = result;
 }
 
-bool TelescopeControl::addTelescopeAtSlot(int slot, ConnectionType connectionType, QString name, QString equinox, QString host, int portTCP, int delay, bool connectAtStartup, QList<double> circles, QString deviceModelName, QString portSerial)
+bool TelescopeControl::addTelescopeAtSlot(int slot, const QVariantMap& properties)
 {
-	//Validation
-	if(!isValidSlotNumber(slot) || name.isEmpty() || equinox.isEmpty() || connectionType <= ConnectionNA || connectionType >= ConnectionCount)
+	//Validate the slot number
+	if(!isValidSlotNumber(slot))
 		return false;
 
-	//Create a new map node and fill it with parameters
-	QVariantMap telescope;
-	telescope.insert("name", name);
-	telescope.insert("connection", connectionTypeNames.value(connectionType));
-	telescope.insert("equinox", equinox);//TODO: Validation!
+	//Name
+	QString name = properties.value("name").toString();
+	if (name.isEmpty())
+		return false;
+	//Connection type
+	QString connectionType = properties.value("connection").toString();
+	if (!connectionTypeNames.values().contains(connectionType))
+		return false;
 
-	if (connectionType == ConnectionRemote)
+	QVariantMap newProperties;
+	newProperties.insert("name", name);
+	newProperties.insert("connection", connectionType);
+
+	if (connectionType == "internal")
 	{
-		//TODO: Add more validation!
+		QString deviceProtocol = properties.value("type").toString();
+		if (deviceProtocol.isEmpty())
+			return false;
+		newProperties.insert("type", deviceProtocol);
+
+		QString deviceModel = properties.value("device_model").toString();
+		//TODO: Autodetect this in TelescopePropertiesWindow if not specified!
+		if (!deviceModel.isEmpty())
+		{
+			newProperties.insert("device_model", deviceModel);
+		}
+
+		QString serialPort = properties.value("serial_port").toString();
+		if (serialPort.isEmpty())
+			return false;
+		//TODO: Serial port validation!
+		newProperties.insert("serial_port", serialPort);
+	}
+
+	if (connectionType == "remote")
+	{
+		QString host = properties.value("host_name").toString();
 		if (host.isEmpty())
 			return false;
-		telescope.insert("host_name", host);
+		newProperties.insert("host_name", host);
 	}
 
-	if(connectionType == ConnectionInternal)
+	if (connectionType != "virtual")
 	{
-		if (!deviceModels.contains(deviceModelName))
-			return false;
-		telescope.insert("device_model", deviceModelName);
+		QString equinox = properties.value("equinox", "J2000").toString();
+		newProperties.insert("equinox", equinox);
 
-		if (portSerial.isEmpty())
-			return false;
-		telescope.insert("serial_port", portSerial);
-	}
-
-	if (connectionType != ConnectionVirtual)
-	{
-		if (!isValidPort(portTCP))
-			return false;
-		telescope.insert("tcp_port", portTCP);
-
+		int delay = properties.value("delay").toInt();
 		if (!isValidDelay(delay))
-			return false;
-		telescope.insert("delay", delay);
+			delay = DEFAULT_DELAY;
+		newProperties.insert("delay", delay);
+
+		//TCP port being specified for "internal" clients is a relic from
+		//separate servers.
+		int tcpPort = properties.value("tcp_port").toInt();
+		if (!isValidPort(tcpPort))
+			tcpPort = DEFAULT_TCP_PORT_FOR_SLOT(slot);
+		newProperties.insert("tcp_port", tcpPort);
 	}
 
-	telescope.insert("connect_at_startup", connectAtStartup);
+	bool connectAtStartup = properties.value("connect_at_startup", false).toBool();
+	newProperties.insert("connect_at_startup", connectAtStartup);
 
-	if(!circles.isEmpty())
+	QStringList fovCircles = properties.value("circles").toStringList();
+	if (!fovCircles.isEmpty())
 	{
-		QVariantList circleList;
-		for(int i = 0; i < circles.size(); i++)
-			circleList.append(circles[i]);
-		telescope.insert("circles", circleList);
+		QStringList newFovCircles;
+		bool ok;
+		for (int i=0; i < fovCircles.count(); i++)
+		{
+			double fov = fovCircles.at(i).toDouble(&ok);
+			if (ok)
+				newFovCircles.append(QString::number(fov));
+		}
+		if (!newFovCircles.isEmpty())
+			newProperties.insert("circles", newFovCircles);
 	}
 
-	telescopeDescriptions.insert(QString::number(slot), telescope);
+	telescopeDescriptions.insert(QString::number(slot), newProperties);
 
 	return true;
 }
