@@ -747,7 +747,7 @@ void TelescopeControl::loadTelescopes()
 				else
 				{
 					//TODO: This is a temporary hack!
-					map.insert("type", deviceModels.value(deviceModelName).server);
+					telescope.insert("type", deviceModels.value(deviceModelName).server);
 				}
 
 				if(portSerial.isEmpty() || !portSerial.startsWith(SERIAL_PORT_PREFIX))
