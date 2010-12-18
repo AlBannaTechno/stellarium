@@ -119,8 +119,8 @@ public:
 	//! Adds a telescope description containing the given properties. DOES NOT VALIDATE its parameters. If serverName is specified, portSerial should be specified too. Call saveTelescopes() to write the modified configuration to disc. Call startTelescopeAtSlot() to start this telescope.
 	//! @param portSerial must be a valid serial port name for the particular platform, e.g. "COM1" for Microsoft Windows of "/dev/ttyS0" for Linux
 	bool addTelescopeAtSlot(int slot, ConnectionType connectionType, QString name, QString equinox, QString host = QString("localhost"), int portTCP = DEFAULT_TCP_PORT, int delay = DEFAULT_DELAY, bool connectAtStartup = false, QList<double> circles = QList<double>(), QString serverName = QString(), QString portSerial = QString());
-	//! Retrieves a telescope description. Returns false if the slot is empty. Returns empty serverName and portSerial if the description contains no server.
-	bool getTelescopeAtSlot(int slot, ConnectionType& connectionType, QString& name, QString& equinox, QString& host, int& portTCP, int& delay, bool& connectAtStartup, QList<double>& circles, QString& serverName, QString& portSerial);
+	//! Retrieves a telescope description.
+	//! \returns empty map if there is nothing at that slot.
 	const QVariantMap getTelescopeAtSlot(int slot) const;
 	//! Removes info from the tree. Should it include stopTelescopeAtSlot()?
 	bool removeTelescopeAtSlot(int slot);

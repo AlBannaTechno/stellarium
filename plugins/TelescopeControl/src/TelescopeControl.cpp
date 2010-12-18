@@ -922,46 +922,6 @@ bool TelescopeControl::addTelescopeAtSlot(int slot, ConnectionType connectionTyp
 	return true;
 }
 
-bool TelescopeControl::getTelescopeAtSlot(int slot, ConnectionType& connectionType, QString& name, QString& equinox, QString& host, int& portTCP, int& delay, bool& connectAtStartup, QList<double>& circles, QString& deviceModelName, QString& portSerial)
-{
-	//Validation
-	if(!isValidSlotNumber(slot))
-		return false;
-
-	//Read the node at that slot
-	QVariantMap telescope = telescopeDescriptions.value(QString::number(slot)).toMap();
-	if(telescope.isEmpty())
-	{
-		telescopeDescriptions.remove(QString::number(slot));
-		return false;
-	}
-
-	//Read the parameters
-	name = telescope.value("name").toString();
-	equinox = telescope.value("equinox", "J2000").toString();
-	host = telescope.value("host_name").toString();
-	portTCP = telescope.value("tcp_port").toInt();
-	delay = telescope.value("delay", DEFAULT_DELAY).toInt();
-	connectAtStartup = telescope.value("connect_at_startup", false).toBool();
-
-	QVariantList circleList = telescope.value("circles").toList();
-	if(!circleList.isEmpty() && circleList.size() <= MAX_CIRCLE_COUNT)
-	{
-		for(int i = 0; i < circleList.size(); i++)
-			circles.append(circleList.value(i, -1.0).toDouble());
-	}
-
-	QString connection = telescope.value("connection").toString();
-	connectionType = connectionTypeNames.key(connection, ConnectionVirtual);
-	if(connectionType == ConnectionInternal)
-	{
-		deviceModelName = telescope.value("device_model").toString();
-		portSerial = telescope.value("serial_port").toString();
-	}
-
-	return true;
-}
-
 const QVariantMap TelescopeControl::getTelescopeAtSlot(int slot) const
 {
 	//Validation

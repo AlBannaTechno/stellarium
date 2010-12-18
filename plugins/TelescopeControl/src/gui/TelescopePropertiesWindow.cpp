@@ -111,6 +111,9 @@ void TelescopePropertiesWindow::initConfigurationDialog()
 	ui->groupBoxType->setVisible(true);
 
 	ui->groupBoxVirtualTelescope->setVisible(false);
+#ifdef Q_OS_WIN32
+	ui->groupBoxAscomSettings->setVisible(false);
+#endif
 	
 	//Telescope properties
 	ui->lineEditTelescopeName->clear();
@@ -157,21 +160,27 @@ void TelescopePropertiesWindow::initNewStellariumTelescope(int slot)
 	initConfigurationDialog();
 	ui->stelWindowTitle->setText("New Stellarium Telescope");
 	ui->lineEditTelescopeName->setText(QString("New Telescope %1").arg(QString::number(configuredSlot)));
+
+	ui->doubleSpinBoxTelescopeDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 	
+	//If there are no drivers, only remote connections are possible
+	//(Relic from the time when all drivers were external.)
 	if(deviceModelNames.isEmpty())
 	{
 		ui->radioButtonTelescopeLocalNative->setEnabled(false);
-		ui->radioButtonTelescopeConnection->setChecked(true);
-		toggleTypeConnection(true);//Not called if the button is already checked
+		if (ui->radioButtonTelescopeConnection->isChecked())
+			toggleTypeConnection(true);
+		else
+			ui->radioButtonTelescopeConnection->setChecked(true);
 	}
 	else
 	{
 		ui->radioButtonTelescopeLocalNative->setEnabled(true);
-		ui->radioButtonTelescopeLocalNative->setChecked(true);
-		toggleTypeLocalNative(true);//Not called if the button is already checked
+		if (ui->radioButtonTelescopeLocalNative->isChecked())
+			toggleTypeLocalNative(true);
+		else
+			ui->radioButtonTelescopeLocalNative->setChecked(true);
 	}
-	
-	ui->doubleSpinBoxTelescopeDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 }
 
 void TelescopePropertiesWindow::initNewVirtualTelescope(int slot)
@@ -217,24 +226,18 @@ void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 	ui->stelWindowTitle->setText("Configure Telescope");
 	
 	//Read the telescope properties
-	QString name;
-	ConnectionType connectionType;
-	QString equinox;
-	QString host;
-	int portTCP;
-	int delay;
-	bool connectAtStartup;
-	QList<double> circles;
-	QString deviceModelName;
-	QString serialPortName;
-	if(!telescopeManager->getTelescopeAtSlot(slot, connectionType, name, equinox, host, portTCP, delay, connectAtStartup, circles, deviceModelName, serialPortName))
+	const QVariantMap& properties = telescopeManager->getTelescopeAtSlot(slot);
+	if(properties.isEmpty())
 	{
 		//TODO: Add debug
 		return;
 	}
-	
+
+	QString name = properties.value("name").toString();
 	ui->lineEditTelescopeName->setText(name);
-	
+
+	QString connection = properties.value("connection").toString();
+	QString deviceModelName = properties.value("device_model").toString();
 	if(!deviceModelName.isEmpty())
 	{
 		ui->radioButtonTelescopeLocalNative->setChecked(true);
@@ -254,12 +257,13 @@ void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 			ui->comboBoxDeviceModel->setCurrentIndex(index);
 		}
 		//Initialize the serial port value
-		ui->lineEditSerialPort->setText(serialPortName);
+		QString serialPort = properties.value("serial_port").toString();
+		ui->lineEditSerialPort->setText(serialPort);
 	}
-	else if (connectionType == ConnectionRemote)
+	else if (connection == "remote" || connection == "local")
 	{
 		ui->radioButtonTelescopeConnection->setChecked(true);//Calls toggleTypeConnection(true)
-		ui->lineEditHostName->setText(host);
+		ui->lineEditHostName->setText(properties.value("host_name", "localhost").toString());
 	}
 	else
 	{
@@ -270,29 +274,29 @@ void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 	}
 
 	//Equinox
-	if (equinox == "JNow")
+	if (properties.value("equinox").toString() == "JNow")
 		ui->radioButtonJNow->setChecked(true);
 	else
 		ui->radioButtonJ2000->setChecked(true);
 	
 	//Circles
-	if(!circles.isEmpty())
+	QStringList circleList = properties.value("circles").toStringList();
+	if(!circleList.isEmpty())
 	{
 		ui->checkBoxCircles->setChecked(true);
-		
-		QStringList circleList;
-		for(int i = 0; i < circles.size(); i++)
-			circleList.append(QString::number(circles[i]));
 		ui->lineEditCircleList->setText(circleList.join(", "));
 	}
 	
 	//TCP port
+	int portTCP = properties.value("tcp_port", DEFAULT_TCP_PORT_FOR_SLOT(configuredSlot)).toInt();
 	ui->spinBoxTCPPort->setValue(portTCP);
 	
 	//Delay
+	int delay = properties.value("delay", DEFAULT_DELAY).toInt();
 	ui->doubleSpinBoxTelescopeDelay->setValue(SECONDS_FROM_MICROSECONDS(delay));//Microseconds to seconds
 	
 	//Connect at startup
+	bool connectAtStartup = properties.value("connect_at_startup", false).toBool();
 	ui->checkBoxConnectAtStartup->setChecked(connectAtStartup);
 }
 
@@ -354,16 +358,13 @@ void TelescopePropertiesWindow::toggleTypeVirtual(bool isChecked)
 #ifdef Q_OS_WIN32
 void TelescopePropertiesWindow::toggleTypeLocalAscom(bool isChecked)
 {
-	if (isChecked && !telescopeManager->canUseAscom())
+	if (!telescopeManager->canUseAscom())
 		return;
 
 	ui->groupBoxAscomSettings->setVisible(isChecked);
 	ui->groupBoxDeviceSettings->setVisible(!isChecked);
 	ui->groupBoxConnectionSettings->setVisible(!isChecked);
 	ui->frameDelay->setVisible(!isChecked);
-
-	if (isChecked)
-		ui->scrollArea->ensureWidgetVisible(ui->groupBoxAscomSettings);
 }
 #endif
 

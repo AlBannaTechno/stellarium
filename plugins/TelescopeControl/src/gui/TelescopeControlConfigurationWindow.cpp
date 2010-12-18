@@ -143,63 +143,62 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	QModelIndex modelIndex;
 
 	//Cycle the slots
-	for (int slotNumber = MIN_SLOT_NUMBER; slotNumber < SLOT_NUMBER_LIMIT; slotNumber++)
+	for (int slot = MIN_SLOT_NUMBER; slot < SLOT_NUMBER_LIMIT; slot++)
 	{
 		//Slot #
 		//int slotNumber = (i+1)%SLOT_COUNT;//Making sure slot 0 is last
 		
 		//Make sure that this is initialized for all slots
-		telescopeStatus[slotNumber] = StatusNA;
+		telescopeStatus[slot] = StatusNA;
 		
 		//Read the telescope properties
-		QString name;
-		ConnectionType connectionType;
-		QString equinox;
-		QString host;
-		int portTCP;
-		int delay;
-		bool connectAtStartup;
-		QList<double> circles;
-		QString serverName;
-		QString portSerial;
-		if(!telescopeManager->getTelescopeAtSlot(slotNumber, connectionType, name, equinox, host, portTCP, delay, connectAtStartup, circles, serverName, portSerial))
+		const QVariantMap& properties = telescopeManager->getTelescopeAtSlot(slot);
+		if(properties.isEmpty())
 			continue;
-		
-		//Determine the server type
+
+		QString name = properties.value("name").toString();
+		if (name.isEmpty())
+			continue;
+		QString connection = properties.value("connection").toString();
+		if (connection.isEmpty())
+			continue;
 		QString connectionTypeLabel;
-		switch (connectionType)
+		if (connection == "internal")
 		{
-			case ConnectionInternal:
-				connectionTypeLabel = "local, Stellarium";
-				break;
-			case ConnectionLocal:
-				connectionTypeLabel = "local, external";
-				break;
-			case ConnectionRemote:
-				connectionTypeLabel = "remote, unknown";
-				break;
-			case ConnectionVirtual:
-			default:
-				connectionTypeLabel = "virtual";
-				break;
+			connectionTypeLabel = "local, Stellarium";
+			telescopeType[slot] = ConnectionInternal;
 		}
-		telescopeType[slotNumber] = connectionType;
+		else if (connection == "local")
+		{
+			connectionTypeLabel = "local, external";
+			telescopeType[slot] = ConnectionLocal;
+		}
+		else if (connection == "remote")
+		{
+			connectionTypeLabel = "remote, unknown";
+			telescopeType[slot] = ConnectionRemote;
+		}
+		else
+		{
+			connectionTypeLabel = "virtual";
+			telescopeType[slot] = ConnectionVirtual;
+		}
 		
 		//Determine the telescope's status
-		if (telescopeManager->isConnectedClientAtSlot(slotNumber))
+		if (telescopeManager->isConnectedClientAtSlot(slot))
 		{
-			telescopeStatus[slotNumber] = StatusConnected;
+			telescopeStatus[slot] = StatusConnected;
 		}
 		else
 		{
 			//TODO: Fix this!
 			//At startup everything exists and attempts to connect
-			telescopeStatus[slotNumber] = StatusConnecting;
+			telescopeStatus[slot] = StatusConnecting;
 		}
 		
 		//New column on a new row in the list: Slot number
 		int lastRow = telescopeListModel->rowCount();
-		tempItem = new QStandardItem(QString::number(slotNumber));
+		tempItem = new QStandardItem(QString::number(slot));
 		tempItem->setEditable(false);
 		telescopeListModel->setItem(lastRow, ColumnSlot, tempItem);
 		
@@ -212,7 +211,7 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 		//telescopeListModel->setItem(lastRow, ColumnStartup, tempItem);//Start-up checkbox
 		
 		//New column on a new row in the list: Telescope status
-		tempItem = new QStandardItem(statusString[telescopeStatus[slotNumber]]);
+		tempItem = new QStandardItem(statusString[telescopeStatus[slot]]);
 		tempItem->setEditable(false);
 		telescopeListModel->setItem(lastRow, ColumnStatus, tempItem);
 		
