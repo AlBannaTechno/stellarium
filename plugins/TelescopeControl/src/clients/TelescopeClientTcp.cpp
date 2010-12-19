@@ -23,9 +23,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#include "TelescopeClientTCP.hpp"
+#include "TelescopeClientTcp.hpp"
 
-TelescopeTCP::TelescopeTCP(const QString &name, const QString &params, Equinox eq) :
+TelescopeClientTcp::TelescopeClientTcp(const QString& name, const QString& params, Equinox eq) :
 		TelescopeClient(name),
 		tcpSocket(new QTcpSocket()),
 		equinox(eq)
@@ -56,17 +56,21 @@ TelescopeTCP::TelescopeTCP(const QString &name, const QString &params, Equinox e
 		return;
 	}
 
-	qDebug() << "TelescopeTCP paramaters host, port, time_delay:" << host << port << time_delay;
+	qDebug() << "TelescopeClientTcp paramaters host, port, time_delay:"
+	         << host << port << time_delay;
 
+	//TODO: Enforce IANA's allowed range?
 	if (port <= 0 || port > 0xFFFF)
 	{
-		qWarning() << "ERROR creating TelescopeTCP - port not valid (should be less than 32767)";
+		qWarning() << "ERROR creating TelescopeClientTcp: "
+				"invalid TCP port numver (should be less than 32767):" << port;
 		return;
 	}
 	
 	if (time_delay <= 0 || time_delay > 10000000)
 	{
-		qWarning() << "ERROR creating TelescopeTCP - time_delay not valid (should be less than 10000000)";
+		qWarning() << "ERROR creating TelescopeClientTcp: "
+				"time_delay not valid (should be less than 10000000)";
 		return;
 	}
 	
@@ -74,7 +78,8 @@ TelescopeTCP::TelescopeTCP(const QString &name, const QString &params, Equinox e
 	QHostInfo info = QHostInfo::fromName(host);
 	if (info.error())
 	{
-		qWarning() << "ERROR creating TelescopeTCP: error looking up host " << host << ":" << info.errorString();
+		qWarning() << "ERROR creating TelescopeClientTcp: error looking up host"
+		           << host << ":" << info.errorString();
 		return;
 	}
 	//BM: is info.addresses().isEmpty() if there's no error?
@@ -90,7 +95,9 @@ TelescopeTCP::TelescopeTCP(const QString &name, const QString &params, Equinox e
 	}
 	if(address.isNull())
 	{
-		qWarning() << "ERROR creating TelescopeTCP: cannot find IPv4 address. Addresses found at " << host << ":" << info.addresses();
+		qWarning() << "ERROR creating TelescopeClientTcp: "
+				"cannot find IPv4 address. Addresses found at "
+				<< host << ":" << info.addresses();
 		return;
 	}
 	
@@ -98,10 +105,11 @@ TelescopeTCP::TelescopeTCP(const QString &name, const QString &params, Equinox e
 	
 	interpolatedPosition.reset();
 	
-	connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketFailed(QAbstractSocket::SocketError)));
+	connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this,
+			SLOT(socketFailed(QAbstractSocket::SocketError)));
 }
 
-void TelescopeTCP::hangup(void)
+void TelescopeClientTcp::hangup(void)
 {
 	if (tcpSocket->isValid())
 	{
@@ -118,7 +126,7 @@ void TelescopeTCP::hangup(void)
 //! queues a GOTO command with the specified position to the write buffer.
 //! For the data format of the command see the
 //! "Stellarium telescope control protocol" text file
-void TelescopeTCP::telescopeGoto(const Vec3d &j2000Pos)
+void TelescopeClientTcp::telescopeGoto(const Vec3d &j2000Pos)
 {
 	if (!isConnected())
 		return;
@@ -133,7 +141,8 @@ void TelescopeTCP::telescopeGoto(const Vec3d &j2000Pos)
 	if (writeBufferEnd - writeBuffer + 20 < (int)sizeof(writeBuffer))
 	{
 		const double ra_signed = atan2(position[1], position[0]);
-		//Workaround for the discrepancy in precision between Windows/Linux/PPC Macs and Intel Macs:
+		//Workaround for the discrepancy in precision
+		//between Windows/Linux/PPC Macs and Intel Macs:
 		const double ra = (ra_signed >= 0) ? ra_signed : (ra_signed + 2.0 * M_PI);
 		const double dec = atan2(position[2], sqrt(position[0]*position[0]+position[1]*position[1]));
 		unsigned int ra_int = (unsigned int)floor(0.5 + ra*(((unsigned int)0x80000000)/M_PI));
@@ -180,19 +189,20 @@ void TelescopeTCP::telescopeGoto(const Vec3d &j2000Pos)
 	}
 	else
 	{
-		qDebug() << "TelescopeTCP(" << name << ")::telescopeGoto: "<< "communication is too slow, I will ignore this command";
+		qDebug() << "TelescopeClientTcp(" << name << ")::telescopeGoto: "
+		         << "communication is too slow, I will ignore this command";
 	}
 }
 
-void TelescopeTCP::performWriting(void)
+void TelescopeClientTcp::performWriting(void)
 {
 	const int to_write = writeBufferEnd - writeBuffer;
 	const int rc = tcpSocket->write(writeBuffer, to_write);
 	if (rc < 0)
 	{
 		//TODO: Better error message. See the Qt documentation.
-		qDebug() << "TelescopeTCP(" << name << ")::performWriting: "
-			<< "write failed: " << tcpSocket->errorString();
+		qDebug() << "TelescopeClientTcp(" << name << ")::performWriting: "
+		         << "write failed: " << tcpSocket->errorString();
 		hangup();
 	}
 	else if (rc > 0)
@@ -212,19 +222,21 @@ void TelescopeTCP::performWriting(void)
 }
 
 //! try to read some data from the telescope server
-void TelescopeTCP::performReading(void)
+void TelescopeClientTcp::performReading(void)
 {
 	const int to_read = readBuffer + sizeof(readBuffer) - readBufferEnd;
 	const int rc = tcpSocket->read(readBufferEnd, to_read);
 	if (rc < 0)
 	{
 		//TODO: Better error warning. See the Qt documentation.
-		qDebug() << "TelescopeTCP(" << name << ")::performReading: " << "read failed: " << tcpSocket->errorString();
+		qDebug() << "TelescopeClientTcp(" << name << ")::performReading: "
+		         << "read failed: " << tcpSocket->errorString();
 		hangup();
 	}
 	else if (rc == 0)
 	{
-		qDebug() << "TelescopeTCP(" << name << ")::performReading: " << "server has closed the connection";
+		qDebug() << "TelescopeClientTcp(" << name << ")::performReading: "
+		         << "server has closed the connection";
 		hangup();
 	}
 	else
@@ -237,7 +249,8 @@ void TelescopeTCP::performReading(void)
 			const int size = (int)(((unsigned char)(p[0])) | (((unsigned int)(unsigned char)(p[1])) << 8));
 			if (size > (int)sizeof(readBuffer) || size < 4)
 			{
-				qDebug() << "TelescopeTCP(" << name << ")::performReading: " << "bad packet size: " << size;
+				qDebug() << "TelescopeClientTcp("<< name <<")::performReading: "
+				         << "bad packet size: " << size;
 				hangup();
 				return;
 			}
@@ -257,7 +270,9 @@ void TelescopeTCP::performReading(void)
 				// "Stellarium telescope control protocol"
 					if (size < 24)
 					{
-						qDebug() << "TelescopeTCP(" << name << ")::performReading: " << "type 0: bad packet size: " << size;
+						qDebug() << "TelescopeClientTcp("
+						         << name << ")::performReading: "
+						         << "type 0: bad packet size: " << size;
 						hangup();
 						return;
 					}
@@ -286,7 +301,7 @@ void TelescopeTCP::performReading(void)
 						     (((unsigned int)(unsigned char)(p[22])) << 16) |
 						     (((unsigned int)(unsigned char)(p[23])) << 24));
 
-					const double ra  =  ra_int * (M_PI/(unsigned int)0x80000000);
+					const double ra =  ra_int * (M_PI/(unsigned int)0x80000000);
 					const double dec = dec_int * (M_PI/(unsigned int)0x80000000);
 					const double cdec = cos(dec);
 					Vec3d position(cos(ra)*cdec, sin(ra)*cdec, sin(dec));
@@ -300,7 +315,9 @@ void TelescopeTCP::performReading(void)
 				}
 				break;
 				default:
-					qDebug() << "TelescopeTCP(" << name << ")::performReading: " << "ignoring unknown packet, type: " << type;
+					qDebug() << "TelescopeClientTcp(" << name
+					         << ")::performReading: "
+					         << "ignoring unknown packet, type: " << type;
 				break;
 			}
 			p += size;
@@ -319,9 +336,9 @@ void TelescopeTCP::performReading(void)
 	}
 }
 
-//! estimates where the telescope is by interpolation in the stored
+//! estimates where the telescope is by interpolation of the stored
 //! telescope positions:
-Vec3d TelescopeTCP::getJ2000EquatorialPos(const StelNavigator*) const
+Vec3d TelescopeClientTcp::getJ2000EquatorialPos(const StelNavigator*) const
 {
 	const qint64 now = getNow() - time_delay;
 	return interpolatedPosition.get(now);
@@ -329,14 +346,15 @@ Vec3d TelescopeTCP::getJ2000EquatorialPos(const StelNavigator*) const
 
 //! checks if the socket is connected, tries to connect if it is not
 //@return true if the socket is connected
-bool TelescopeTCP::prepareCommunication()
+bool TelescopeClientTcp::prepareCommunication()
 {
 	if(tcpSocket->state() == QAbstractSocket::ConnectedState)
 	{
 		if(wait_for_connection_establishment)
 		{
 			wait_for_connection_establishment = false;
-			qDebug() << "TelescopeTCP(" << name << ")::prepareCommunication: Connection established";
+			qDebug() << "TelescopeClientTcp(" << name
+			         << ")::prepareCommunication: Connection established";
 		}
 		return true;
 	}
@@ -346,7 +364,8 @@ bool TelescopeTCP::prepareCommunication()
 		if (now > end_of_timeout)
 		{
 			end_of_timeout = now + 1000000;
-			qDebug() << "TelescopeTCP(" << name << ")::prepareCommunication: Connection attempt timed out";
+			qDebug() << "TelescopeClientTcp(" << name
+			         << ")::prepareCommunication: Connection attempt timed out";
 			hangup();
 		}
 	}
@@ -358,12 +377,14 @@ bool TelescopeTCP::prepareCommunication()
 		end_of_timeout = now + 5000000;
 		tcpSocket->connectToHost(address, port);
 		wait_for_connection_establishment = true;
-		qDebug() << "TelescopeTCP(" << name << ")::prepareCommunication: Attempting to connect to host" << address.toString() << "at port" << port;
+		qDebug() << "TelescopeClientTcp(" << name
+		         << ")::prepareCommunication: Attempting to connect to host"
+		         << address.toString() << "at port" << port;
 	}
 	return false;
 }
 
-void TelescopeTCP::performCommunication()
+void TelescopeClientTcp::performCommunication()
 {
 	if (tcpSocket->state() == QAbstractSocket::ConnectedState)
 	{
@@ -379,7 +400,8 @@ void TelescopeTCP::performCommunication()
 }
 
 //TODO: More informative error messages?
-void TelescopeTCP::socketFailed(QAbstractSocket::SocketError)
+void TelescopeClientTcp::socketFailed(QAbstractSocket::SocketError)
 {
-	qDebug() << "TelescopeTCP(" << name << "): TCP socket error:\n" << tcpSocket->errorString();
+	qDebug() << "TelescopeClientTcp(" << name << "): TCP socket error:\n"
+	         << tcpSocket->errorString();
 }

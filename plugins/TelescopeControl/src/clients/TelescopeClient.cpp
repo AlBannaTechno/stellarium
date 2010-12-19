@@ -25,7 +25,7 @@
 
 #include "TelescopeClient.hpp"
 #include "TelescopeClientDummy.hpp"
-#include "TelescopeClientTCP.hpp"
+#include "TelescopeClientTcp.hpp"
 #include "TelescopeClientDirectLx200.hpp"
 #include "TelescopeClientDirectNexStar.hpp"
 #ifdef Q_OS_WIN32
@@ -92,7 +92,7 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 	}
 	else if (type == "TCP")
 	{
-		newTelescope = new TelescopeTCP(name, params, eq);
+		newTelescope = new TelescopeClientTcp(name, params, eq);
 	}
 	else if (type == "Lx200") //BM: One of the rare occasions of painless extension
 	{

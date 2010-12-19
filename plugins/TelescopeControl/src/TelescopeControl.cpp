@@ -28,7 +28,7 @@
 #include "TelescopeControl.hpp"
 #include "TelescopeClient.hpp"
 #include "TelescopeClientDummy.hpp"
-#include "TelescopeClientTCP.hpp"
+#include "TelescopeClientTcp.hpp"
 #include "TelescopeClientDirectLx200.hpp"
 #include "TelescopeClientDirectNexStar.hpp"
 #ifdef Q_OS_WIN32
@@ -1117,7 +1117,7 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 		QString host = properties.value("host_name", "localhost").toString();
 		int port = properties.value("tcp_port").toInt();
 		parameters = QString("%1:%2:%3").arg(host).arg(port).arg(delay);
-		newTelescope = new TelescopeTCP(name, parameters, equinox);
+		newTelescope = new TelescopeClientTcp(name, parameters, equinox);
 	}
 	else if (connectionType == "internal")
 	{

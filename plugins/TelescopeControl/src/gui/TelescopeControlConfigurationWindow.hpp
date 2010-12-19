@@ -38,6 +38,8 @@ class Ui_widgetTelescopeControlConfiguration;
 class TelescopePropertiesWindow;
 class TelescopeControl;
 
+//! The configuration window of the TelescopeControl plug-in.
+//! \author Bogdan Marinov
 class TelescopeControlConfigurationWindow : public StelDialogTelescopeControl
 {
 	Q_OBJECT

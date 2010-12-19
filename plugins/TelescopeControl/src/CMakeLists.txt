@@ -15,8 +15,8 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClient.hpp
   clients/TelescopeClient.cpp
   clients/TelescopeClientDummy.hpp
-  clients/TelescopeClientTCP.hpp
-  clients/TelescopeClientTCP.cpp
+  clients/TelescopeClientTcp.hpp
+  clients/TelescopeClientTcp.cpp
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectLx200.cpp
   clients/TelescopeClientDirectNexStar.hpp
@@ -80,7 +80,7 @@ SET(TelescopeControl_MOC_HDRS
   TelescopeControl.hpp
   clients/TelescopeClient.hpp
   clients/TelescopeClientDummy.hpp
-  clients/TelescopeClientTCP.hpp
+  clients/TelescopeClientTcp.hpp
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectNexStar.hpp
   )

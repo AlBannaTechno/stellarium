@@ -39,12 +39,12 @@
 //! the "Stellarium telescope control protocol" over TCP/IP.
 //! The "Stellarium telescope control protocol" is specified in a seperate
 //! document along with the telescope server software.
-class TelescopeTCP : public TelescopeClient
+class TelescopeClientTcp : public TelescopeClient
 {
 	Q_OBJECT
 public:
-	TelescopeTCP(const QString &name, const QString &params, Equinox eq = EquinoxJ2000);
-	~TelescopeTCP(void)
+	TelescopeClientTcp(const QString &name, const QString &params, Equinox eq = EquinoxJ2000);
+	~TelescopeClientTcp(void)
 	{
 		hangup();
 	}
