@@ -934,16 +934,16 @@ bool TelescopeControl::addTelescopeAtSlot(int slot, const QVariantMap& propertie
 	bool connectAtStartup = properties.value("connect_at_startup", false).toBool();
 	newProperties.insert("connect_at_startup", connectAtStartup);
 
-	QStringList fovCircles = properties.value("circles").toStringList();
+	QVariantList fovCircles = properties.value("circles").toList();
 	if (!fovCircles.isEmpty())
 	{
-		QStringList newFovCircles;
+		QVariantList newFovCircles;
 		bool ok;
 		for (int i=0; i < fovCircles.count(); i++)
 		{
 			double fov = fovCircles.at(i).toDouble(&ok);
 			if (ok)
-				newFovCircles.append(QString::number(fov));
+				newFovCircles.append(fov);
 		}
 		if (!newFovCircles.isEmpty())
 			newProperties.insert("circles", newFovCircles);

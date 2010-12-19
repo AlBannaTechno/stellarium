@@ -390,14 +390,14 @@ void TelescopePropertiesWindow::buttonSavePressed()
 		rawFovCircles.removeDuplicates();
 		rawFovCircles.sort();
 		
-		QString fovCircles;
+		QVariantList fovCircles;
 		for(int i = 0; i < rawFovCircles.size(); i++)
 		{
 			if(i >= MAX_CIRCLE_COUNT)
 				break;
 			double circle = rawFovCircles.at(i).toDouble();
 			if(circle > 0.0)
-				fovCircles.append(QString::number(circle));
+				fovCircles.append(circle);
 		}
 		if (!fovCircles.isEmpty())
 			newTelescopeProperties.insert("circles", fovCircles);
