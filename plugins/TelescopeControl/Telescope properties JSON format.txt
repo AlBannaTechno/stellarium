@@ -1,0 +1,63 @@
+Definition of the JSON format used to describe telescopes in the telescopes.json
+file and inside the TelescopeControl plug-in.
+
+REQUIRED values are absolutely necessary.
+ASSUMED values may be skipped - a default value will be assumed.
+SPECIFIC values are values REQUIRED by a specific client/connection type.
+OPTIONAL values provide additional, non-essential features.
+ 
+== Version 0.4.0 (and later?) ==
+1. Structure of telescopes.json: a JSON object/hash, with slot numbers as keys
+and telescope JSON objects as values. A separate "version" key provides
+a version number string.
+
+2. Structure of a telescope connection JSON object:
+
+[REQUIRED] "name"
+[REQUIRED] "interface" (string; "virtual", "Stellarium", "INDI" or "ASCOM")
+[REQUIRED] "isRemoteConnection" (bool; some combinations can't exist - see 3.)
+[OPTIONAL] "fovCircles" (JSON list of *numbers*, not strings)
+[ASSUMED]  "connectsAtStartup" (bool, default: false) TODO: RENAME!
+[ASSUMED-SPECIFIC?]  "equinox" (string; recognized: "J2000" (default), "JNow")
+                               [!VIRTUAL]
+[ASSUMED-SPECIFIC?]  "delay" (number; default: 500000) TODO: RENAME!
+[SPECIFIC] "driverId" (string) [!REMOTE: STELLARIUM, INDI, ASCOM]
+[SPECIFIC] "deviceModel" (string) [!REMOTE: STELLARIUM (optional), INDI]
+[SPECIFIC] "serialPort" (string) [!REMOTE: STELLARIUM]
+[SPECIFIC] "host" (string; host name or IP address) [REMOTE]
+[SPECIFIC] "tcpPort" (number) [REMOTE]
+
+3. Type tree:
+
+Interface:      Can be remote:
+------------------------------
+virtual         no
+Stellarium      yes
+ASCOM           no (for now)
+INDI            yes
+
+== Versions prior to 0.4.0 ==
+1. Structure of telescopes.json: a JSON object/hash, with slot numbers as keys
+and telescope JSON objects as values. A separate "version" key provides
+a version number string.
+
+2. Structure of a telescope JSON object:
+
+[REQUIRED] "name" (string)
+[REQUIRED] "connection" (string, see 3.)
+[ASSUMED]  "connect_at_startup" (bool; default: false)
+[ASSUMED]  "equinox" (string; recognized: "J2000" (default), "JNow")
+[ASSUMED]  "delay" (number; default: 500000)
+[OPTIONAL] "circles" (JSON list of *numbers*, not strings)
+[SPECIFIC] "device_model" (string; a device model name as specified in 
+                           the device_models.json file) [INTERNAL]
+[SPECIFIC] "serial_port" (string; serial port name) [INTERNAL]
+[SPECIFIC] "tcp_port" (number; TCP port number) [INTERNAL, LOCAL, REMOTE]
+                      (used in INTERNAL because of separate server executables)
+[SPECIFIC] "host_name" (string; host name or IPv4 address) [REMOTE]
+
+3. Connection types:
+"virtual" (the "dummy" virtual/simulated telescope)
+"internal" (telescope servers)
+"local" (TCP connection to localhost)
+"remote" (TCP connection to a remote host)
