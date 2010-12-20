@@ -50,10 +50,6 @@ class TelescopeClient : public QObject, public StelObject
 {
 	Q_OBJECT
 public:
-	static TelescopeClient* create(const QString& url);
-	//! creates a TelescopeClient subclass object from a JSON node.
-	//! The node should be in the format used in the telescopes.json file.
-	static TelescopeClient* create(const QVariantMap& jsonNode);
 	virtual ~TelescopeClient(void) {}
 	
 	// Method inherited from StelObject
@@ -78,6 +74,7 @@ public:
 	// Methods specific to telescope
 	virtual void telescopeGoto(const Vec3d &j2000Pos) = 0;
 	virtual bool isConnected(void) const = 0;
+	virtual bool isInitialized(void) const {return true;}
 	virtual bool hasKnownPosition(void) const = 0;
 	void addOcular(double fov) {if (fov>=0.0) oculars.push_back(fov);}
 	const QList<double> &getOculars(void) const {return oculars;}
@@ -90,7 +87,6 @@ protected:
 	QString nameI18n;
 	const QString name;
 private:
-	virtual bool isInitialized(void) const {return true;}
 	float getSelectPriority(const StelNavigator*) const {return -10.f;}
 private:
 	QList<double> oculars; // fov of the oculars

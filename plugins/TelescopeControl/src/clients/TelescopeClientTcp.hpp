@@ -53,16 +53,16 @@ public:
 		//return (tcpSocket->isValid() && !wait_for_connection_establishment);
 		return (tcpSocket->state() == QAbstractSocket::ConnectedState);
 	}
+	bool isInitialized(void) const
+	{
+		return (!address.isNull());
+	}
 	
 private:
 	Vec3d getJ2000EquatorialPos(const StelNavigator *nav=0) const;
 	bool prepareCommunication();
 	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
-	bool isInitialized(void) const
-	{
-		return (!address.isNull());
-	}
 	void performReading(void);
 	void performWriting(void);
 	

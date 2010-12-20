@@ -1,7 +1,7 @@
 /*
- * Stellarium Telescope Control Plug-in
+ * Stellarium Telescope Control plug-in
  * 
- * Copyright (C) 2009 Bogdan Marinov (this file,
+ * Copyright (C) 2009-2010 Bogdan Marinov (this file,
  * reusing code written by Johannes Gajdosik in 2006)
  * 
  * Johannes Gajdosik wrote in 2006 the original telescope control feature
@@ -55,6 +55,7 @@ public:
 	//======================================================================
 	// Methods inherited from TelescopeClient
 	bool isConnected(void) const;
+	bool isInitialized(void) const;
 	
 	//======================================================================
 	// Methods inherited from Server
@@ -70,7 +71,6 @@ private:
 	bool prepareCommunication();
 	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
-	bool isInitialized(void) const;
 	
 	//======================================================================
 	// Methods inherited from Server

@@ -85,7 +85,7 @@ StelPluginInfo TelescopeControlStelPluginInterface::getPluginInfo() const
 	info.displayedName = q_("Telescope Control");
 	info.authors = "Bogdan Marinov, Johannes Gajdosik";
 	info.contact = "http://stellarium.org";
-	info.description = q_("This plug-in allows Stellarium to send \"slew\" commands to a telescope on a computerized mount (a \"GoTo telescope\").");
+	info.description = q_("This plug-in allows Stellarium to send \"slew\" commands to a telescope on a computerized mount (a \"GoTo telescope\"). It can also simulate a moving telescope reticle surrounded by field-of-view circles without connecting to any real telescope.");
 	return info;
 }
 
@@ -1102,6 +1102,8 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 	if (connectionType.isEmpty())
 		return newTelescope;
 
+	qDebug() << "Attempting to create a telescope client:" << properties;
+
 	int delay = properties.value("delay", DEFAULT_DELAY).toInt();
 	QString equinoxString = properties.value("equinox", "J2000").toString();
 	Equinox equinox = (equinoxString == "JNow") ? EquinoxJNow : EquinoxJ2000;
@@ -1165,8 +1167,7 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 		}
 	}
 
-	//if (newTelescope && !newTelescope->isInitialized())
-	if (!newTelescope)//TODO: Decide what to do with this procedure and where to put isInitialized
+	if (newTelescope && !newTelescope->isInitialized())
 	{
 		qDebug() << "TelescopeClient::create(): Unable to create a telescope client.";
 		delete newTelescope;

@@ -33,13 +33,13 @@ public:
 	TelescopeClientAscom(const QString &name, const QString &params, Equinox eq);
 	virtual ~TelescopeClientAscom(void);
 	bool isConnected(void) const;
+	bool isInitialized(void) const;
 
 private:
 	Vec3d getJ2000EquatorialPos(const StelNavigator *nav) const;
 	bool prepareCommunication();
 	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
-	bool isInitialized(void) const;
 
 	InterpolatedPosition interpolatedPosition;
 	virtual bool hasKnownPosition(void) const
