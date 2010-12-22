@@ -18,13 +18,81 @@
 
 #include "TelescopeClientAscom.hpp"
 
+#include <cmath>
+
 #include <QAxObject>
+
+#include "StelUtils.hpp"
+
+const char* TelescopeClientAscom::P_CONNECTED = "Connected";
+const char* TelescopeClientAscom::P_PARKED = "AtPark";
+const char* TelescopeClientAscom::P_TRACKING = "Tracking";
+const char* TelescopeClientAscom::P_CAN_SLEW = "CanSlew";
+const char* TelescopeClientAscom::P_CAN_SLEW_ASYNCHRONOUSLY = "CanSlewAsync";
+const char* TelescopeClientAscom::P_CAN_TRACK = "CanSetTracking";
+const char* TelescopeClientAscom::P_CAN_UNPARK = "CanUnpark";
+const char* TelescopeClientAscom::P_RA = "RightAscension";
+const char* TelescopeClientAscom::P_DEC = "Declination";
+const char* TelescopeClientAscom::P_EQUATORIAL_SYSTEM = "EquatorialSystem";
+const char* TelescopeClientAscom::M_UNPARK = "Unpark()";
+const char* TelescopeClientAscom::M_SLEW = "SlewToCoordinates(double, double)";
+const char* TelescopeClientAscom::M_SLEW_ASYNCHRONOUSLY =
+		"SlewToCoordinatesAsync(double, double)";
 
 TelescopeClientAscom::TelescopeClientAscom(const QString &name, const QString &params, Equinox eq):
 		TelescopeClient(name),
-		equinox(eq)
+		equinox(eq),
+		driver(0)
 {
+	qDebug() << "Creating ASCOM telescope client:" << name << params;
+
+	//Get the driver identifier from the parameters string
+	//(for now, it contains only the driver identifier)
+	driverId = params;
+
+	//Intialize the driver object
 	driver = new QAxObject(this);
+	driver->setControl(driverId);
+	if (driver->isNull())
+		return;
+	connect(driver,
+			SIGNAL(exception (int, QString, QString, QString)),
+			this,
+			SLOT(handleDriverException(int, QString, QString, QString)));
+
+	//Check if the driver supports slewing to an equatorial position
+	bool canSlew = driver->property(P_CAN_SLEW).toBool();
+	if (!canSlew)
+		qWarning() << "Warning!" << name << "can't receive \"go to\" commands. "
+		              "Its current position will be displayed only.";
+	//(Not an error - this covers things like digital setting circles that can
+	// only emit their current position)
+
+	//Try to connect (make sure driver settings are correct, e.g. the serial
+	//port is the right one)
+	driver->setProperty(P_CONNECTED, true);
+	bool connectionAttemptSucceeded = driver->property(P_CONNECTED).toBool();
+	if (!connectionAttemptSucceeded)
+	{
+		deleteDriver();
+	}
+
+	//If it is parked, see if it can be unparked
+	//TODO: Temporary. The imporved GUI should offer parking/unparking.
+	bool isParked = driver->property(P_PARKED).toBool();
+	if (isParked)
+	{
+		bool canUnpark = driver->property(P_CAN_UNPARK).toBool();
+		if (!canUnpark)
+		{
+			qDebug() << "The" << name << "telescope is parked"
+			         << "and the Telescope control plug-in can't unpark it.";
+			deleteDriver();
+		}
+	}
+
+	//Initialize the countdown
+	timeToGetPosition = getNow() + POSITION_REFRESH_INTERVAL;
 }
 
 TelescopeClientAscom::~TelescopeClientAscom(void)
@@ -32,32 +100,202 @@ TelescopeClientAscom::~TelescopeClientAscom(void)
 	//
 }
 
+bool TelescopeClientAscom::isInitialized(void) const
+{
+	if (driver && !driver->isNull())
+		return true;
+	else
+		return false;
+}
+
 bool TelescopeClientAscom::isConnected(void) const
 {
-	//
+	if (!isInitialized())
+		return false;
+
+	bool isConnected = driver->property(P_CONNECTED).toBool();
+	return isConnected;
 }
 
 Vec3d TelescopeClientAscom::getJ2000EquatorialPos(const StelNavigator *nav) const
 {
-	//
+	//TODO: see what to do about time_delay
+	const qint64 now = getNow() - POSITION_REFRESH_INTERVAL;// - time_delay;
+	return interpolatedPosition.get(now);
 }
 
 bool TelescopeClientAscom::prepareCommunication()
 {
-	//
+	if (!isInitialized())
+		return false;
+
+	return true;
 }
 
 void TelescopeClientAscom::performCommunication()
 {
-	//
+	if (!isInitialized())
+		return;
+
+	if (!isConnected())
+	{
+		driver->setProperty(P_CONNECTED, true);
+		bool connectionAttemptSucceeded = driver->property(P_CONNECTED).toBool();
+		if (!connectionAttemptSucceeded)
+			return;
+	}
+
+	//Get the position every POSITION_REFRESH_INTERVAL microseconds
+	const qint64 now = getNow();
+	if (now < timeToGetPosition)
+		return;
+	else
+		timeToGetPosition = now + POSITION_REFRESH_INTERVAL;
+
+	//Determine the coordinate system
+	//Stellarium supports only JNow (1) and J2000 (2).
+	int equatorialCoordinateType = driver->property(P_EQUATORIAL_SYSTEM).toInt();
+	if (equatorialCoordinateType < 1 || equatorialCoordinateType > 2)
+	{
+		qWarning() << "Stellarium does not support any of the coordinate "
+		              "formats used by" << name;
+		return;
+	}
+
+	//Get the coordinates and convert them to a vector
+	const qint64 serverTime = getNow();
+	const double raHours = driver->property(P_RA).toDouble();
+	const double decDegrees = driver->property(P_DEC).toDouble();
+	const double raRadians = raHours * (M_PI / 12);
+	const double decRadians = decDegrees * (M_PI / 180);
+	Vec3d coordinates;
+	StelUtils::spheToRect(raRadians, decRadians, coordinates);
+
+	Vec3d j2000Coordinates = coordinates;
+	if (equatorialCoordinateType == 1)//coordinates are in JNow
+	{
+		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
+		j2000Coordinates = navigator->equinoxEquToJ2000(coordinates);
+	}
+
+	interpolatedPosition.add(j2000Coordinates, getNow(), serverTime);
 }
 
-void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Pos)
+void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 {
-	//
+	if (!isInitialized())
+		return;
+
+	if (!isConnected())
+	{
+		driver->setProperty(P_CONNECTED, true);
+		bool connectionAttemptSucceeded = driver->property(P_CONNECTED).toBool();
+		if (!connectionAttemptSucceeded)
+			return;
+	}
+
+	//Determine the coordinate system
+	//Stellarium supports only JNow (1) and J2000 (2).
+	int equatorialCoordinateType = driver->property(P_EQUATORIAL_SYSTEM).toInt();
+	if (equatorialCoordinateType < 1 || equatorialCoordinateType > 2)
+	{
+		qWarning() << "Stellarium does not support any of the coordinate "
+		              "formats used by" << name;
+		return;
+	}
+
+	//Parked?
+	bool isParked = driver->property(P_PARKED).toBool();
+	if (isParked)
+	{
+		bool canUnpark = driver->property(P_CAN_UNPARK).toBool();
+		if (canUnpark)
+		{
+			driver->dynamicCall(M_UNPARK);
+		}
+		else
+		{
+			qDebug() << "The" << name << "telescope is parked"
+			         << "and the Telescope control plug-in can't unpark it.";
+			return;
+		}
+	}
+
+	//Tracking?
+	bool isTracking = driver->property(P_TRACKING).toBool();
+	if (!isTracking)
+	{
+		bool canTrack = driver->property(P_CAN_TRACK).toBool();
+		if (canTrack)
+		{
+			driver->setProperty(P_TRACKING, true);
+			isTracking = driver->property(P_TRACKING).toBool();
+			if (!isTracking)
+				return;
+		}
+		else
+		{
+			//TODO: Are there any drivers that can slew, but not track?
+			return;
+		}
+	}
+
+	//Equatorial system
+	Vec3d targetCoordinates = j2000Coordinates;
+	if (equatorialCoordinateType == 1)//coordinates are in JNow
+	{
+		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
+		targetCoordinates = navigator->equinoxEquToJ2000(j2000Coordinates);
+	}
+
+	//Convert coordinates from the vector
+	double raRadians;
+	double decRadians;
+	StelUtils::rectToSphe(&raRadians, &decRadians, targetCoordinates);
+	const double raHours = raRadians * (M_PI / 12);
+	const double decDegrees = decRadians * (M_PI / 180);
+
+	//Send the "go to" command
+	bool canSlewAsynchronously = driver->property(P_CAN_SLEW_ASYNCHRONOUSLY).toBool();
+	if (canSlewAsynchronously)
+	{
+		driver->dynamicCall(M_SLEW_ASYNCHRONOUSLY, raHours, decDegrees);
+	}
+	else
+	{
+		//Last resort - this block the execution of Stellarium until the
+		//slew is complete.
+		bool canSlew = driver->property(P_CAN_SLEW).toBool();
+		if (canSlew)
+		{
+			driver->dynamicCall(M_SLEW, raHours, decDegrees);
+		}
+	}
 }
 
-bool TelescopeClientAscom::isInitialized(void) const
+void TelescopeClientAscom::handleDriverException(int code,
+												 const QString &source,
+												 const QString &desc,
+												 const QString &help)
 {
-	//
+	QString errorMessage = QString("%1: ASCOM driver error:\n"
+	                               "Code: %2\n"
+	                               "Source: %3\n"
+	                               "Description: %4")
+	                               .arg(name)
+	                               .arg(code)
+	                               .arg(desc);
+	qDebug() << errorMessage;
+	deleteDriver();
+	emit ascomError(errorMessage);
+}
+
+void TelescopeClientAscom::deleteDriver()
+{
+	if (driver)
+	{
+		delete driver;
+		driver = 0;
+	}
+	return;
 }

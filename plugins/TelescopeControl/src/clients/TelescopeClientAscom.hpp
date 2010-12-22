@@ -26,6 +26,12 @@
 #include <QObject>
 #include <QString>
 
+//! Telescope client that uses an ASCOM driver.
+//! The ASCOM platform is a driver interface standard based on Microsoft's
+//! Component Object Model (COM). ASCOM drivers are COM objects, so this class
+//! has to use Qt's AxContainer module. In this class, the selected driver is
+//! loaded by a QAxObject object, and communication with it (the driver) is
+//! possible only via QAxObject::dynamicCall() and similar functions.
 class TelescopeClientAscom : public TelescopeClient
 {
 	Q_OBJECT
@@ -35,12 +41,24 @@ public:
 	bool isConnected(void) const;
 	bool isInitialized(void) const;
 
-private:
+	//! Estimates a current position from the stored previous positions.
+	//! InterpolatedPosition is used to make the apparent movement of the
+	//! telescope reticle smoother.
 	Vec3d getJ2000EquatorialPos(const StelNavigator *nav) const;
 	bool prepareCommunication();
 	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
 
+signals:
+	void ascomError(QString);
+
+private slots:
+	void handleDriverException(int code,
+	                           const QString& source,
+	                           const QString& desc,
+	                           const QString& help);
+
+private:
 	InterpolatedPosition interpolatedPosition;
 	virtual bool hasKnownPosition(void) const
 	{
@@ -50,9 +68,35 @@ private:
 	Equinox equinox;
 
 	//! Qt wrapper around the ASCOM device driver COM object.
-	QAxObject * driver;
+	QAxObject* driver;
 	//! String identifier of the ASCOM driver object.
 	QString driverId;
+
+	//! Deletes the internal driver object, putting the client into
+	//! a deinitialized state.
+	void deleteDriver();
+
+	//! Counter for taking the telescope's position every
+	//! POSITION_REFRESH_INTERVAL microseconds.
+	qint64 timeToGetPosition;
+	//! Interval between attempts to read position info, in microseconds.
+	//! Default is half a second.
+	static const qint64 POSITION_REFRESH_INTERVAL = 500000;
+
+	//ASCOM named properties and functions
+	static const char* P_CONNECTED;
+	static const char* P_PARKED;
+	static const char* P_TRACKING;
+	static const char* P_CAN_SLEW;
+	static const char* P_CAN_SLEW_ASYNCHRONOUSLY;
+	static const char* P_CAN_TRACK;
+	static const char* P_CAN_UNPARK;
+	static const char* P_RA;
+	static const char* P_DEC;
+	static const char* P_EQUATORIAL_SYSTEM;
+	static const char* M_UNPARK;
+	static const char* M_SLEW;
+	static const char* M_SLEW_ASYNCHRONOUSLY;
 };
 
 #endif //_TELESCOPE_CLIENT_ASCOM_HPP_
