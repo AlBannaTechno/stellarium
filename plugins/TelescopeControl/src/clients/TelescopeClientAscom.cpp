@@ -97,7 +97,13 @@ TelescopeClientAscom::TelescopeClientAscom(const QString &name, const QString &p
 
 TelescopeClientAscom::~TelescopeClientAscom(void)
 {
-	//
+	if (driver)
+	{
+		if (!driver->isNull())
+			driver->clear();
+		delete driver;
+		driver = 0;
+	}
 }
 
 bool TelescopeClientAscom::isInitialized(void) const
@@ -145,6 +151,10 @@ void TelescopeClientAscom::performCommunication()
 			return;
 	}
 
+	bool isParked = driver->property(P_PARKED).toBool();
+	if (isParked)
+		return;
+
 	//Get the position every POSITION_REFRESH_INTERVAL microseconds
 	const qint64 now = getNow();
 	if (now < timeToGetPosition)
@@ -152,6 +162,11 @@ void TelescopeClientAscom::performCommunication()
 	else
 		timeToGetPosition = now + POSITION_REFRESH_INTERVAL;
 
+	//This returns result of type AscomInterfacesLib::EquatorialCoordinateType,
+	//which is not registered. AFAIK, using it would require defining
+	//the interface in Stellarium's code. I don't know how compatible is this
+	//with the GNU GPL.
+	/*
 	//Determine the coordinate system
 	//Stellarium supports only JNow (1) and J2000 (2).
 	int equatorialCoordinateType = driver->property(P_EQUATORIAL_SYSTEM).toInt();
@@ -160,7 +175,7 @@ void TelescopeClientAscom::performCommunication()
 		qWarning() << "Stellarium does not support any of the coordinate "
 		              "formats used by" << name;
 		return;
-	}
+	}*/
 
 	//Get the coordinates and convert them to a vector
 	const qint64 serverTime = getNow();
@@ -172,7 +187,9 @@ void TelescopeClientAscom::performCommunication()
 	StelUtils::spheToRect(raRadians, decRadians, coordinates);
 
 	Vec3d j2000Coordinates = coordinates;
-	if (equatorialCoordinateType == 1)//coordinates are in JNow
+	//See the note about equinox detection above:
+	//if (equatorialCoordinateType == 1)//coordinates are in JNow
+	if (equinox == EquinoxJNow)
 	{
 		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
 		j2000Coordinates = navigator->equinoxEquToJ2000(coordinates);
@@ -194,6 +211,11 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 			return;
 	}
 
+	//This returns result of type AscomInterfacesLib::EquatorialCoordinateType,
+	//which is not registered. AFAIK, using it would require defining
+	//the interface in Stellarium's code. I don't know how compatible is this
+	//with the GNU GPL.
+	/*
 	//Determine the coordinate system
 	//Stellarium supports only JNow (1) and J2000 (2).
 	int equatorialCoordinateType = driver->property(P_EQUATORIAL_SYSTEM).toInt();
@@ -203,6 +225,7 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 		              "formats used by" << name;
 		return;
 	}
+	*/
 
 	//Parked?
 	bool isParked = driver->property(P_PARKED).toBool();
@@ -242,7 +265,9 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 
 	//Equatorial system
 	Vec3d targetCoordinates = j2000Coordinates;
-	if (equatorialCoordinateType == 1)//coordinates are in JNow
+	//See the note about equinox detection above:
+	//if (equatorialCoordinateType == 1)//coordinates are in JNow
+	if (equinox == EquinoxJNow)
 	{
 		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
 		targetCoordinates = navigator->equinoxEquToJ2000(j2000Coordinates);
@@ -252,8 +277,8 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 	double raRadians;
 	double decRadians;
 	StelUtils::rectToSphe(&raRadians, &decRadians, targetCoordinates);
-	const double raHours = raRadians * (M_PI / 12);
-	const double decDegrees = decRadians * (M_PI / 180);
+	const double raHours = raRadians * (12 / M_PI);
+	const double decDegrees = decRadians * (180 / M_PI);
 
 	//Send the "go to" command
 	bool canSlewAsynchronously = driver->property(P_CAN_SLEW_ASYNCHRONOUSLY).toBool();
