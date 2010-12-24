@@ -117,8 +117,6 @@ void TelescopePropertiesWindow::initConfigurationDialog()
 	
 	//Telescope properties
 	ui->lineEditTelescopeName->clear();
-	ui->labelEquinox->setVisible(false);
-	ui->frameEquinox->setVisible(false);
 	ui->frameDelay->setVisible(true);
 	ui->radioButtonJ2000->setChecked(true);
 	ui->checkBoxConnectAtStartup->setChecked(false);
@@ -444,6 +442,21 @@ void TelescopePropertiesWindow::buttonSavePressed()
 		QString type = telescopeManager->getDeviceModels().value(deviceModel).server;
 		newTelescopeProperties.insert("type", type);
 	}
+
+#ifdef Q_OS_WIN32
+	if (ui->radioButtonTelescopeLocalAscom->isChecked())
+	{
+		QString ascomControlId = ui->lineEditAscomControlId->text();
+		if (ascomControlId.isEmpty())
+			return;
+		newTelescopeProperties.insert("driverId", ascomControlId);
+
+		type = ConnectionInternal;
+		connection = "internal";
+
+		newTelescopeProperties.insert("type", "Ascom");
+	}
+#endif
 
 	if (ui->radioButtonTelescopeConnection->isChecked())
 	{
