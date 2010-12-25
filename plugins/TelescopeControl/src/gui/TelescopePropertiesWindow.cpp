@@ -236,6 +236,7 @@ void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 
 	QString connection = properties.value("connection").toString();
 	QString deviceModelName = properties.value("device_model").toString();
+	QString type = properties.value("type").toString();
 	if(!deviceModelName.isEmpty())
 	{
 		ui->radioButtonTelescopeLocalNative->setChecked(true);
@@ -258,6 +259,23 @@ void TelescopePropertiesWindow::initExistingTelescopeConfiguration(int slot)
 		QString serialPort = properties.value("serial_port").toString();
 		ui->lineEditSerialPort->setText(serialPort);
 	}
+#ifdef Q_OS_WIN32
+	//TODO: This is mostly a temporary hack.
+	else if (type == "Ascom")
+	{
+		QString driverId = properties.value("driverId").toString();
+		if (driverId.isEmpty())
+		{
+			//TODO: Debug?
+			return;
+		}
+		if (ui->radioButtonTelescopeLocalAscom->isChecked())
+			toggleTypeLocalAscom(true);
+		else
+			ui->radioButtonTelescopeLocalAscom->setChecked(true);
+		ui->lineEditAscomControlId->setText(driverId);
+	}
+#endif
 	else if (connection == "remote" || connection == "local")
 	{
 		ui->radioButtonTelescopeConnection->setChecked(true);//Calls toggleTypeConnection(true)
