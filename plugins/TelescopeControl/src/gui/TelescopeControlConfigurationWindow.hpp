@@ -55,70 +55,61 @@ protected:
 	Ui_widgetTelescopeControlConfiguration* ui;
 	
 private:
+	void populateConnectionList();
+
 	//! Update the text and the tooltip of the ChangeStatus button
 	void updateStatusButtonForSlot(int slot);
-	
-	void setStatusButtonToStart();
-	void setStatusButtonToStop();
-	void setStatusButtonToConnect();
-	void setStatusButtonToDisconnect();
 
 	int findFirstUnoccupiedSlot();
+	QString getStatusStringForSlot(int slot);
 	
 private slots:
-	void changeSelectedConnectionStatus();
+	//! Connects or disconnects the connection selected in the list.
+	//! Called when the "Connect/Disconnect" button is clicked.
+	void toggleSelectedConnection();
+	//! Called when the "Configure" button is clicked.
 	void configureSelectedConnection();
 	void removeSelectedConnection();
-	void createNewStellariumTelescope();
-	void createNewVirtualTelescope();
+	void createNewStellariumConnection();
+	void createNewVirtualConnection();
 #ifdef Q_OS_WIN32
-	void createNewAscomTelescope();
+	void createNewAscomConnection();
 #endif
 	
 	//! Slot for receiving information from TelescopeConfigurationDialog
 	void saveChanges(QString name, ConnectionType type);
 	//! Slot for receiving information from TelescopeConfigurationDialog
-	void discardChanges(void);
+	void discardChanges();
 	
-	void toggleReticles(int);
-	void toggleLabels(int);
-	void toggleCircles(int);
-	void selectTelecope(const QModelIndex &);
-	void configureTelescope(const QModelIndex &);
+	//! Called when a connection is selected in the list.
+	void selectConnection(const QModelIndex&);
+	//! Used only by configureSelectedConnection().
+	//! The reason for a separate function was that once upon a time
+	//! a connection could be edited by double clicking on it.
+	void configureConnection(const QModelIndex&);
 	
-	//! Update the list of telescopes with their current states
-	void updateTelescopeStates(void);
+	//! Updates the connection states (connected/disconnected) in the list.
+	void updateConnectionStates();
 
 private:
-	enum TelescopeStatus {
-		StatusNA = 0,
-		StatusStarting,
-		StatusConnecting,
-		StatusConnected,
-		StatusDisconnected,
-		StatusStopped,
-		StatusCount
-	};
-	
 	//! @enum ModelColumns This enum defines the number and the order of the columns in the table that lists active telescopes
 	enum ModelColumns {
-		ColumnSlot = 0,		//!< slot number column
-		//ColumnStartup,	//!< startup checkbox column
-		ColumnStatus,		//!< telescope status column
-		ColumnType,		//!< telescope type column
-		ColumnName,		//!< telescope name column
-		ColumnCount		//!< total number of columns
+		ColumnSlot = 0, //!< slot number column
+		//ColumnStartup, //!< startup checkbox column
+		ColumnStatus, //!< connection status (connected/disconnected)
+		ColumnType, //!< connection type column
+		ColumnInterface, //!< connection interface column
+		ColumnName, //!< telescope name column
+		ColumnCount //!< total number of columns
 	};
 	
-	QHash<int, QString> statusString;
 	TelescopePropertiesWindow propertiesWindow;
 	
-	QStandardItemModel * telescopeListModel;
+	QStandardItemModel * connectionListModel;
 	
 	TelescopeControl * telescopeManager;
-	
-	int telescopeStatus[SLOT_NUMBER_LIMIT];
-	ConnectionType telescopeType[SLOT_NUMBER_LIMIT];
+
+	ConnectionType connectionType[SLOT_NUMBER_LIMIT];
 	
 	int telescopeCount;
 	int configuredSlot;

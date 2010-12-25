@@ -49,15 +49,7 @@ TelescopeControlConfigurationWindow::TelescopeControlConfigurationWindow()
 	
 	//TODO: Fix this - it's in the same plugin
 	telescopeManager = GETSTELMODULE(TelescopeControl);
-	telescopeListModel = new QStandardItemModel(0, ColumnCount);
-	
-	//TODO: This shouldn't be a hash...
-	statusString[StatusNA] = QString("N/A");
-	statusString[StatusStarting] = QString("Starting");
-	statusString[StatusConnecting] = QString("Connecting");
-	statusString[StatusConnected] = QString("Connected");
-	statusString[StatusDisconnected] = QString("Disconnected");
-	statusString[StatusStopped] = QString("Stopped");
+	connectionListModel = new QStandardItemModel(0, ColumnCount);
 	
 	telescopeCount = 0;
 }
@@ -66,7 +58,7 @@ TelescopeControlConfigurationWindow::~TelescopeControlConfigurationWindow()
 {	
 	delete ui;
 	
-	delete telescopeListModel;
+	delete connectionListModel;
 }
 
 void TelescopeControlConfigurationWindow::languageChanged()
@@ -84,30 +76,44 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 	
 	//Connect: sender, signal, receiver, method
-	//Page: Telescopes
-	connect(ui->pushButtonChangeStatus, SIGNAL(clicked()), this, SLOT(changeSelectedConnectionStatus()));
-	connect(ui->pushButtonConfigure, SIGNAL(clicked()), this, SLOT(configureSelectedConnection()));
-	connect(ui->pushButtonRemove, SIGNAL(clicked()), this, SLOT(removeSelectedConnection()));
+	//Page: Connection
+	connect(ui->pushButtonChangeStatus, SIGNAL(clicked()),
+	        this, SLOT(toggleSelectedConnection()));
+	connect(ui->pushButtonConfigure, SIGNAL(clicked()),
+	        this, SLOT(configureSelectedConnection()));
+	connect(ui->pushButtonRemove, SIGNAL(clicked()),
+	        this, SLOT(removeSelectedConnection()));
 
-	connect(ui->pushButtonNewStellarium, SIGNAL(clicked()), this, SLOT(createNewStellariumTelescope()));
-	connect(ui->pushButtonNewVirtual, SIGNAL(clicked()), this, SLOT(createNewVirtualTelescope()));
+	connect(ui->pushButtonNewStellarium, SIGNAL(clicked()),
+	        this, SLOT(createNewStellariumConnection()));
+	connect(ui->pushButtonNewVirtual, SIGNAL(clicked()),
+	        this, SLOT(createNewVirtualConnection()));
 #ifdef Q_OS_WIN32
-	connect(ui->pushButtonNewAscom, SIGNAL(clicked()), this, SLOT(createNewAscomTelescope()));
+	connect(ui->pushButtonNewAscom, SIGNAL(clicked()),
+	        this, SLOT(createNewAscomConnection()));
 #endif
 	
-	connect(ui->telescopeTreeView, SIGNAL(clicked (const QModelIndex &)), this, SLOT(selectTelecope(const QModelIndex &)));
-	//connect(ui->telescopeTreeView, SIGNAL(activated (const QModelIndex &)), this, SLOT(configureTelescope(const QModelIndex &)));
+	connect(ui->telescopeTreeView, SIGNAL(clicked (const QModelIndex &)),
+	        this, SLOT(selectConnection(const QModelIndex &)));
+	//connect(ui->telescopeTreeView, SIGNAL(activated (const QModelIndex &)),
+	//        this, SLOT(configureTelescope(const QModelIndex &)));
 	
 	//Page: Options:
-	connect(ui->checkBoxReticles, SIGNAL(stateChanged(int)), this, SLOT(toggleReticles(int)));
-	connect(ui->checkBoxLabels, SIGNAL(stateChanged(int)), this, SLOT(toggleLabels(int)));
-	connect(ui->checkBoxCircles, SIGNAL(stateChanged(int)), this, SLOT(toggleCircles(int)));
+	connect(ui->checkBoxReticles, SIGNAL(toggled(bool)),
+	        telescopeManager, SLOT(setFlagTelescopeReticles(bool)));
+	connect(ui->checkBoxLabels, SIGNAL(toggled(bool)),
+	        telescopeManager, SLOT(setFlagTelescopeLabels(bool)));
+	connect(ui->checkBoxCircles, SIGNAL(toggled(bool)),
+	        telescopeManager, SLOT(setFlagTelescopeCircles(bool)));
 	
-	connect(ui->checkBoxEnableLogs, SIGNAL(toggled(bool)), telescopeManager, SLOT(setFlagUseTelescopeServerLogs(bool)));
+	connect(ui->checkBoxEnableLogs, SIGNAL(toggled(bool)),
+	        telescopeManager, SLOT(setFlagUseTelescopeServerLogs(bool)));
 	
 	//In other dialogs:
-	connect(&propertiesWindow, SIGNAL(changesDiscarded()), this, SLOT(discardChanges()));
-	connect(&propertiesWindow, SIGNAL(changesSaved(QString, ConnectionType)), this, SLOT(saveChanges(QString, ConnectionType)));
+	connect(&propertiesWindow, SIGNAL(changesDiscarded()),
+	        this, SLOT(discardChanges()));
+	connect(&propertiesWindow, SIGNAL(changesSaved(QString, ConnectionType)),
+	        this, SLOT(saveChanges(QString, ConnectionType)));
 	
 	//Initialize the style
 	updateStyle();
@@ -123,139 +129,7 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	ui->groupBoxAscom->setVisible(false);
 #endif
 	
-	//Initializing the list of telescopes
-	telescopeListModel->setColumnCount(ColumnCount);
-	QStringList headerStrings;
-	headerStrings << "#";
-	//headerStrings << "Start";
-	headerStrings <<  "Status";
-	headerStrings << "Type";
-	headerStrings << "Name";
-	telescopeListModel->setHorizontalHeaderLabels(headerStrings);
-	
-	ui->telescopeTreeView->setModel(telescopeListModel);
-	ui->telescopeTreeView->header()->setMovable(false);
-	ui->telescopeTreeView->header()->setResizeMode(ColumnSlot, QHeaderView::ResizeToContents);
-	ui->telescopeTreeView->header()->setStretchLastSection(true);
-	
-	//Populating the list
-	QStandardItem * tempItem;
-	QModelIndex modelIndex;
-
-	//Cycle the slots
-	for (int slot = MIN_SLOT_NUMBER; slot < SLOT_NUMBER_LIMIT; slot++)
-	{
-		//Slot #
-		//int slotNumber = (i+1)%SLOT_COUNT;//Making sure slot 0 is last
-		
-		//Make sure that this is initialized for all slots
-		telescopeStatus[slot] = StatusNA;
-		
-		//Read the telescope properties
-		const QVariantMap& properties = telescopeManager->getTelescopeAtSlot(slot);
-		if(properties.isEmpty())
-			continue;
-
-		QString name = properties.value("name").toString();
-		if (name.isEmpty())
-			continue;
-		QString connection = properties.value("connection").toString();
-		if (connection.isEmpty())
-			continue;
-		QString connectionTypeLabel;
-		if (connection == "internal")
-		{
-			connectionTypeLabel = "local, Stellarium";
-			telescopeType[slot] = ConnectionInternal;
-		}
-		else if (connection == "local")
-		{
-			connectionTypeLabel = "local, external";
-			telescopeType[slot] = ConnectionLocal;
-		}
-		else if (connection == "remote")
-		{
-			connectionTypeLabel = "remote, unknown";
-			telescopeType[slot] = ConnectionRemote;
-		}
-		else
-		{
-			connectionTypeLabel = "virtual";
-			telescopeType[slot] = ConnectionVirtual;
-		}
-		
-		//Determine the telescope's status
-		if (telescopeManager->isConnectedClientAtSlot(slot))
-		{
-			telescopeStatus[slot] = StatusConnected;
-		}
-		else
-		{
-			//TODO: Fix this!
-			//At startup everything exists and attempts to connect
-			telescopeStatus[slot] = StatusConnecting;
-		}
-		
-		//New column on a new row in the list: Slot number
-		int lastRow = telescopeListModel->rowCount();
-		tempItem = new QStandardItem(QString::number(slot));
-		tempItem->setEditable(false);
-		telescopeListModel->setItem(lastRow, ColumnSlot, tempItem);
-		
-		//TODO: This is not updated, because it was commented out
-		//tempItem = new QStandardItem;
-		//tempItem->setEditable(false);
-		//tempItem->setCheckable(true);
-		//tempItem->setCheckState(Qt::Checked);
-		//tempItem->setData("If checked, this telescope will start when Stellarium is started", Qt::ToolTipRole);
-		//telescopeListModel->setItem(lastRow, ColumnStartup, tempItem);//Start-up checkbox
-		
-		//New column on a new row in the list: Telescope status
-		tempItem = new QStandardItem(statusString[telescopeStatus[slot]]);
-		tempItem->setEditable(false);
-		telescopeListModel->setItem(lastRow, ColumnStatus, tempItem);
-		
-		//New column on a new row in the list: Telescope type
-		tempItem = new QStandardItem(connectionTypeLabel);
-		tempItem->setEditable(false);
-		telescopeListModel->setItem(lastRow, ColumnType, tempItem);
-		
-		//New column on a new row in the list: Telescope name
-		tempItem = new QStandardItem(name);
-		tempItem->setEditable(false);
-		telescopeListModel->setItem(lastRow, ColumnName, tempItem);
-		
-		//After everything is done, count this as loaded
-		telescopeCount++;
-	}
-	
-	//Finished populating the table, let's sort it by slot number
-	//ui->telescopeTreeView->setSortingEnabled(true);//Set in the .ui file
-	ui->telescopeTreeView->sortByColumn(ColumnSlot, Qt::AscendingOrder);
-	//(Works even when the table is empty)
-	//(Makes redundant the delay of 0 above)
-	
-	//TODO: Reuse code.
-	if(telescopeCount > 0)
-	{
-		ui->telescopeTreeView->setFocus();
-		ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::ResizeToContents);
-		ui->labelWarning->setText(LABEL_TEXT_CONTROL_TIP);
-	}
-	else
-	{
-		ui->pushButtonChangeStatus->setEnabled(false);
-		ui->pushButtonConfigure->setEnabled(false);
-		ui->pushButtonRemove->setEnabled(false);
-		ui->pushButtonNewStellarium->setFocus();
-		if(telescopeManager->getDeviceModels().isEmpty())
-			ui->labelWarning->setText(LABEL_TEXT_NO_DEVICE_MODELS);
-		else
-			ui->labelWarning->setText(LABEL_TEXT_ADD_TIP);
-	}
-	
-	if(telescopeCount >= SLOT_COUNT)
-		ui->frameNewButtons->setEnabled(false);
+	populateConnectionList();
 	
 	//Checkboxes
 	ui->checkBoxReticles->setChecked(telescopeManager->getFlagTelescopeReticles());
@@ -309,76 +183,31 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	//Everything must be initialized by now, start the updateTimer
 	//TODO: Find if it's possible to run it only when the dialog is visible
 	QTimer* updateTimer = new QTimer(this);
-	connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateTelescopeStates()));
+	connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateConnectionStates()));
 	updateTimer->start(200);
 }
 
-void TelescopeControlConfigurationWindow::toggleReticles(int state)
-{
-	if(state == Qt::Checked)
-	{
-		telescopeManager->setFlagTelescopeReticles(true);
-	}
-	else
-	{
-		telescopeManager->setFlagTelescopeReticles(false);
-	}
-}
-
-void TelescopeControlConfigurationWindow::toggleLabels(int state)
-{
-	if(state == Qt::Checked)
-	{
-		telescopeManager->setFlagTelescopeLabels(true);
-	}
-	else
-	{
-		telescopeManager->setFlagTelescopeLabels(false);
-	}
-}
-
-void TelescopeControlConfigurationWindow::toggleCircles(int state)
-{
-	if(state == Qt::Checked)
-	{
-		telescopeManager->setFlagTelescopeCircles(true);
-	}
-	else
-	{
-		telescopeManager->setFlagTelescopeCircles(false);
-	}
-}
-
-void TelescopeControlConfigurationWindow::selectTelecope(const QModelIndex & index)
+void TelescopeControlConfigurationWindow::selectConnection(const QModelIndex & index)
 {
 	//Extract selected item index
-	int selectedSlot = telescopeListModel->data( telescopeListModel->index(index.row(),0) ).toInt();
+	int selectedSlot = connectionListModel->data( connectionListModel->index(index.row(),0) ).toInt();
 	updateStatusButtonForSlot(selectedSlot);
 
 	//In all cases
 	ui->pushButtonRemove->setEnabled(true);
 }
 
-void TelescopeControlConfigurationWindow::configureTelescope(const QModelIndex & currentIndex)
+void TelescopeControlConfigurationWindow::configureConnection(const QModelIndex & currentIndex)
 {
 	configuredTelescopeIsNew = false;
-	configuredSlot = telescopeListModel->data( telescopeListModel->index(currentIndex.row(), ColumnSlot) ).toInt();
+	configuredSlot = connectionListModel->data( connectionListModel->index(currentIndex.row(), ColumnSlot) ).toInt();
 	
 	//Stop the telescope first if necessary
-	if(telescopeType[configuredSlot] != ConnectionInternal && telescopeStatus[configuredSlot] != StatusDisconnected)
-	{
-		if(telescopeManager->stopTelescopeAtSlot(configuredSlot)) //Act as "Disconnect"
-				telescopeStatus[configuredSlot] = StatusDisconnected;
-		else
-			return;
-	}
-	else if(telescopeStatus[configuredSlot] != StatusStopped)
-	{
-		if(telescopeManager->stopTelescopeAtSlot(configuredSlot)) //Act as "Stop"
-					telescopeStatus[configuredSlot] = StatusStopped;
-	}
+	if(!telescopeManager->stopTelescopeAtSlot(configuredSlot))
+		return;
+
 	//Update the status in the list
-	telescopeListModel->setData(telescopeListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnStatus), statusString[telescopeStatus[configuredSlot]], Qt::DisplayRole);
+	updateConnectionStates();
 	
 	setVisible(false);
 	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
@@ -386,65 +215,27 @@ void TelescopeControlConfigurationWindow::configureTelescope(const QModelIndex &
 	propertiesWindow.initExistingTelescopeConfiguration(configuredSlot);
 }
 
-void TelescopeControlConfigurationWindow::changeSelectedConnectionStatus()
+void TelescopeControlConfigurationWindow::toggleSelectedConnection()
 {
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
 	
 	//Extract selected slot
-	int selectedSlot = telescopeListModel->data( telescopeListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnSlot) ).toInt();
-	
-	//TODO: As most of these are asynchronous actions, it looks like that there should be a queue...
-	
-	if(telescopeType[selectedSlot] != ConnectionInternal) 
-	{
-		//Can't be launched by Stellarium -> can't be stopped by Stellarium
-		//Can be only connected/disconnected
-		if(telescopeStatus[selectedSlot] == StatusDisconnected)
-		{
-			if(telescopeManager->startTelescopeAtSlot(selectedSlot)) //Act as "Connect"
-				telescopeStatus[selectedSlot] = StatusConnecting;
-		}
-		else
-		{
-			if(telescopeManager->stopTelescopeAtSlot(selectedSlot)) //Act as "Disconnect"
-				telescopeStatus[selectedSlot] = StatusDisconnected;
-		}
-	}
+	int selectedSlot = connectionListModel->data( connectionListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnSlot) ).toInt();
+	if(telescopeManager->isConnectedClientAtSlot(selectedSlot))
+		telescopeManager->stopTelescopeAtSlot(selectedSlot);
 	else
-	{
-		switch(telescopeStatus[selectedSlot]) //Why the switch?
-		{
-			case StatusNA:
-			case StatusStopped:
-			{
-				if(telescopeManager->startTelescopeAtSlot(selectedSlot)) //Act as "Start"
-					telescopeStatus[selectedSlot] = StatusConnecting;
-			}
-			break;
-			case StatusConnecting:
-			case StatusConnected:
-			{
-				if(telescopeManager->stopTelescopeAtSlot(selectedSlot)) //Act as "Stop"
-					telescopeStatus[selectedSlot] = StatusStopped;
-			}
-			break;
-			default:
-				break;
-		}
-	}
-	
-	//Update the status in the list
-	telescopeListModel->setData(telescopeListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnStatus), statusString[telescopeStatus[selectedSlot]], Qt::DisplayRole);
+		telescopeManager->startTelescopeAtSlot(selectedSlot);
+	updateConnectionStates();
 }
 
 void TelescopeControlConfigurationWindow::configureSelectedConnection()
 {
 	if(ui->telescopeTreeView->currentIndex().isValid())
-		configureTelescope(ui->telescopeTreeView->currentIndex());
+		configureConnection(ui->telescopeTreeView->currentIndex());
 }
 
-void TelescopeControlConfigurationWindow::createNewStellariumTelescope()
+void TelescopeControlConfigurationWindow::createNewStellariumConnection()
 {
 	if(telescopeCount >= SLOT_COUNT)
 		return;
@@ -457,7 +248,7 @@ void TelescopeControlConfigurationWindow::createNewStellariumTelescope()
 	propertiesWindow.initNewStellariumTelescope(configuredSlot);
 }
 
-void TelescopeControlConfigurationWindow::createNewVirtualTelescope()
+void TelescopeControlConfigurationWindow::createNewVirtualConnection()
 {
 	if(telescopeCount >= SLOT_COUNT)
 		return;
@@ -471,7 +262,7 @@ void TelescopeControlConfigurationWindow::createNewVirtualTelescope()
 }
 
 #ifdef Q_OS_WIN32
-void TelescopeControlConfigurationWindow::createNewAscomTelescope()
+void TelescopeControlConfigurationWindow::createNewAscomConnection()
 {
 	if (telescopeCount >= SLOT_COUNT)
 		return;
@@ -491,7 +282,7 @@ void TelescopeControlConfigurationWindow::removeSelectedConnection()
 		return;
 	
 	//Extract selected slot
-	int selectedSlot = telescopeListModel->data( telescopeListModel->index(ui->telescopeTreeView->currentIndex().row(),0) ).toInt();
+	int selectedSlot = connectionListModel->data( connectionListModel->index(ui->telescopeTreeView->currentIndex().row(),0) ).toInt();
 	
 	//Stop the telescope if necessary and remove it
 	if(telescopeManager->stopTelescopeAtSlot(selectedSlot))
@@ -511,123 +302,16 @@ void TelescopeControlConfigurationWindow::removeSelectedConnection()
 	
 	//Save the changes to file
 	telescopeManager->saveTelescopes();
-	
-	telescopeStatus[selectedSlot] = StatusNA;
-	telescopeCount -= 1;
-	
-//Update the interface to reflect the changes:
-	
-	//Make sure that the header section keeps it size
-	if(telescopeCount == 0)
-		ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::Interactive);
-	
-	//Remove the telescope from the table/tree
-	telescopeListModel->removeRow(ui->telescopeTreeView->currentIndex().row());
-	
-	//If there are less than the maximal number of telescopes now, new ones can be added
-	if(telescopeCount < SLOT_COUNT)
-		ui->frameNewButtons->setEnabled(true);
-	
-	//If there are no telescopes left, disable some buttons
-	if(telescopeCount == 0)
-	{
-		//TODO: Fix the phantom text of the Status button (reuse code?)
-		//IDEA: Vsible/invisible instead of enabled/disabled?
-		//The other buttons expand to take the place (delete spacers)
-		ui->pushButtonChangeStatus->setEnabled(false);
-		ui->pushButtonConfigure->setEnabled(false);
-		ui->pushButtonRemove->setEnabled(false);
-		if(telescopeManager->getDeviceModels().isEmpty())
-			ui->labelWarning->setText(LABEL_TEXT_NO_DEVICE_MODELS);
-		else
-			ui->labelWarning->setText(LABEL_TEXT_ADD_TIP);
-	}
-	else
-	{
-		ui->labelWarning->setText(LABEL_TEXT_CONTROL_TIP);
-		ui->telescopeTreeView->setCurrentIndex(telescopeListModel->index(0,0));
-	}
+	configuredTelescopeIsNew = true;//HACK!
+	populateConnectionList();
 }
 
 void TelescopeControlConfigurationWindow::saveChanges(QString name, ConnectionType type)
 {
 	//Save the changes to file
 	telescopeManager->saveTelescopes();
-	
-	//Type and server properties
-	telescopeType[configuredSlot] = type;
-	QString typeString;
-	switch (type)
-	{
-		case ConnectionVirtual:
-			telescopeStatus[configuredSlot] = StatusStopped;
-			typeString = "virtual";
-			break;
 
-		case ConnectionInternal:
-			if(configuredTelescopeIsNew)
-				telescopeStatus[configuredSlot] = StatusStopped;//TODO: Is there a point? Isn't it better to force the status update method?
-			typeString = "local, Stellarium";
-			break;
-
-		case ConnectionLocal:
-			telescopeStatus[configuredSlot] = StatusDisconnected;
-			typeString = "local, external";
-			break;
-
-		case ConnectionRemote:
-		default:
-			telescopeStatus[configuredSlot] = StatusDisconnected;
-			typeString = "remote, unknown";
-	}
-	
-	//Update the model/list
-	if(configuredTelescopeIsNew)
-	{
-		QList<QStandardItem *> newRow;
-		newRow << new QStandardItem(QString::number(configuredSlot))
-		       << new QStandardItem(statusString[telescopeStatus[configuredSlot]])
-		       << new QStandardItem(typeString)
-		       << new QStandardItem(name);
-		telescopeListModel->appendRow(newRow);
-		telescopeCount++;
-	}
-	else
-	{
-		int currentRow = ui->telescopeTreeView->currentIndex().row();
-		//ColumnSlot doesn't need to be updated. :)
-		telescopeListModel->setData(telescopeListModel->index(currentRow, ColumnStatus), statusString[telescopeStatus[configuredSlot]], Qt::DisplayRole);
-		telescopeListModel->setData(telescopeListModel->index(currentRow, ColumnType), typeString, Qt::DisplayRole);
-		telescopeListModel->setData(telescopeListModel->index(currentRow, ColumnName), name, Qt::DisplayRole);
-	}
-	//Sort the updated table by slot number
-	ui->telescopeTreeView->sortByColumn(ColumnSlot, Qt::AscendingOrder);
-	
-	//Can't add more telescopes if they have reached the maximum number
-	if (telescopeCount >= SLOT_COUNT)
-		ui->frameNewButtons->setEnabled(false);
-	
-	//
-	if (telescopeCount == 0)
-	{
-		ui->pushButtonChangeStatus->setEnabled(false);
-		ui->pushButtonConfigure->setEnabled(false);
-		ui->pushButtonRemove->setEnabled(false);
-		ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::Interactive);
-		if(telescopeManager->getDeviceModels().isEmpty())
-			ui->labelWarning->setText(LABEL_TEXT_NO_DEVICE_MODELS);
-		else
-			ui->labelWarning->setText(LABEL_TEXT_ADD_TIP);
-	}
-	else
-	{
-		ui->telescopeTreeView->setFocus();
-		ui->telescopeTreeView->setCurrentIndex(telescopeListModel->index(0,0));
-		ui->pushButtonConfigure->setEnabled(true);
-		ui->pushButtonRemove->setEnabled(true);
-		ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::ResizeToContents);
-		ui->labelWarning->setText(LABEL_TEXT_CONTROL_TIP);
-	}
+	populateConnectionList();
 	
 	configuredTelescopeIsNew = false;
 	propertiesWindow.setVisible(false);
@@ -647,117 +331,55 @@ void TelescopeControlConfigurationWindow::discardChanges()
 	configuredTelescopeIsNew = false;
 }
 
-void TelescopeControlConfigurationWindow::updateTelescopeStates()
+void TelescopeControlConfigurationWindow::updateConnectionStates()
 {
-	if(telescopeCount == 0)
+	if (telescopeCount == 0)
+		return;
+
+	//If the dialog is not visible, don't bother updating the status
+	if (!visible())
 		return;
 	
 	int slotNumber = -1;
-	for (int i=0; i<(telescopeListModel->rowCount()); i++)
+	for (int i=0; i<(connectionListModel->rowCount()); i++)
 	{
-		slotNumber = telescopeListModel->data( telescopeListModel->index(i, ColumnSlot) ).toInt();
-		//TODO: Check if these cover all possibilites
-		if (telescopeManager->isConnectedClientAtSlot(slotNumber))
-		{
-			telescopeStatus[slotNumber] = StatusConnected;
-		}
-		else if(telescopeManager->isExistingClientAtSlot(slotNumber))
-		{
-			telescopeStatus[slotNumber] = StatusConnecting;
-		}
-		else
-		{
-			if(telescopeType[slotNumber] == ConnectionInternal)
-				telescopeStatus[slotNumber] = StatusStopped;
-			else
-				telescopeStatus[slotNumber] = StatusDisconnected;
-		}
-		
-		//Update the status in the list
-		telescopeListModel->setData(telescopeListModel->index(i, ColumnStatus), statusString[telescopeStatus[slotNumber]], Qt::DisplayRole);
+		slotNumber = connectionListModel->data( connectionListModel->index(i, ColumnSlot) ).toInt();
+		QString newStatusString = getStatusStringForSlot(slotNumber);
+		connectionListModel->setData(connectionListModel->index(i, ColumnStatus), newStatusString, Qt::DisplayRole);
 	}
 	
 	if(ui->telescopeTreeView->currentIndex().isValid())
 	{
-		int selectedSlot = telescopeListModel->data( telescopeListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnSlot) ).toInt();
+		int selectedSlot = connectionListModel->data( connectionListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnSlot) ).toInt();
 		//Update the ChangeStatus button
 		updateStatusButtonForSlot(selectedSlot);
 	}
 }
 
-void TelescopeControlConfigurationWindow::updateStatusButtonForSlot(int selectedSlot)
+void TelescopeControlConfigurationWindow::updateStatusButtonForSlot(int slot)
 {
-	if(telescopeType[selectedSlot] != ConnectionInternal)
+	if(telescopeManager->isConnectedClientAtSlot(slot))
 	{
-		//Can't be launched by Stellarium => can't be stopped by Stellarium
-		//Can be only connected/disconnected
-		if(telescopeStatus[selectedSlot] == StatusDisconnected)
-		{
-			setStatusButtonToConnect();
-			ui->pushButtonChangeStatus->setEnabled(true);
-		}
-		else
-		{
-			setStatusButtonToDisconnect();
-			ui->pushButtonChangeStatus->setEnabled(true);
-		}
+		ui->pushButtonChangeStatus->setText("Disconnect");
+		ui->pushButtonChangeStatus->setToolTip("Disconnect from the selected telescope");
+		ui->pushButtonChangeStatus->setEnabled(true);
 	}
 	else
 	{
-		switch(telescopeStatus[selectedSlot])
-		{
-			case StatusNA:
-			case StatusStopped:
-				setStatusButtonToStart();
-				ui->pushButtonChangeStatus->setEnabled(true);
-				break;
-			case StatusConnected:
-			case StatusConnecting:
-				setStatusButtonToStop();
-				ui->pushButtonChangeStatus->setEnabled(true);
-				break;
-			default:
-				setStatusButtonToStart();
-				ui->pushButtonChangeStatus->setEnabled(false);
-				ui->pushButtonConfigure->setEnabled(false);
-				ui->pushButtonRemove->setEnabled(false);
-				break;
-		}
+		ui->pushButtonChangeStatus->setText("Connect");
+		ui->pushButtonChangeStatus->setToolTip("Connect to the selected telescope");
+		ui->pushButtonChangeStatus->setEnabled(true);
 	}
-}
-
-void TelescopeControlConfigurationWindow::setStatusButtonToStart()
-{
-	ui->pushButtonChangeStatus->setText("Start");
-	ui->pushButtonChangeStatus->setToolTip("Start the selected local telescope");
-}
-
-void TelescopeControlConfigurationWindow::setStatusButtonToStop()
-{
-	ui->pushButtonChangeStatus->setText("Stop");
-	ui->pushButtonChangeStatus->setToolTip("Stop the selected local telescope");
-}
-
-void TelescopeControlConfigurationWindow::setStatusButtonToConnect()
-{
-	ui->pushButtonChangeStatus->setText("Connect");
-	ui->pushButtonChangeStatus->setToolTip("Connect to the selected telescope");
-}
-
-void TelescopeControlConfigurationWindow::setStatusButtonToDisconnect()
-{
-	ui->pushButtonChangeStatus->setText("Disconnect");
-	ui->pushButtonChangeStatus->setToolTip("Disconnect from the selected telescope");
 }
 
 int TelescopeControlConfigurationWindow::findFirstUnoccupiedSlot()
 {
 	//Find the first unoccupied slot (there is at least one)
-	for (int i = MIN_SLOT_NUMBER; i < SLOT_NUMBER_LIMIT; i++)
+	for (int slot = MIN_SLOT_NUMBER; slot < SLOT_NUMBER_LIMIT; slot++)
 	{
 		//configuredSlot = (i+1)%SLOT_COUNT;
-		if(telescopeStatus[i] == StatusNA)
-			return i;
+		if(!telescopeManager->isExistingClientAtSlot(slot))
+			return slot;
 	}
 	return -1;
 }
@@ -771,5 +393,180 @@ void TelescopeControlConfigurationWindow::updateStyle()
 		QString style(gui->getStelStyle().htmlStyleSheet);
 		ui->textBrowserAbout->document()->setDefaultStyleSheet(style);
 		ui->textBrowserHelp->document()->setDefaultStyleSheet(style);
+	}
+}
+
+void TelescopeControlConfigurationWindow::populateConnectionList()
+{
+	//Remember the previously selected connection, if any
+	int selectedRow = 0;
+	if (!configuredTelescopeIsNew)
+		selectedRow = ui->telescopeTreeView->currentIndex().row();
+
+	//Initializing the list of telescopes
+	connectionListModel->clear();
+	telescopeCount = 0;
+
+	connectionListModel->setColumnCount(ColumnCount);
+	QStringList headerStrings;
+	headerStrings << "#";
+	//headerStrings << "Start";
+	headerStrings <<  "Status";
+	headerStrings << "Connection";
+	headerStrings << "Interface";
+	headerStrings << "Name";
+	connectionListModel->setHorizontalHeaderLabels(headerStrings);
+
+	ui->telescopeTreeView->setModel(connectionListModel);
+	ui->telescopeTreeView->header()->setMovable(false);
+	ui->telescopeTreeView->header()->setResizeMode(ColumnSlot, QHeaderView::ResizeToContents);
+	ui->telescopeTreeView->header()->setStretchLastSection(true);
+
+	//Populating the list
+	QStandardItem * tempItem;
+
+	//Cycle the slots
+	for (int slot = MIN_SLOT_NUMBER; slot < SLOT_NUMBER_LIMIT; slot++)
+	{
+		//Slot #
+		//int slotNumber = (i+1)%SLOT_COUNT;//Making sure slot 0 is last
+
+		//Read the telescope properties
+		const QVariantMap& properties = telescopeManager->getTelescopeAtSlot(slot);
+		if(properties.isEmpty())
+			continue;
+
+		QString name = properties.value("name").toString();
+		if (name.isEmpty())
+			continue;
+		QString connection = properties.value("connection").toString();
+		if (connection.isEmpty())
+			continue;
+		QString type = properties.value("type").toString();
+
+		QString connectionTypeLabel;
+		QString interfaceTypeLabel;
+		if (connection == "internal")
+		{
+			if (type.isEmpty())
+				continue;
+
+			connectionTypeLabel = "direct";
+#ifdef Q_OS_WIN32
+			if (type == "Ascom")
+				interfaceTypeLabel = "ASCOM";
+			else
+#endif
+				connectionTypeLabel = "Stellarium";
+			connectionType[slot] = ConnectionInternal;
+		}
+		else if (connection == "local")
+		{
+			connectionTypeLabel = "local";
+			interfaceTypeLabel = "Stellarium";
+			connectionType[slot] = ConnectionLocal;
+		}
+		else if (connection == "remote")
+		{
+			connectionTypeLabel = "remote";
+			interfaceTypeLabel = "Stellarium";
+			connectionType[slot] = ConnectionRemote;
+		}
+		else
+		{
+			connectionTypeLabel = "direct";
+			interfaceTypeLabel = "virtual";
+			connectionType[slot] = ConnectionVirtual;
+		}
+
+		//New column on a new row in the list: Slot number
+		int lastRow = connectionListModel->rowCount();
+		tempItem = new QStandardItem(QString::number(slot));
+		tempItem->setEditable(false);
+		connectionListModel->setItem(lastRow, ColumnSlot, tempItem);
+
+		//TODO: This is not updated, because it was commented out
+		//tempItem = new QStandardItem;
+		//tempItem->setEditable(false);
+		//tempItem->setCheckable(true);
+		//tempItem->setCheckState(Qt::Checked);
+		//tempItem->setData("If checked, this telescope will start when Stellarium is started", Qt::ToolTipRole);
+		//telescopeListModel->setItem(lastRow, ColumnStartup, tempItem);//Start-up checkbox
+
+		//New column on a new row in the list: Connection status
+		QString newStatusString = getStatusStringForSlot(slot);
+		tempItem = new QStandardItem(newStatusString);
+		tempItem->setEditable(false);
+		connectionListModel->setItem(lastRow, ColumnStatus, tempItem);
+
+		//New column on a new row in the list: Connection type
+		tempItem = new QStandardItem(connectionTypeLabel);
+		tempItem->setEditable(false);
+		connectionListModel->setItem(lastRow, ColumnType, tempItem);
+
+		//New column on a new row in the list: Interface type
+		tempItem = new QStandardItem(interfaceTypeLabel);
+		tempItem->setEditable(false);
+		connectionListModel->setItem(lastRow, ColumnInterface, tempItem);
+
+		//New column on a new row in the list: Telescope name
+		tempItem = new QStandardItem(name);
+		tempItem->setEditable(false);
+		connectionListModel->setItem(lastRow, ColumnName, tempItem);
+
+		//After everything is done, count this as loaded
+		telescopeCount++;
+	}
+
+	//Finished populating the table, let's sort it by slot number
+	//ui->telescopeTreeView->setSortingEnabled(true);//Set in the .ui file
+	ui->telescopeTreeView->sortByColumn(ColumnSlot, Qt::AscendingOrder);
+	//(Works even when the table is empty)
+	//(Makes redundant the delay of 0 above)
+
+	if(telescopeCount > 0)
+	{
+		ui->telescopeTreeView->setFocus();
+		ui->telescopeTreeView->setCurrentIndex(connectionListModel->index(selectedRow,0));
+		ui->pushButtonChangeStatus->setEnabled(true);
+		ui->pushButtonConfigure->setEnabled(true);
+		ui->pushButtonRemove->setEnabled(true);
+		ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::ResizeToContents);
+		ui->labelWarning->setText(LABEL_TEXT_CONTROL_TIP);
+	}
+	else
+	{
+		ui->pushButtonChangeStatus->setEnabled(false);
+		ui->pushButtonConfigure->setEnabled(false);
+		ui->pushButtonRemove->setEnabled(false);
+		ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::Interactive);
+		ui->pushButtonNewStellarium->setFocus();
+		if(telescopeManager->getDeviceModels().isEmpty())
+			ui->labelWarning->setText(LABEL_TEXT_NO_DEVICE_MODELS);
+		else
+			ui->labelWarning->setText(LABEL_TEXT_ADD_TIP);
+	}
+
+	//If there are less than the maximal number of telescopes,
+	//new ones can be added
+	if(telescopeCount < SLOT_COUNT)
+		ui->frameNewButtons->setEnabled(true);
+	else
+		ui->frameNewButtons->setEnabled(false);
+}
+
+QString TelescopeControlConfigurationWindow::getStatusStringForSlot(int slot)
+{
+	if (telescopeManager->isConnectedClientAtSlot(slot))
+	{
+		return "Connected";
+	}
+	else if(telescopeManager->isExistingClientAtSlot(slot))
+	{
+		return "Connecting";
+	}
+	else
+	{
+		return "Disconnected";
 	}
 }
