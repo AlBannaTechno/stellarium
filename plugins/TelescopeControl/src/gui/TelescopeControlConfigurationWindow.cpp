@@ -125,7 +125,8 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	else
 		ui->pushButtonNewAscom->setEnabled(false);
 #else
-	ui->frameAscomButtons->setVisible(false);
+	ui->pushButtonNewAscom->setVisible(false);
+	ui->labelAscomNotice->setVisible(false);
 	ui->groupBoxAscom->setVisible(false);
 #endif
 	
@@ -324,7 +325,7 @@ void TelescopeControlConfigurationWindow::discardChanges()
 	setVisible(true);//Brings the current window to the foreground
 	
 	if (telescopeCount >= SLOT_COUNT)
-		ui->frameNewButtons->setEnabled(false);
+		ui->groupBoxNewButtons->setEnabled(false);
 	if (telescopeCount == 0)
 		ui->pushButtonRemove->setEnabled(false);
 	
@@ -550,9 +551,9 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 	//If there are less than the maximal number of telescopes,
 	//new ones can be added
 	if(telescopeCount < SLOT_COUNT)
-		ui->frameNewButtons->setEnabled(true);
+		ui->groupBoxNewButtons->setEnabled(true);
 	else
-		ui->frameNewButtons->setEnabled(false);
+		ui->groupBoxNewButtons->setEnabled(false);
 }
 
 QString TelescopeControlConfigurationWindow::getStatusStringForSlot(int slot)
