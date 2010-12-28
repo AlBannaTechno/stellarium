@@ -15,6 +15,7 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClient.hpp
   clients/TelescopeClient.cpp
   clients/TelescopeClientDummy.hpp
+  clients/TelescopeClientDummy.cpp
   clients/TelescopeClientTcp.hpp
   clients/TelescopeClientTcp.cpp
   clients/TelescopeClientDirectLx200.hpp

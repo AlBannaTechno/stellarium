@@ -37,41 +37,15 @@
 //! TelescopeDummy class in Stellarium's main code.
 class TelescopeClientDummy : public TelescopeClient
 {
+	Q_OBJECT
 public:
-	TelescopeClientDummy(const QString &name, const QString &) : TelescopeClient(name)
-	{
-		desired_pos[0] = XYZ[0] = 1.0;
-		desired_pos[1] = XYZ[1] = 0.0;
-		desired_pos[2] = XYZ[2] = 0.0;
-	}
-	~TelescopeClientDummy(void) {}
-	bool isConnected(void) const
-	{
-		return true;
-	}
-	bool prepareCommunication(void)
-	{
-		XYZ = XYZ * 31.0 + desired_pos;
-		const double lq = XYZ.lengthSquared();
-		if (lq > 0.0)
-			XYZ *= (1.0/sqrt(lq));
-		else
-			XYZ = desired_pos;
-		return true;
-	}
-	void telescopeGoto(const Vec3d &j2000Pos)
-	{
-		desired_pos = j2000Pos;
-		desired_pos.normalize();
-	}
-	bool hasKnownPosition(void) const
-	{
-		return true;
-	}
-	Vec3d getJ2000EquatorialPos(const StelNavigator*) const
-	{
-		return XYZ;
-	}
+	TelescopeClientDummy(const QString& name, const QString&);
+	~TelescopeClientDummy() {}
+	bool isConnected() const;
+	bool prepareCommunication();
+	void telescopeGoto(const Vec3d& j2000Pos);
+	bool hasKnownPosition() const;
+	Vec3d getJ2000EquatorialPos(const StelNavigator*) const;
 	
 private:
 	Vec3d XYZ; // j2000 position
