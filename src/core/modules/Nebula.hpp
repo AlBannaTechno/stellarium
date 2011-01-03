@@ -28,6 +28,7 @@
 class StelPainter;
 class QDataStream;
 
+// Updated Nebula class based on catalogue of Wolfgang Steinicke
 class Nebula : public StelObject
 {
 friend class NebulaMgr;
@@ -74,23 +75,35 @@ private:
 	//! @enum NebulaType Nebula types
 	enum NebulaType
 	{
-		NebGx=0,     //!< Galaxy
-		NebOc=1,     //!< Open star cluster
-		NebGc=2,     //!< Globular star cluster, usually in the Milky Way Galaxy
-		NebN=3,      //!< Bright emission or reflection nebula
-		NebPn=4,     //!< Planetary nebula
-		NebDn=5,     //!< ???
-		NebIg=6,     //!< ???
-		NebCn=7,     //!< Cluster associated with nebulosity
-		NebUnknown=8 //!< Unknown type
+		NebGx,     //!< Galaxy
+		NebOpenC,  //!< Open star cluster
+		NebGlobC,  //!< Globular star cluster, usually in the Milky Way Galaxy
+		NebN,      //!< Bright emission or reflection nebula [deprecated]
+		NebPNe,    //!< Planetary nebula
+		NebDn,     //!< ???
+		NebIg,     //!< ???
+		NebCn,     //!< Cluster associated with nebulosity [deprecated]
+		NebUnknown, //!< Unknown type
+		// NEW types added for W. Steinicke's catalogue
+		NebGNe,		//!< Galactic nebula
+		NebEmis,	//!< Emission nebula
+		NebCopy,	//!< WARNING: repeated object
+		NebInNGC,	//!< WARNING: object already exists in NGC catalogue
+		NebStar		//!< Nebula is actually a star
 	};
 
 	//! Translate nebula name using the passed translator
 	void translateName(StelTranslator& trans) {nameI18 = trans.qtranslate(englishName);}
 
-	bool readNGC(char *record);
-	void readNGC(QDataStream& in);
-			
+	void readNGC(QDataStream& in);	//TODO: implement binary file with new catalogue
+	bool readNGC(QString& record);
+	void readIdentifiers(const QString& record);
+	void parseRecord(const QString& record, int idx);
+	
+	// debug only!
+	void debugNGC(float ra);
+
+	
 	void drawLabel(StelPainter& sPainter, float maxMagLabel);
 	void drawHints(StelPainter& sPainter, float maxMagHints);
 
@@ -107,6 +120,18 @@ private:
 
 	SphericalRegionP pointRegion;
 
+	// Additional data from W. Steinicke's catalogue
+	bool bDreyerObject;			//!< is it in original Dreyer catalogue?
+	QString constellationAbbr;	//!< constellation abbrev.
+	float magB;					//!< blue magnitude
+	float magV;					//!< visual magnitude
+	float SBrightness;			//!< surface brightness (mag/arcmin2)
+	float sizeX;
+	float sizeY;
+	float PAdeg;				//!< principal angle (range 0..360 degrees)
+	QString hubbleType;			//!< Hubble type for galaxies
+
+// Stellarium properties
 	static StelTextureSP texCircle;   // The symbolic circle texture
 	static float hintsBrightness;
 

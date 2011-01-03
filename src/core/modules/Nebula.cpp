@@ -37,9 +37,16 @@
 
 StelTextureSP Nebula::texCircle;
 float Nebula::circleScale = 1.f;
-float Nebula::hintsBrightness = 0;
+float Nebula::hintsBrightness = 1;
 Vec3f Nebula::labelColor = Vec3f(0.4,0.3,0.5);
 Vec3f Nebula::circleColor = Vec3f(0.8,0.8,0.1);
+
+
+/* ___________________________________________________
+ *
+ * New Nebula class with NGC catalogue from W Steinitz
+ * ___________________________________________________
+ */
 
 Nebula::Nebula() :
 		M_nb(0),
@@ -52,6 +59,43 @@ Nebula::Nebula() :
 
 Nebula::~Nebula()
 {
+}
+
+QString Nebula::getTypeString(void) const
+{
+	QString wsType;
+
+	switch(nType)
+	{
+		case NebGx:
+			wsType = q_("Galaxy");
+			break;
+		case NebGNe:
+			wsType = q_("Galactic Nebula");
+			break;
+		case NebPNe:
+			wsType = q_("Planetary nebula");
+			break;
+		case NebOpenC:
+			wsType = q_("Open cluster");
+			break;
+		case NebGlobC:
+			wsType = q_("Globular cluster");
+			break;
+		case NebEmis:
+			wsType = q_("Emission nebula");
+			break;
+		case NebStar:
+			wsType = q_("Star"); // TODO: May look strange to stellarium users?
+			break;
+		case NebUnknown:
+			wsType = q_("Unknown");
+			break;
+		default:
+			wsType = q_("Undocumented type");
+			break;
+	}
+	return wsType;
 }
 
 QString Nebula::getInfoString(const StelCore *core, const InfoStringGroup& flags) const
@@ -137,13 +181,18 @@ void Nebula::drawHints(StelPainter& sPainter, float maxMagHints)
 	float lum = 1.f;//qMin(1,4.f/getOnScreenSize(core))*0.8;
 	sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
 	Nebula::texCircle->bind();
-	sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+	//sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+	float pixelPerDegree = M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
+	//sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree, sizeY*pixelPerDegree);
+	sPainter.drawCircle(XY[0], XY[1], sizeX*pixelPerDegree);
+	//qDebug("x=%f y=%f color[0]=%f", XY[0], XY[1], circleColor[0]*lum*hintsBrightness);
 }
 
 void Nebula::drawLabel(StelPainter& sPainter, float maxMagLabel)
 {
 	if (mag>maxMagLabel)
 		return;
+	
 	sPainter.setColor(labelColor[0], labelColor[1], labelColor[2], hintsBrightness);
 	float size = getAngularSize(NULL)*M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
 	float shift = 4.f + size/1.8f;
@@ -163,6 +212,155 @@ void Nebula::drawLabel(StelPainter& sPainter, float maxMagLabel)
 	sPainter.drawText(XY[0]+shift, XY[1]+shift, str, 0, 0, 0, false);
 }
 
+
+bool Nebula::readNGC(QString& record)
+{
+	int nb;
+
+	// TODO: No longer purely numeric, e.g. NGC 5144A and NGC 5144B
+	// TODO: Number of components also
+	nb = record.mid(1,4).toInt();
+
+	// Is it NGC or IC object?
+	if (record.mid(0,1) == QString("I"))
+	{
+		IC_nb = nb;
+	}
+	else
+	{
+		NGC_nb = nb;
+	}
+
+	readIdentifiers(record);
+	parseRecord(record, nb);
+	
+	return true;
+}
+
+void Nebula::readIdentifiers(const QString& record)
+{
+	int NGCType = record.mid(8,1).toInt();
+	
+	// this is a huge performance drag if called every frame, so cache here
+	switch (NGCType)
+	{
+		case 1: nType = NebGx; break;		// galaxy
+		case 2: nType = NebGNe; break;		// galactic nebula (NEW)
+		case 3: nType = NebPNe; break;		// planetary nebula
+		case 4: nType = NebOpenC; break;	// open cluster
+		case 5: nType = NebGlobC; break;	// globular cluster
+		case 6: nType = NebEmis; break;		// emission nebula (NEW)
+		case 7: nType = NebCopy; break;		// !repeated object! (NEW)
+		case 8: nType = NebInNGC; break;	// !object in NGC catalogue! (NEW)
+		case 9: nType = NebStar; break;		// star (NEW)
+		default:  nType = NebUnknown;
+	}	
+}
+
+//! \brief Degrees (or Hours), Mins, Secs to decimal
+struct DMS
+{
+	float Degrees, Minutes, Secs;
+	
+	DMS(const float _degs, const float _mins, const float _secs)
+		: Degrees(_degs), Minutes(_mins), Secs(_secs)
+	{}
+	
+	float toDecimal()
+	{
+		return Degrees + Minutes/60.0 + Secs/3600.0;
+	}	
+};
+
+//! \brief Read the following positional info:
+//		o constellation
+//		o RA, declination
+//		o B,V mag, surface bightness
+//		o Semimajor/semiminor axis
+//		o PA (degrees)
+//		o Type
+void Nebula::parseRecord(const QString& record, int idx)
+{
+	// Dreyer object?
+	if (record.mid(7,1) == QString("*"))
+		bDreyerObject = true;
+	else
+		bDreyerObject = false;
+	
+	// Identification (object type) -- see above
+	
+	// Precision flags
+	
+	// Constellation
+	constellationAbbr = record.mid(11,3);
+	
+	// right ascension
+	const float raHrs = record.mid(15, 2).toFloat();
+	const float raMins = record.mid(18, 2).toFloat();
+	const float raSecs = record.mid(20, 3).toFloat();
+	float ra = DMS(raHrs, raMins, raSecs).toDecimal();
+	
+	// declination
+	const float decDegs = record.mid(24, 2).toFloat();
+	const float decMins = record.mid(27, 2).toFloat();
+	const float decSecs = record.mid(29, 2).toFloat();
+	const QString decSgn = record.mid(23,1);
+	float dec = DMS(decDegs, decMins, decSecs).toDecimal();
+	if ( decSgn == QString("-")) dec *= -1.;
+	
+	// debug
+	if (idx==5139)
+	{
+		qDebug("data: %s", record.toLatin1().data() );
+		debugNGC(ra);
+	}
+
+	ra *= M_PI/12.;     // Convert from hours to rad
+	dec *= M_PI/180.;    // Convert from deg to rad
+
+	// Calc the Cartesian coord with RA and DE
+	StelUtils::spheToRect(ra, dec, XYZ);	
+
+	// Read the blue (photographic) and visual magnitude
+	magB = record.mid(33, 4).toFloat();
+	mag = magV = record.mid(38, 4).toFloat();
+
+	// surface brightness
+	SBrightness = record.mid(42,4).toFloat();
+	
+	// Calc the angular size in radian
+	// TODO: this should be independant of tex_angular_size
+	// TODO: now have major and minor axes and PA available for galaxies
+	// TODO: also have surface brightness (rendering option?)
+	
+	sizeX = record.mid(46, 4).toFloat();
+	sizeY = record.mid(51, 3).toFloat();
+	PAdeg = record.mid(54, 3).toFloat();
+	float size;		// size (arcmin)
+	if (sizeY > 0)
+		size = 0.5 * (sizeX + sizeY);
+	else
+		size = sizeX;
+
+	angularSize = size/60;
+	if (angularSize<=0)
+		angularSize=0.01;
+
+	// Hubble classification
+	hubbleType = record.mid(57,6);
+	
+	// TODO: PGC/GCGC/ other designations
+
+	// TODO: where is this used?
+	pointRegion = SphericalRegionP(new SphericalPoint(getJ2000EquatorialPos(NULL)));
+}
+
+void Nebula::debugNGC(float ra)
+{
+	qDebug("RA: %f\n", ra);
+	qDebug("For omegaCen, should be: 13hr 26m 47 == %f\n",
+		13 +26.0/60 +47.0/3600);
+}
 
 void Nebula::readNGC(QDataStream& in)
 {
@@ -233,10 +431,10 @@ bool Nebula::readNGC(char *recordstr)
 
 	// this is a huge performance drag if called every frame, so cache here
 	if (!strncmp(&recordstr[8],"Gx",2)) { nType = NebGx;}
-	else if (!strncmp(&recordstr[8],"OC",2)) { nType = NebOc;}
-	else if (!strncmp(&recordstr[8],"Gb",2)) { nType = NebGc;}
+	else if (!strncmp(&recordstr[8],"OC",2)) { nType = NebOpenC;}
+	else if (!strncmp(&recordstr[8],"Gb",2)) { nType = NebGlobC;}
 	else if (!strncmp(&recordstr[8],"Nb",2)) { nType = NebN;}
-	else if (!strncmp(&recordstr[8],"Pl",2)) { nType = NebPn;}
+	else if (!strncmp(&recordstr[8],"Pl",2)) { nType = NebPNe;}
 	else if (!strncmp(&recordstr[8],"  ",2)) { return false;}
 	else if (!strncmp(&recordstr[8]," -",2)) { return false;}
 	else if (!strncmp(&recordstr[8]," *",2)) { return false;}
@@ -259,37 +457,4 @@ bool Nebula::readNGC(char *recordstr)
 }
 #endif
 
-QString Nebula::getTypeString(void) const
-{
-	QString wsType;
-
-	switch(nType)
-	{
-		case NebGx:
-			wsType = q_("Galaxy");
-			break;
-		case NebOc:
-			wsType = q_("Open cluster");
-			break;
-		case NebGc:
-			wsType = q_("Globular cluster");
-			break;
-		case NebN:
-			wsType = q_("Nebula");
-			break;
-		case NebPn:
-			wsType = q_("Planetary nebula");
-			break;
-		case NebCn:
-			wsType = q_("Cluster associated with nebulosity");
-			break;
-		case NebUnknown:
-			wsType = q_("Unknown");
-			break;
-		default:
-			wsType = q_("Undocumented type");
-			break;
-	}
-	return wsType;
-}
 

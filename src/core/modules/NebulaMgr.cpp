@@ -112,6 +112,7 @@ struct DrawNebulaFuncObject
 	void operator()(StelRegionObjectP obj)
 	{
 		Nebula* n = obj.staticCast<Nebula>().data();
+		//qDebug("%f %f", n->angularSize, n->mag);
 		if (n->angularSize>angularSizeLimit || (checkMaxMagHints && n->mag <= maxMagHints))
 		{
 			sPainter->getProjector()->project(n->XYZ,n->XY);
@@ -134,7 +135,8 @@ void NebulaMgr::draw(StelCore* core)
 
 	StelSkyDrawer* skyDrawer = core->getSkyDrawer();
 
-	Nebula::hintsBrightness = hintsFader.getInterstate()*flagShow.getInterstate();
+	//Nebula::hintsBrightness = hintsFader.getInterstate()*flagShow.getInterstate();
+	Nebula::hintsBrightness = 1.;
 
 	sPainter.enableTexture2d(true);
 	glEnable(GL_BLEND);
@@ -225,7 +227,9 @@ void NebulaMgr::loadNebulaSet(const QString& setName)
 {
 	try
 	{
-		loadNGC(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000.dat"));
+		//loadNGC(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000.dat"));
+		// TODO: convert W Steinitz's catalogue to binary format
+		loadNGCOld(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000steinitz.dat"));
 		loadNGCNames(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000names.dat"));
 	}
 	catch (std::runtime_error& e)
@@ -301,7 +305,7 @@ NebulaP NebulaMgr::searchIC(unsigned int IC)
 	return NebulaP();
 }
 
-#if 0
+#if 1
 // read from stream
 bool NebulaMgr::loadNGCOld(const QString& catNGC)
 {
@@ -335,7 +339,7 @@ bool NebulaMgr::loadNGCOld(const QString& catNGC)
 
 		// Create a new Nebula record
 		NebulaP e = NebulaP(new Nebula);
-		if (!e->readNGC((char*)record.toLocal8Bit().data())) // reading error
+		if (!e->readNGC(record)) // reading error
 		{
 			e.clear();
 		}
@@ -352,7 +356,7 @@ bool NebulaMgr::loadNGCOld(const QString& catNGC)
 	qDebug() << "Loaded" << readOk << "/" << totalRecords << "NGC records";
 	return true;
 }
-#endif
+#else
 
 bool NebulaMgr::loadNGC(const QString& catNGC)
 {
@@ -379,7 +383,7 @@ bool NebulaMgr::loadNGC(const QString& catNGC)
 	qDebug() << "Loaded" << totalRecords << "NGC records";
 	return true;
 }
-
+#endif
 bool NebulaMgr::loadNGCNames(const QString& catNGCNames)
 {
 	qDebug() << "Loading NGC name data ...";
