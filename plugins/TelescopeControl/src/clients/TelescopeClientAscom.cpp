@@ -277,7 +277,9 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 	double raRadians;
 	double decRadians;
 	StelUtils::rectToSphe(&raRadians, &decRadians, targetCoordinates);
-	const double raHours = raRadians * (12 / M_PI);
+	double raHours = raRadians * (12 / M_PI);
+	if (raHours < 0)
+		raHours += 24.0;
 	const double decDegrees = decRadians * (180 / M_PI);
 
 	//Send the "go to" command
