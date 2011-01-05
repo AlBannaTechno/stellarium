@@ -1,5 +1,5 @@
 /*
- * Stellarium TelescopeControl Plug-in
+ * Stellarium TelescopeControl plug-in
  * 
  * Copyright (C) 2009-2010 Bogdan Marinov (this file)
  * 
@@ -47,11 +47,11 @@ public:
 	virtual ~TelescopePropertiesWindow();
 	void languageChanged();
 	
-	void initExistingTelescopeConfiguration(int slot);
-	void initNewStellariumTelescope(int slot);
-	void initNewVirtualTelescope(int slot);
+	void prepareForExistingConfiguration(int slot);
+	void prepareNewStellariumConfiguration(int slot);
+	void prepareNewVirtualConfiguration(int slot);
 #ifdef Q_OS_WIN32
-	void initNewAscomTelescope(int slot);
+	void prepareNewAscomConfiguration(int slot);
 #endif
 	
 protected:
@@ -60,18 +60,19 @@ protected:
 	Ui_widgetTelescopeProperties* ui;
 	
 private:
-	void initConfigurationDialog();
+	void showConnectionTab(bool show);
+	void showAscomTab(bool show);
+	void showSerialTab(bool show);
+	void showNetworkTab(bool show);
+	void showTab(QWidget* tab, const QString& label);
+	void hideTab(QWidget* tab);
 	
 private slots:
-	void buttonSavePressed();
-	void buttonDiscardPressed();
+	void saveChanges();
+	void discardChanges();
 	
-	void toggleTypeLocalNative(bool);
-#ifdef Q_OS_WIN32
-	void toggleTypeLocalAscom(bool);
-#endif
-	void toggleTypeConnection(bool);
-	void toggleTypeVirtual(bool);
+	void prepareDirectConnection(bool);
+	void prepareIndirectConnection(bool);
 	
 	void deviceModelSelected(const QString&);
 
@@ -81,18 +82,26 @@ private slots:
 #endif
 
 signals:
-	void changesSaved(QString name, ConnectionType type);
+	void changesSaved(QString name);
 	void changesDiscarded();
 	
 private:
 	QStringList deviceModelNames;
 	
-	QRegExpValidator * telescopeNameValidator;
+	QRegExpValidator * clientNameValidator;
 	QRegExpValidator * hostNameValidator;
 	QRegExpValidator * circleListValidator;
 	QRegExpValidator * serialPortValidator;
 	
 	int configuredSlot;
+	bool configuredConnectionIsRemote;
+	enum ConnectionInterface {
+		ConnectionVirtual = 0,//!<
+		ConnectionStellarium,
+#ifdef Q_OS_WIN32
+		ConnectionAscom,
+#endif
+	} configuredConnectionInterface;
 	
 	TelescopeControl * telescopeManager;
 

@@ -77,7 +77,7 @@ private slots:
 #endif
 	
 	//! Slot for receiving information from TelescopeConfigurationDialog
-	void saveChanges(QString name, ConnectionType type);
+	void saveChanges(QString name);
 	//! Slot for receiving information from TelescopeConfigurationDialog
 	void discardChanges();
 	

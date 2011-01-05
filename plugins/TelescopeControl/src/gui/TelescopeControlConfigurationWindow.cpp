@@ -112,8 +112,8 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	//In other dialogs:
 	connect(&propertiesWindow, SIGNAL(changesDiscarded()),
 	        this, SLOT(discardChanges()));
-	connect(&propertiesWindow, SIGNAL(changesSaved(QString, ConnectionType)),
-	        this, SLOT(saveChanges(QString, ConnectionType)));
+	connect(&propertiesWindow, SIGNAL(changesSaved(QString)),
+	        this, SLOT(saveChanges(QString)));
 	
 	//Initialize the style
 	updateStyle();
@@ -213,7 +213,7 @@ void TelescopeControlConfigurationWindow::configureConnection(const QModelIndex 
 	setVisible(false);
 	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
 	
-	propertiesWindow.initExistingTelescopeConfiguration(configuredSlot);
+	propertiesWindow.prepareForExistingConfiguration(configuredSlot);
 }
 
 void TelescopeControlConfigurationWindow::toggleSelectedConnection()
@@ -246,7 +246,7 @@ void TelescopeControlConfigurationWindow::createNewStellariumConnection()
 	
 	setVisible(false);
 	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
-	propertiesWindow.initNewStellariumTelescope(configuredSlot);
+	propertiesWindow.prepareNewStellariumConfiguration(configuredSlot);
 }
 
 void TelescopeControlConfigurationWindow::createNewVirtualConnection()
@@ -259,7 +259,7 @@ void TelescopeControlConfigurationWindow::createNewVirtualConnection()
 
 	setVisible(false);
 	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
-	propertiesWindow.initNewVirtualTelescope(configuredSlot);
+	propertiesWindow.prepareNewVirtualConfiguration(configuredSlot);
 }
 
 #ifdef Q_OS_WIN32
@@ -273,7 +273,7 @@ void TelescopeControlConfigurationWindow::createNewAscomConnection()
 
 	setVisible(false);
 	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
-	propertiesWindow.initNewAscomTelescope(configuredSlot);
+	propertiesWindow.prepareNewAscomConfiguration(configuredSlot);
 }
 #endif
 
@@ -307,7 +307,7 @@ void TelescopeControlConfigurationWindow::removeSelectedConnection()
 	populateConnectionList();
 }
 
-void TelescopeControlConfigurationWindow::saveChanges(QString name, ConnectionType type)
+void TelescopeControlConfigurationWindow::saveChanges(QString name)
 {
 	//Save the changes to file
 	telescopeManager->saveTelescopes();
