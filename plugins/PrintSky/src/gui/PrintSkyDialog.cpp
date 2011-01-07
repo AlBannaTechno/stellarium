@@ -414,7 +414,9 @@ void PrintSkyDialog::printDataSky(QPrinter * printer)
 		{
 			painter.drawText(surfaceData.adjusted(surfaceData.width()+xPos, yPos, 0, 0), Qt::AlignLeft, QString("%1").arg(listPairsMagnitudesRadius.at(icount-1).first));
 			painter.setBrush(Qt::SolidPattern);
-			painter.drawEllipse(QPoint(surfaceData.left()+surfaceData.width()+xPos-40, surfaceData.top()+yPos+(font.pixelSize()/2)), std::ceil(listPairsMagnitudesRadius.at(icount-1).second), std::ceil(listPairsMagnitudesRadius.at(icount-1).second));
+			painter.drawEllipse(QPoint(surfaceData.left() + surfaceData.width() + xPos - 40, surfaceData.top() + yPos + (font.pixelSize()/2)), 
+									  (int) std::ceil(listPairsMagnitudesRadius.at(icount - 1).second), 
+									  (int) std::ceil(listPairsMagnitudesRadius.at(icount - 1).second));
 			yPos+=lineSpacing;
 			if (yPos+lineSpacing>=surfaceData.height())
 			{

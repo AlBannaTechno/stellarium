@@ -73,12 +73,6 @@ public:
 	//! @param skyCultureDir the name of the directory containing the sky culture to use.
 	virtual void updateSkyCulture(const QString& skyCultureDir);
 
-	//! Limit the number of constellations to draw based on selected stars.
-	//! The selected objects changed, check if some stars are selected and display the
-	//! matching constellations if isolateSelected mode is activated.
-	//! @param action define whether to add to, replace, or remove from the existing selection
-	virtual void selectedObjectChangeCallBack(StelModuleSelectAction action = StelModule::ReplaceSelection);
-
 	//! Load a color scheme
 	virtual void setStelStyle(const QString& section);
 
@@ -107,7 +101,7 @@ public:
 
 	///////////////////////////////////////////////////////////////////////////
 	// Properties setters and getters
-public slots:
+public slots:	
 	//! Set constellation art fade duration in second
 	void setArtFadeDuration(float duration);
 	//! Get constellation art fade duration in second
@@ -139,7 +133,7 @@ public slots:
 	bool getFlagLabels(void) const {return flagNames;}
 
 	//! Set whether selected constellation must be displayed alone
-	void setFlagIsolateSelected(bool s) { isolateSelected = s; }
+	void setFlagIsolateSelected(bool s);
 	//! Get whether selected constellation is displayed alone
 	bool getFlagIsolateSelected(void) const { return isolateSelected;}
 
@@ -163,6 +157,13 @@ public slots:
 	//! Get the font size used for constellation names display
 	float getFontSize() const;
 
+private slots:
+	//! Limit the number of constellations to draw based on selected stars.
+	//! The selected objects changed, check if some stars are selected and display the
+	//! matching constellations if isolateSelected mode is activated.
+	//! @param action define whether to add to, replace, or remove from the existing selection
+	void selectedObjectChange(StelModule::StelModuleSelectAction action);
+	
 private:
 	//! Read constellation names from the given file.
 	//! @param namesFile Name of the file containing the constellation names in english
@@ -212,6 +213,8 @@ private:
 	//! NOTE: this function should return a list of all, or may be deleted. Please
 	//! do not use until it exhibits the proper behaviour.
 	StelObject* getSelected(void) const;
+	//! Remove constellations from selected objects
+	void deselectConstellations(void);
 
 	std::vector<Constellation*> selected; // More than one can be selected at a time
 
