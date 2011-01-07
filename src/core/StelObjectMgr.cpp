@@ -159,8 +159,9 @@ StelObjectP StelObjectMgr::cleverFind(const StelCore* core, const Vec3d& v) cons
 StelObjectP StelObjectMgr::cleverFind(const StelCore* core, int x, int y) const
 {
 	Vec3d v;
-	core->getProjection(StelCore::FrameJ2000)->unProject(x,y,v);
-	return cleverFind(core, v);
+	if (core->getProjection(StelCore::FrameJ2000)->unProject(x,y,v))
+		return cleverFind(core, v);
+	return StelObjectP();
 }
 
 /*************************************************************************
@@ -169,12 +170,7 @@ StelObjectP StelObjectMgr::cleverFind(const StelCore* core, int x, int y) const
 void StelObjectMgr::unSelect(void)
 {
 	lastSelectedObjects.clear();
-
-	// Send the event to every StelModule
-	foreach (StelModule* iter, StelApp::getInstance().getModuleMgr().getAllModules())
-	{
-		iter->selectedObjectChangeCallBack(StelModule::RemoveFromSelection);
-	}
+	emit(selectedObjectChanged(StelModule::RemoveFromSelection));
 }
 
 /*************************************************************************
@@ -199,13 +195,11 @@ bool StelObjectMgr::setSelectedObject(const StelObjectP obj, StelModule::StelMod
 *************************************************************************/
 bool StelObjectMgr::setSelectedObject(const QList<StelObjectP>& objs, StelModule::StelModuleSelectAction action)
 {
-	lastSelectedObjects=objs;
-
-	// Send the event to every StelModule
-	foreach (StelModule* iter, StelApp::getInstance().getModuleMgr().getAllModules())
-	{
-		iter->selectedObjectChangeCallBack(action);
-	}
+	if (action==StelModule::AddToSelection)
+		lastSelectedObjects.append(objs);
+	else
+		lastSelectedObjects = objs;
+	emit(selectedObjectChanged(action));
 	return true;
 }
 
