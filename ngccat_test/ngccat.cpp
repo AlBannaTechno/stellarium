@@ -48,6 +48,8 @@ public:
 	//! Get the printable nebula Type.
 	//! @return the nebula type code.
 	QString getTypeString() const;
+	
+	QString getTypeDetailString(void) const;
 
 //private:
 //	friend struct DrawNebulaFuncObject;
@@ -56,17 +58,13 @@ public:
 	enum NebulaType
 	{
 		NebGx,     //!< Galaxy
+		NebPNe,    //!< Planetary nebula
 		NebOpenC,  //!< Open star cluster
 		NebGlobC,  //!< Globular star cluster, usually in the Milky Way Galaxy
-		NebN,      //!< Bright emission or reflection nebula [deprecated]
-		NebPNe,    //!< Planetary nebula
-		NebDn,     //!< ???
-		NebIg,     //!< ???
-		NebCn,     //!< Cluster associated with nebulosity [deprecated]
 		NebUnknown, //!< Unknown type
 		// NEW types added for W. Steinicke's catalogue
-		NebGNe,		//!< Galactic nebula
-		NebEmis,	//!< Emission nebula
+		NebGNe,		//!< Galactic nebula/SN remnant
+		NebDiffuse,	//!< Diffuse nebula/part of Galaxy, e.g. H-II regions
 		NebCopy,	//!< WARNING: repeated object
 		NebInNGC,	//!< WARNING: object already exists in NGC catalogue
 		NebStar		//!< Nebula is actually a star
@@ -109,6 +107,7 @@ public:
 	float sizeY;
 	float PAdeg;				//!< principal angle (range 0..360 degrees)
 	QString hubbleType;			//!< Hubble type for galaxies
+	bool bNGCObject;
 #if 0
 // Stellarium properties
 	static StelTextureSP texCircle;   // The symbolic circle texture
@@ -117,6 +116,10 @@ public:
 	static Vec3f labelColor, circleColor;
 	static float circleScale;       // Define the scaling of the hints circle
 #endif	
+	private:
+	float BmV;
+	int PGC_nb;
+	QString altDesig1;			//!< alternative designation 1
 };
 
 typedef class Nebula*	NebulaP;
@@ -124,8 +127,16 @@ typedef class Nebula*	NebulaP;
 #define M_PI		3.1415926535
 #define q_			QString
 
-int main()
+int main(int argc, char **argv)
 {
+	if(argc != 3)
+	{
+		qDebug() << "Usage: ngccat_test N/I <number>";
+		exit(0);
+	}
+	bool bNGC = (argv[1][0] == 'N') ? true : false;
+	int idx = QString(argv[2]).toInt();
+	
 	QString catNGC = QString("/home/thomas/.stellarium/nebulae/default/ngc2000steinitz.dat");
 	QList<NebulaP> NGClist;
 	
@@ -174,13 +185,14 @@ int main()
 	in.close();
 	qDebug() << "Loaded" << readOk << "/" << totalRecords << "NGC records";
 
-	int idx = 5466;
+	//idx = 5466;
+	
 	// Look up object
 	for(QList<NebulaP>::const_iterator it = NGClist.begin();
 		it != NGClist.end();
 		++it)
 	{
-		if( (*it)->NGC_nb == idx)
+		if( ((*it)->NGC_nb == idx) && ((*it)->bNGCObject == bNGC))
 		{
 			(*it)->listData();
 		}
@@ -216,11 +228,15 @@ void Nebula::listData() const
 	qDebug() << data;
 	data = QString("V magnitude: %1").arg(magV);
 	qDebug() << data;
+	data = QString("B-V colour: %1").arg(BmV);
+	qDebug() << data;
 	
 	
 	data = QString("Messier number #%1").arg(M_nb);
 	qDebug() << data;
 	data = QString("IC number #%1").arg(IC_nb);
+	qDebug() << data;
+	data = QString("PGC number #%1").arg(PGC_nb);
 	qDebug() << data;
 
 	qDebug() << "Name: " << englishName << ", " << nameI18;
@@ -234,7 +250,82 @@ void Nebula::listData() const
 	qDebug() << data;
 
 	qDebug() << "Type: " << getTypeString();
+	qDebug() << "Sub-type: " << getTypeDetailString();
 	qDebug() << "Hubble type: " << hubbleType;
+}
+
+QString Nebula::getTypeDetailString(void) const
+{
+	QString wsType;
+	
+	// Parse the abbreviations in the 'Hubble type' field
+	switch(nType)
+	{
+		case NebGx:
+		{
+			char* type = hubbleType.toLatin1().data();
+			switch(type[0])
+			{
+				case 'C':
+					wsType = q_("Compact");
+					break;
+				case 'D':
+					wsType = q_("Dwarf");
+					break;
+				case 'E':
+					wsType = q_("Elliptical");
+					break;
+				case 'I':
+					wsType = q_("Irregular");
+					break;
+				case 'P':
+					wsType = q_("Peculiar");
+					break;
+				case 'S':
+					wsType = q_("Spiral");
+					break;
+				default:
+					break;
+			}
+			wsType += ", " + hubbleType;
+			break;
+		}	
+		case NebGlobC:
+			// concentration class, otherwise GCL
+			break;
+			
+			// Following objects share abbreviations
+		case NebOpenC:
+			// Trumpler class, otherwise OCL (sometimes EN too)
+		case NebPNe:
+			// PN, sometimes OCL too
+		case NebGNe:
+			// EN, RN, sometimes OCL too
+			
+
+		// NEW types added for W. Steinicke's catalogue
+		case NebDiffuse:
+			//!< (6) Diffuse nebula/part of Galaxy, e.g. H-II regions
+			// All GxyP in 2010 edition of catalogue
+			break;
+		case NebCopy:
+			//!< (7) WARNING: repeated object
+		case NebInNGC:
+			//!< (8) WARNING: object already exists in NGC catalogue
+			// Check field which stores true NGC identification number
+			wsType = "Repeated object, see " + altDesig1;
+			break;
+		case NebStar:
+			//!< (9) Nebula is actually a star
+			// * followed by 1,2,Group or Cloud
+		case NebUnknown:
+			//!< Unknown type
+			break;
+		default:
+			break;
+	}
+	
+	return wsType;
 }
 
 QString Nebula::getTypeString(void) const
@@ -247,7 +338,7 @@ QString Nebula::getTypeString(void) const
 			wsType = q_("Galaxy");
 			break;
 		case NebGNe:
-			wsType = q_("Galactic Nebula");
+			wsType = q_("Galactic nebula");
 			break;
 		case NebPNe:
 			wsType = q_("Planetary nebula");
@@ -258,8 +349,8 @@ QString Nebula::getTypeString(void) const
 		case NebGlobC:
 			wsType = q_("Globular cluster");
 			break;
-		case NebEmis:
-			wsType = q_("Emission nebula");
+		case NebDiffuse:
+			wsType = q_("Diffuse nebula");
 			break;
 		case NebStar:
 			wsType = q_("Star"); // TODO: May look strange to stellarium users?
@@ -306,11 +397,11 @@ void Nebula::readIdentifiers(const QString& record)
 	switch (NGCType)
 	{
 		case 1: nType = NebGx; break;		// galaxy
-		case 2: nType = NebGNe; break;		// galactic nebula (NEW)
+		case 2: nType = NebGNe; break;		// galactic nebula/SN remnant (NEW)
 		case 3: nType = NebPNe; break;		// planetary nebula
 		case 4: nType = NebOpenC; break;	// open cluster
 		case 5: nType = NebGlobC; break;	// globular cluster
-		case 6: nType = NebEmis; break;		// emission nebula (NEW)
+		case 6: nType = NebDiffuse; break;	// part of Galaxy/diffuse emission, e.g. H-II regions (NEW)
 		case 7: nType = NebCopy; break;		// !repeated object! (NEW)
 		case 8: nType = NebInNGC; break;	// !object in NGC catalogue! (NEW)
 		case 9: nType = NebStar; break;		// star (NEW)
@@ -342,6 +433,9 @@ struct DMS
 //		o Type
 void Nebula::parseRecord(const QString& record, int idx)
 {
+	// In NGC catalogue?
+	bNGCObject = (record.mid(0,1) == QString("N")) ? true : false;
+	
 	// Dreyer object?
 	if (record.mid(7,1) == QString("*"))
 		bDreyerObject = true;
@@ -356,16 +450,16 @@ void Nebula::parseRecord(const QString& record, int idx)
 	constellationAbbr = record.mid(11,3);
 	
 	// right ascension
-	const float raHrs = record.mid(15, 2).toFloat();
-	const float raMins = record.mid(18, 2).toFloat();
+	const float raHrs = record.mid(14, 3).toFloat();
+	const float raMins = record.mid(17, 3).toFloat();
 	const float raSecs = record.mid(20, 3).toFloat();
 	float ra = DMS(raHrs, raMins, raSecs).toDecimal();
 	
 	// declination
-	const float decDegs = record.mid(24, 2).toFloat();
-	const float decMins = record.mid(27, 2).toFloat();
-	const float decSecs = record.mid(29, 2).toFloat();
-	const QString decSgn = record.mid(23,1);
+	const float decDegs = record.mid(24, 3).toFloat();
+	const float decMins = record.mid(27, 3).toFloat();
+	const float decSecs = record.mid(30, 2).toFloat();
+	const QString decSgn = record.mid(23, 1);
 	float dec = DMS(decDegs, decMins, decSecs).toDecimal();
 	if ( decSgn == QString("-")) dec *= -1.;
 	
@@ -383,20 +477,23 @@ void Nebula::parseRecord(const QString& record, int idx)
 	//StelUtils::spheToRect(ra, dec, XYZ);	
 
 	// Read the blue (photographic) and visual magnitude
-	mag = magB = record.mid(33, 4).toFloat();
-	magV = record.mid(38, 4).toFloat();
+	magB = record.mid(32, 5).toFloat();
+	mag = magV = record.mid(37, 5).toFloat();
 
+	// B-V colour
+	BmV = record.mid(42, 3).toFloat();
+	
 	// surface brightness
-	SBrightness = record.mid(42,4).toFloat();
+	SBrightness = record.mid(45,3).toFloat();
 	
 	// Calc the angular size in radian
 	// TODO: this should be independant of tex_angular_size
 	// TODO: now have major and minor axes and PA available for galaxies
 	// TODO: also have surface brightness (rendering option?)
 	
-	sizeX = record.mid(46, 4).toFloat();
-	sizeY = record.mid(51, 3).toFloat();
-	PAdeg = record.mid(54, 3).toFloat();
+	sizeX = record.mid(49, 4).toFloat();
+	sizeY = record.mid(54, 3).toFloat();
+	PAdeg = record.mid(57, 3).toFloat();
 	float size;		// size (arcmin)
 	if (sizeY > 0)
 		size = 0.5 * (sizeX + sizeY);
@@ -404,14 +501,14 @@ void Nebula::parseRecord(const QString& record, int idx)
 		size = sizeX;
 
 	angularSize = size/60;
-	if (angularSize<=0)
-		angularSize=0.01;
 
 	// Hubble classification
-	hubbleType = record.mid(57,6);
+	hubbleType = record.mid(60,9);
 	
 	// TODO: PGC/GCGC/ other designations
-
+	PGC_nb = record.mid(69, 6).toInt();
+	altDesig1 = record.mid(75, 27);
+	
 	// TODO: where is this used?
 	//pointRegion = SphericalRegionP(new SphericalPoint(getJ2000EquatorialPos(NULL)));
 }

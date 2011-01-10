@@ -249,7 +249,7 @@ void Nebula::readIdentifiers(const QString& record)
 		case 3: nType = NebPNe; break;		// planetary nebula
 		case 4: nType = NebOpenC; break;	// open cluster
 		case 5: nType = NebGlobC; break;	// globular cluster
-		case 6: nType = NebEmis; break;		// emission nebula (NEW)
+		case 6: nType = NebEmis; break;		// part of Galaxy, e.g. H-II region (NEW)
 		case 7: nType = NebCopy; break;		// !repeated object! (NEW)
 		case 8: nType = NebInNGC; break;	// !object in NGC catalogue! (NEW)
 		case 9: nType = NebStar; break;		// star (NEW)
