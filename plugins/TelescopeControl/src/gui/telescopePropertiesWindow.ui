@@ -718,9 +718,6 @@ Increase this value if the reticle is skipping.</string>
               </property>
               <item row="0" column="0">
                <widget class="QLabel" name="labelHost">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
                 <property name="text">
                  <string>Host:</string>
                 </property>
@@ -728,9 +725,6 @@ Increase this value if the reticle is skipping.</string>
               </item>
               <item row="1" column="0">
                <widget class="QLineEdit" name="lineEditHostName">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
                 <property name="toolTip">
                  <string>Host name or IPv4 address of the machine that hosts the telescope server</string>
                 </property>
