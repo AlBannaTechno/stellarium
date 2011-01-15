@@ -4,12 +4,14 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src
   ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src/gui
   ${CMAKE_BINARY_DIR}/plugins/TelescopeControl/src/servers
-  . gui clients servers)
+  . gui clients servers indi)
 
 LINK_DIRECTORIES(/src)
 
 SET(TelescopeControl_SRCS
   TelescopeControlGlobals.hpp
+  indi/IndiClient.hpp
+  indi/IndiClient.cpp
   clients/InterpolatedPosition.hpp
   clients/InterpolatedPosition.cpp
   clients/TelescopeClient.hpp
@@ -22,6 +24,8 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClientDirectLx200.cpp
   clients/TelescopeClientDirectNexStar.hpp
   clients/TelescopeClientDirectNexStar.cpp
+  clients/TelescopeClientIndi.hpp
+  clients/TelescopeClientIndi.cpp
   TelescopeControl.hpp
   TelescopeControl.cpp
   gui/SlewWindow.hpp
@@ -79,11 +83,13 @@ SET(TelescopeControl_MOC_HDRS
   gui/TelescopeControlConfigurationWindow.hpp
   gui/SlewWindow.hpp
   TelescopeControl.hpp
+  indi/IndiClient.hpp
   clients/TelescopeClient.hpp
   clients/TelescopeClientDummy.hpp
   clients/TelescopeClientTcp.hpp
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectNexStar.hpp
+  clients/TelescopeClientIndi.hpp
   )
 
 IF(WIN32)

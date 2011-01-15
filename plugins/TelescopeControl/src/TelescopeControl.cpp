@@ -28,6 +28,7 @@
 #include "TelescopeControl.hpp"
 #include "TelescopeClient.hpp"
 #include "TelescopeClientDummy.hpp"
+#include "TelescopeClientIndi.hpp"
 #include "TelescopeClientTcp.hpp"
 #include "TelescopeClientDirectLx200.hpp"
 #include "TelescopeClientDirectNexStar.hpp"
@@ -1076,7 +1077,10 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 		newTelescope = new TelescopeClientAscom(name, parameters, equinox);
 	}
 #endif
-	//TODO: Add INDI here
+	else if (interfaceType == "INDI")
+	{
+		newTelescope = new TelescopeClientIndi(name, QString(), equinox);
+	}
 	else
 	{
 		qWarning() << "TelescopeControl: unable to create a client of type"
