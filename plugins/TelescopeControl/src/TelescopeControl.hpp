@@ -249,7 +249,7 @@ private:
 	QVariantMap telescopeDescriptions;
 	QHash<QString, DeviceModel> deviceModels;
 	
-	QHash<ConnectionType, QString> connectionTypeNames;
+	QHash<ConnectionType, QString> interfaceTypeNames;
 	
 	bool useTelescopeServerLogs;
 	QHash<int, QFile*> telescopeServerLogFiles;

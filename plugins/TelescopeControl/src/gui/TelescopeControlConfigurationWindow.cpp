@@ -378,8 +378,7 @@ int TelescopeControlConfigurationWindow::findFirstUnoccupiedSlot()
 	//Find the first unoccupied slot (there is at least one)
 	for (int slot = MIN_SLOT_NUMBER; slot < SLOT_NUMBER_LIMIT; slot++)
 	{
-		//configuredSlot = (i+1)%SLOT_COUNT;
-		if(!telescopeManager->isExistingClientAtSlot(slot))
+		if(telescopeManager->getTelescopeAtSlot(slot).isEmpty())
 			return slot;
 	}
 	return -1;
@@ -433,6 +432,7 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		//int slotNumber = (i+1)%SLOT_COUNT;//Making sure slot 0 is last
 
 		//Read the telescope properties
+		//(Minimal validation - this is supposed to have been validated once.)
 		const QVariantMap& properties = telescopeManager->getTelescopeAtSlot(slot);
 		if(properties.isEmpty())
 			continue;
@@ -440,44 +440,27 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		QString name = properties.value("name").toString();
 		if (name.isEmpty())
 			continue;
-		QString connection = properties.value("connection").toString();
-		if (connection.isEmpty())
+
+		QString interfaceTypeLabel = properties.value("interface").toString();
+		if (interfaceTypeLabel.isEmpty())
 			continue;
-		QString type = properties.value("type").toString();
 
+		bool isRemote = properties.value("isRemoteConnection").toBool();
 		QString connectionTypeLabel;
-		QString interfaceTypeLabel;
-		if (connection == "internal")
+		if (isRemote)
 		{
-			if (type.isEmpty())
-				continue;
-
-			connectionTypeLabel = "direct";
-#ifdef Q_OS_WIN32
-			if (type == "Ascom")
-				interfaceTypeLabel = "ASCOM";
+			if (properties.value("host") == "localhost")
+			{
+				connectionTypeLabel = "local";
+			}
 			else
-#endif
-				connectionTypeLabel = "Stellarium";
-			connectionType[slot] = ConnectionInternal;
-		}
-		else if (connection == "local")
-		{
-			connectionTypeLabel = "local";
-			interfaceTypeLabel = "Stellarium";
-			connectionType[slot] = ConnectionLocal;
-		}
-		else if (connection == "remote")
-		{
-			connectionTypeLabel = "remote";
-			interfaceTypeLabel = "Stellarium";
-			connectionType[slot] = ConnectionRemote;
+			{
+				connectionTypeLabel = "remote";
+			}
 		}
 		else
 		{
 			connectionTypeLabel = "direct";
-			interfaceTypeLabel = "virtual";
-			connectionType[slot] = ConnectionVirtual;
 		}
 
 		//New column on a new row in the list: Slot number

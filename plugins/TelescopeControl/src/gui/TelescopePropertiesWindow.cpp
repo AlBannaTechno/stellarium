@@ -136,9 +136,7 @@ void TelescopePropertiesWindow::prepareNewStellariumConfiguration(int slot)
 	ui->lineEditFovCircleSizes->clear();
 
 	showConnectionTab(true);
-#ifdef Q_OS_WIN32
 	showAscomTab(false);
-#endif
 }
 
 void TelescopePropertiesWindow::prepareNewVirtualConfiguration(int slot)
@@ -153,9 +151,7 @@ void TelescopePropertiesWindow::prepareNewVirtualConfiguration(int slot)
 	showConnectionTab(false);
 	showSerialTab(false);
 	showNetworkTab(false);
-#ifdef Q_OS_WIN32
 	showAscomTab(false);
-#endif
 
 	ui->lineEditName->setText(QString("New Telescope %1").arg(configuredSlot));
 	ui->checkBoxConnectAtStartup->setChecked(true);
@@ -229,99 +225,127 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 	else
 		ui->radioButtonJ2000->setChecked(true);
 
-	bool connectAtStartup = properties.value("connect_at_startup", false).toBool();
+	bool connectAtStartup = properties.value("connectsAtStartup", false).toBool();
 	ui->checkBoxConnectAtStartup->setChecked(connectAtStartup);
 
-	QStringList circleList = properties.value("circles").toStringList();
+	QStringList circleList = properties.value("fovCircles").toStringList();
 	if(!circleList.isEmpty())
 	{
 		ui->groupBoxFovCircles->setChecked(true);
 		ui->lineEditFovCircleSizes->setText(circleList.join(", "));
 	}
+	else
+	{
+		ui->groupBoxFovCircles->setChecked(false);
+		ui->lineEditFovCircleSizes->clear();
+	}
 
 	//Detecting protocol/interface and connection type
-	QString connection = properties.value("connection").toString();
+	QString interface = properties.value("interface").toString();
+	bool isRemote = properties.value("isRemoteConnection", false).toBool();
 
-	if (connection == "internal")
+	if (interface == "Stellarium")
 	{
-		configuredConnectionIsRemote = false;
-		showNetworkTab(false);
+		configuredConnectionInterface = ConnectionStellarium;
+		showAscomTab(false);
 
-		QString type = properties.value("type").toString();
-#ifdef Q_OS_WIN32
-		//TODO: This is mostly a temporary hack.
-		if (type == "Ascom")
+		if (isRemote)
 		{
-			if (!telescopeManager->canUseAscom())
-			{
-				emit changesDiscarded();
-				return;
-			}
-
-			QString driverId = properties.value("driverId").toString();
-			if (driverId.isEmpty())
-			{
-				emit changesDiscarded();
-				return;
-			}
-			configuredConnectionInterface = ConnectionAscom;
-
-			showAscomTab(true);
+			configuredConnectionIsRemote = true;
+			showNetworkTab(true);
 			showSerialTab(false);
 
-			ui->lineEditAscomControlId->setText(driverId);
-			return;//Normal exit
-		}
-#endif
-		QString deviceModelName = properties.value("device_model").toString();
-		if(!deviceModelName.isEmpty())
-		{
-			//Make the current device model selected in the list
-			int index = ui->comboBoxDeviceModel->findText(deviceModelName);
-			if(index < 0)
-			{
-				qDebug() << "TelescopeConfigurationDialog: Current device model is not in the list?";
-				emit changesDiscarded();
-				return;
-			}
-			else
-			{
-				ui->comboBoxDeviceModel->setCurrentIndex(index);
-			}
-		}
-		else if (!type.isEmpty())
-		{
-			//
+			//TCP port
+			int tcpPort = properties.value("tcpPort", DEFAULT_TCP_PORT_FOR_SLOT(configuredSlot)).toInt();
+			ui->spinBoxTcpPort->setValue(tcpPort);
+
+			//Host name/address
+			ui->lineEditHostName->setText(properties.value("host", "localhost").toString());
 		}
 		else
 		{
-			//TODO: Abnormal exit
+			configuredConnectionIsRemote = false;
+			showNetworkTab(false);
+			showSerialTab(true);
+
+			QString driver = properties.value("driverId").toString();
+			if (driver.isEmpty())
+			{
+				emit changesDiscarded();
+				return;
+			}
+			QString deviceModelName = properties.value("deviceModel").toString();
+			//If no device model name is specified, pick one from the list
+			if (deviceModelName.isEmpty())
+			{
+				foreach (QString name, deviceModelNames)
+				{
+					if (telescopeManager->getDeviceModels().value(name).server == driver)
+					{
+						deviceModelName = name;
+						break;
+					}
+				}
+			}
+
+			if(!deviceModelName.isEmpty())
+			{
+				//Populate the device model list
+				ui->comboBoxDeviceModel->clear();
+				if (!deviceModelNames.isEmpty())
+				{
+					deviceModelNames.sort();
+					ui->comboBoxDeviceModel->addItems(deviceModelNames);
+				}
+				//Make the current device model selected in the list
+				int index = ui->comboBoxDeviceModel->findText(deviceModelName);
+				if(index < 0)
+				{
+					qDebug() << "TelescopeConfigurationDialog: Current device model is not in the list?";
+					emit changesDiscarded();
+					return;
+				}
+				else
+				{
+					ui->comboBoxDeviceModel->setCurrentIndex(index);
+				}
+			}
+			else
+			{
+				//TODO: Abnormal exit
+				emit changesDiscarded();
+				return;
+			}
+
+			//Initialize the serial port value
+			QString serialPort = properties.value("serialPort").toString();
+			ui->lineEditSerialPort->setText(serialPort);
+		}
+	}
+#ifdef Q_OS_WIN32
+	else if (interface == "ASCOM")
+	{
+		if (!telescopeManager->canUseAscom())
+		{
 			emit changesDiscarded();
 			return;
 		}
 
-		configuredConnectionInterface = ConnectionStellarium;
-		showSerialTab(true);
+		QString driverId = properties.value("driverId").toString();
+		if (driverId.isEmpty())
+		{
+			emit changesDiscarded();
+			return;
+		}
+		configuredConnectionInterface = ConnectionAscom;
 
-		//Initialize the serial port value
-		QString serialPort = properties.value("serial_port").toString();
-		ui->lineEditSerialPort->setText(serialPort);
-	}
-	else if (connection == "remote" || connection == "local")
-	{
-		configuredConnectionInterface = ConnectionStellarium;
-		configuredConnectionIsRemote = true;
-
-		showNetworkTab(true);
+		showAscomTab(true);
 		showSerialTab(false);
 
-		//TCP port
-		int tcpPort = properties.value("tcp_port", DEFAULT_TCP_PORT_FOR_SLOT(configuredSlot)).toInt();
-		ui->spinBoxTcpPort->setValue(tcpPort);
-
-		//Host name/address
-		ui->lineEditHostName->setText(properties.value("host_name", "localhost").toString());
+		ui->lineEditAscomControlId->setText(driverId);
+		return;//Normal exit
 	}
+#endif
 	else
 	{
 		configuredConnectionInterface = ConnectionVirtual;
@@ -389,7 +413,7 @@ void TelescopePropertiesWindow::saveChanges()
 	newTelescopeProperties.insert("name", name);
 
 	bool connectAtStartup = ui->checkBoxConnectAtStartup->isChecked();
-	newTelescopeProperties.insert("connect_at_startup", connectAtStartup);
+	newTelescopeProperties.insert("connectsAtStartup", connectAtStartup);
 
 	//Circles
 	QString rawCirclesString = ui->lineEditFovCircleSizes->text().trimmed();
@@ -410,12 +434,12 @@ void TelescopePropertiesWindow::saveChanges()
 				fovCircles.append(circle);
 		}
 		if (!fovCircles.isEmpty())
-			newTelescopeProperties.insert("circles", fovCircles);
+			newTelescopeProperties.insert("fovCircles", fovCircles);
 	}
 	
-	//Type and server properties
+	//Interface properties
 	//TODO: When adding, check for success!
-	QString connection = "virtual";
+	QString interface = "virtual";
 
 	if (configuredConnectionInterface != ConnectionVirtual)
 	{
@@ -431,22 +455,20 @@ void TelescopePropertiesWindow::saveChanges()
 
 	if (configuredConnectionInterface == ConnectionStellarium)
 	{
+		interface = "Stellarium";
+		newTelescopeProperties.insert("isRemoteConnection",
+		                              configuredConnectionIsRemote);
 		if (configuredConnectionIsRemote)
 		{
 			int tcpPort = ui->spinBoxTcpPort->value();
-			newTelescopeProperties.insert("tcp_port", tcpPort);
+			newTelescopeProperties.insert("tcpPort", tcpPort);
 
 			QString hostName = ui->lineEditHostName->text().trimmed();
 			if(hostName.isEmpty())//TODO: Validate host
 				return;
-			if(hostName == "localhost")
+			if(hostName != "localhost")
 			{
-				connection = "local";
-			}
-			else
-			{
-				connection = "remote";
-				newTelescopeProperties.insert("host_name", hostName);
+				newTelescopeProperties.insert("host", hostName);
 			}
 		}
 		else
@@ -455,15 +477,13 @@ void TelescopePropertiesWindow::saveChanges()
 			QString serialPortName = ui->lineEditSerialPort->text();
 			if(!serialPortName.startsWith(SERIAL_PORT_PREFIX))
 				return;//TODO: Add more validation!
-			newTelescopeProperties.insert("serial_port", serialPortName);
-
-			connection = "internal";
+			newTelescopeProperties.insert("serialPort", serialPortName);
 
 			QString deviceModel = ui->comboBoxDeviceModel->currentText();
-			newTelescopeProperties.insert("device_model", deviceModel);
+			newTelescopeProperties.insert("deviceModel", deviceModel);
 
-			QString type = telescopeManager->getDeviceModels().value(deviceModel).server;
-			newTelescopeProperties.insert("type", type);
+			QString driver = telescopeManager->getDeviceModels().value(deviceModel).server;
+			newTelescopeProperties.insert("driverId", driver);
 		}
 	}
 #ifdef Q_OS_WIN32
@@ -474,12 +494,11 @@ void TelescopePropertiesWindow::saveChanges()
 			return;
 		newTelescopeProperties.insert("driverId", ascomControlId);
 
-		connection = "internal";
-		newTelescopeProperties.insert("type", "Ascom");
+		interface = "ASCOM";
 	}
 #endif
 
-	newTelescopeProperties.insert("connection", connection);
+	newTelescopeProperties.insert("interface", interface);
 	telescopeManager->addTelescopeAtSlot(configuredSlot, newTelescopeProperties);
 	
 	emit changesSaved(name);

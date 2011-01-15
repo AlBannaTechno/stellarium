@@ -108,8 +108,6 @@ private:
 	QStandardItemModel * connectionListModel;
 	
 	TelescopeControl * telescopeManager;
-
-	ConnectionType connectionType[SLOT_NUMBER_LIMIT];
 	
 	int telescopeCount;
 	int configuredSlot;
