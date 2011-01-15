@@ -142,7 +142,7 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	//TODO: Expand
 	QString htmlPage = "<html><head></head><body>";
 	htmlPage += "<h2>Stellarium Telescope Control Plug-in</h2>";
-	htmlPage += "<h3>Version " + QString(PLUGIN_VERSION) + "</h3>";
+	htmlPage += "<h3>Version " + QString(TELESCOPE_CONTROL_VERSION) + "</h3>";
 	htmlPage += "<p>Copyright &copy; 2006 Johannes Gajdosik, Michael Heinz</p>";
 	htmlPage += "<p>Copyright &copy; 2009-2010 Bogdan Marinov</p>"
 				"<p>This plug-in is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</p>"

@@ -596,7 +596,7 @@ void TelescopeControl::saveTelescopes()
 		}
 
 		//Add the version:
-		telescopeDescriptions.insert("version", QString(PLUGIN_VERSION));
+		telescopeDescriptions.insert("version", QString(TELESCOPE_CONTROL_VERSION));
 
 		//Convert the tree to JSON
 		StelJsonParser::write(telescopeDescriptions, &telescopesJsonFile);
@@ -612,6 +612,7 @@ void TelescopeControl::saveTelescopes()
 
 void TelescopeControl::loadTelescopes()
 {
+	//TODO: Determine what exactly needed to be in a try/catch
 	try
 	{
 		QString telescopesJsonPath = StelFileMgr::findFile("modules/TelescopeControl", (StelFileMgr::Flags)(StelFileMgr::Directory|StelFileMgr::Writable)) + "/telescopes.json";
@@ -644,7 +645,7 @@ void TelescopeControl::loadTelescopes()
 		}
 
 		QString version = map.value("version", "0.0.0").toString();
-		if(version != QString(PLUGIN_VERSION))
+		if(version != QString(TELESCOPE_CONTROL_VERSION))
 		{
 			qWarning() << "TelescopeControl:"
 				<< "The existing version of telescopes.json is not compatible.";
@@ -755,7 +756,7 @@ bool TelescopeControl::addTelescopeAtSlot(int slot, const QVariantMap& propertie
 	if (name.isEmpty())
 	{
 		qDebug() << "TelescopeControl: Unable to add telescope: "
-		            "No name specified at slot" << slot;
+		         << "No name specified at slot" << slot;
 		return false;
 	}
 	//Connection type
@@ -763,7 +764,7 @@ bool TelescopeControl::addTelescopeAtSlot(int slot, const QVariantMap& propertie
 	if (!connectionTypeNames.values().contains(connectionType))
 	{
 		qDebug() << "TelescopeControl: Unable to add telescope: "
-		            "No valid connection type at slot" << slot;
+		         << "No valid connection type at slot" << slot;
 		return false;
 	}
 
@@ -1173,7 +1174,7 @@ void TelescopeControl::loadDeviceModels()
 			QVariantMap deviceModelsJsonMap;
 			deviceModelsJsonMap = StelJsonParser::parse(&deviceModelsJsonFile).toMap();
 			QString version = deviceModelsJsonMap.value("version", "0.0.0").toString();
-			if(version < QString(PLUGIN_VERSION))
+			if(version < QString(TELESCOPE_CONTROL_VERSION))
 			{
 				deviceModelsJsonFile.close();
 				QString newName = deviceModelsJsonPath + ".backup." + QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss");
