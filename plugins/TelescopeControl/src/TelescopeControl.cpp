@@ -644,23 +644,22 @@ void TelescopeControl::loadTelescopes()
 		}
 
 		QString version = map.value("version", "0.0.0").toString();
-		if(version < QString(PLUGIN_VERSION))
+		if(version != QString(PLUGIN_VERSION))
 		{
+			qWarning() << "TelescopeControl:"
+				<< "The existing version of telescopes.json is not compatible.";
+
 			QString newName = telescopesJsonPath
 				+ ".backup."
 				+ QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss");
 			if(telescopesJsonFile.rename(newName))
 			{
-				qWarning() << "TelescopeControl:"
-					<< "The existing version of telescopes.json is obsolete."
-					<< "It has been backed up as" << newName;
+				qWarning() << "The file has been backed up as" << newName;
 				return;
 			}
 			else
 			{
-				qWarning() << "TelescopeControl:"
-					<< "The existing version of telescopes.json is obsolete."
-					<< "And the file cannot be backed up.";
+				qWarning() << "The file cannot be replaced.";
 				return;
 			}
 		}
