@@ -201,6 +201,9 @@ public:
 	//! IndiClient only handles the command streams.
 	void addConnection(QIODevice* ioDevice);
 
+	//! \todo A temporary function to fill the gap.
+	void sendRawCommand(const QString& command);
+
 	//INDI XML tags
 	static const char* T_DEF_NUMBER_VECTOR;
 	static const char* T_SET_NUMBER_VECTOR;
@@ -223,6 +226,8 @@ public:
 	static const char* A_STEP;
 
 	//INDI standard properties
+	//http://www.indilib.org/index.php?title=Standard_Properties
+	static const char* SP_CONNECTION;
 	static const char* SP_JNOW_COORD;
 
 public slots:

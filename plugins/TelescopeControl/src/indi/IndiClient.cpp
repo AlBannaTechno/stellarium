@@ -191,6 +191,7 @@ const char* IndiClient::A_MINIMUM = "min";
 const char* IndiClient::A_MAXIMUM = "max";
 const char* IndiClient::A_STEP = "step";
 
+const char* IndiClient::SP_CONNECTION = "CONNECTION";
 const char* IndiClient::SP_JNOW_COORD = "EQUATORIAL_EOD_COORD";
 
 IndiClient::IndiClient(QObject* parent)
@@ -239,8 +240,21 @@ void IndiClient::addConnection(QIODevice* newIoDevice)
 	        this, SLOT(handleIncomingCommands()));
 
 	//TODO: Temporarily here. Find a better way!
+	sendRawCommand("<getProperties version='1.7' />\n");
+}
+
+void IndiClient::sendRawCommand(const QString& command)
+{
+	if (textStream == 0)
+		return;
+
+	if (ioDevice == 0 ||
+		!ioDevice->isOpen() ||
+		!ioDevice->isWritable())
+		return;
+
 	QTextStream outgoing(ioDevice);
-	outgoing << QString("<getProperties version='1.7' />\n");
+	outgoing << command;
 }
 
 void IndiClient::handleIncomingCommands()

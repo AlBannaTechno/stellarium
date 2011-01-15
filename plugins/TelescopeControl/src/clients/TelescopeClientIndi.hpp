@@ -60,7 +60,7 @@ signals:
 
 private slots:
 	void handleDriverError(QProcess::ProcessError error);
-	void handleConnectionError(QTcpSocket::SocketError error);
+	void handleConnectionError(QAbstractSocket::SocketError error);
 
 	void handlePropertyUpdate(QString device, Property* property);
 

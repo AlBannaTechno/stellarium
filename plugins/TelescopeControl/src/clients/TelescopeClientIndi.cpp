@@ -45,7 +45,7 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 				connect(tcpSocket,
 				        SIGNAL(error(QAbstractSocket::SocketError)),
 				        this,
-				        SLOT(handleConnectionError(QTcpSocket::SocketError)));
+				        SLOT(handleConnectionError(QAbstractSocket::SocketError)));
 				indiClient.addConnection(tcpSocket);
 				break;
 			}
@@ -67,6 +67,10 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 
 	connect(&indiClient, SIGNAL(propertyUpdated(QString,Property*)),
 	        this, SLOT(handlePropertyUpdate(QString,Property*)));
+
+	//TODO: Find a better way
+	QString commandConnect = "<newSwitchVector device= \"Telescope Simulator\" name=\"CONNECTION\">\n<oneSwitch name=\"CONNECT\">On</oneSwitch>\n<oneSwitch name=\"DISCONNECT\">Off</oneSwitch>\n</newSwitchVector>";
+	indiClient.sendRawCommand(commandConnect);
 }
 
 TelescopeClientIndi::~TelescopeClientIndi(void)
@@ -75,9 +79,9 @@ TelescopeClientIndi::~TelescopeClientIndi(void)
 	if (tcpSocket)
 	{
 		disconnect(tcpSocket,
-		           SIGNAL(error(QTcpSocket::SocketError)),
+		           SIGNAL(error(QAbstractSocket::SocketError)),
 		           this,
-		           SLOT(handleConnectionError(QTcpSocket::SocketError)));
+		           SLOT(handleConnectionError(QAbstractSocket::SocketError)));
 		tcpSocket->disconnectFromHost();
 		tcpSocket->deleteLater();
 	}
@@ -156,9 +160,8 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 
 	//Equatorial system
 	Vec3d targetCoordinates = j2000Coordinates;
-	//See the note about equinox detection above:
-	//if (equatorialCoordinateType == 1)//coordinates are in JNow
-	if (equinox == EquinoxJNow)
+	//As the coordinates in this standard property are always in EOD:
+	//if (equinox == EquinoxJNow)
 	{
 		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
 		targetCoordinates = navigator->equinoxEquToJ2000(j2000Coordinates);
@@ -174,7 +177,10 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	const double decDegrees = decRadians * (180 / M_PI);
 
 	//Send the "go to" command
-	//
+	//TODO: Again, this is not the right way. :)
+	QString commandGoto = "<newNumberVector device= \"Telescope Simulator\" name=\"EQUATORIAL_EOD_COORD_REQUEST\">\n<oneNumber name=\"RA\">%1</oneNumber>\n<oneNumber name=\"DEC\">%2</oneNumber>\n</newNumberVector>";
+	commandGoto = commandGoto.arg(raHours).arg(decDegrees);
+	indiClient.sendRawCommand(commandGoto);
 }
 
 void TelescopeClientIndi::handleConnectionError(QTcpSocket::SocketError error)
