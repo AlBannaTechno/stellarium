@@ -99,11 +99,11 @@ TelescopeControl::TelescopeControl()
 {
 	setObjectName("TelescopeControl");
 
-	interfaceTypeNames.insert(ConnectionVirtual, "virtual");
-	interfaceTypeNames.insert(ConnectionInternal, "Stellarium");
-	interfaceTypeNames.insert(ConnectionLocal, "INDI");
+	interfaceTypeNames.append("virtual");
+	interfaceTypeNames.append("Stellarium");
+	interfaceTypeNames.append("INDI");
 	//TODO: Ifdef?
-	interfaceTypeNames.insert(ConnectionRemote, "ASCOM");
+	interfaceTypeNames.append("ASCOM");
 
 	configurationWindow = NULL;
 	slewWindow = NULL;
@@ -763,7 +763,7 @@ bool TelescopeControl::addTelescopeAtSlot(int slot, const QVariantMap& propertie
 	}
 	//Interface type
 	QString interfaceType = properties.value("interface").toString();
-	if (!interfaceTypeNames.values().contains(interfaceType))
+	if (!interfaceTypeNames.contains(interfaceType))
 	{
 		qDebug() << "TelescopeControl: Unable to add telescope: "
 		         << "No valid interface type at slot" << slot;
