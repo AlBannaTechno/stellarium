@@ -30,6 +30,10 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 {
 	qDebug() << "Creating INDI telescope client:" << name << params;
 
+	isDefinedConnection = false;
+	isDefinedJ2000CoordinateRequest = false;
+	isDefinedJNowCoordinateRequest = false;
+
 	//TODO: Actually parse the parameters
 	//TODO: For now, for testing purposes, all connections are remote
 	isRemoteConnection = true;
@@ -65,6 +69,8 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 		indiClient.addConnection(driverProcess);
 	}
 
+	connect(&indiClient, SIGNAL(propertyDefined(QString,Property*)),
+	        this, SLOT(handlePropertyDefinition(QString,Property*)));
 	connect(&indiClient, SIGNAL(propertyUpdated(QString,Property*)),
 	        this, SLOT(handlePropertyUpdate(QString,Property*)));
 
@@ -73,7 +79,7 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 	indiClient.sendRawCommand(commandConnect);
 }
 
-TelescopeClientIndi::~TelescopeClientIndi(void)
+TelescopeClientIndi::~TelescopeClientIndi()
 {
 	//TODO: Disconnect stuff
 	if (tcpSocket)
@@ -98,7 +104,7 @@ TelescopeClientIndi::~TelescopeClientIndi(void)
 	}
 }
 
-bool TelescopeClientIndi::isInitialized(void) const
+bool TelescopeClientIndi::isInitialized() const
 {
 	//TODO: Improve the checks.
 	if (isRemoteConnection)
@@ -120,8 +126,9 @@ bool TelescopeClientIndi::isInitialized(void) const
 	}
 }
 
-bool TelescopeClientIndi::isConnected(void) const
+bool TelescopeClientIndi::isConnected() const
 {
+	//TODO: Should include a check for the CONNECTION property
 	if (!isInitialized())
 		return false;
 	else
@@ -139,6 +146,9 @@ bool TelescopeClientIndi::prepareCommunication()
 {
 	if (!isInitialized())
 		return false;
+
+	//TODO: Request properties?
+	//TODO: Try to connect
 
 	return true;
 }
@@ -158,16 +168,28 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 		//
 	}
 
-	//Equatorial system
-	Vec3d targetCoordinates = j2000Coordinates;
-	//As the coordinates in this standard property are always in EOD:
-	//if (equinox == EquinoxJNow)
+	//TODO: Verify what kind of action is going to be performed on a request
+
+	Vec3d targetCoordinates;
+	QString command;
+	if (isDefinedJ2000CoordinateRequest)
+	{
+		targetCoordinates = j2000Coordinates;
+		command = IndiClient::SP_J2000_COORDINATES_REQUEST;
+	}
+	else if (isDefinedJNowCoordinateRequest)
 	{
 		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
 		targetCoordinates = navigator->equinoxEquToJ2000(j2000Coordinates);
+		command = IndiClient::SP_JNOW_COORDINATES_REQUEST;
 	}
-
-	//Convert coordinates from the vector
+	else
+	{
+		//If no standard properties for requesting a slew are defined,
+		//there's no way to perform one.
+		return;
+	}
+	//Get a coordinate pair from the vector
 	double raRadians;
 	double decRadians;
 	StelUtils::rectToSphe(&raRadians, &decRadians, targetCoordinates);
@@ -178,9 +200,9 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 
 	//Send the "go to" command
 	//TODO: Again, this is not the right way. :)
-	QString commandGoto = "<newNumberVector device= \"Telescope Simulator\" name=\"EQUATORIAL_EOD_COORD_REQUEST\">\n<oneNumber name=\"RA\">%1</oneNumber>\n<oneNumber name=\"DEC\">%2</oneNumber>\n</newNumberVector>";
-	commandGoto = commandGoto.arg(raHours).arg(decDegrees);
-	indiClient.sendRawCommand(commandGoto);
+	QString xmlElement = "<newNumberVector device= \"Telescope Simulator\" name=\"%3\">\n<oneNumber name=\"RA\">%1</oneNumber>\n<oneNumber name=\"DEC\">%2</oneNumber>\n</newNumberVector>";
+	xmlElement = xmlElement.arg(raHours).arg(decDegrees).arg(command);
+	indiClient.sendRawCommand(xmlElement);
 }
 
 void TelescopeClientIndi::handleConnectionError(QTcpSocket::SocketError error)
@@ -197,12 +219,44 @@ void TelescopeClientIndi::handleDriverError(QProcess::ProcessError error)
 	qDebug() << driverProcess->errorString();
 }
 
-void TelescopeClientIndi::handlePropertyUpdate(QString device, Property* property)
+void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Property* property)
+{
+	//TODO: Check for IndiClient::SP_CONNECTION
+	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
+	if (numberProperty)
+	{
+		//TODO: Check permissions, too.
+		if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES_REQUEST)
+		{
+			isDefinedJ2000CoordinateRequest = true;
+		}
+		else if (numberProperty->getName() == IndiClient::SP_JNOW_COORDINATES_REQUEST)
+		{
+			isDefinedJNowCoordinateRequest = true;
+		}
+	}
+}
+
+void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* property)
 {
 	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
 	if (numberProperty)
 	{
-		if (numberProperty->getName() == IndiClient::SP_JNOW_COORD)
+		//Use INDI standard properties to receive location
+		bool hasReceivedCoordinates = false;
+		bool coordinatesAreInEod = false;
+
+		if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES)
+		{
+			hasReceivedCoordinates = true;
+		}
+		else if (numberProperty->getName() == IndiClient::SP_JNOW_COORDINATES)
+		{
+			hasReceivedCoordinates = true;
+			coordinatesAreInEod = true;
+		}
+
+		if (hasReceivedCoordinates)
 		{
 			//Get the coordinates and convert them to a vector
 			//TODO: Get serverTime from the property timestamp
@@ -215,8 +269,7 @@ void TelescopeClientIndi::handlePropertyUpdate(QString device, Property* propert
 			StelUtils::spheToRect(raRadians, decRadians, coordinates);
 
 			Vec3d j2000Coordinates = coordinates;
-			//As the coordinates in this standard property are always in EOD:
-			//if (equinox == EquinoxJNow)
+			if (coordinatesAreInEod)
 			{
 				const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
 				j2000Coordinates = navigator->equinoxEquToJ2000(coordinates);

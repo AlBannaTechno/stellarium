@@ -192,7 +192,10 @@ const char* IndiClient::A_MAXIMUM = "max";
 const char* IndiClient::A_STEP = "step";
 
 const char* IndiClient::SP_CONNECTION = "CONNECTION";
-const char* IndiClient::SP_JNOW_COORD = "EQUATORIAL_EOD_COORD";
+const char* IndiClient::SP_J2000_COORDINATES = "EQUATORIAL_COORD";
+const char* IndiClient::SP_JNOW_COORDINATES = "EQUATORIAL_EOD_COORD";
+const char* IndiClient::SP_J2000_COORDINATES_REQUEST = "EQUATORIAL_COORD_REQUEST";
+const char* IndiClient::SP_JNOW_COORDINATES_REQUEST = "EQUATORIAL_EOD_COORD_REQUEST";
 
 IndiClient::IndiClient(QObject* parent)
 	: QObject(parent),

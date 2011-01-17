@@ -228,13 +228,19 @@ public:
 	//INDI standard properties
 	//http://www.indilib.org/index.php?title=Standard_Properties
 	static const char* SP_CONNECTION;
-	static const char* SP_JNOW_COORD;
+	static const char* SP_J2000_COORDINATES;
+	static const char* SP_JNOW_COORDINATES;
+	static const char* SP_J2000_COORDINATES_REQUEST;
+	static const char* SP_JNOW_COORDINATES_REQUEST;
 
 public slots:
 
 signals:
-	void propertyDefined(QString deviceName, Property* property);
-	void propertyUpdated(QString deviceName, Property* property);
+	void propertyDefined(const QString& deviceName, Property* property);
+	void propertyUpdated(const QString& deviceName, Property* property);
+	void propertyRemoved(const QString& deviceName, const QString& propertyName);
+	//! \todo determine parameters
+	void messageLogged();
 
 private slots:
 	void handleIncomingCommands();

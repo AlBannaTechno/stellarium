@@ -44,9 +44,9 @@ class TelescopeClientIndi : public TelescopeClient
 	Q_OBJECT
 public:
 	TelescopeClientIndi(const QString& name, const QString& params, Equinox eq);
-	virtual ~TelescopeClientIndi(void);
-	bool isConnected(void) const;
-	bool isInitialized(void) const;
+	virtual ~TelescopeClientIndi();
+	bool isConnected() const;
+	bool isInitialized() const;
 
 	//! Estimates a current position from the stored previous positions.
 	//! InterpolatedPosition is used to make the apparent movement of the
@@ -62,7 +62,8 @@ private slots:
 	void handleDriverError(QProcess::ProcessError error);
 	void handleConnectionError(QAbstractSocket::SocketError error);
 
-	void handlePropertyUpdate(QString device, Property* property);
+	void handlePropertyDefinition(const QString& device, Property *property);
+	void handlePropertyUpdate(const QString& device, Property* property);
 
 private:
 	InterpolatedPosition interpolatedPosition;
@@ -84,6 +85,10 @@ private:
 	IndiClient indiClient;
 	QTcpSocket* tcpSocket;
 	QProcess* driverProcess;
+
+	bool isDefinedConnection;
+	bool isDefinedJ2000CoordinateRequest;
+	bool isDefinedJNowCoordinateRequest;
 };
 
 #endif //_TELESCOPE_CLIENT_INDI_HPP_
