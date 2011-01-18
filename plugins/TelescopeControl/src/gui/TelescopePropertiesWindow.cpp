@@ -111,9 +111,6 @@ void TelescopePropertiesWindow::createDialogContent()
 	ui->lineEditHostName->setValidator(hostNameValidator);
 	ui->lineEditFovCircleSizes->setValidator(circleListValidator);
 	ui->lineEditSerialPort->setValidator(serialPortValidator);
-
-	//TODO: Temporarily here
-	populateIndiDeviceModelList();
 }
 
 void TelescopePropertiesWindow::prepareNewStellariumConfiguration(int slot)
@@ -143,6 +140,7 @@ void TelescopePropertiesWindow::prepareNewStellariumConfiguration(int slot)
 
 	showConnectionTab(true);
 	showAscomTab(false);
+	showIndiTab(false);
 }
 
 void TelescopePropertiesWindow::prepareNewIndiConfiguration(int slot)
@@ -187,6 +185,7 @@ void TelescopePropertiesWindow::prepareNewVirtualConfiguration(int slot)
 	showSerialTab(false);
 	showNetworkTab(false);
 	showAscomTab(false);
+	showIndiTab(false);
 
 	ui->lineEditName->setText(QString("New Telescope %1").arg(configuredSlot));
 	ui->checkBoxConnectAtStartup->setChecked(true);
@@ -216,6 +215,7 @@ void TelescopePropertiesWindow::prepareNewAscomConfiguration(int slot)
 	showAscomTab(true);
 	showSerialTab(false);
 	showNetworkTab(false);
+	showIndiTab(false);
 
 	ui->lineEditName->setText(QString("New Telescope %1").arg(configuredSlot));
 	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
@@ -283,6 +283,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 	{
 		configuredConnectionInterface = ConnectionStellarium;
 		showAscomTab(false);
+		showIndiTab(false);
 
 		if (isRemote)
 		{
@@ -350,6 +351,77 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 			QString serialPort = properties.value("serialPort").toString();
 			ui->lineEditSerialPort->setText(serialPort);
 		}
+	}
+	else if (interface == "INDI")
+	{
+		//TODO: Reuse the code from the Stellarium case
+		configuredConnectionInterface = ConnectionIndi;
+		showSerialTab(false);
+		showAscomTab(false);
+
+		if (isRemote)
+		{
+			configuredConnectionIsRemote = true;
+			showNetworkTab(true);
+			showIndiTab(false);
+
+			//TCP port
+			int tcpPort = properties.value("tcpPort", DEFAULT_TCP_PORT_FOR_SLOT(configuredSlot)).toInt();
+			ui->spinBoxTcpPort->setValue(tcpPort);
+
+			//Host name/address
+			ui->lineEditHostName->setText(properties.value("host", "localhost").toString());
+		}
+		else
+		{
+			configuredConnectionIsRemote = false;
+			showNetworkTab(false);
+			showIndiTab(true);
+
+			QString driver = properties.value("driverId").toString();
+			if (driver.isEmpty())
+			{
+				emit changesDiscarded();
+				return;
+			}
+			QString deviceModelName = properties.value("deviceModel").toString();
+			//If no device model name is specified, pick one from the list
+			if (deviceModelName.isEmpty())
+			{
+				foreach (QString name, deviceModelNames)
+				{
+					if (telescopeManager->getIndiDeviceModels().value(name) == driver)
+					{
+						deviceModelName = name;
+						break;
+					}
+				}
+			}
+
+			if(!deviceModelName.isEmpty())
+			{
+				populateIndiDeviceModelList();
+				//Make the current device model selected in the list
+				int index = ui->comboBoxIndiDeviceModel->findText(deviceModelName);
+				if(index < 0)
+				{
+					qDebug() << "TelescopeConfigurationDialog: Current device model is not in the list?";
+					emit changesDiscarded();
+					return;
+				}
+				else
+				{
+					ui->comboBoxIndiDeviceModel->setCurrentIndex(index);
+				}
+			}
+			else
+			{
+				//TODO: Abnormal exit
+				emit changesDiscarded();
+				return;
+			}
+		}
+
 	}
 #ifdef Q_OS_WIN32
 	else if (interface == "ASCOM")
