@@ -19,6 +19,8 @@
 #include "TelescopeClientIndi.hpp"
 
 #include <cmath>
+#include <QFile>
+#include <QFileInfo>
 
 #include "StelUtils.hpp"
 
@@ -34,17 +36,27 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 	isDefinedJ2000CoordinateRequest = false;
 	isDefinedJNowCoordinateRequest = false;
 
-	//TODO: Actually parse the parameters
-	//TODO: For now, for testing purposes, all connections are remote
-	isRemoteConnection = true;
+	//TODO: Improve parameter handling
+	//TODO: Finally refactor TelescopeClient constructors to use exceptions.
+	QStringList parametersList = params.split(':');
+	if (parametersList.count() < 2 || parametersList.count() > 3)
+		return;
 
-	if (isRemoteConnection)
+	if (parametersList.count() == 3)
 	{
+		QString host = parametersList[0];
+		if (host.isEmpty())
+			return;
+		quint16 port = parametersList[1].toUInt();
+		//TODO: Validation
+		if (port <= 0)
+			return;
+
 		tcpSocket = new QTcpSocket();
 		for (int i=0; i<3; i++)
 		{
-			tcpSocket->connectToHost("localhost",
-			                         IndiClient::DEFAULT_INDI_TCP_PORT);
+			tcpSocket->connectToHost(host,
+			                         port);
 			if (tcpSocket->waitForConnected(1000))
 			{
 				connect(tcpSocket,
@@ -58,12 +70,19 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 	}
 	else
 	{
+		//TODO: Again, use exception instead of this.
+		QString driverFileName = parametersList[0];
+		if (driverFileName.isEmpty()
+			|| !QFile::exists("/usr/bin/" + driverFileName)
+			|| !QFileInfo("/usr/bin/" + driverFileName).isExecutable())
+			return;
+
 		driverProcess = new QProcess(this);
-		//QString driverPath = "/home/bogdan/indi/qtcreator-build/tutorial_two";
-		QString driverPath = "indi_lx200classic";
+		//TODO: Fix this!
+		//TODO: Pass the full path instead of only the filename?
+		QString driverPath = "/usr/bin/" + driverFileName;
 		QStringList driverArguments;
-		//driverArguments << "\"Test Driver\"";
-		//driverArguments << "/dev/ttyS0";
+		qDebug() << driverPath;
 		driverProcess->start(driverPath, driverArguments);
 		connect(driverProcess, SIGNAL(error(QProcess::ProcessError)),
 		        this, SLOT(handleDriverError(QProcess::ProcessError)));
@@ -76,6 +95,7 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 	        this, SLOT(handlePropertyUpdate(QString,Property*)));
 
 	//TODO: Find a better way
+	//TODO: Move to another function, check if this property has been changed.
 	QString commandConnect = "<newSwitchVector device= \"Telescope Simulator\" name=\"CONNECTION\">\n<oneSwitch name=\"CONNECT\">On</oneSwitch>\n<oneSwitch name=\"DISCONNECT\">Off</oneSwitch>\n</newSwitchVector>";
 	indiClient.sendRawCommand(commandConnect);
 }
@@ -139,7 +159,7 @@ bool TelescopeClientIndi::isConnected() const
 Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelNavigator *nav) const
 {
 	//TODO: see what to do about time_delay
-	const qint64 now = getNow() - POSITION_REFRESH_INTERVAL;// - time_delay;
+	const qint64 now = getNow() - 500000;// - time_delay;
 	return interpolatedPosition.get(now);
 }
 

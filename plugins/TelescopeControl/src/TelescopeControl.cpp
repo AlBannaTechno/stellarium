@@ -820,6 +820,31 @@ bool TelescopeControl::addTelescopeAtSlot(int slot, const QVariantMap& propertie
 			newProperties.insert("serialPort", serialPort);
 		}
 	}
+	else if (interfaceType == "INDI")
+	{
+		if (!isRemote)
+		{
+			//TODO: Better check
+			if (driver.isEmpty() ||
+				!indiDeviceModels.values().contains(driver))
+			{
+				qDebug() << "TelescopeControl: Unable to add telescope: "
+				            "No INDI driver specified for slot" << slot;
+				return false;
+			}
+
+			//Add the stuff to the new node
+			if (deviceModel.isEmpty() || !indiDeviceModels.contains(deviceModel))
+			{
+				newProperties.insert("driverId", driver);
+			}
+			else
+			{
+				newProperties.insert("driverId", indiDeviceModels.value(deviceModel));
+				newProperties.insert("deviceModel", deviceModel);
+			}
+		}
+	}
 #ifdef Q_OS_WIN32
 	else if (interfaceType == "ASCOM")
 	{
@@ -1067,6 +1092,26 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 				newTelescope = new TelescopeClientDirectNexStar(name, parameters, equinox);
 			}
 		}
+	}
+	else if (interfaceType == "INDI")
+	{
+		if (isRemote)
+		{
+			QString host = properties.value("host", "localhost").toString();
+			int port = properties.value("tcpPort").toInt();
+			parameters = QString("%1:%2:%3").arg(host).arg(port).arg(delay);
+		}
+		else
+		{
+			QString driver = properties.value("driverId").toString();
+			//TODO: Fix the file check!
+			if (driver.isEmpty()
+				|| !QFile::exists("/usr/bin/" + driver)
+				|| !QFileInfo("/usr/bin/" + driver).isExecutable())
+				return newTelescope;
+			parameters = QString("%1:%2").arg(driver).arg(delay);
+		}
+		newTelescope = new TelescopeClientIndi(name, parameters, equinox);
 	}
 #ifdef Q_OS_WIN32
 	else if (interfaceType == "ASCOM")

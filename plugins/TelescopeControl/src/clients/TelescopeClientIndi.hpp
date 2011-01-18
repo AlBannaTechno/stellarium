@@ -74,13 +74,6 @@ private:
 
 	Equinox equinox;
 
-	//! Counter for taking the telescope's position every
-	//! POSITION_REFRESH_INTERVAL microseconds.
-	qint64 timeToGetPosition;
-	//! Interval between attempts to read position info, in microseconds.
-	//! Default is half a second.
-	static const qint64 POSITION_REFRESH_INTERVAL = 500000;
-
 	bool isRemoteConnection;
 	IndiClient indiClient;
 	QTcpSocket* tcpSocket;

@@ -71,6 +71,7 @@ private slots:
 	void configureSelectedConnection();
 	void removeSelectedConnection();
 	void createNewStellariumConnection();
+	void createNewIndiConnection();
 	void createNewVirtualConnection();
 #ifdef Q_OS_WIN32
 	void createNewAscomConnection();

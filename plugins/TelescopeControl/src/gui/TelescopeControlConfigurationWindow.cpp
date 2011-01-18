@@ -86,6 +86,8 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 
 	connect(ui->pushButtonNewStellarium, SIGNAL(clicked()),
 	        this, SLOT(createNewStellariumConnection()));
+	connect(ui->pushButtonNewIndi, SIGNAL(clicked()),
+	        this, SLOT(createNewIndiConnection()));
 	connect(ui->pushButtonNewVirtual, SIGNAL(clicked()),
 	        this, SLOT(createNewVirtualConnection()));
 #ifdef Q_OS_WIN32
@@ -247,6 +249,19 @@ void TelescopeControlConfigurationWindow::createNewStellariumConnection()
 	setVisible(false);
 	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
 	propertiesWindow.prepareNewStellariumConfiguration(configuredSlot);
+}
+
+void TelescopeControlConfigurationWindow::createNewIndiConnection()
+{
+	if (telescopeCount >= SLOT_COUNT)
+		return;
+
+	configuredTelescopeIsNew = true;
+	configuredSlot= findFirstUnoccupiedSlot();
+
+	setVisible(false);
+	propertiesWindow.setVisible(true);
+	propertiesWindow.prepareNewIndiConfiguration(configuredSlot);
 }
 
 void TelescopeControlConfigurationWindow::createNewVirtualConnection()

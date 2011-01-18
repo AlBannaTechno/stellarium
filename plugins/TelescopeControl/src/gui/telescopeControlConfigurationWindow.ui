@@ -420,6 +420,25 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QPushButton" name="pushButtonNewIndi">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>INDI...</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
           <item>
@@ -663,6 +682,10 @@
   <tabstop>pushButtonChangeStatus</tabstop>
   <tabstop>pushButtonConfigure</tabstop>
   <tabstop>pushButtonRemove</tabstop>
+  <tabstop>pushButtonNewVirtual</tabstop>
+  <tabstop>pushButtonNewStellarium</tabstop>
+  <tabstop>pushButtonNewAscom</tabstop>
+  <tabstop>pushButtonNewIndi</tabstop>
   <tabstop>checkBoxLabels</tabstop>
   <tabstop>checkBoxReticles</tabstop>
   <tabstop>checkBoxCircles</tabstop>

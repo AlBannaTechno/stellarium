@@ -98,10 +98,6 @@ void TelescopePropertiesWindow::createDialogContent()
 	        SIGNAL(currentIndexChanged(const QString&)),
 	        this,
 	        SLOT(deviceModelSelected(const QString&)));
-	connect(ui->comboBoxIndiDeviceModel,
-	        SIGNAL(currentIndexChanged(const QString&)),
-	        this,
-	        SLOT(indiDeviceModelSelected(const QString&)));
 
 #ifdef Q_OS_WIN32
 	connect(ui->pushButtonAscomSelect, SIGNAL(clicked()),
@@ -126,6 +122,35 @@ void TelescopePropertiesWindow::prepareNewStellariumConfiguration(int slot)
 	configuredConnectionInterface = ConnectionStellarium;
 
 	ui->stelWindowTitle->setText("New Stellarium Telescope");
+
+	//The user must choose between direct and indirect connection
+	ui->stackedWidget->setCurrentWidget(ui->pageType);
+	ui->radioButtonDirectConnection->blockSignals(true);
+	ui->radioButtonDirectConnection->setChecked(false);
+	ui->radioButtonDirectConnection->blockSignals(false);
+	ui->radioButtonIndirectConnection->blockSignals(true);
+	ui->radioButtonIndirectConnection->setChecked(false);
+	ui->radioButtonIndirectConnection->blockSignals(false);
+
+	//Prepare the rest of the window
+	ui->tabWidget->setCurrentWidget(ui->tabGeneral);
+	ui->lineEditName->setText(QString("New Telescope %1").arg(configuredSlot));
+	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
+	ui->radioButtonJ2000->setChecked(true);
+	ui->checkBoxConnectAtStartup->setChecked(false);
+	ui->groupBoxFovCircles->setChecked(false);
+	ui->lineEditFovCircleSizes->clear();
+
+	showConnectionTab(true);
+	showAscomTab(false);
+}
+
+void TelescopePropertiesWindow::prepareNewIndiConfiguration(int slot)
+{
+	configuredSlot = slot;
+	configuredConnectionInterface = ConnectionIndi;
+
+	ui->stelWindowTitle->setText("New INDI Connection");
 
 	//The user must choose between direct and indirect connection
 	ui->stackedWidget->setCurrentWidget(ui->pageType);
@@ -369,16 +394,29 @@ void TelescopePropertiesWindow::prepareDirectConnection(bool prepare)
 
 	configuredConnectionIsRemote = false;
 	showConnectionTab(true);
-	showSerialTab(true);
 	showAscomTab(false);
 	showNetworkTab(false);
 
-	ui->lineEditSerialPort->clear();
-	//TODO: FIX THIS:
-	ui->lineEditSerialPort->setCompleter(new QCompleter(SERIAL_PORT_NAMES, this));
-	ui->lineEditSerialPort->setText(SERIAL_PORT_NAMES.value(0));
-	populateDeviceModelList();
-	ui->comboBoxDeviceModel->setCurrentIndex(0);
+	if (configuredConnectionInterface == ConnectionStellarium)
+	{
+		showSerialTab(true);
+		showIndiTab(false);
+
+		ui->lineEditSerialPort->clear();
+		//TODO: FIX THIS:
+		ui->lineEditSerialPort->setCompleter(new QCompleter(SERIAL_PORT_NAMES, this));
+		ui->lineEditSerialPort->setText(SERIAL_PORT_NAMES.value(0));
+		populateDeviceModelList();
+		ui->comboBoxDeviceModel->setCurrentIndex(0);
+	}
+	else if (configuredConnectionInterface == ConnectionIndi)
+	{
+		showIndiTab(true);
+		showSerialTab(false);
+
+		populateIndiDeviceModelList();
+		ui->comboBoxIndiDeviceModel->setCurrentIndex(0);
+	}
 
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
 }
@@ -395,6 +433,11 @@ void TelescopePropertiesWindow::prepareIndirectConnection(bool prepare)
 	showSerialTab(false);
 
 	ui->lineEditHostName->setText("localhost");
+	if (configuredConnectionInterface == ConnectionIndi)
+	{
+		//TODO: Remove the magic number
+		ui->spinBoxTcpPort->setValue(7624);
+	}
 	ui->spinBoxTcpPort->setValue(DEFAULT_TCP_PORT_FOR_SLOT(configuredSlot));
 
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
@@ -481,6 +524,33 @@ void TelescopePropertiesWindow::saveChanges()
 			newTelescopeProperties.insert("deviceModel", deviceModel);
 
 			QString driver = telescopeManager->getDeviceModels().value(deviceModel).driver;
+			newTelescopeProperties.insert("driverId", driver);
+		}
+	}
+	else if (configuredConnectionInterface == ConnectionIndi)
+	{
+		interface = "INDI";
+		newTelescopeProperties.insert("isRemoteConnection",
+		                              configuredConnectionIsRemote);
+		if (configuredConnectionIsRemote)
+		{
+			int tcpPort = ui->spinBoxTcpPort->value();
+			newTelescopeProperties.insert("tcpPort", tcpPort);
+
+			QString hostName = ui->lineEditHostName->text().trimmed();
+			if(hostName.isEmpty())//TODO: Validate host
+				return;
+			if(hostName != "localhost")
+			{
+				newTelescopeProperties.insert("host", hostName);
+			}
+		}
+		else
+		{
+			QString deviceModel = ui->comboBoxIndiDeviceModel->currentText();
+			newTelescopeProperties.insert("deviceModel", deviceModel);
+
+			QString driver = telescopeManager->getIndiDeviceModels().value(deviceModel);
 			newTelescopeProperties.insert("driverId", driver);
 		}
 	}

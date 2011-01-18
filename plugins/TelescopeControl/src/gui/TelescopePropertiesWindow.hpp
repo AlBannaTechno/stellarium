@@ -49,7 +49,7 @@ public:
 	
 	void prepareForExistingConfiguration(int slot);
 	void prepareNewStellariumConfiguration(int slot);
-	//void prepareNewIndiConfiguration(int slot);
+	void prepareNewIndiConfiguration(int slot);
 	void prepareNewVirtualConfiguration(int slot);
 #ifdef Q_OS_WIN32
 	void prepareNewAscomConfiguration(int slot);
