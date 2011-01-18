@@ -41,7 +41,10 @@ TelescopePropertiesWindow::TelescopePropertiesWindow()
 	telescopeManager = GETSTELMODULE(TelescopeControl);
 	//After the removal of the separate telescope server executables,
 	//this list can't be changed after Stellarium has been started:
+	//TODO: Simply call telescopeManager->getDeviceModels every time instead of
+	//storing it?
 	deviceModelNames = telescopeManager->getDeviceModels().keys();
+	deviceModelNames.sort();
 
 	//Test the update for JSON
 	clientNameValidator = new QRegExpValidator (QRegExp("[^:\"]+"), this);
@@ -95,6 +98,10 @@ void TelescopePropertiesWindow::createDialogContent()
 	        SIGNAL(currentIndexChanged(const QString&)),
 	        this,
 	        SLOT(deviceModelSelected(const QString&)));
+	connect(ui->comboBoxIndiDeviceModel,
+	        SIGNAL(currentIndexChanged(const QString&)),
+	        this,
+	        SLOT(indiDeviceModelSelected(const QString&)));
 
 #ifdef Q_OS_WIN32
 	connect(ui->pushButtonAscomSelect, SIGNAL(clicked()),
@@ -108,6 +115,9 @@ void TelescopePropertiesWindow::createDialogContent()
 	ui->lineEditHostName->setValidator(hostNameValidator);
 	ui->lineEditFovCircleSizes->setValidator(circleListValidator);
 	ui->lineEditSerialPort->setValidator(serialPortValidator);
+
+	//TODO: Temporarily here
+	populateIndiDeviceModelList();
 }
 
 void TelescopePropertiesWindow::prepareNewStellariumConfiguration(int slot)
@@ -280,7 +290,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 			{
 				foreach (QString name, deviceModelNames)
 				{
-					if (telescopeManager->getDeviceModels().value(name).server == driver)
+					if (telescopeManager->getDeviceModels().value(name).driver == driver)
 					{
 						deviceModelName = name;
 						break;
@@ -290,13 +300,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 
 			if(!deviceModelName.isEmpty())
 			{
-				//Populate the device model list
-				ui->comboBoxDeviceModel->clear();
-				if (!deviceModelNames.isEmpty())
-				{
-					deviceModelNames.sort();
-					ui->comboBoxDeviceModel->addItems(deviceModelNames);
-				}
+				populateDeviceModelList();
 				//Make the current device model selected in the list
 				int index = ui->comboBoxDeviceModel->findText(deviceModelName);
 				if(index < 0)
@@ -373,13 +377,7 @@ void TelescopePropertiesWindow::prepareDirectConnection(bool prepare)
 	//TODO: FIX THIS:
 	ui->lineEditSerialPort->setCompleter(new QCompleter(SERIAL_PORT_NAMES, this));
 	ui->lineEditSerialPort->setText(SERIAL_PORT_NAMES.value(0));
-	//Populate the list of available devices
-	ui->comboBoxDeviceModel->clear();
-	if (!deviceModelNames.isEmpty())
-	{
-		deviceModelNames.sort();
-		ui->comboBoxDeviceModel->addItems(deviceModelNames);
-	}
+	populateDeviceModelList();
 	ui->comboBoxDeviceModel->setCurrentIndex(0);
 
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
@@ -482,7 +480,7 @@ void TelescopePropertiesWindow::saveChanges()
 			QString deviceModel = ui->comboBoxDeviceModel->currentText();
 			newTelescopeProperties.insert("deviceModel", deviceModel);
 
-			QString driver = telescopeManager->getDeviceModels().value(deviceModel).server;
+			QString driver = telescopeManager->getDeviceModels().value(deviceModel).driver;
 			newTelescopeProperties.insert("driverId", driver);
 		}
 	}
@@ -526,6 +524,26 @@ void TelescopePropertiesWindow::hideTab(QWidget *tab)
 	ui->tabWidget->removeTab(ui->tabWidget->indexOf(tab));
 }
 
+void TelescopePropertiesWindow::populateDeviceModelList()
+{
+	//Populate the device model list
+	ui->comboBoxDeviceModel->clear();
+	if (!deviceModelNames.isEmpty())
+	{
+		ui->comboBoxDeviceModel->addItems(deviceModelNames);
+	}
+}
+
+void TelescopePropertiesWindow::populateIndiDeviceModelList()
+{
+	ui->comboBoxIndiDeviceModel->clear();
+	QStringList indiModelNames = telescopeManager->getIndiDeviceModels().keys();
+	if (!indiModelNames.isEmpty())
+	{
+		indiModelNames.sort();
+		ui->comboBoxIndiDeviceModel->addItems(indiModelNames);
+	}
+}
 
 void TelescopePropertiesWindow::showConnectionTab(bool show)
 {
@@ -545,6 +563,14 @@ void TelescopePropertiesWindow::showAscomTab(bool show)
 	}
 	else
 		hideTab(ui->tabAscom);
+}
+
+void TelescopePropertiesWindow::showIndiTab(bool show)
+{
+	if (show)
+		showTab(ui->tabIndi, "INDI");
+	else
+		hideTab(ui->tabIndi);
 }
 
 void TelescopePropertiesWindow::showSerialTab(bool show)

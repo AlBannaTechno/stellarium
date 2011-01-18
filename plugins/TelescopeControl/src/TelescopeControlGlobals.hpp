@@ -52,7 +52,7 @@ namespace TelescopeControlGlobals {
 	{
  		QString name;
 		QString description;
-		QString server;
+		QString driver;
 		int defaultDelay;
 	};
 	

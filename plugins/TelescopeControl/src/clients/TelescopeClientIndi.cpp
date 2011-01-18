@@ -43,7 +43,8 @@ TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& par
 		tcpSocket = new QTcpSocket();
 		for (int i=0; i<3; i++)
 		{
-			tcpSocket->connectToHost("localhost", 7624);
+			tcpSocket->connectToHost("localhost",
+			                         IndiClient::DEFAULT_INDI_TCP_PORT);
 			if (tcpSocket->waitForConnected(1000))
 			{
 				connect(tcpSocket,

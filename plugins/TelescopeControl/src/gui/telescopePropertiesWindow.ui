@@ -546,6 +546,51 @@ Increase this value if the reticle is skipping.</string>
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="tabIndi">
+          <attribute name="title">
+           <string>INDI</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayoutIndi">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="margin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QGroupBox" name="groupBoxIndi">
+             <property name="title">
+              <string>Local INDI settings</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_8">
+              <item>
+               <widget class="QLabel" name="labelIndiDeviceModel">
+                <property name="text">
+                 <string>Device model:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBoxIndiDeviceModel"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>116</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
          <widget class="QWidget" name="tabSerial">
           <attribute name="title">
            <string>Serial</string>

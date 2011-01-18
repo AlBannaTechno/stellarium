@@ -19,6 +19,7 @@
 
 #include "IndiClient.hpp"
 #include <QDebug>
+#include <QFile>
 #include <QRegExp>
 
 Element::Element(const QString &elementName, const QString &elementLabel)
@@ -258,6 +259,67 @@ void IndiClient::sendRawCommand(const QString& command)
 
 	QTextStream outgoing(ioDevice);
 	outgoing << command;
+}
+
+QHash<QString,QString> IndiClient::loadDeviceDescriptions()
+{
+	QHash<QString,QString> result;
+
+	//TODO: It should allow the file path to be set somewhere
+	QFile indiDriversXmlFile("/usr/share/indi/drivers.xml");
+	if (indiDriversXmlFile.open(QFile::ReadOnly | QFile::Text))
+	{
+		QXmlStreamReader xmlReader(&indiDriversXmlFile);
+
+		QString deviceName;
+		QString driverName;
+		while (!xmlReader.atEnd())
+		{
+			if (xmlReader.hasError())
+			{
+				qDebug() << "Error parsing drivers.xml:"
+				         << xmlReader.errorString();
+				break;
+			}
+
+			if (xmlReader.isEndDocument())
+				break;
+
+			if (xmlReader.isStartElement())
+			{
+				if (xmlReader.name() == "devGroup")
+				{
+					if (xmlReader.attributes().value("group").toString() != "Telescopes")
+						xmlReader.skipCurrentElement();
+				}
+				else if (xmlReader.name() == "device")
+				{
+					deviceName = xmlReader.attributes().value("label").toString();
+					if (deviceName.isEmpty())
+						xmlReader.skipCurrentElement();
+				}
+				else if (xmlReader.name() == "driver")
+				{
+					if (deviceName.isEmpty())
+						xmlReader.skipCurrentElement();
+					driverName = xmlReader.readElementText(QXmlStreamReader::SkipChildElements).trimmed();
+					if (driverName.isEmpty())
+						xmlReader.skipCurrentElement();
+					result.insert(deviceName, driverName);
+				}
+			}
+
+			xmlReader.readNext();
+		}
+
+		indiDriversXmlFile.close();
+	}
+	else
+	{
+		qDebug() << "Unable to open drivers.xml.";
+	}
+
+	return result;
 }
 
 void IndiClient::handleIncomingCommands()

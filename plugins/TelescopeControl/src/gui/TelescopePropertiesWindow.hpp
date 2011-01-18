@@ -49,6 +49,7 @@ public:
 	
 	void prepareForExistingConfiguration(int slot);
 	void prepareNewStellariumConfiguration(int slot);
+	//void prepareNewIndiConfiguration(int slot);
 	void prepareNewVirtualConfiguration(int slot);
 #ifdef Q_OS_WIN32
 	void prepareNewAscomConfiguration(int slot);
@@ -62,10 +63,13 @@ protected:
 private:
 	void showConnectionTab(bool show);
 	void showAscomTab(bool show);
+	void showIndiTab(bool show);
 	void showSerialTab(bool show);
 	void showNetworkTab(bool show);
 	void showTab(QWidget* tab, const QString& label);
 	void hideTab(QWidget* tab);
+	void populateDeviceModelList();
+	void populateIndiDeviceModelList();
 	
 private slots:
 	void saveChanges();
@@ -75,6 +79,7 @@ private slots:
 	void prepareIndirectConnection(bool);
 	
 	void deviceModelSelected(const QString&);
+	//void indiDeviceModelSelected(const QString&);
 
 #ifdef Q_OS_WIN32
 	void showAscomSelector();
@@ -98,6 +103,7 @@ private:
 	enum ConnectionInterface {
 		ConnectionVirtual = 0,//!<
 		ConnectionStellarium,
+		ConnectionIndi,
 #ifdef Q_OS_WIN32
 		ConnectionAscom,
 #endif

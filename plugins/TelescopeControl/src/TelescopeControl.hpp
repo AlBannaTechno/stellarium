@@ -104,6 +104,8 @@ public:
 	
 	//! Safe access to the loaded list of telescope models
 	const QHash<QString, DeviceModel>& getDeviceModels();
+	//! \todo Add description
+	const QHash<QString, QString>& getIndiDeviceModels();
 	
 	//! Loads the module's configuration from the configuration file.
 	void loadConfiguration();
@@ -248,6 +250,8 @@ private:
 	QStringList telescopeServers;
 	QVariantMap telescopeDescriptions;
 	QHash<QString, DeviceModel> deviceModels;
+	//! \todo Temporary.
+	QHash<QString, QString> indiDeviceModels;
 	
 	QStringList interfaceTypeNames;
 	
@@ -284,6 +288,9 @@ private:
 
 	//! Loads the list of supported telescope models.
 	void loadDeviceModels();
+	//! If the INDI library is installed, loads the list of available INDI
+	//! drivers
+	void loadIndiDeviceModels();
 	
 	//! Copies the default device_models.json to the given destination
 	//! \returns true if the file has been copied successfully

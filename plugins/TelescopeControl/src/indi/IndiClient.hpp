@@ -204,6 +204,12 @@ public:
 	//! \todo A temporary function to fill the gap.
 	void sendRawCommand(const QString& command);
 
+	//! Loads drivers.xml
+	//! \returns a hash with keys device names, values driver names.
+	static QHash<QString, QString> loadDeviceDescriptions();
+
+	static const int DEFAULT_INDI_TCP_PORT = 7624;
+
 	//INDI XML tags
 	static const char* T_DEF_NUMBER_VECTOR;
 	static const char* T_SET_NUMBER_VECTOR;

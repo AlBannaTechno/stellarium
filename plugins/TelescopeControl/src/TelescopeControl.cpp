@@ -67,6 +67,8 @@
 #include <QAxObject>
 #endif
 
+#include <QXmlStreamReader>
+
 #include <QDebug>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -144,6 +146,7 @@ void TelescopeControl::init()
 #endif
 		
 		//Load the device models
+		loadIndiDeviceModels();
 		loadDeviceModels();
 		if(deviceModels.isEmpty())
 		{
@@ -811,7 +814,7 @@ bool TelescopeControl::addTelescopeAtSlot(int slot, const QVariantMap& propertie
 			}
 			else
 			{
-				newProperties.insert("driverId", deviceModels.value(deviceModel).server);
+				newProperties.insert("driverId", deviceModels.value(deviceModel).driver);
 				newProperties.insert("deviceModel", deviceModel);
 			}
 			newProperties.insert("serialPort", serialPort);
@@ -1258,9 +1261,19 @@ void TelescopeControl::loadDeviceModels()
 	}
 }
 
+void TelescopeControl::loadIndiDeviceModels()
+{
+	indiDeviceModels = IndiClient::loadDeviceDescriptions();
+}
+
 const QHash<QString, DeviceModel>& TelescopeControl::getDeviceModels()
 {
 	return deviceModels;
+}
+
+const QHash<QString, QString>& TelescopeControl::getIndiDeviceModels()
+{
+	return indiDeviceModels;
 }
 
 QHash<int, QString> TelescopeControl::getConnectedClientsNames()
