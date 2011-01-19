@@ -43,7 +43,8 @@ class TelescopeClientIndi : public TelescopeClient
 {
 	Q_OBJECT
 public:
-	TelescopeClientIndi(const QString& name, const QString& params, Equinox eq);
+	TelescopeClientIndi(const QString& name, const QString& host, int port, Equinox eq);
+	TelescopeClientIndi(const QString& name, const QString& driverName, Equinox eq);
 	virtual ~TelescopeClientIndi();
 	bool isConnected() const;
 	bool isInitialized() const;
@@ -82,6 +83,8 @@ private:
 	bool isDefinedConnection;
 	bool isDefinedJ2000CoordinateRequest;
 	bool isDefinedJNowCoordinateRequest;
+	
+	virtual void initialize();
 };
 
 #endif //_TELESCOPE_CLIENT_INDI_HPP_

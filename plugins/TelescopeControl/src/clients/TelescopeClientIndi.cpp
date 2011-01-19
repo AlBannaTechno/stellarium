@@ -24,80 +24,60 @@
 
 #include "StelUtils.hpp"
 
-TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& params, Equinox eq):
-		TelescopeClient(name),
-		equinox(eq),
-		tcpSocket(0),
-		driverProcess(0)
+TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& host, int port, Equinox eq):
+	TelescopeClient(name), 
+	equinox(eq),
+	tcpSocket(0),
+	driverProcess(0)
 {
-	qDebug() << "Creating INDI telescope client:" << name << params;
-
-	isDefinedConnection = false;
-	isDefinedJ2000CoordinateRequest = false;
-	isDefinedJNowCoordinateRequest = false;
-
-	//TODO: Improve parameter handling
-	//TODO: Finally refactor TelescopeClient constructors to use exceptions.
-	QStringList parametersList = params.split(':');
-	if (parametersList.count() < 2 || parametersList.count() > 3)
+	qDebug() << "Creating INDI telescope client:" << name;
+	
+	if (host.isEmpty())
 		return;
-
-	if (parametersList.count() == 3)
+	//TODO: Validation
+	if (port <= 0)
+		return;
+	
+	tcpSocket = new QTcpSocket();
+	for (int i=0; i<3; i++)
 	{
-		QString host = parametersList[0];
-		if (host.isEmpty())
-			return;
-		quint16 port = parametersList[1].toUInt();
-		//TODO: Validation
-		if (port <= 0)
-			return;
-
-		tcpSocket = new QTcpSocket();
-		for (int i=0; i<3; i++)
+		tcpSocket->connectToHost(host, port);
+		if (tcpSocket->waitForConnected(1000))
 		{
-			tcpSocket->connectToHost(host,
-			                         port);
-			if (tcpSocket->waitForConnected(1000))
-			{
-				connect(tcpSocket,
-				        SIGNAL(error(QAbstractSocket::SocketError)),
-				        this,
-				        SLOT(handleConnectionError(QAbstractSocket::SocketError)));
-				indiClient.addConnection(tcpSocket);
-				break;
-			}
+			connect(tcpSocket,
+					  SIGNAL(error(QAbstractSocket::SocketError)),
+					  this,
+					  SLOT(handleConnectionError(QAbstractSocket::SocketError)));
+			indiClient.addConnection(tcpSocket);
+			break;
 		}
 	}
-	else
-	{
-		//TODO: Again, use exception instead of this.
-		QString driverFileName = parametersList[0];
-		if (driverFileName.isEmpty()
-			|| !QFile::exists("/usr/bin/" + driverFileName)
-			|| !QFileInfo("/usr/bin/" + driverFileName).isExecutable())
-			return;
+}
 
-		driverProcess = new QProcess(this);
-		//TODO: Fix this!
-		//TODO: Pass the full path instead of only the filename?
-		QString driverPath = "/usr/bin/" + driverFileName;
-		QStringList driverArguments;
-		qDebug() << driverPath;
-		driverProcess->start(driverPath, driverArguments);
-		connect(driverProcess, SIGNAL(error(QProcess::ProcessError)),
-		        this, SLOT(handleDriverError(QProcess::ProcessError)));
-		indiClient.addConnection(driverProcess);
-	}
-
-	connect(&indiClient, SIGNAL(propertyDefined(QString,Property*)),
-	        this, SLOT(handlePropertyDefinition(QString,Property*)));
-	connect(&indiClient, SIGNAL(propertyUpdated(QString,Property*)),
-	        this, SLOT(handlePropertyUpdate(QString,Property*)));
-
-	//TODO: Find a better way
-	//TODO: Move to another function, check if this property has been changed.
-	QString commandConnect = "<newSwitchVector device= \"Telescope Simulator\" name=\"CONNECTION\">\n<oneSwitch name=\"CONNECT\">On</oneSwitch>\n<oneSwitch name=\"DISCONNECT\">Off</oneSwitch>\n</newSwitchVector>";
-	indiClient.sendRawCommand(commandConnect);
+TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& driverName, Equinox eq):
+	TelescopeClient(name), 
+	equinox(eq),
+	tcpSocket(0),
+	driverProcess(0)
+{
+	qDebug() << "Creating INDI telescope client:" << name;
+	
+	//TODO: Again, use exception instead of this.
+	if (driverName.isEmpty()
+		 || !QFile::exists("/usr/bin/" + driverName)
+		 || !QFileInfo("/usr/bin/" + driverName).isExecutable())
+		return;
+	
+	driverProcess = new QProcess(this);
+	//TODO: Fix this!
+	//TODO: Pass the full path instead of only the filename?
+	QString driverPath = "/usr/bin/" + driverName;
+	QStringList driverArguments;
+	qDebug() << driverPath;
+	driverProcess->start(driverPath, driverArguments);
+	connect(driverProcess, SIGNAL(error(QProcess::ProcessError)),
+			  this, SLOT(handleDriverError(QProcess::ProcessError)));
+	indiClient.addConnection(driverProcess);
 }
 
 TelescopeClientIndi::~TelescopeClientIndi()
@@ -123,6 +103,25 @@ TelescopeClientIndi::~TelescopeClientIndi()
 		driverProcess->waitForFinished();
 		driverProcess->deleteLater();
 	}
+}
+
+void TelescopeClientIndi::initialize()
+{
+	isDefinedConnection = false;
+	isDefinedJ2000CoordinateRequest = false;
+	isDefinedJNowCoordinateRequest = false;
+	
+
+	connect(&indiClient, SIGNAL(propertyDefined(QString,Property*)),
+	        this, SLOT(handlePropertyDefinition(QString,Property*)));
+	connect(&indiClient, SIGNAL(propertyUpdated(QString,Property*)),
+	        this, SLOT(handlePropertyUpdate(QString,Property*)));
+	
+	//TODO: Find a better way
+	//TODO: Move to another function, check if this property has been changed.
+	QString commandConnect = "<newSwitchVector device= \"Telescope Simulator\" name=\"CONNECTION\">\n<oneSwitch name=\"CONNECT\">On</oneSwitch>\n<oneSwitch name=\"DISCONNECT\">Off</oneSwitch>\n</newSwitchVector>";
+	indiClient.sendRawCommand(commandConnect);
+	
 }
 
 bool TelescopeClientIndi::isInitialized() const
@@ -158,6 +157,7 @@ bool TelescopeClientIndi::isConnected() const
 
 Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelNavigator *nav) const
 {
+	Q_UNUSED(nav);
 	//TODO: see what to do about time_delay
 	const qint64 now = getNow() - 500000;// - time_delay;
 	return interpolatedPosition.get(now);
@@ -242,6 +242,7 @@ void TelescopeClientIndi::handleDriverError(QProcess::ProcessError error)
 
 void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Property* property)
 {
+	Q_UNUSED(device);
 	//TODO: Check for IndiClient::SP_CONNECTION
 	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
 	if (numberProperty)
@@ -260,6 +261,7 @@ void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Proper
 
 void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* property)
 {
+	Q_UNUSED(device);
 	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
 	if (numberProperty)
 	{
