@@ -26,6 +26,10 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClientDirectNexStar.cpp
   clients/TelescopeClientIndi.hpp
   clients/TelescopeClientIndi.cpp
+  clients/TelescopeClientIndiLocal.hpp
+  clients/TelescopeClientIndiLocal.cpp
+  clients/TelescopeClientIndiTcp.hpp
+  clients/TelescopeClientIndiTcp.cpp
   TelescopeControl.hpp
   TelescopeControl.cpp
   gui/SlewWindow.hpp
@@ -90,6 +94,8 @@ SET(TelescopeControl_MOC_HDRS
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectNexStar.hpp
   clients/TelescopeClientIndi.hpp
+  clients/TelescopeClientIndiLocal.hpp
+  clients/TelescopeClientIndiTcp.hpp
   )
 
 IF(WIN32)
