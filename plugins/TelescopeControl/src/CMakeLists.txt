@@ -10,6 +10,8 @@ LINK_DIRECTORIES(/src)
 
 SET(TelescopeControl_SRCS
   TelescopeControlGlobals.hpp
+  indi/Indi.hpp
+  indi/Indi.cpp
   indi/IndiClient.hpp
   indi/IndiClient.cpp
   clients/InterpolatedPosition.hpp
