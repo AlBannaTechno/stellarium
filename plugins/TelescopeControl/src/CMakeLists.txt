@@ -10,8 +10,8 @@ LINK_DIRECTORIES(/src)
 
 SET(TelescopeControl_SRCS
   TelescopeControlGlobals.hpp
-  indi/IndiClient.hpp
-  indi/IndiClient.cpp
+  TelescopeControl.hpp
+  TelescopeControl.cpp
   clients/InterpolatedPosition.hpp
   clients/InterpolatedPosition.cpp
   clients/TelescopeClient.hpp
@@ -30,8 +30,6 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClientIndiLocal.cpp
   clients/TelescopeClientIndiTcp.hpp
   clients/TelescopeClientIndiTcp.cpp
-  TelescopeControl.hpp
-  TelescopeControl.cpp
   gui/SlewWindow.hpp
   gui/SlewWindow.cpp
   gui/TelescopeControlConfigurationWindow.hpp
@@ -40,6 +38,10 @@ SET(TelescopeControl_SRCS
   gui/TelescopePropertiesWindow.cpp
   gui/StelDialogTelescopeControl.hpp
   gui/StelDialogTelescopeControl.cpp
+  indi/Indi.hpp
+  indi/Indi.cpp
+  indi/IndiClient.hpp
+  indi/IndiClient.cpp
   servers/LogFile.hpp
   servers/LogFile.cpp
   servers/Socket.hpp
@@ -82,12 +84,7 @@ QT4_ADD_RESOURCES(TelescopeControl_RES_CXX ${TelescopeControl_RES})
 # Add here all the files which require moc compilation
 # that is, all the headers with SIGNAL/SLOTS/PLUGIN_INTERFACE etc..
 SET(TelescopeControl_MOC_HDRS
-  gui/StelDialogTelescopeControl.hpp
-  gui/TelescopePropertiesWindow.hpp
-  gui/TelescopeControlConfigurationWindow.hpp
-  gui/SlewWindow.hpp
   TelescopeControl.hpp
-  indi/IndiClient.hpp
   clients/TelescopeClient.hpp
   clients/TelescopeClientDummy.hpp
   clients/TelescopeClientTcp.hpp
@@ -96,6 +93,11 @@ SET(TelescopeControl_MOC_HDRS
   clients/TelescopeClientIndi.hpp
   clients/TelescopeClientIndiLocal.hpp
   clients/TelescopeClientIndiTcp.hpp
+  gui/StelDialogTelescopeControl.hpp
+  gui/TelescopePropertiesWindow.hpp
+  gui/TelescopeControlConfigurationWindow.hpp
+  gui/SlewWindow.hpp
+  indi/IndiClient.hpp
   )
 
 IF(WIN32)

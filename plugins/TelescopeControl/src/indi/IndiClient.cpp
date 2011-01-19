@@ -22,157 +22,6 @@
 #include <QFile>
 #include <QRegExp>
 
-Element::Element(const QString &elementName, const QString &elementLabel)
-{
-	name = elementName;
-	if (elementLabel.isEmpty())
-		label = name;
-	else
-		label = elementLabel;
-}
-
-const QString& Element::getName() const
-{
-	return name;
-}
-
-const QString& Element::getLabel() const
-{
-	return label;
-}
-
-double NumberElement::readDoubleFromString(const QString& string)
-{
-	if (string.isEmpty())
-		return 0.0;
-
-	bool isDecimal = false;
-	double decimalNumber = string.toDouble(&isDecimal);
-	if (isDecimal)
-		return decimalNumber;
-
-	//TODO: Implement conversion from sexagesimal
-	return 0.0;
-}
-
-NumberElement::NumberElement(const QString& elementName,
-                             const QString& initialValue,
-                             const QString& format,
-                             const QString& minimalValue,
-                             const QString& maximalValue,
-                             const QString& incrementStep,
-                             const QString& elementLabel) :
-	Element(elementName, elementLabel)
-{
-	//TODO: Validation and other stuff
-	formatString = format;
-
-	minValue = readDoubleFromString(minimalValue);
-	maxValue = readDoubleFromString(maximalValue);
-	step = readDoubleFromString(incrementStep);
-	value = readDoubleFromString(initialValue);
-}
-
-QString NumberElement::getFormattedValue() const
-{
-	//TODO: Add the other case
-	//TODO: Use the standard function for C-formatted output?
-	QString formattedValue;
-	formattedValue.sprintf(formatString.toAscii(), value);
-	return formattedValue;
-}
-
-double NumberElement::getValue() const
-{
-	return value;
-}
-
-void NumberElement::setValue(const QString& stringValue)
-{
-	//TODO: Checks for min/max/step
-	value = readDoubleFromString(stringValue);
-}
-
-Property::Property(const QString& propertyName,
-				   State propertyState,
-				   Permission accessPermission,
-				   const QString& propertyLabel,
-				   const QString& propertyGroup)
-{
-	name = propertyName;
-	if (propertyLabel.isEmpty())
-		label = name;
-	else
-		label = propertyLabel;
-
-	group = propertyGroup;
-	permission = accessPermission;
-	state = propertyState;
-}
-
-QString Property::getName()
-{
-	return name;
-}
-
-QString Property::getLabel()
-{
-	return label;
-}
-
-bool Property::isReadable()
-{
-	return (permission == PermissionReadOnly || permission == PermissionReadWrite);
-}
-
-bool Property::isWritable()
-{
-	return (permission == PermissionWriteOnly || permission == PermissionReadWrite);
-}
-
-NumberProperty::NumberProperty(const QString& propertyName,
-							   State propertyState,
-							   Permission accessPermission,
-							   const QString& propertyLabel,
-							   const QString& propertyGroup) :
-	Property(propertyName,
-			 propertyState,
-			 accessPermission,
-			 propertyLabel,
-			 propertyGroup)
-{
-	//
-}
-
-NumberProperty::~NumberProperty()
-{
-	foreach (NumberElement* numberElementPtr, elements)
-	{
-		delete numberElementPtr;
-	}
-}
-
-void NumberProperty::addElement(NumberElement* element)
-{
-	elements.insert(element->getName(), element);
-}
-
-void NumberProperty::updateElement(const QString& name, const QString& newValue)
-{
-	elements[name]->setValue(newValue);
-}
-
-NumberElement* NumberProperty::getElement(const QString& name)
-{
-	return elements.value(name);
-}
-
-int NumberProperty::elementCount() const
-{
-	return elements.count();
-}
-
-
 const char* IndiClient::T_DEF_NUMBER_VECTOR = "defNumberVector";
 const char* IndiClient::T_SET_NUMBER_VECTOR = "setNumberVector";
 const char* IndiClient::T_DEF_NUMBER = "defNumber";
@@ -462,10 +311,9 @@ void IndiClient::readNumberPropertyDefinition()
 
 	if (numberProperty->elementCount() > 0)
 	{
-		numberProperties.insert(name, numberProperty);
+		deviceProperties[device].insert(numberProperty->getName(), numberProperty);
 		emit propertyDefined(device, numberProperty);
 	}
-	//TODO: Later, allow for device in the data structure
 
 	//TODO: Emit timestamp/message, or only message is no timestamp is available
 }
@@ -534,14 +382,26 @@ void IndiClient::readNumberProperty()
 	QString name = attributes.value(A_NAME).toString();
 	//TODO: read state, timeout, timestamp, etc.
 
-	//TODO: handle device names
-	if (!numberProperties.contains(name))
+	if (!deviceProperties.contains(device))
+	{
+		qDebug() << "Unknown device name:" << device;
+		xmlReader.skipCurrentElement();
+		return;
+	}
+	if (!deviceProperties[device].contains(name))
 	{
 		qDebug() << "Unknown property name:" << name;
 		xmlReader.skipCurrentElement();
 		return;
 	}
-	NumberProperty* numberProperty = numberProperties.value(name);
+	Property* property = deviceProperties[device].value(name);
+	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
+	if (numberProperty == 0)//TODO: What does it return exactly if the cast fails?
+	{
+		qDebug() << "Not a number property:" << name;
+		xmlReader.skipCurrentElement();
+		return;
+	}
 
 	while (!(xmlReader.name() == T_SET_NUMBER_VECTOR && xmlReader.isEndElement()))
 	{
