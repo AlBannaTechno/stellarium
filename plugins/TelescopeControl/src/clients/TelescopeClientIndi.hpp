@@ -77,8 +77,12 @@ protected:
 	IndiClient indiClient;
 
 	bool isDefinedConnection;
+	bool isConnectionConnected;
 	bool isDefinedJ2000CoordinateRequest;
 	bool isDefinedJNowCoordinateRequest;
+
+	bool hasQueuedGoto;
+	Vec3d queuedGotoJ2000Pos;
 	
 	virtual void initialize();
 };

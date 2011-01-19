@@ -41,19 +41,15 @@ TelescopeClientIndi::~TelescopeClientIndi()
 void TelescopeClientIndi::initialize()
 {
 	isDefinedConnection = false;
+	isConnectionConnected = false;
 	isDefinedJ2000CoordinateRequest = false;
 	isDefinedJNowCoordinateRequest = false;
+	hasQueuedGoto = false;
 
 	connect(&indiClient, SIGNAL(propertyDefined(QString,Property*)),
 	        this, SLOT(handlePropertyDefinition(QString,Property*)));
 	connect(&indiClient, SIGNAL(propertyUpdated(QString,Property*)),
 	        this, SLOT(handlePropertyUpdate(QString,Property*)));
-	
-	//TODO: Find a better way
-	//TODO: Move to another function, check if this property has been changed.
-	QString commandConnect = "<newSwitchVector device= \"Telescope Simulator\" name=\"CONNECTION\">\n<oneSwitch name=\"CONNECT\">On</oneSwitch>\n<oneSwitch name=\"DISCONNECT\">Off</oneSwitch>\n</newSwitchVector>";
-	indiClient.sendRawCommand(commandConnect);
-	
 }
 
 Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelNavigator *nav) const
@@ -71,7 +67,17 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 
 	if (!isConnected())
 	{
-		//
+		return;
+	}
+
+	//If it's not connected, attempt to connect
+	if (isDefinedConnection && !isConnectionConnected)
+	{
+		hasQueuedGoto = true;
+		queuedGotoJ2000Pos = j2000Coordinates;
+		QString commandConnect = "<newSwitchVector device= \"Telescope Simulator\" name=\"CONNECTION\">\n<oneSwitch name=\"CONNECT\">On</oneSwitch>\n<oneSwitch name=\"DISCONNECT\">Off</oneSwitch>\n</newSwitchVector>";
+		indiClient.sendRawCommand(commandConnect);
+		return;
 	}
 
 	//TODO: Verify what kind of action is going to be performed on a request
@@ -127,12 +133,23 @@ void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Proper
 		{
 			isDefinedJNowCoordinateRequest = true;
 		}
+
+		return;
+	}
+
+	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
+	if (switchProperty)
+	{
+		if (switchProperty->getName() == IndiClient::SP_CONNECTION)
+		{
+			isDefinedConnection = true;
+		}
 	}
 }
 
 void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* property)
 {
-	Q_UNUSED(device);
+	Q_UNUSED(device);//TODO: Handle device name!
 	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
 	if (numberProperty)
 	{
@@ -170,6 +187,22 @@ void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* 
 			}
 
 			interpolatedPosition.add(j2000Coordinates, getNow(), serverTime);
+		}
+
+		return;
+	}
+
+	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
+	if (switchProperty)
+	{
+		if (isDefinedConnection && switchProperty->getName() == IndiClient::SP_CONNECTION)
+		{
+			isConnectionConnected = switchProperty->getElement("CONNECT")->isOn();
+			if (isConnectionConnected && hasQueuedGoto)
+			{
+				telescopeGoto(queuedGotoJ2000Pos);
+				hasQueuedGoto = false;
+			}
 		}
 	}
 }
