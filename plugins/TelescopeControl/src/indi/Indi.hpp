@@ -110,19 +110,32 @@ private:
 
 //! Sub-property representing a single switch/button.
 //! Despite being defined as a class, this is just a data structure.
-class Switch
+//! \todo Is there a point of this existing, or it can be replaced with a hash
+//! of booleans?
+class SwitchElement : public Element
 {
+public:
+	SwitchElement(const QString& elementName,
+				  const QString& initialValue,
+				  const QString& label = QString());
+
+	bool isOn();
+	void setValue(const QString& stringValue);
+
+private:
+	//! State of the switch. True is "on", false is "off". :)
+	bool state;
 };
 
 //! Sub-property representing a single indicator light.
 //! Despite being defined as a class, this is just a data structure.
-class Light
+class LightElement
 {
 };
 
 //! Sub-property representing a single BLOB (Binary Large OBject, e.g. a photo).
 //! Despite being defined as a class, this is just a data structure.
-class Blob
+class BlobElement
 {
 	QString name;
 	QString label;
@@ -181,6 +194,32 @@ public:
 
 private:
 	QHash<QString,NumberElement*> elements;
+};
+
+//! A vector/array of switches (boolean SwitchElement-s)
+class SwitchProperty : public Property
+{
+public:
+	SwitchProperty(const QString& propertyName,
+	               State propertyState,
+	               Permission accessPermission,
+	               SwitchRule switchRule,
+	               const QString& propertyLabel = QString(),
+	               const QString& propertyGroup = QString());
+	~SwitchProperty();
+
+	SwitchRule getSwitchRule() const;
+
+	void addElement(SwitchElement* element);
+	//! Ignores the SwitchRule - everything is supposed to be checked on the
+	//! device side.
+	void updateElement(const QString& name, const QString& newValue);
+	SwitchElement* getElement(const QString& name);
+	int elementCount() const;
+
+private:
+	SwitchRule rule;
+	QHash<QString,SwitchElement*> elements;
 };
 
 #endif//_INDI_HPP_

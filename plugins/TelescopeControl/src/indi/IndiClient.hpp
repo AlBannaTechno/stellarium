@@ -20,6 +20,7 @@
 #ifndef _INDI_CLIENT_HPP_
 #define _INDI_CLIENT_HPP_
 
+#include <QDateTime>
 #include <QHash>
 #include <QObject>
 #include <QSignalMapper>
@@ -59,9 +60,14 @@ public:
 
 	//INDI XML tags
 	static const char* T_DEF_NUMBER_VECTOR;
+	static const char* T_DEF_SWITCH_VECTOR;
 	static const char* T_SET_NUMBER_VECTOR;
+	static const char* T_SET_SWITCH_VECTOR;
 	static const char* T_DEF_NUMBER;
+	static const char* T_DEF_SWITCH;
 	static const char* T_ONE_NUMBER;
+	static const char* T_ONE_SWITCH;
+
 
 	//INDI XML attributes
 	static const char* A_DEVICE;
@@ -77,6 +83,7 @@ public:
 	static const char* A_MINIMUM;
 	static const char* A_MAXIMUM;
 	static const char* A_STEP;
+	static const char* A_RULE;
 
 	//INDI standard properties
 	//http://www.indilib.org/index.php?title=Standard_Properties
@@ -92,8 +99,10 @@ signals:
 	void propertyDefined(const QString& deviceName, Property* property);
 	void propertyUpdated(const QString& deviceName, Property* property);
 	void propertyRemoved(const QString& deviceName, const QString& propertyName);
-	//! \todo determine parameters
-	void messageLogged();
+	//! \param timestamp uses QDateTime for now. It supports millisecond
+	//! precision. If higher precision is necessary, an IndiTimestamp class may
+	//! be necessary.
+	void messageLogged(const QString& deviceName, QDateTime timestamp, const QString& message);
 
 private slots:
 	void handleIncomingCommands();
@@ -103,15 +112,41 @@ private:
 	Permission readPermissionFromString(const QString& string);
 	//!
 	State readStateFromString(const QString& string);
+	//!
+	SwitchRule readSwitchRuleFromString(const QString& string);
 
+	//!
+	bool readPropertyAttributes(QString& device,
+	                            QString& property,
+	                            QString& label,
+	                            QString& group,
+	                            QString& state,
+	                            QString& permission,
+	                            QString& timeout,
+	                            bool checkPermission);
+	//!
+	bool readPropertyAttributes(QString& device,
+								QString& name,
+								QString& state,
+								QString& timeout);
+	//!
+	void readPropertyAttributesTimestampAndMessage(const QString& device, QDateTime& timestamp);
 	//!
 	void readNumberPropertyDefinition();
 	//!
 	void readNumberElementDefinition(NumberProperty* numberProperty);
 	//!
+	void readSwitchPropertyDefinition();
+	//!
+	void readSwitchElementDefinition(SwitchProperty* switchProperty);
+	//!
 	void readNumberProperty();
 	//!
 	void readNumberElement(NumberProperty* numberProperty);
+	//!
+	void readSwitchProperty();
+	//!
+	void readSwitchElement(SwitchProperty* switchProperty);
 
 	//! May be a QProcess or a QTcpSocket.
 	QIODevice* ioDevice;

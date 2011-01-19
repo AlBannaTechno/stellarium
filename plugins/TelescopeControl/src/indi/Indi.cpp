@@ -90,6 +90,31 @@ void NumberElement::setValue(const QString& stringValue)
 	value = readDoubleFromString(stringValue);
 }
 
+SwitchElement::SwitchElement(const QString& elementName,
+                             const QString& initialValue,
+                             const QString& label) :
+	Element(elementName, label)
+{
+	state = false;
+	setValue(initialValue);
+}
+
+bool SwitchElement::isOn()
+{
+	return state;
+}
+
+void SwitchElement::setValue(const QString& string)
+{
+	if (string == "On")
+		state = true;
+	else if (string == "Off")
+		state = false;
+	else
+		return;
+	//TODO: Output?
+}
+
 Property::Property(const QString& propertyName,
 				   State propertyState,
 				   Permission accessPermission,
@@ -165,6 +190,57 @@ NumberElement* NumberProperty::getElement(const QString& name)
 }
 
 int NumberProperty::elementCount() const
+{
+	return elements.count();
+}
+
+SwitchProperty::SwitchProperty(const QString &propertyName,
+                               State propertyState,
+                               Permission accessPermission,
+                               SwitchRule switchRule,
+                               const QString &propertyLabel,
+                               const QString &propertyGroup) :
+	Property(propertyName,
+	         propertyState,
+	         accessPermission,
+	         propertyLabel,
+	         propertyGroup),
+	rule(switchRule)
+{
+	//
+}
+
+SwitchProperty::~SwitchProperty()
+{
+	foreach (SwitchElement* switchElementPtr, elements)
+	{
+		delete switchElementPtr;
+	}
+}
+
+SwitchRule SwitchProperty::getSwitchRule() const
+{
+	return rule;
+}
+
+void SwitchProperty::addElement(SwitchElement* element)
+{
+	elements.insert(element->getName(), element);
+}
+
+void SwitchProperty::updateElement(const QString& name,
+                                   const QString& newValue)
+{
+	if (elements.contains(name))
+		elements[name]->setValue(newValue);
+}
+
+SwitchElement* SwitchProperty::getElement(const QString& name)
+{
+	return elements.value(name);
+}
+
+int SwitchProperty::elementCount() const
 {
 	return elements.count();
 }

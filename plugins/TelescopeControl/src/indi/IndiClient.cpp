@@ -23,9 +23,13 @@
 #include <QRegExp>
 
 const char* IndiClient::T_DEF_NUMBER_VECTOR = "defNumberVector";
+const char* IndiClient::T_DEF_SWITCH_VECTOR = "defSwitchVector";
 const char* IndiClient::T_SET_NUMBER_VECTOR = "setNumberVector";
+const char* IndiClient::T_SET_SWITCH_VECTOR = "setSwitchVector";
 const char* IndiClient::T_DEF_NUMBER = "defNumber";
+const char* IndiClient::T_DEF_SWITCH = "defSwitch";
 const char* IndiClient::T_ONE_NUMBER = "oneNumber";
+const char* IndiClient::T_ONE_SWITCH = "oneSwitch";
 
 const char* IndiClient::A_DEVICE = "device";
 const char* IndiClient::A_NAME = "name";
@@ -40,6 +44,7 @@ const char* IndiClient::A_FORMAT = "format";
 const char* IndiClient::A_MINIMUM = "min";
 const char* IndiClient::A_MAXIMUM = "max";
 const char* IndiClient::A_STEP = "step";
+const char* IndiClient::A_RULE = "rule";
 
 const char* IndiClient::SP_CONNECTION = "CONNECTION";
 const char* IndiClient::SP_J2000_COORDINATES = "EQUATORIAL_COORD";
@@ -225,9 +230,17 @@ void IndiClient::handleIncomingCommands()
 			{
 				readNumberPropertyDefinition();
 			}
+			else if (xmlReader.name() == T_DEF_NUMBER_VECTOR)
+			{
+				readSwitchPropertyDefinition();
+			}
 			else if (xmlReader.name() == T_SET_NUMBER_VECTOR)
 			{
 				readNumberProperty();
+			}
+			else if (xmlReader.name() == T_SET_SWITCH_VECTOR)
+			{
+				readSwitchProperty();
 			}
 			//TODO: To be continued...
 		}
@@ -256,46 +269,123 @@ State IndiClient::readStateFromString(const QString& string)
 		return StateAlert;
 }
 
+SwitchRule IndiClient::readSwitchRuleFromString(const QString& string)
+{
+	if (string == "OneOfMany")
+		return SwitchOnlyOne;
+	else if (string == "AtMostOne")
+		return SwitchAtMostOne;
+	else
+		return SwitchAny;
+}
+
+bool IndiClient::readPropertyAttributes(QString& device,
+                                                QString& name,
+                                                QString& label,
+                                                QString& group,
+                                                QString& state,
+                                                QString& permission,
+                                                QString& timeout,
+                                                bool checkPermission)
+{
+	QXmlStreamAttributes attributes = xmlReader.attributes();
+	device = attributes.value(A_DEVICE).toString();
+	name = attributes.value(A_NAME).toString();
+	label = attributes.value(A_LABEL).toString();
+	group = attributes.value(A_GROUP).toString();
+	state = attributes.value(A_STATE).toString();
+	permission = attributes.value(A_PERMISSION).toString();
+	timeout = attributes.value(A_TIMEOUT).toString();
+
+	//Check for required attributes
+	//Permission is not used for arrays of Lights.
+	if (device.isEmpty() ||
+	    name.isEmpty() ||
+	    state.isEmpty() ||
+	    (permission.isEmpty() && checkPermission))
+	{
+		qDebug() << "A required attribute is missing"
+		         << "(device, name, state, permission):"
+		         << device << name << state << permission;
+		return false;
+	}
+
+	return true;
+}
+
+bool IndiClient::readPropertyAttributes(QString& device,
+                                        QString& name,
+                                        QString& state,
+                                        QString& timeout)
+{
+	QXmlStreamAttributes attributes = xmlReader.attributes();
+	device = attributes.value(A_DEVICE).toString();
+	name = attributes.value(A_NAME).toString();
+	state = attributes.value(A_STATE).toString();
+	timeout = attributes.value(A_TIMEOUT).toString();
+
+	//Check for required attributes
+	if (device.isEmpty() ||
+	    name.isEmpty())
+	{
+		qDebug() << "A required attribute is missing"
+		         << "(device, name):"
+		         << device << name;
+		return false;
+	}
+
+	return true;
+}
+
+void IndiClient::readPropertyAttributesTimestampAndMessage(const QString &device,
+														   QDateTime &timestamp)
+{
+	QXmlStreamAttributes attributes = xmlReader.attributes();
+	QString timestampString = attributes.value(A_TIMESTAMP).toString();
+	QString messageString = attributes.value(A_MESSAGE).toString();
+
+	if (!timestampString.isEmpty())
+	{
+		timestamp = QDateTime::fromString(timestampString, Qt::ISODate);
+	}
+	if (!messageString.isEmpty())
+	{
+		QString logString;
+		if (timestamp.isValid())
+			logString = QString("[%1] %2: %3").arg(timestamp.time().toString("hh:mm:ss")).arg(device).arg(messageString);
+		emit messageLogged(device, timestamp, messageString);
+	}
+}
+
 void IndiClient::readNumberPropertyDefinition()
 {
-	//TODO: Reuse code!
-	QXmlStreamAttributes attributes = xmlReader.attributes();
-	QString device = attributes.value(A_DEVICE).toString();
-	if (device.isEmpty())
+	QString device;
+	QString name;
+	QString label;
+	QString group;
+	QString stateString;
+	QString permissionString;
+	QString timeoutString;
+	bool hasAllRequiredAttributes = readPropertyAttributes(device,
+	                                                       name,
+	                                                       label,
+	                                                       group,
+	                                                       stateString,
+	                                                       permissionString,
+	                                                       timeoutString,
+	                                                       true);
+	if (!hasAllRequiredAttributes)
 	{
-		qDebug() << "A 'device' attribute is required.";
 		xmlReader.skipCurrentElement();
 		return;
 	}
-	QString name = attributes.value(A_NAME).toString();
-	if (name.isEmpty())
-	{
-		qDebug() << "A 'name' attribute is required.";
-		xmlReader.skipCurrentElement();
-		return;
-	}
-	QString label = attributes.value(A_LABEL).toString();
-	QString group = attributes.value(A_GROUP).toString();
-	QString stateString = attributes.value(A_STATE).toString();
-	if (stateString.isEmpty())
-	{
-		qDebug() << "A 'state' attribute is required.";
-		xmlReader.skipCurrentElement();
-		return;
-	}
-	State initialState = readStateFromString(stateString);
-	QString permissionString = attributes.value(A_PERMISSION).toString();
-	if (permissionString.isEmpty())
-	{
-		qDebug() << "A 'perm' attribute is required.";
-		xmlReader.skipCurrentElement();
-		return;
-	}
-	Permission permission = readPermissionFromString(permissionString);
-	QString timeoutString = attributes.value(A_TIMEOUT).toString();
-	QString timestampString = attributes.value(A_TIMESTAMP).toString();
-	QString message = attributes.value(A_MESSAGE).toString();
+	QDateTime timestamp;
+	readPropertyAttributesTimestampAndMessage(device, timestamp);
 
+	State initialState = readStateFromString(stateString);
+	Permission permission = readPermissionFromString(permissionString);
+
+	//TODO: Handle timestamp, timeout, etc.
 	NumberProperty* numberProperty = new NumberProperty(name, initialState, permission, label, group);
 	while (true)
 	{
@@ -311,47 +401,38 @@ void IndiClient::readNumberPropertyDefinition()
 
 	if (numberProperty->elementCount() > 0)
 	{
-		deviceProperties[device].insert(numberProperty->getName(), numberProperty);
+		deviceProperties[device].insert(name, numberProperty);
 		emit propertyDefined(device, numberProperty);
+	}
+	else
+	{
+		delete numberProperty;
 	}
 
 	//TODO: Emit timestamp/message, or only message is no timestamp is available
 }
 
-void IndiClient::readNumberElementDefinition(NumberProperty *numberProperty)
+void IndiClient::readNumberElementDefinition(NumberProperty* numberProperty)
 {
-	//TODO: Reuse code?
 	QXmlStreamAttributes attributes = xmlReader.attributes();
 	QString name = attributes.value(A_NAME).toString();
-	if (name.isEmpty())
-	{
-		qDebug() << "defNumber" << "A 'name' attrbute is required.";
-		xmlReader.skipCurrentElement();
-		return;
-	}
 	QString label = attributes.value(A_LABEL).toString();
 	QString format = attributes.value(A_FORMAT).toString();
-	if (format.isEmpty())
-	{
-		qDebug() << "defNumber" << "A 'format' attribute is required.";
-		xmlReader.skipCurrentElement();
-		return;
-	}
 	QString min = attributes.value(A_MINIMUM).toString();
-	if (min.isEmpty())
-	{
-		qDebug() << "defNumber" << "A 'min' attribute is required.";
-		xmlReader.skipCurrentElement();
-		return;
-	}
 	QString max = attributes.value(A_MAXIMUM).toString();
-	if (max.isEmpty())
+	QString step = attributes.value(A_STEP).toString();
+	if (name.isEmpty() ||
+	    format.isEmpty() ||
+	    min.isEmpty() ||
+	    max.isEmpty() ||
+	    step.isEmpty())
 	{
-		qDebug() << "'max'";
+		qDebug() << "A required attribute is missing"
+		         << "(name, format, min, max, step):"
+		         << name << format << min << max << step;
 		xmlReader.skipCurrentElement();
 		return;
 	}
-	QString step = attributes.value(A_STEP).toString();
 	//TODO: Validation
 
 	QString value;
@@ -374,13 +455,112 @@ void IndiClient::readNumberElementDefinition(NumberProperty *numberProperty)
 	numberProperty->addElement(numberElement);
 }
 
+void IndiClient::readSwitchPropertyDefinition()
+{
+	QString device;
+	QString name;
+	QString label;
+	QString group;
+	QString stateString;
+	QString permissionString;
+	QString timeoutString;
+	bool hasAllRequiredAttributes = readPropertyAttributes(device,
+	                                                       name,
+	                                                       label,
+	                                                       group,
+	                                                       stateString,
+	                                                       permissionString,
+	                                                       timeoutString,
+	                                                       true);
+
+	QString ruleString = xmlReader.attributes().value(A_RULE).toString();
+	if (ruleString.isEmpty())
+	{
+		hasAllRequiredAttributes = false;
+	}
+
+	if (!hasAllRequiredAttributes)
+	{
+		xmlReader.skipCurrentElement();
+		return;
+	}
+	QDateTime timestamp;
+	readPropertyAttributesTimestampAndMessage(device, timestamp);
+
+	State initialState = readStateFromString(stateString);
+	Permission permission = readPermissionFromString(permissionString);
+	SwitchRule rule = readSwitchRuleFromString(ruleString);
+
+	//TODO: Handle timestamp, timeout, etc.
+	SwitchProperty* switchProperty = new SwitchProperty(name, initialState, permission, rule, label, group);
+	while(true)
+	{
+		xmlReader.readNext();
+		if (xmlReader.name() == T_DEF_SWITCH_VECTOR && xmlReader.isEndElement())
+			break;
+		else if (xmlReader.name() == T_DEF_SWITCH)
+		{
+			readSwitchElementDefinition(switchProperty);
+		}
+	}
+
+	if (switchProperty->elementCount() > 0)
+	{
+		deviceProperties[device].insert(name, switchProperty);
+		emit propertyDefined(device, switchProperty);
+	}
+	else
+	{
+		delete switchProperty;
+	}
+
+	//TODO: Emit timestamp/message, or only message is no timestamp is available
+}
+
+void IndiClient::readSwitchElementDefinition(SwitchProperty* switchProperty)
+{
+	QXmlStreamAttributes attributes = xmlReader.attributes();
+	QString name = attributes.value(A_NAME).toString();
+	QString label = attributes.value(A_LABEL).toString();
+
+	QString value;
+	while(!(xmlReader.name() == T_DEF_SWITCH && xmlReader.isEndElement()))
+	{
+		if (xmlReader.isCharacters())
+		{
+			value = xmlReader.text().toString().trimmed();
+			//TODO: break?
+		}
+		xmlReader.readNext();
+	}
+	if (value.isEmpty())
+	{
+		qDebug() << "defSwitch element is empty?";
+		return;
+	}
+
+	SwitchElement* switchElement = new SwitchElement(name, value, label);
+	switchProperty->addElement(switchElement);
+}
+
 void IndiClient::readNumberProperty()
 {
-	//TODO: Reuse code?
-	QXmlStreamAttributes attributes = xmlReader.attributes();
-	QString device = attributes.value(A_DEVICE).toString();
-	QString name = attributes.value(A_NAME).toString();
-	//TODO: read state, timeout, timestamp, etc.
+	QString device;
+	QString name;
+	QString state;
+	QString timeout;
+	bool hasAllRequiredAttributes = readPropertyAttributes(device,
+	                                                       name,
+	                                                       state,
+	                                                       timeout);
+	if (!hasAllRequiredAttributes)
+	{
+		xmlReader.skipCurrentElement();
+		return;
+	}
+	QDateTime timestamp;
+	readPropertyAttributesTimestampAndMessage(device, timestamp);
+	//TODO: Handle state, timeout
 
 	if (!deviceProperties.contains(device))
 	{
@@ -433,4 +613,74 @@ void IndiClient::readNumberElement(NumberProperty* numberProperty)
 		return;
 	}
 	numberProperty->updateElement(name, value);
+}
+
+void IndiClient::readSwitchProperty()
+{
+	QString device;
+	QString name;
+	QString state;
+	QString timeout;
+	bool hasAllRequiredAttributes = readPropertyAttributes(device,
+	                                                       name,
+	                                                       state,
+	                                                       timeout);
+	if (!hasAllRequiredAttributes)
+	{
+		xmlReader.skipCurrentElement();
+		return;
+	}
+	QDateTime timestamp;
+	readPropertyAttributesTimestampAndMessage(device, timestamp);
+	//TODO: Handle state, timeout, etc.
+
+	if (!deviceProperties.contains(device))
+	{
+		qDebug() << "Unknown device name:" << device;
+		xmlReader.skipCurrentElement();
+		return;
+	}
+	if (!deviceProperties[device].contains(name))
+	{
+		qDebug() << "Unknown property name:" << name;
+		xmlReader.skipCurrentElement();
+		return;
+	}
+	Property* property = deviceProperties[device].value(name);
+	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
+	if (switchProperty == 0)
+	{
+		qDebug() << "Not a SwitchProperty" << name;
+		xmlReader.skipCurrentElement();
+		return;
+	}
+
+	while(!(xmlReader.name() == T_SET_SWITCH_VECTOR && xmlReader.isEndElement()))
+	{
+		if (xmlReader.name() == T_ONE_SWITCH)
+		{
+			readSwitchElement(switchProperty);
+		}
+		xmlReader.readNext();
+	}
+
+	//TODO: Add check if anything has been updated at all?
+	emit propertyUpdated(device, switchProperty);
+}
+
+void IndiClient::readSwitchElement(SwitchProperty* switchProperty)
+{
+	QString name = xmlReader.attributes().value(A_NAME).toString();
+	QString value;
+	while(!(xmlReader.name() == T_ONE_SWITCH && xmlReader.isEndElement()))
+	{
+		if (xmlReader.isCharacters())
+			value = xmlReader.text().toString().trimmed();
+		xmlReader.readNext();
+	}
+	if (value.isEmpty())
+	{
+		return;
+	}
+	switchProperty->updateElement(name, value);
 }
