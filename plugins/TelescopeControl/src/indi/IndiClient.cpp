@@ -311,10 +311,9 @@ void IndiClient::readNumberPropertyDefinition()
 
 	if (numberProperty->elementCount() > 0)
 	{
-		numberProperties.insert(name, numberProperty);
+		deviceProperties[device].insert(numberProperty->getName(), numberProperty);
 		emit propertyDefined(device, numberProperty);
 	}
-	//TODO: Later, allow for device in the data structure
 
 	//TODO: Emit timestamp/message, or only message is no timestamp is available
 }
@@ -383,14 +382,26 @@ void IndiClient::readNumberProperty()
 	QString name = attributes.value(A_NAME).toString();
 	//TODO: read state, timeout, timestamp, etc.
 
-	//TODO: handle device names
-	if (!numberProperties.contains(name))
+	if (!deviceProperties.contains(device))
+	{
+		qDebug() << "Unknown device name:" << device;
+		xmlReader.skipCurrentElement();
+		return;
+	}
+	if (!deviceProperties[device].contains(name))
 	{
 		qDebug() << "Unknown property name:" << name;
 		xmlReader.skipCurrentElement();
 		return;
 	}
-	NumberProperty* numberProperty = numberProperties.value(name);
+	Property* property = deviceProperties[device].value(name);
+	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
+	if (numberProperty == 0)//TODO: What does it return exactly if the cast fails?
+	{
+		qDebug() << "Not a number property:" << name;
+		xmlReader.skipCurrentElement();
+		return;
+	}
 
 	while (!(xmlReader.name() == T_SET_NUMBER_VECTOR && xmlReader.isEndElement()))
 	{

@@ -22,6 +22,7 @@
 
 #include <QHash>
 #include <QObject>
+#include <QSignalMapper>
 #include <QString>
 #include <QTextStream>
 #include <QXmlStreamReader>
@@ -31,6 +32,10 @@
 //! Class implementing a client for the INDI wire protocol.
 //! Properties are stored internally. Qt signals are emitted when a property
 //! is changed or defined.
+//! \todo Decide whether to use only one instance of IndiClient to handle all
+//! INDI connections, or to use one copy per connection. (In the second case,
+//! pointer to the QIODevice should be given to the constructor, not via a
+//! separate method.
 class IndiClient : public QObject
 {
 	Q_OBJECT
@@ -116,9 +121,10 @@ private:
 	//! \todo Better name...
 	QXmlStreamReader xmlReader;
 
-	//! Temporary number properties only.
-	//! \todo Must support named devices and all kinds of properties
-	QHash<QString,NumberProperty*> numberProperties;
+	//! Represents all the named properties of a single device.
+	typedef QHash<QString,Property*> DeviceProperties;
+	//! The properties of all named devices.
+	QHash<QString,DeviceProperties> deviceProperties;
 };
 
 #endif //_INDI_CLIENT_HPP_
