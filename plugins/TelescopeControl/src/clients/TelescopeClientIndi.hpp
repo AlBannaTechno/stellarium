@@ -1,7 +1,8 @@
 /*
  * Stellarium Telescope Control plug-in
- * Copyright (C) 2010  Bogdan Marinov (this file)
- * 
+ * Copyright (C) 2010  Bogdan Marinov
+ * Copyright (C) 2011  Timothy Reaves
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -43,30 +44,28 @@ class TelescopeClientIndi : public TelescopeClient
 {
 	Q_OBJECT
 public:
-	TelescopeClientIndi(const QString& name, const QString& host, int port, Equinox eq);
-	TelescopeClientIndi(const QString& name, const QString& driverName, Equinox eq);
+	static TelescopeClientIndi* telescopeClient(const QString& name, const QString& driverName, Equinox eq);
+	static TelescopeClientIndi* telescopeClient(const QString& name, const QString& host, int port, Equinox eq);
 	virtual ~TelescopeClientIndi();
-	bool isConnected() const;
-	bool isInitialized() const;
+	virtual bool isConnected() const = 0;
+	virtual bool isInitialized() const = 0;
 
 	//! Estimates a current position from the stored previous positions.
 	//! InterpolatedPosition is used to make the apparent movement of the
 	//! telescope reticle smoother.
 	Vec3d getJ2000EquatorialPos(const StelNavigator *nav) const;
-	bool prepareCommunication();
-	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
 
 signals:
 
-private slots:
-	void handleDriverError(QProcess::ProcessError error);
-	void handleConnectionError(QAbstractSocket::SocketError error);
-
+protected slots:
 	void handlePropertyDefinition(const QString& device, Property *property);
 	void handlePropertyUpdate(const QString& device, Property* property);
 
-private:
+protected:
+	TelescopeClientIndi(const QString& name, Equinox eq);
+	virtual bool prepareCommunication() = 0;
+	virtual void performCommunication() = 0;
 	InterpolatedPosition interpolatedPosition;
 	virtual bool hasKnownPosition(void) const
 	{
@@ -75,10 +74,7 @@ private:
 
 	Equinox equinox;
 
-	bool isRemoteConnection;
 	IndiClient indiClient;
-	QTcpSocket* tcpSocket;
-	QProcess* driverProcess;
 
 	bool isDefinedConnection;
 	bool isDefinedJ2000CoordinateRequest;

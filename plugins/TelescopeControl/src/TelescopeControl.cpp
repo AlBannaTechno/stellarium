@@ -1100,7 +1100,7 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 			QString host = properties.value("host", "localhost").toString();
 			int port = properties.value("tcpPort").toInt();
 			parameters = QString("%1:%2:%3").arg(host).arg(port).arg(delay);
-			newTelescope = new TelescopeClientIndi(name, host, port, equinox);
+			newTelescope = TelescopeClientIndi::telescopeClient(name, host, port, equinox);
 		}
 		else
 		{
@@ -1111,7 +1111,7 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 				|| !QFileInfo("/usr/bin/" + driver).isExecutable())
 				return newTelescope;
 			parameters = QString("%1:%2").arg(driver).arg(delay);
-			newTelescope = new TelescopeClientIndi(name, driver, equinox);
+			newTelescope = TelescopeClientIndi::telescopeClient(name, driver, equinox);
 		}
 	}
 #ifdef Q_OS_WIN32

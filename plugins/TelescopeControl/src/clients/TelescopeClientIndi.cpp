@@ -1,7 +1,8 @@
 /*
  * Stellarium Telescope Control plug-in
- * Copyright (C) 2010  Bogdan Marinov (this file)
- * 
+ * Copyright (C) 2010  Bogdan Marinov
+ * Copyright (C) 2011  Timothy Reaves
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -17,6 +18,8 @@
  */
 
 #include "TelescopeClientIndi.hpp"
+#include "TelescopeClientIndiLocal.hpp"
+#include "TelescopeClientIndiTcp.hpp"
 
 #include <cmath>
 #include <QFile>
@@ -24,85 +27,15 @@
 
 #include "StelUtils.hpp"
 
-TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& host, int port, Equinox eq):
-	TelescopeClient(name), 
-	equinox(eq),
-	tcpSocket(0),
-	driverProcess(0)
+TelescopeClientIndi::TelescopeClientIndi(const QString& name, Equinox eq):
+	TelescopeClient(name),
+	equinox(eq)
 {
-	qDebug() << "Creating INDI telescope client:" << name;
-	
-	if (host.isEmpty())
-		return;
-	//TODO: Validation
-	if (port <= 0)
-		return;
-	
-	tcpSocket = new QTcpSocket();
-	for (int i=0; i<3; i++)
-	{
-		tcpSocket->connectToHost(host, port);
-		if (tcpSocket->waitForConnected(1000))
-		{
-			connect(tcpSocket,
-					  SIGNAL(error(QAbstractSocket::SocketError)),
-					  this,
-					  SLOT(handleConnectionError(QAbstractSocket::SocketError)));
-			indiClient.addConnection(tcpSocket);
-			break;
-		}
-	}
 }
 
-TelescopeClientIndi::TelescopeClientIndi(const QString& name, const QString& driverName, Equinox eq):
-	TelescopeClient(name), 
-	equinox(eq),
-	tcpSocket(0),
-	driverProcess(0)
-{
-	qDebug() << "Creating INDI telescope client:" << name;
-	
-	//TODO: Again, use exception instead of this.
-	if (driverName.isEmpty()
-		 || !QFile::exists("/usr/bin/" + driverName)
-		 || !QFileInfo("/usr/bin/" + driverName).isExecutable())
-		return;
-	
-	driverProcess = new QProcess(this);
-	//TODO: Fix this!
-	//TODO: Pass the full path instead of only the filename?
-	QString driverPath = "/usr/bin/" + driverName;
-	QStringList driverArguments;
-	qDebug() << driverPath;
-	driverProcess->start(driverPath, driverArguments);
-	connect(driverProcess, SIGNAL(error(QProcess::ProcessError)),
-			  this, SLOT(handleDriverError(QProcess::ProcessError)));
-	indiClient.addConnection(driverProcess);
-}
 
 TelescopeClientIndi::~TelescopeClientIndi()
 {
-	//TODO: Disconnect stuff
-	if (tcpSocket)
-	{
-		disconnect(tcpSocket,
-		           SIGNAL(error(QAbstractSocket::SocketError)),
-		           this,
-		           SLOT(handleConnectionError(QAbstractSocket::SocketError)));
-		tcpSocket->disconnectFromHost();
-		tcpSocket->deleteLater();
-	}
-
-	if (driverProcess)
-	{
-		disconnect(driverProcess, SIGNAL(error(QProcess::ProcessError)),
-		           this, SLOT(handleDriverError(QProcess::ProcessError)));
-		//TODO: There was some problems on Windows with QProcess - one of the
-		//termination methods didn't work. This is not a problem at the moment.
-		driverProcess->terminate();
-		driverProcess->waitForFinished();
-		driverProcess->deleteLater();
-	}
 }
 
 void TelescopeClientIndi::initialize()
@@ -110,7 +43,6 @@ void TelescopeClientIndi::initialize()
 	isDefinedConnection = false;
 	isDefinedJ2000CoordinateRequest = false;
 	isDefinedJNowCoordinateRequest = false;
-	
 
 	connect(&indiClient, SIGNAL(propertyDefined(QString,Property*)),
 	        this, SLOT(handlePropertyDefinition(QString,Property*)));
@@ -124,59 +56,12 @@ void TelescopeClientIndi::initialize()
 	
 }
 
-bool TelescopeClientIndi::isInitialized() const
-{
-	//TODO: Improve the checks.
-	if (isRemoteConnection)
-	{
-		if (tcpSocket->isOpen() &&
-		    tcpSocket->isReadable() &&
-		    tcpSocket->isWritable())
-			return true;
-		else
-			return false;
-	}
-	else
-	{
-		if (driverProcess->state() == QProcess::Running &&
-		    driverProcess->isOpen())
-			return true;
-		else
-			return false;
-	}
-}
-
-bool TelescopeClientIndi::isConnected() const
-{
-	//TODO: Should include a check for the CONNECTION property
-	if (!isInitialized())
-		return false;
-	else
-		return true;
-}
-
 Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelNavigator *nav) const
 {
 	Q_UNUSED(nav);
 	//TODO: see what to do about time_delay
 	const qint64 now = getNow() - 500000;// - time_delay;
 	return interpolatedPosition.get(now);
-}
-
-bool TelescopeClientIndi::prepareCommunication()
-{
-	if (!isInitialized())
-		return false;
-
-	//TODO: Request properties?
-	//TODO: Try to connect
-
-	return true;
-}
-
-void TelescopeClientIndi::performCommunication()
-{
-	//
 }
 
 void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
@@ -224,20 +109,6 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	QString xmlElement = "<newNumberVector device= \"Telescope Simulator\" name=\"%3\">\n<oneNumber name=\"RA\">%1</oneNumber>\n<oneNumber name=\"DEC\">%2</oneNumber>\n</newNumberVector>";
 	xmlElement = xmlElement.arg(raHours).arg(decDegrees).arg(command);
 	indiClient.sendRawCommand(xmlElement);
-}
-
-void TelescopeClientIndi::handleConnectionError(QTcpSocket::SocketError error)
-{
-	//TODO
-	qDebug() << error;
-	qDebug() << tcpSocket->errorString();
-}
-
-void TelescopeClientIndi::handleDriverError(QProcess::ProcessError error)
-{
-	//TODO
-	qDebug() << error;
-	qDebug() << driverProcess->errorString();
 }
 
 void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Property* property)
@@ -302,3 +173,18 @@ void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* 
 		}
 	}
 }
+
+TelescopeClientIndi* TelescopeClientIndi::telescopeClient(const QString& name, const QString& driverName, Equinox eq)
+{
+	TelescopeClientIndi* client = new TelescopeClientIndiLocal(name, driverName, eq);
+	client->initialize();
+	return client;
+}
+
+TelescopeClientIndi* TelescopeClientIndi::telescopeClient(const QString& name, const QString& host, int port, Equinox eq)
+{
+	TelescopeClientIndi* client = new TelescopeClientIndiTcp(name, host, port, eq);
+	client->initialize();
+	return client;
+}
+
