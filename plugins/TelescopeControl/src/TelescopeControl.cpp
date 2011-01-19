@@ -1100,6 +1100,7 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 			QString host = properties.value("host", "localhost").toString();
 			int port = properties.value("tcpPort").toInt();
 			parameters = QString("%1:%2:%3").arg(host).arg(port).arg(delay);
+			newTelescope = new TelescopeClientIndi(name, host, port, equinox);
 		}
 		else
 		{
@@ -1110,8 +1111,8 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 				|| !QFileInfo("/usr/bin/" + driver).isExecutable())
 				return newTelescope;
 			parameters = QString("%1:%2").arg(driver).arg(delay);
+			newTelescope = new TelescopeClientIndi(name, driver, equinox);
 		}
-		newTelescope = new TelescopeClientIndi(name, parameters, equinox);
 	}
 #ifdef Q_OS_WIN32
 	else if (interfaceType == "ASCOM")
@@ -1125,10 +1126,6 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 		newTelescope = new TelescopeClientAscom(name, parameters, equinox);
 	}
 #endif
-	else if (interfaceType == "INDI")
-	{
-		newTelescope = new TelescopeClientIndi(name, QString(), equinox);
-	}
 	else
 	{
 		qWarning() << "TelescopeControl: unable to create a client of type"

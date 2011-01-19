@@ -324,6 +324,7 @@ void TelescopeControlConfigurationWindow::removeSelectedConnection()
 
 void TelescopeControlConfigurationWindow::saveChanges(QString name)
 {
+	Q_UNUSED(name);
 	//Save the changes to file
 	telescopeManager->saveTelescopes();
 
