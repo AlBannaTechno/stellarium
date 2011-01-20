@@ -152,6 +152,7 @@ public:
 			 Permission accessPermission,
 			 const QString& propertyLabel = QString(),
 			 const QString& propertyGroup = QString());
+	virtual ~Property();
 	QString getName();
 	QString getLabel();
 	bool isReadable();
@@ -185,7 +186,7 @@ public:
 				   Permission accessPermission,
 				   const QString& propertyLabel = QString(),
 				   const QString& propertyGroup = QString());
-	~NumberProperty();
+	virtual ~NumberProperty();
 
 	void addElement(NumberElement* element);
 	void updateElement(const QString& name, const QString& newValue);
@@ -206,7 +207,7 @@ public:
 	               SwitchRule switchRule,
 	               const QString& propertyLabel = QString(),
 	               const QString& propertyGroup = QString());
-	~SwitchProperty();
+	virtual ~SwitchProperty();
 
 	SwitchRule getSwitchRule() const;
 

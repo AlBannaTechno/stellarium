@@ -19,6 +19,12 @@
 
 #include "Indi.hpp"
 
+/* ********************************************************************* */
+#if 0
+#pragma mark -
+#pragma mark Element Methods
+#endif
+/* ********************************************************************* */
 Element::Element(const QString &elementName, const QString &elementLabel)
 {
 	name = elementName;
@@ -38,6 +44,12 @@ const QString& Element::getLabel() const
 	return label;
 }
 
+/* ********************************************************************* */
+#if 0
+#pragma mark -
+#pragma mark NumberElement Methods
+#endif
+/* ********************************************************************* */
 double NumberElement::readDoubleFromString(const QString& string)
 {
 	if (string.isEmpty())
@@ -90,6 +102,12 @@ void NumberElement::setValue(const QString& stringValue)
 	value = readDoubleFromString(stringValue);
 }
 
+/* ********************************************************************* */
+#if 0
+#pragma mark -
+#pragma mark SwitchElement Methods
+#endif
+/* ********************************************************************* */
 SwitchElement::SwitchElement(const QString& elementName,
                              const QString& initialValue,
                              const QString& label) :
@@ -115,6 +133,12 @@ void SwitchElement::setValue(const QString& string)
 	//TODO: Output?
 }
 
+/* ********************************************************************* */
+#if 0
+#pragma mark -
+#pragma mark Property Methods
+#endif
+/* ********************************************************************* */
 Property::Property(const QString& propertyName,
 				   State propertyState,
 				   Permission accessPermission,
@@ -130,6 +154,10 @@ Property::Property(const QString& propertyName,
 	group = propertyGroup;
 	permission = accessPermission;
 	state = propertyState;
+}
+
+Property::~Property()
+{
 }
 
 QString Property::getName()
@@ -152,6 +180,12 @@ bool Property::isWritable()
 	return (permission == PermissionWriteOnly || permission == PermissionReadWrite);
 }
 
+/* ********************************************************************* */
+#if 0
+#pragma mark -
+#pragma mark NumberProperty Methods
+#endif
+/* ********************************************************************* */
 NumberProperty::NumberProperty(const QString& propertyName,
 							   State propertyState,
 							   Permission accessPermission,
@@ -168,10 +202,7 @@ NumberProperty::NumberProperty(const QString& propertyName,
 
 NumberProperty::~NumberProperty()
 {
-	foreach (NumberElement* numberElementPtr, elements)
-	{
-		delete numberElementPtr;
-	}
+	qDeleteAll(elements);
 }
 
 void NumberProperty::addElement(NumberElement* element)
@@ -194,6 +225,12 @@ int NumberProperty::elementCount() const
 	return elements.count();
 }
 
+/* ********************************************************************* */
+#if 0
+#pragma mark -
+#pragma mark SwitchProperty Methods
+#endif
+/* ********************************************************************* */
 SwitchProperty::SwitchProperty(const QString &propertyName,
                                State propertyState,
                                Permission accessPermission,
@@ -212,10 +249,7 @@ SwitchProperty::SwitchProperty(const QString &propertyName,
 
 SwitchProperty::~SwitchProperty()
 {
-	foreach (SwitchElement* switchElementPtr, elements)
-	{
-		delete switchElementPtr;
-	}
+	qDeleteAll(elements);
 }
 
 SwitchRule SwitchProperty::getSwitchRule() const
