@@ -230,7 +230,7 @@ void IndiClient::handleIncomingCommands()
 			{
 				readNumberPropertyDefinition();
 			}
-			else if (xmlReader.name() == T_DEF_NUMBER_VECTOR)
+			else if (xmlReader.name() == T_DEF_SWITCH_VECTOR)
 			{
 				readSwitchPropertyDefinition();
 			}
@@ -522,6 +522,7 @@ void IndiClient::readSwitchElementDefinition(SwitchProperty* switchProperty)
 	QXmlStreamAttributes attributes = xmlReader.attributes();
 	QString name = attributes.value(A_NAME).toString();
 	QString label = attributes.value(A_LABEL).toString();
+	//TODO: Check this?
 
 	QString value;
 	while(!(xmlReader.name() == T_DEF_SWITCH && xmlReader.isEndElement()))
