@@ -1,6 +1,6 @@
 /*
  * Stellarium Telescope Control plug-in
- * Copyright (C) 2010  Bogdan Marinov
+ * Copyright (C) 2010-2011  Bogdan Marinov
  * Copyright (C) 2011  Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
@@ -75,6 +75,9 @@ protected:
 	Equinox equinox;
 
 	IndiClient indiClient;
+	//! The device name used by INDI properties.
+	//! \todo Set in the constructor? At the moment, it's auto-detected.
+	QString deviceName;
 
 	bool isDefinedConnection;
 	bool isConnectionConnected;

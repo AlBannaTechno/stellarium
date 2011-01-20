@@ -1,6 +1,6 @@
 /*
  * Stellarium Telescope Control plug-in
- * Copyright (C) 2010  Bogdan Marinov
+ * Copyright (C) 2010-2011  Bogdan Marinov
  * Copyright (C) 2011  Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
@@ -75,25 +75,28 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	{
 		hasQueuedGoto = true;
 		queuedGotoJ2000Pos = j2000Coordinates;
-		QString commandConnect = "<newSwitchVector device= \"Telescope Simulator\" name=\"CONNECTION\">\n<oneSwitch name=\"CONNECT\">On</oneSwitch>\n<oneSwitch name=\"DISCONNECT\">Off</oneSwitch>\n</newSwitchVector>";
-		indiClient.sendRawCommand(commandConnect);
+		QHash<QString,bool> elements;
+		elements.insert(IndiClient::SP_CONNECT, true);
+		elements.insert(IndiClient::SP_DISCONNECT, false);
+		indiClient.writeSwitchProperty(deviceName, IndiClient::SP_CONNECTION, elements);
+		//(isDefinedConnection == true ensures that deviceName is not empty)
 		return;
 	}
 
-	//TODO: Verify what kind of action is going to be performed on a request
+	//TODO: Verify what kind of action (SLEW, SYNC) is going to be performed on a request
 
 	Vec3d targetCoordinates;
-	QString command;
+	QString property;
 	if (isDefinedJ2000CoordinateRequest)
 	{
 		targetCoordinates = j2000Coordinates;
-		command = IndiClient::SP_J2000_COORDINATES_REQUEST;
+		property = IndiClient::SP_J2000_COORDINATES_REQUEST;
 	}
 	else if (isDefinedJNowCoordinateRequest)
 	{
 		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
 		targetCoordinates = navigator->equinoxEquToJ2000(j2000Coordinates);
-		command = IndiClient::SP_JNOW_COORDINATES_REQUEST;
+		property = IndiClient::SP_JNOW_COORDINATES_REQUEST;
 	}
 	else
 	{
@@ -111,21 +114,38 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	const double decDegrees = decRadians * (180 / M_PI);
 
 	//Send the "go to" command
-	//TODO: Again, this is not the right way. :)
-	QString xmlElement = "<newNumberVector device= \"Telescope Simulator\" name=\"%3\">\n<oneNumber name=\"RA\">%1</oneNumber>\n<oneNumber name=\"DEC\">%2</oneNumber>\n</newNumberVector>";
-	xmlElement = xmlElement.arg(raHours).arg(decDegrees).arg(command);
-	indiClient.sendRawCommand(xmlElement);
+	QHash<QString,double> newValues;
+	newValues.insert("RA", raHours);
+	newValues.insert("DEC", decDegrees);
+	indiClient.writeNumberProperty(deviceName, property, newValues);
 }
 
 void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Property* property)
 {
-	Q_UNUSED(device);
-	//TODO: Check for IndiClient::SP_CONNECTION
+	//Autodetect device name: first device that provides defintions :)
+	//TODO: Alternative: first device that provides coordinate information?
+	if (deviceName.isEmpty())
+		deviceName = device;
+
+	//Ignore this property if it belongs to another device.
+	if (deviceName != device)
+		return;
+
 	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
 	if (numberProperty)
 	{
 		//TODO: Check permissions, too.
-		if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES_REQUEST)
+		if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES)
+		{
+			//Make sure the intial coordinates values are handled.
+			handlePropertyUpdate(device, property);
+		}
+		else if (numberProperty->getName() == IndiClient::SP_JNOW_COORDINATES)
+		{
+			//Make sure the intial coordinates values are handled.
+			handlePropertyUpdate(device, property);
+		}
+		else if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES_REQUEST)
 		{
 			isDefinedJ2000CoordinateRequest = true;
 		}
@@ -149,7 +169,10 @@ void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Proper
 
 void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* property)
 {
-	Q_UNUSED(device);//TODO: Handle device name!
+	//Ignore this property if it belongs to another device.
+	if (deviceName != device)
+		return;
+
 	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
 	if (numberProperty)
 	{
@@ -197,7 +220,7 @@ void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* 
 	{
 		if (isDefinedConnection && switchProperty->getName() == IndiClient::SP_CONNECTION)
 		{
-			isConnectionConnected = switchProperty->getElement("CONNECT")->isOn();
+			isConnectionConnected = switchProperty->getElement(IndiClient::SP_CONNECT)->isOn();
 			if (isConnectionConnected && hasQueuedGoto)
 			{
 				telescopeGoto(queuedGotoJ2000Pos);
