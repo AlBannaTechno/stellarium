@@ -158,6 +158,7 @@ public:
 	bool isReadable();
 	bool isWritable();
 	virtual int elementCount() const = 0;
+	virtual QStringList getElementNames() const = 0;
 
 private:
 	//! Name used to identify the property internally.
@@ -192,6 +193,7 @@ public:
 	void updateElement(const QString& name, const QString& newValue);
 	NumberElement* getElement(const QString& name);
 	int elementCount() const;
+	QStringList getElementNames() const;
 
 private:
 	QHash<QString,NumberElement*> elements;
@@ -217,6 +219,7 @@ public:
 	void updateElement(const QString& name, const QString& newValue);
 	SwitchElement* getElement(const QString& name);
 	int elementCount() const;
+	QStringList getElementNames() const;
 
 private:
 	SwitchRule rule;

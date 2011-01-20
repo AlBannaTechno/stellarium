@@ -19,6 +19,8 @@
 
 #include "Indi.hpp"
 
+#include <QStringList>
+
 /* ********************************************************************* */
 #if 0
 #pragma mark -
@@ -225,6 +227,11 @@ int NumberProperty::elementCount() const
 	return elements.count();
 }
 
+QStringList NumberProperty::getElementNames() const
+{
+	return elements.keys();
+}
+
 /* ********************************************************************* */
 #if 0
 #pragma mark -
@@ -277,4 +284,9 @@ SwitchElement* SwitchProperty::getElement(const QString& name)
 int SwitchProperty::elementCount() const
 {
 	return elements.count();
+}
+
+QStringList SwitchProperty::getElementNames() const
+{
+	return elements.keys();
 }

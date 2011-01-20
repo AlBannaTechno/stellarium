@@ -63,6 +63,8 @@ public:
 	static const char* T_DEF_SWITCH_VECTOR;
 	static const char* T_SET_NUMBER_VECTOR;
 	static const char* T_SET_SWITCH_VECTOR;
+	static const char* T_NEW_NUMBER_VECTOR;
+	static const char* T_NEW_SWITCH_VECTOR;
 	static const char* T_DEF_NUMBER;
 	static const char* T_DEF_SWITCH;
 	static const char* T_ONE_NUMBER;
@@ -86,6 +88,7 @@ public:
 	static const char* A_RULE;
 
 	//INDI standard properties
+	//TODO: Move to the telescope client
 	//http://www.indilib.org/index.php?title=Standard_Properties
 	static const char* SP_CONNECTION;
 	static const char* SP_J2000_COORDINATES;
@@ -147,6 +150,24 @@ private:
 	void readSwitchProperty();
 	//!
 	void readSwitchElement(SwitchProperty* switchProperty);
+
+	//!
+	void writeTextProperty(const QString& device,
+	                       const QString& property,
+	                       const QHash<QString,QString>& newValues);
+	//!
+	void writeNumberProperty(const QString& device,
+	                         const QString& property,
+	                         const QHash<QString,double>& newValues);
+	//!
+	void writeSwitchProperty(const QString& device,
+	                         const QString& property,
+	                         const QHash<QString,bool>& newValues);
+	//!
+	void writeBlobProperty(const QString& device,
+	                       const QString& property,
+	                       const QHash<QString,QByteArray>& newValues);
+
 
 	//! May be a QProcess or a QTcpSocket.
 	QIODevice* ioDevice;
