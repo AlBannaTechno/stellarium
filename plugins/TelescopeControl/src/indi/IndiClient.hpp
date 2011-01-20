@@ -88,15 +88,33 @@ public:
 	static const char* A_RULE;
 
 	//INDI standard properties
-	//TODO: Move to the telescope client
+	//TODO: Move to the telescope client?
 	//http://www.indilib.org/index.php?title=Standard_Properties
 	static const char* SP_CONNECTION;
+	static const char* SP_CONNECT;
+	static const char* SP_DISCONNECT;
 	static const char* SP_J2000_COORDINATES;
 	static const char* SP_JNOW_COORDINATES;
 	static const char* SP_J2000_COORDINATES_REQUEST;
 	static const char* SP_JNOW_COORDINATES_REQUEST;
 
 public slots:
+	//!
+	void writeTextProperty(const QString& device,
+	                       const QString& property,
+	                       const QHash<QString,QString>& newValues);
+	//!
+	void writeNumberProperty(const QString& device,
+	                         const QString& property,
+	                         const QHash<QString,double>& newValues);
+	//!
+	void writeSwitchProperty(const QString& device,
+	                         const QString& property,
+	                         const QHash<QString,bool>& newValues);
+	//!
+	void writeBlobProperty(const QString& device,
+	                       const QString& property,
+	                       const QHash<QString,QByteArray>& newValues);
 
 signals:
 	void propertyDefined(const QString& deviceName, Property* property);
@@ -150,23 +168,6 @@ private:
 	void readSwitchProperty();
 	//!
 	void readSwitchElement(SwitchProperty* switchProperty);
-
-	//!
-	void writeTextProperty(const QString& device,
-	                       const QString& property,
-	                       const QHash<QString,QString>& newValues);
-	//!
-	void writeNumberProperty(const QString& device,
-	                         const QString& property,
-	                         const QHash<QString,double>& newValues);
-	//!
-	void writeSwitchProperty(const QString& device,
-	                         const QString& property,
-	                         const QHash<QString,bool>& newValues);
-	//!
-	void writeBlobProperty(const QString& device,
-	                       const QString& property,
-	                       const QHash<QString,QByteArray>& newValues);
 
 
 	//! May be a QProcess or a QTcpSocket.

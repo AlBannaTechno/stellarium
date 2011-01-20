@@ -51,6 +51,8 @@ const char* IndiClient::A_STEP = "step";
 const char* IndiClient::A_RULE = "rule";
 
 const char* IndiClient::SP_CONNECTION = "CONNECTION";
+const char* IndiClient::SP_CONNECT = "CONNECT";
+const char* IndiClient::SP_DISCONNECT = "DISCONNECT";
 const char* IndiClient::SP_J2000_COORDINATES = "EQUATORIAL_COORD";
 const char* IndiClient::SP_JNOW_COORDINATES = "EQUATORIAL_EOD_COORD";
 const char* IndiClient::SP_J2000_COORDINATES_REQUEST = "EQUATORIAL_COORD_REQUEST";
@@ -737,6 +739,8 @@ void IndiClient::writeNumberProperty(const QString& device,
 
 		xmlWriter.writeEndElement();
 		xmlWriter.writeEndDocument();
+
+		//TODO: Update property state and send it to the UI (additional signal?)
 	}
 }
 
