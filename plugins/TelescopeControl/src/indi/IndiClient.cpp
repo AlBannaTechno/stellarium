@@ -744,11 +744,48 @@ void IndiClient::writeNumberProperty(const QString& device,
 	}
 }
 
-void IndiClient::writeSwitchProperty(const QString &device, const QString &property, const QHash<QString, bool> &newValues)
+void IndiClient::writeSwitchProperty(const QString &device,
+                                     const QString &property,
+                                     const QHash<QString, bool> &newValues)
 {
-	Q_UNUSED(device)
-	Q_UNUSED(property)
-	Q_UNUSED(newValues)
+	if (!deviceProperties.contains(device) ||
+	    !deviceProperties[device].contains(property) ||
+	    newValues.isEmpty())
+	{
+		//TODO: Log?
+		return;
+	}
+
+	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(deviceProperties[device][property]);
+	if (switchProperty)
+	{
+		QXmlStreamWriter xmlWriter(ioDevice);
+		xmlWriter.writeStartDocument();
+		xmlWriter.writeStartElement(T_NEW_SWITCH_VECTOR);
+		xmlWriter.writeAttribute(QXmlStreamAttribute(A_DEVICE, device));
+		xmlWriter.writeAttribute(QXmlStreamAttribute(A_NAME, property));
+		//TODO: Add timestamp?
+
+		QStringList elements = switchProperty->getElementNames();//TODO: Optimize this
+		foreach (const QString& element, elements)
+		{
+			xmlWriter.writeStartElement(T_ONE_SWITCH);
+			xmlWriter.writeAttribute(QXmlStreamAttribute(A_NAME, element));
+			bool value;
+			//TODO: Check if this is actually necessary
+			if (newValues.contains(element))
+				value = newValues[element];
+			else
+				value = switchProperty->getElement(element)->isOn();
+			xmlWriter.writeCharacters((value)?"On":"Off");
+			xmlWriter.writeEndElement();
+		}
+
+		xmlWriter.writeEndElement();
+		xmlWriter.writeEndDocument();
+
+		//TODO: Update property state and send it to the UI (additional signal?)
+	}
 }
 
 void IndiClient::writeBlobProperty(const QString &device, const QString &property, const QHash<QString, QByteArray> &newValues)
