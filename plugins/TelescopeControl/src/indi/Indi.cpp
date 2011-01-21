@@ -19,6 +19,7 @@
 
 #include "Indi.hpp"
 
+#include <math.h>
 #include <QStringList>
 
 /* ********************************************************************* */
@@ -52,6 +53,41 @@ const QString& Element::getLabel() const
 #pragma mark NumberElement Methods
 #endif
 /* ********************************************************************* */
+NumberElement::NumberElement(const QString& elementName,
+									  const double initialValue,
+									  const QString& format,
+									  const double minimumValue,
+									  const double maximumValue,
+									  const double step,
+									  const QString& label) :
+Element(elementName, label),
+value(initialValue),
+maxValue(maximumValue),
+minValue(minimumValue),
+step(step)
+{
+	//TODO: Validation and other stuff
+	formatString = format;
+}
+
+NumberElement::NumberElement(const QString& elementName,
+                             const QString& initialValue,
+                             const QString& format,
+                             const QString& minimalValue,
+                             const QString& maximalValue,
+                             const QString& incrementStep,
+                             const QString& elementLabel) :
+Element(elementName, elementLabel)
+{
+	//TODO: Validation and other stuff
+	formatString = format;
+	
+	minValue = readDoubleFromString(minimalValue);
+	maxValue = readDoubleFromString(maximalValue);
+	step = readDoubleFromString(incrementStep);
+	value = readDoubleFromString(initialValue);
+}
+
 double NumberElement::readDoubleFromString(const QString& string)
 {
 	if (string.isEmpty())
@@ -64,24 +100,6 @@ double NumberElement::readDoubleFromString(const QString& string)
 
 	//TODO: Implement conversion from sexagesimal
 	return 0.0;
-}
-
-NumberElement::NumberElement(const QString& elementName,
-                             const QString& initialValue,
-                             const QString& format,
-                             const QString& minimalValue,
-                             const QString& maximalValue,
-                             const QString& incrementStep,
-                             const QString& elementLabel) :
-	Element(elementName, elementLabel)
-{
-	//TODO: Validation and other stuff
-	formatString = format;
-
-	minValue = readDoubleFromString(minimalValue);
-	maxValue = readDoubleFromString(maximalValue);
-	step = readDoubleFromString(incrementStep);
-	value = readDoubleFromString(initialValue);
 }
 
 QString NumberElement::getFormattedValue() const
@@ -100,8 +118,14 @@ double NumberElement::getValue() const
 
 void NumberElement::setValue(const QString& stringValue)
 {
-	//TODO: Checks for min/max/step
-	value = readDoubleFromString(stringValue);
+	double newValue = readDoubleFromString(stringValue);
+	if (newValue < minValue) {
+		value = minValue;
+	} else if (newValue > maxValue) {
+		value = maxValue;
+	} else if (fabs(newValue - value) == step) {
+		value = newValue;
+	}
 }
 
 /* ********************************************************************* */

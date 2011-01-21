@@ -141,3 +141,24 @@ IF(BUILD_STATIC_PLUGINS)
  SET_TARGET_PROPERTIES(TelescopeControl-static PROPERTIES COMPILE_FLAGS "-DQT_STATICPLUGIN")
  ADD_DEPENDENCIES(AllStaticPlugins TelescopeControl-static)
 ENDIF()
+
+#############################################################################################
+################################## Build unit tests #########################################
+#############################################################################################
+# This is needed even though it is in the root file.
+SET(extLinkerOptionTest ${QT_QTCORE_LIBRARY} ${QT_QTNETWORK_LIBRARY} ${QT_QTTEST_LIBRARY} ${QT_QTGUI_LIBRARY} ${ICONV_LIBRARIES} ${INTL_LIBRARIES} ${ZLIB_LIBRARIES})
+
+# Custom target used to build all tests at once
+ADD_CUSTOM_TARGET(buildTelescopeControlTests)
+
+# INDI tests
+SET(tests_testINDI_SRCS
+	indi/Indi.hpp
+	indi/Indi.cpp
+        tests/testINDI.hpp
+        tests/testINDI.cpp)
+    QT4_WRAP_CPP(testINDI_MOC_SRCS tests/testINDI.hpp)
+    ADD_EXECUTABLE(testTelescopeControlINDI EXCLUDE_FROM_ALL ${tests_testINDI_SRCS} ${testINDI_MOC_SRCS})
+    TARGET_LINK_LIBRARIES(testTelescopeControlINDI ${extLinkerOptionTest})
+    ADD_DEPENDENCIES(buildTelescopeControlTests testINDI)
+

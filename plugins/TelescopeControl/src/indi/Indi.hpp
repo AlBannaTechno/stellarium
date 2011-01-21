@@ -24,6 +24,10 @@
 #include <QHash>
 #include <QString>
 
+#include <limits>
+const double DOUBLE_MAX = std::numeric_limits<double>::max();
+const double DOUBLE_MIN = std::numeric_limits<double>::min();
+
 //! Possible property permissions according to the INDI protocol specification.
 //! Lights are assumed to be always read-only, Switches can be read-only or
 //! read-write.
@@ -80,10 +84,17 @@ private:
 };
 
 //! Sub-property representing a single number.
-//! Despite being defined as a class, this is just a data structure.
 class NumberElement : public Element
 {
 public:
+	NumberElement(const QString& elementName,
+	              const double initialValue = 0.0,
+	              const QString& format = "%d",
+	              const double minimumValue = DOUBLE_MIN,
+	              const double maximumValue = DOUBLE_MAX,
+	              const double step = 0,
+	              const QString& label = QString());
+	
 	NumberElement(const QString& elementName,
 	              const QString& initialValue,
 	              const QString& format,
@@ -98,6 +109,9 @@ public:
 	void setValue(const QString& stringValue);
 
 private:
+	// For unit tests
+	friend class TestNumberElement;
+	
 	bool isSexagesimal;
 	double value;
 	double maxValue;
