@@ -19,7 +19,7 @@
 
 #include "Indi.hpp"
 
-#include <math.h>
+#include <cmath>
 #include <QStringList>
 
 /* ********************************************************************* */
@@ -104,10 +104,48 @@ double NumberElement::readDoubleFromString(const QString& string)
 
 QString NumberElement::getFormattedValue() const
 {
-	//TODO: Add the other case
-	//TODO: Use the standard function for C-formatted output?
+	//TODO: Optimize
 	QString formattedValue;
-	formattedValue.sprintf(formatString.toAscii(), value);
+	QRegExp indiFormat("^\\%(\\d+)\\.(\\d)\\m$");
+	if (indiFormat.exactMatch(formatString))
+	{
+		int width = indiFormat.cap(1).toInt();
+		int precision = indiFormat.cap(2).toInt();
+		if (width < 1)
+			return formattedValue;
+
+		double seconds = value * 3600.0;
+		int degrees = seconds / 3600;
+		seconds = fabs(seconds);
+		seconds = fmod(seconds, 60);
+		double minutes = seconds / 60.0;
+		seconds = fmod(seconds, 60);
+
+		switch (precision)
+		{
+		case 3:
+			formattedValue = QString("%1:%2").arg(degrees).arg(minutes, 2, 'f', 0, '0');
+			break;
+		case 5:
+			formattedValue = QString("%1:%2").arg(degrees).arg(minutes, 4, 'f', 1, '0');
+			break;
+		case 6:
+			formattedValue = QString("%1:%2:%3").arg(degrees).arg(minutes, 2, 'f', 0, '0').arg(seconds, 2, 'f', 0, '0');
+			break;
+		case 8:
+			formattedValue = QString("%1:%2:%3").arg(degrees).arg(minutes, 2, 'f', 0, '0').arg(seconds, 4, 'f', 1, '0');
+			break;
+		case 9:
+		default:
+			formattedValue = QString("%1:%2:%3").arg(degrees).arg(minutes, 2, 'f', 0, '0').arg(seconds, 5, 'f', 2, '0');
+		}
+		formattedValue = formattedValue.rightJustified(width, ' ', true);
+	}
+	else
+	{
+		//TODO: Use the standard function for C-formatted output?
+		formattedValue.sprintf(formatString.toAscii(), value);
+	}
 	return formattedValue;
 }
 
@@ -118,6 +156,11 @@ double NumberElement::getValue() const
 
 void NumberElement::setValue(const QString& stringValue)
 {
+	value = readDoubleFromString(stringValue);
+	//This breaks the existing TelescopeClientIndi. Min, max and step settings
+	//have can have values that mean "ignore this restriction".
+	//Also, as we established, "step" does not work that way.
+	/*
 	double newValue = readDoubleFromString(stringValue);
 	if (newValue < minValue) {
 		value = minValue;
@@ -126,6 +169,7 @@ void NumberElement::setValue(const QString& stringValue)
 	} else if (fabs(newValue - value) == step) {
 		value = newValue;
 	}
+	*/
 }
 
 /* ********************************************************************* */
