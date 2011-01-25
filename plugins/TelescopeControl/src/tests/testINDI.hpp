@@ -30,6 +30,10 @@ private slots:
 	void testReadDoubleFromString_EmptyString_Returns0();
 	void testReadDoubleFromString_NonNumber_Returns0();
 	void testReadDoubleFromString_ReturnsNumber();
+	void testReadDoubleFromString_SexagesimalInputTwoElementWithSpaces();
+	void testReadDoubleFromString_SexagesimalInputThreeElementsWithColons();
+	void testReadDoubleFromString_SexagesimalConsistence();
+	void testReadDoubleFromString_SexagesimalConsistenceHighPrecision();
 	void testNumberElementSetValue_MoreThanMaximumResultInMaximum();
 	void testNumberElementSetValue_LessThanMinimumResultsInMinimum();
 	void testNumberElementSetValue_CorrectStepIncrement();

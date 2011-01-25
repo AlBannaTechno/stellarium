@@ -98,8 +98,30 @@ double NumberElement::readDoubleFromString(const QString& string)
 	if (isDecimal)
 		return decimalNumber;
 
-	//TODO: Implement conversion from sexagesimal
-	return 0.0;
+	double degrees = 0.0, minutes = 0.0, seconds = 0.0;
+	QRegExp separator("[\\ \\: \\;]");
+	QStringList components = string.split(separator);
+	if (components.count() < 2 || components.count() > 3)
+		return 0.0;
+
+	degrees = components.at(0).toDouble();
+	minutes = components.at(1).toDouble();
+	if (components.count() == 3)
+		seconds = components.at(2).toDouble();
+
+	//TODO: Smarter way of calculating a degree fraction.
+	//TODO: And dealing with the sign.
+	double sign = 1.0;
+	if (degrees < 0)
+	{
+		sign = -1.0;
+		degrees = -degrees;
+	}
+	degrees += (minutes/60.0);
+	degrees += (seconds/3600.0);
+	degrees *= sign;
+
+	return degrees;
 }
 
 QString NumberElement::getFormattedValue() const
@@ -117,7 +139,7 @@ QString NumberElement::getFormattedValue() const
 		double seconds = value * 3600.0;
 		int degrees = seconds / 3600;
 		seconds = fabs(seconds);
-		seconds = fmod(seconds, 60);
+		seconds = fmod(seconds, 3600);
 		double minutes = seconds / 60.0;
 		seconds = fmod(seconds, 60);
 
