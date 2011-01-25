@@ -34,8 +34,8 @@ private slots:
 	void testReadDoubleFromString_SexagesimalInputThreeElementsWithColons();
 	void testReadDoubleFromString_SexagesimalConsistence();
 	void testReadDoubleFromString_SexagesimalConsistenceHighPrecision();
-	void testNumberElementSetValue_MoreThanMaximumResultInMaximum();
-	void testNumberElementSetValue_LessThanMinimumResultsInMinimum();
+	void testNumberElementSetValue_MoreThanMaximumShouldBeIgnored();
+	void testNumberElementSetValue_LessThanMinimumShouldBeIgnored();
 	void testNumberElementSetValue_CorrectStepIncrement();
 	void testNumberElementSetValue_NotStepIncrement_ShouldIgnoreValue();
 

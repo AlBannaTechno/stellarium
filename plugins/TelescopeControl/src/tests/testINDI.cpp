@@ -90,38 +90,37 @@ void TestNumberElement::testReadDoubleFromString_SexagesimalConsistenceHighPreci
 	QCOMPARE(sexagesimalValueWithColons, actualValue);
 }
 
-void TestNumberElement::testNumberElementSetValue_MoreThanMaximumResultInMaximum()
+void TestNumberElement::testNumberElementSetValue_MoreThanMaximumShouldBeIgnored()
 {
-	QSKIP("Needs to be re-designed after fixing min/max/step logic.", SkipSingle);
-	NumberElement element("TestNumberElement", 1.0, "%d", 0.0);
+	NumberElement element("test", "00:00:00", "%d", "00:00:00", "180:00:00", "0");
 	
-	element.setValue("-1.0");
+	element.setValue("192:00:00");
 	QCOMPARE(element.getValue(), 0.0);
 }
 
-void TestNumberElement::testNumberElementSetValue_LessThanMinimumResultsInMinimum()
+void TestNumberElement::testNumberElementSetValue_LessThanMinimumShouldBeIgnored()
 {
-	QSKIP("Needs to be re-designed after fixing min/max/step logic.", SkipSingle);
-	NumberElement element("TestNumberElement", 1.0, "%d", 0.0, 10.0);
+	NumberElement element("test", "00:00:00", "%d", "90:00:00", "180:00:00", "0");
 	
-	element.setValue("10.1");
-	QCOMPARE(element.getValue(), 10.0);
+	element.setValue("10");
+	QCOMPARE(element.getValue(), 0.0);
 }
 
 void TestNumberElement::testNumberElementSetValue_CorrectStepIncrement()
 {
-	QSKIP("Needs to be re-designed after fixing min/max/step logic.", SkipSingle);
-	NumberElement element("TestNumberElement", 1.0, "%d", 0.0, 100.0, 5.0);
+	//The example is straight out of Gerry Rozema's e-mail
+	NumberElement element("test", "0", "%d", "-180", "180", "0.01");
 	
-	element.setValue("6.0");
-	QCOMPARE(element.getValue(), 6.0);
+	element.setValue("1.01");
+	QCOMPARE(element.getValue(), 1.01);
 }
 
 void TestNumberElement::testNumberElementSetValue_NotStepIncrement_ShouldIgnoreValue()
 {
-	QSKIP("Needs to be re-designed after fixing min/max/step logic.", SkipSingle);
-	NumberElement element("TestNumberElement", 1.0, "%d", 0.0, 100.0, 5.0);
+
+	//The example is straight out of Gerry Rozema's e-mail
+	NumberElement element("test", "0", "%d", "-180", "180", "0.01");
 	
-	element.setValue("10.1");
-	QCOMPARE(element.getValue(), 1.0);
+	element.setValue("10.012");
+	QCOMPARE(element.getValue(), 0.0);
 }

@@ -178,20 +178,26 @@ double NumberElement::getValue() const
 
 void NumberElement::setValue(const QString& stringValue)
 {
-	value = readDoubleFromString(stringValue);
-	//This breaks the existing TelescopeClientIndi. Min, max and step settings
-	//have can have values that mean "ignore this restriction".
-	//Also, as we established, "step" does not work that way.
-	/*
 	double newValue = readDoubleFromString(stringValue);
-	if (newValue < minValue) {
-		value = minValue;
-	} else if (newValue > maxValue) {
-		value = maxValue;
-	} else if (fabs(newValue - value) == step) {
-		value = newValue;
+	if (newValue < minValue)
+		return;
+
+	//If maxValue == minValue, it should be ignored per the INDI specification.
+	if (maxValue > minValue && newValue > maxValue)
+		return;
+
+	//If step is 0, it should be ignored per the INDI specification.
+	//TODO: Doesn't work very well for non-integers.
+	//Alternative: (fmod((newValue-minValue), step) - step) > 0.001,
+	//but that doesn't work very well, too.
+	if (step > 0.0)
+	{
+		double remainder = fmod((newValue - minValue), step);
+		if (qFuzzyCompare(remainder+1, 0.0+1))
+			return;
 	}
-	*/
+
+	value = newValue;
 }
 
 /* ********************************************************************* */
