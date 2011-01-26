@@ -24,6 +24,7 @@
 #include <QStringList>
 #include <QXmlStreamWriter>
 
+const char* IndiClient::T_MESSAGE = "message";
 const char* IndiClient::T_GET_PROPERTIES = "getProperties";
 const char* IndiClient::T_DEF_NUMBER_VECTOR = "defNumberVector";
 const char* IndiClient::T_DEF_SWITCH_VECTOR = "defSwitchVector";
@@ -104,6 +105,10 @@ void IndiClient::addConnection(QIODevice* newIoDevice)
 
 	connect(ioDevice, SIGNAL(readyRead()),
 	        this, SLOT(handleIncomingCommands()));
+
+	//TODO: This should be done actually by the app using the class.
+	connect(this, SIGNAL(messageReceived(QString,QDateTime,QString)),
+	        this, SLOT(logMessage(QString,QDateTime,QString)));
 
 	//TODO: Call it here, or somewhere/sometime else?
 	writeGetProperties();
@@ -250,9 +255,27 @@ void IndiClient::handleIncomingCommands()
 			{
 				readSwitchProperty();
 			}
+			else if (xmlReader.name() == T_MESSAGE)
+			{
+				readMessageElement();
+			}
 			//TODO: To be continued...
 		}
 	}
+}
+
+void IndiClient::logMessage(const QString& device,
+                            const QDateTime& timestamp,
+                            const QString& message)
+{
+	QDateTime time = QDateTime::currentDateTime();
+	if (timestamp.isValid())
+		time = timestamp.toLocalTime();
+
+	if (device.isEmpty())
+		qWarning() << "INDI:" << time.toString(Qt::ISODate) << message;
+	else
+		qWarning() << "INDI:" << time.toString(Qt::ISODate) << device << message;
 }
 
 Permission IndiClient::readPermissionFromString(const QString& string)
@@ -345,25 +368,37 @@ bool IndiClient::readPropertyAttributes(QString& device,
 	return true;
 }
 
-void IndiClient::readPropertyAttributesTimestampAndMessage(const QString &device,
-														   QDateTime &timestamp)
+QDateTime IndiClient::readTimestampAttribute()
 {
 	QXmlStreamAttributes attributes = xmlReader.attributes();
 	QString timestampString = attributes.value(A_TIMESTAMP).toString();
-	QString messageString = attributes.value(A_MESSAGE).toString();
-
+	QDateTime timestamp;
 	if (!timestampString.isEmpty())
 	{
 		timestamp = QDateTime::fromString(timestampString, Qt::ISODate);
 		timestamp.setTimeSpec(Qt::UTC);
 	}
+	return timestamp;
+}
+
+void IndiClient::readMessageAttribute(const QString &device,
+                                      const QDateTime &timestamp)
+{
+	QXmlStreamAttributes attributes = xmlReader.attributes();
+	QString messageString = attributes.value(A_MESSAGE).toString();
 	if (!messageString.isEmpty())
 	{
-		QString logString;
-		if (timestamp.isValid())
-			logString = QString("[%1] %2: %3").arg(timestamp.time().toString("hh:mm:ss")).arg(device).arg(messageString);
-		emit messageLogged(device, timestamp, messageString);
+		emit messageReceived(device, timestamp, messageString);
 	}
+}
+
+void IndiClient::readMessageElement()
+{
+	QString device = xmlReader.attributes().value(A_DEVICE).toString();
+	QDateTime timestamp = readTimestampAttribute();
+	readMessageAttribute(device, timestamp);
+	while (!xmlReader.isEndElement() && xmlReader.name() != T_MESSAGE)
+		xmlReader.readNext();
 }
 
 void IndiClient::readNumberPropertyDefinition()
@@ -388,8 +423,8 @@ void IndiClient::readNumberPropertyDefinition()
 		xmlReader.skipCurrentElement();
 		return;
 	}
-	QDateTime timestamp;
-	readPropertyAttributesTimestampAndMessage(device, timestamp);
+	QDateTime timestamp = readTimestampAttribute();
+	readMessageAttribute(device, timestamp);
 
 	State initialState = readStateFromString(stateString);
 	Permission permission = readPermissionFromString(permissionString);
@@ -417,8 +452,6 @@ void IndiClient::readNumberPropertyDefinition()
 	{
 		delete numberProperty;
 	}
-
-	//TODO: Emit timestamp/message, or only message is no timestamp is available
 }
 
 void IndiClient::readNumberElementDefinition(NumberProperty* numberProperty)
@@ -493,14 +526,14 @@ void IndiClient::readSwitchPropertyDefinition()
 		xmlReader.skipCurrentElement();
 		return;
 	}
-	QDateTime timestamp;
-	readPropertyAttributesTimestampAndMessage(device, timestamp);
+	QDateTime timestamp = readTimestampAttribute();
+	readMessageAttribute(device, timestamp);
 
 	State initialState = readStateFromString(stateString);
 	Permission permission = readPermissionFromString(permissionString);
 	SwitchRule rule = readSwitchRuleFromString(ruleString);
 
-	//TODO: Handle timestamp, timeout, etc.
+	//TODO: Handle timeout, etc.
 	SwitchProperty* switchProperty = new SwitchProperty(name, initialState, permission, rule, label, group);
 	while(true)
 	{
@@ -568,8 +601,8 @@ void IndiClient::readNumberProperty()
 		xmlReader.skipCurrentElement();
 		return;
 	}
-	QDateTime timestamp;
-	readPropertyAttributesTimestampAndMessage(device, timestamp);
+	QDateTime timestamp = readTimestampAttribute();
+	readMessageAttribute(device, timestamp);
 	//TODO: Handle state, timeout
 
 	if (!deviceProperties.contains(device))
@@ -640,8 +673,8 @@ void IndiClient::readSwitchProperty()
 		xmlReader.skipCurrentElement();
 		return;
 	}
-	QDateTime timestamp;
-	readPropertyAttributesTimestampAndMessage(device, timestamp);
+	QDateTime timestamp = readTimestampAttribute();
+	readMessageAttribute(device, timestamp);
 	//TODO: Handle state, timeout, etc.
 
 	if (!deviceProperties.contains(device))

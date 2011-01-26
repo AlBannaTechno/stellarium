@@ -60,6 +60,7 @@ public:
 
 	//INDI XML tags
 	static const char* T_GET_PROPERTIES;
+	static const char* T_MESSAGE;
 	static const char* T_DEF_NUMBER_VECTOR;
 	static const char* T_DEF_SWITCH_VECTOR;
 	static const char* T_SET_NUMBER_VECTOR;
@@ -141,10 +142,14 @@ signals:
 	//! \param timestamp uses QDateTime for now. It supports millisecond
 	//! precision. If higher precision is necessary, an IndiTimestamp class may
 	//! be necessary.
-	void messageLogged(const QString& deviceName, QDateTime timestamp, const QString& message);
+	void messageReceived(const QString& deviceName, const QDateTime& timestamp, const QString& message);
 
 private slots:
 	void handleIncomingCommands();
+	//! Example log message handling function.
+	void logMessage(const QString& deviceName,
+	                const QDateTime& timestamp,
+	                const QString& message);
 
 private:
 	//!
@@ -165,11 +170,19 @@ private:
 	                            bool checkPermission);
 	//!
 	bool readPropertyAttributes(QString& device,
-								QString& name,
-								QString& state,
-								QString& timeout);
+	                            QString& name,
+	                            QString& state,
+	                            QString& timeout);
+	//! Attempts to read the \b timestamp attribute of the current element.
+	//! \returns a UTC datetime if the timestamp can be parsed, otherwise
+	//! an invalid QDateTime object.
+	QDateTime readTimestampAttribute();
+	//! Attempts to read the \b message attribute of the current element.
+	//! Emits messageReceived() if it's not empty.
+	void readMessageAttribute(const QString& device,
+	                          const QDateTime& timestamp);
 	//!
-	void readPropertyAttributesTimestampAndMessage(const QString& device, QDateTime& timestamp);
+	void readMessageElement();
 	//!
 	void readNumberPropertyDefinition();
 	//!
