@@ -24,6 +24,7 @@
 #include <QStringList>
 #include <QXmlStreamWriter>
 
+const char* IndiClient::T_GET_PROPERTIES = "getProperties";
 const char* IndiClient::T_DEF_NUMBER_VECTOR = "defNumberVector";
 const char* IndiClient::T_DEF_SWITCH_VECTOR = "defSwitchVector";
 const char* IndiClient::T_SET_NUMBER_VECTOR = "setNumberVector";
@@ -35,6 +36,7 @@ const char* IndiClient::T_DEF_SWITCH = "defSwitch";
 const char* IndiClient::T_ONE_NUMBER = "oneNumber";
 const char* IndiClient::T_ONE_SWITCH = "oneSwitch";
 
+const char* IndiClient::A_VERSION = "version";
 const char* IndiClient::A_DEVICE = "device";
 const char* IndiClient::A_NAME = "name";
 const char* IndiClient::A_LABEL = "label";
@@ -103,8 +105,8 @@ void IndiClient::addConnection(QIODevice* newIoDevice)
 	connect(ioDevice, SIGNAL(readyRead()),
 	        this, SLOT(handleIncomingCommands()));
 
-	//TODO: Temporarily here. Find a better way!
-	sendRawCommand("<getProperties version='1.7' />\n");
+	//TODO: Call it here, or somewhere/sometime else?
+	writeGetProperties();
 }
 
 void IndiClient::sendRawCommand(const QString& command)
@@ -353,6 +355,7 @@ void IndiClient::readPropertyAttributesTimestampAndMessage(const QString &device
 	if (!timestampString.isEmpty())
 	{
 		timestamp = QDateTime::fromString(timestampString, Qt::ISODate);
+		timestamp.setTimeSpec(Qt::UTC);
 	}
 	if (!messageString.isEmpty())
 	{
@@ -692,6 +695,29 @@ void IndiClient::readSwitchElement(SwitchProperty* switchProperty)
 	switchProperty->updateElement(name, value);
 }
 
+void IndiClient::writeGetProperties(const QString& device,
+                                    const QString& property)
+{
+	if (textStream == 0)
+		return;
+
+	if (ioDevice == 0 ||
+		!ioDevice->isOpen() ||
+		!ioDevice->isWritable())
+		return;
+
+	QXmlStreamWriter xmlWriter(ioDevice);
+	xmlWriter.writeStartDocument();
+	xmlWriter.writeEmptyElement(T_GET_PROPERTIES);
+	//TODO: Centralized storage of supported version number
+	xmlWriter.writeAttribute(A_VERSION, "1.7");
+	if (!device.isEmpty())
+		xmlWriter.writeAttribute(A_DEVICE, device);
+	if (!property.isEmpty())
+		xmlWriter.writeAttribute(A_NAME, property);
+	xmlWriter.writeEndDocument();
+}
+
 void IndiClient::writeTextProperty(const QString &device, const QString &property, const QHash<QString, QString> &newValues)
 {
 	Q_UNUSED(device)
@@ -718,15 +744,15 @@ void IndiClient::writeNumberProperty(const QString& device,
 		QXmlStreamWriter xmlWriter(ioDevice);
 		xmlWriter.writeStartDocument();
 		xmlWriter.writeStartElement(T_NEW_NUMBER_VECTOR);
-		xmlWriter.writeAttribute(QXmlStreamAttribute(A_DEVICE, device));
-		xmlWriter.writeAttribute(QXmlStreamAttribute(A_NAME, property));
+		xmlWriter.writeAttribute(A_DEVICE, device);
+		xmlWriter.writeAttribute(A_NAME, property);
 		//TODO: Add timestamp?
 
 		QStringList elements = numberProperty->getElementNames();//TODO: Optimize this
 		foreach (const QString& element, elements)
 		{
 			xmlWriter.writeStartElement(T_ONE_NUMBER);
-			xmlWriter.writeAttribute(QXmlStreamAttribute(A_NAME, element));
+			xmlWriter.writeAttribute(A_NAME, element);
 			double value;
 			//TODO: Check if this is actually necessary
 			if (newValues.contains(element))
@@ -762,15 +788,15 @@ void IndiClient::writeSwitchProperty(const QString &device,
 		QXmlStreamWriter xmlWriter(ioDevice);
 		xmlWriter.writeStartDocument();
 		xmlWriter.writeStartElement(T_NEW_SWITCH_VECTOR);
-		xmlWriter.writeAttribute(QXmlStreamAttribute(A_DEVICE, device));
-		xmlWriter.writeAttribute(QXmlStreamAttribute(A_NAME, property));
+		xmlWriter.writeAttribute(A_DEVICE, device);
+		xmlWriter.writeAttribute(A_NAME, property);
 		//TODO: Add timestamp?
 
 		QStringList elements = switchProperty->getElementNames();//TODO: Optimize this
 		foreach (const QString& element, elements)
 		{
 			xmlWriter.writeStartElement(T_ONE_SWITCH);
-			xmlWriter.writeAttribute(QXmlStreamAttribute(A_NAME, element));
+			xmlWriter.writeAttribute(A_NAME, element);
 			bool value;
 			//TODO: Check if this is actually necessary
 			if (newValues.contains(element))

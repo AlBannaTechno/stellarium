@@ -59,6 +59,7 @@ public:
 	static const int DEFAULT_INDI_TCP_PORT = 7624;
 
 	//INDI XML tags
+	static const char* T_GET_PROPERTIES;
 	static const char* T_DEF_NUMBER_VECTOR;
 	static const char* T_DEF_SWITCH_VECTOR;
 	static const char* T_SET_NUMBER_VECTOR;
@@ -72,6 +73,7 @@ public:
 
 
 	//INDI XML attributes
+	static const char* A_VERSION;
 	static const char* A_DEVICE;
 	static const char* A_NAME;
 	static const char* A_LABEL;
@@ -99,27 +101,43 @@ public:
 	static const char* SP_JNOW_COORDINATES_REQUEST;
 
 public slots:
-	//!
+	//! Sends a \b getProperties element to the specified device.
+	//! This asks the other side of the connection to send definitions of its
+	//! properties. If no device name is specified, the command applies to all
+	//! devices connected via this connection. If no property name is specified,
+	//! the command applies to all properties.
+	void writeGetProperties(const QString& device = QString(),
+	                        const QString& property = QString());
+	//! Sends a \b newTextVector element to the specified device.
+	//! \todo Needs to be actually implemented.
 	void writeTextProperty(const QString& device,
 	                       const QString& property,
 	                       const QHash<QString,QString>& newValues);
-	//!
+	//! Sends a \b newNumberVector element to the specified device.
 	void writeNumberProperty(const QString& device,
 	                         const QString& property,
 	                         const QHash<QString,double>& newValues);
-	//!
+	//! Sends a \b newSwitchVector element to the specified device.
 	void writeSwitchProperty(const QString& device,
 	                         const QString& property,
 	                         const QHash<QString,bool>& newValues);
-	//!
+	//! Sends a \b newBlobVector element to the specified device.
+	//! \todo Needs to be actually implemented.
 	void writeBlobProperty(const QString& device,
 	                       const QString& property,
 	                       const QHash<QString,QByteArray>& newValues);
 
 signals:
+	//! Emitted when a \b def[type]Vector element has been parsed.
 	void propertyDefined(const QString& deviceName, Property* property);
+	//! Emitted when a \b new[type]Vector element has been parsed.
+	//! Such a message is sent by the device to notify that a given property
+	//! or its attributes have changed and have a \b new value.
 	void propertyUpdated(const QString& deviceName, Property* property);
+	//! Emitted when a \b delProperty message has been parsed.
 	void propertyRemoved(const QString& deviceName, const QString& propertyName);
+	//! Emitted when a property definition or update contains a message, or when
+	//! a \b message element has been received.
 	//! \param timestamp uses QDateTime for now. It supports millisecond
 	//! precision. If higher precision is necessary, an IndiTimestamp class may
 	//! be necessary.
