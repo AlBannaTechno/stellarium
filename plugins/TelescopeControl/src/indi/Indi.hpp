@@ -21,6 +21,7 @@
 #define _INDI_HPP_
 
 #include <QByteArray>
+#include <QDateTime>
 #include <QHash>
 #include <QString>
 
@@ -162,17 +163,25 @@ class Property
 {
 public:
 	Property(const QString& propertyName,
-			 State propertyState,
-			 Permission accessPermission,
-			 const QString& propertyLabel = QString(),
-			 const QString& propertyGroup = QString());
+	         State propertyState,
+	         Permission accessPermission,
+	         const QString& propertyLabel = QString(),
+	         const QString& propertyGroup = QString(),
+	         const QDateTime& timestamp = QDateTime());
 	virtual ~Property();
 	QString getName();
 	QString getLabel();
 	bool isReadable();
 	bool isWritable();
+	QDateTime getTimestamp() const;
+	qint64 getTimestampInMilliseconds() const;
 	virtual int elementCount() const = 0;
 	virtual QStringList getElementNames() const = 0;
+
+protected:
+	//! Sets the timestamp value. If necessary, reinterprets the data as UTC.
+	//! If the argument is not a valid QDateTime, uses the current moment.
+	void setTimestamp(const QDateTime& timestamp);
 
 private:
 	//! Name used to identify the property internally.
@@ -188,6 +197,8 @@ private:
 	State state;
 	//! Time in seconds before the next expected change in value.
 	double timeout;
+	//! Time of the last change (UTC)
+	QDateTime timestamp;
 };
 
 //! A vector/array of numeric values (NumberElement-s).
@@ -197,15 +208,17 @@ public:
 	//! \todo Do I need a device name field?
 	//! \todo More stuff may need to be added to the constructor's arguments.
 	NumberProperty(const QString& propertyName,
-				   State propertyState,
-				   Permission accessPermission,
-				   const QString& propertyLabel = QString(),
-				   const QString& propertyGroup = QString());
+	               State propertyState,
+	               Permission accessPermission,
+	               const QString& propertyLabel = QString(),
+	               const QString& propertyGroup = QString(),
+	               const QDateTime& timestamp = QDateTime());
 	virtual ~NumberProperty();
 
 	void addElement(NumberElement* element);
-	void updateElement(const QString& name, const QString& newValue);
 	NumberElement* getElement(const QString& name);
+	void update(const QHash<QString,QString>& newValues,
+	            const QDateTime& timestamp);
 	int elementCount() const;
 	QStringList getElementNames() const;
 
@@ -222,7 +235,8 @@ public:
 	               Permission accessPermission,
 	               SwitchRule switchRule,
 	               const QString& propertyLabel = QString(),
-	               const QString& propertyGroup = QString());
+	               const QString& propertyGroup = QString(),
+	               const QDateTime& timestamp = QDateTime());
 	virtual ~SwitchProperty();
 
 	SwitchRule getSwitchRule() const;
@@ -230,7 +244,8 @@ public:
 	void addElement(SwitchElement* element);
 	//! Ignores the SwitchRule - everything is supposed to be checked on the
 	//! device side.
-	void updateElement(const QString& name, const QString& newValue);
+	void update(const QHash<QString,QString>& newValues,
+	            const QDateTime& timestamp);
 	SwitchElement* getElement(const QString& name);
 	int elementCount() const;
 	QStringList getElementNames() const;

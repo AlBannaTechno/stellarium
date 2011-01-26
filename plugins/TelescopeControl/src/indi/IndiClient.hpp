@@ -194,11 +194,11 @@ private:
 	//!
 	void readNumberProperty();
 	//!
-	void readNumberElement(NumberProperty* numberProperty);
+	void readNumberElement(QHash<QString,QString>& newValues);
 	//!
 	void readSwitchProperty();
 	//!
-	void readSwitchElement(SwitchProperty* switchProperty);
+	void readSwitchElement(QHash<QString,QString>& newValues);
 
 
 	//! May be a QProcess or a QTcpSocket.

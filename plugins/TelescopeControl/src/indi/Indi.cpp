@@ -241,7 +241,8 @@ Property::Property(const QString& propertyName,
 				   State propertyState,
 				   Permission accessPermission,
 				   const QString& propertyLabel,
-				   const QString& propertyGroup)
+				   const QString& propertyGroup,
+				   const QDateTime& _timestamp)
 {
 	name = propertyName;
 	if (propertyLabel.isEmpty())
@@ -252,6 +253,7 @@ Property::Property(const QString& propertyName,
 	group = propertyGroup;
 	permission = accessPermission;
 	state = propertyState;
+	setTimestamp(_timestamp);
 }
 
 Property::~Property()
@@ -278,6 +280,31 @@ bool Property::isWritable()
 	return (permission == PermissionWriteOnly || permission == PermissionReadWrite);
 }
 
+QDateTime Property::getTimestamp() const
+{
+	return timestamp;
+}
+
+qint64 Property::getTimestampInMilliseconds() const
+{
+	return timestamp.toMSecsSinceEpoch();
+}
+
+void Property::setTimestamp(const QDateTime& newTimestamp)
+{
+	if (newTimestamp.isValid())
+	{
+		timestamp = newTimestamp;
+		//TODO: Re-interpret or convert?
+		if(newTimestamp.timeSpec() != Qt::UTC)
+			timestamp.setTimeSpec(Qt::UTC);
+	}
+	else
+	{
+		timestamp = QDateTime::currentDateTimeUtc();
+	}
+}
+
 /* ********************************************************************* */
 #if 0
 #pragma mark -
@@ -285,15 +312,17 @@ bool Property::isWritable()
 #endif
 /* ********************************************************************* */
 NumberProperty::NumberProperty(const QString& propertyName,
-							   State propertyState,
-							   Permission accessPermission,
-							   const QString& propertyLabel,
-							   const QString& propertyGroup) :
+                               State propertyState,
+                               Permission accessPermission,
+                               const QString& propertyLabel,
+                               const QString& propertyGroup,
+                               const QDateTime& timestamp) :
 	Property(propertyName,
-			 propertyState,
-			 accessPermission,
-			 propertyLabel,
-			 propertyGroup)
+	         propertyState,
+	         accessPermission,
+	         propertyLabel,
+	         propertyGroup,
+	         timestamp)
 {
 	//
 }
@@ -308,9 +337,17 @@ void NumberProperty::addElement(NumberElement* element)
 	elements.insert(element->getName(), element);
 }
 
-void NumberProperty::updateElement(const QString& name, const QString& newValue)
+void NumberProperty::update(const QHash<QString, QString>& newValues,
+                            const QDateTime& newTimestamp)
 {
-	elements[name]->setValue(newValue);
+	QHashIterator<QString, QString> it(newValues);
+	while(it.hasNext())
+	{
+		it.next();
+		if (elements.contains(it.key()))
+			elements[it.key()]->setValue(it.value());
+	}
+	setTimestamp(newTimestamp);
 }
 
 NumberElement* NumberProperty::getElement(const QString& name)
@@ -339,12 +376,14 @@ SwitchProperty::SwitchProperty(const QString &propertyName,
                                Permission accessPermission,
                                SwitchRule switchRule,
                                const QString &propertyLabel,
-                               const QString &propertyGroup) :
+                               const QString &propertyGroup,
+                               const QDateTime& timestamp) :
 	Property(propertyName,
 	         propertyState,
 	         accessPermission,
 	         propertyLabel,
-	         propertyGroup),
+	         propertyGroup,
+	         timestamp),
 	rule(switchRule)
 {
 	//
@@ -365,11 +404,17 @@ void SwitchProperty::addElement(SwitchElement* element)
 	elements.insert(element->getName(), element);
 }
 
-void SwitchProperty::updateElement(const QString& name,
-                                   const QString& newValue)
+void SwitchProperty::update(const QHash<QString, QString>& newValues,
+                            const QDateTime& newTimestamp)
 {
-	if (elements.contains(name))
-		elements[name]->setValue(newValue);
+	QHashIterator<QString, QString> it(newValues);
+	while(it.hasNext())
+	{
+		it.next();
+		if (elements.contains(it.key()))
+			elements[it.key()]->setValue(it.value());
+	}
+	setTimestamp(newTimestamp);
 }
 
 SwitchElement* SwitchProperty::getElement(const QString& name)

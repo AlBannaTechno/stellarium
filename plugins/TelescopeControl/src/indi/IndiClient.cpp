@@ -626,19 +626,23 @@ void IndiClient::readNumberProperty()
 		return;
 	}
 
+	QHash<QString,QString> values;
 	while (!(xmlReader.name() == T_SET_NUMBER_VECTOR && xmlReader.isEndElement()))
 	{
 		if (xmlReader.name() == T_ONE_NUMBER)
 		{
-			readNumberElement(numberProperty);
+			readNumberElement(values);
 		}
 		xmlReader.readNext();
 	}
-	//TODO: Add check if anything has been updated at all?
-	emit propertyUpdated(device, numberProperty);
+	if (!values.isEmpty())
+	{
+		numberProperty->update(values, timestamp);
+		emit propertyUpdated(device, numberProperty);;
+	}
 }
 
-void IndiClient::readNumberElement(NumberProperty* numberProperty)
+void IndiClient::readNumberElement(QHash<QString, QString>& newValues)
 {
 	QString name = xmlReader.attributes().value(A_NAME).toString();
 	//TODO: Validation
@@ -655,7 +659,7 @@ void IndiClient::readNumberElement(NumberProperty* numberProperty)
 		qDebug() << "oneNumber element is empty?";
 		return;
 	}
-	numberProperty->updateElement(name, value);
+	newValues.insert(name, value);
 }
 
 void IndiClient::readSwitchProperty()
@@ -698,20 +702,23 @@ void IndiClient::readSwitchProperty()
 		return;
 	}
 
+	QHash<QString,QString> values;
 	while(!(xmlReader.name() == T_SET_SWITCH_VECTOR && xmlReader.isEndElement()))
 	{
 		if (xmlReader.name() == T_ONE_SWITCH)
 		{
-			readSwitchElement(switchProperty);
+			readSwitchElement(values);
 		}
 		xmlReader.readNext();
 	}
-
-	//TODO: Add check if anything has been updated at all?
-	emit propertyUpdated(device, switchProperty);
+	if (!values.isEmpty())
+	{
+		switchProperty->update(values, timestamp);
+		emit propertyUpdated(device, switchProperty);
+	}
 }
 
-void IndiClient::readSwitchElement(SwitchProperty* switchProperty)
+void IndiClient::readSwitchElement(QHash<QString,QString>& newValues)
 {
 	QString name = xmlReader.attributes().value(A_NAME).toString();
 	QString value;
@@ -725,7 +732,7 @@ void IndiClient::readSwitchElement(SwitchProperty* switchProperty)
 	{
 		return;
 	}
-	switchProperty->updateElement(name, value);
+	newValues.insert(name, value);
 }
 
 void IndiClient::writeGetProperties(const QString& device,
