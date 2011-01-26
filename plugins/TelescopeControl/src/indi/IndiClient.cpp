@@ -799,7 +799,7 @@ void IndiClient::writeNumberProperty(const QString& device,
 				value = newValues[element];
 			else
 				value = numberProperty->getElement(element)->getValue();
-			xmlWriter.writeCharacters(QString::number(value));
+			xmlWriter.writeCharacters(QString::number(value, 'f'));
 			xmlWriter.writeEndElement();
 		}
 

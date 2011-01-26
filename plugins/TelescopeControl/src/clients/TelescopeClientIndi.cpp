@@ -95,7 +95,7 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	else if (isDefinedJNowCoordinateRequest)
 	{
 		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
-		targetCoordinates = navigator->equinoxEquToJ2000(j2000Coordinates);
+		targetCoordinates = navigator->j2000ToEquinoxEqu(j2000Coordinates);
 		property = IndiClient::SP_JNOW_COORDINATES_REQUEST;
 	}
 	else

@@ -270,7 +270,7 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 	if (equinox == EquinoxJNow)
 	{
 		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
-		targetCoordinates = navigator->equinoxEquToJ2000(j2000Coordinates);
+		targetCoordinates = navigator->j2000ToEquinoxEqu(j2000Coordinates);
 	}
 
 	//Convert coordinates from the vector
