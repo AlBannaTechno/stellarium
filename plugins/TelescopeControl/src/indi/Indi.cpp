@@ -280,6 +280,16 @@ bool Property::isWritable()
 	return (permission == PermissionWriteOnly || permission == PermissionReadWrite);
 }
 
+void Property::setState(State newState)
+{
+	state = newState;
+}
+
+State Property::getCurrentState() const
+{
+	return state;
+}
+
 QDateTime Property::getTimestamp() const
 {
 	return timestamp;
@@ -350,6 +360,14 @@ void NumberProperty::update(const QHash<QString, QString>& newValues,
 	setTimestamp(newTimestamp);
 }
 
+void NumberProperty::update(const QHash<QString, QString>& newValues,
+                            const QDateTime &timestamp,
+                            State newState)
+{
+	setState(newState);
+	update(newValues, timestamp);
+}
+
 NumberElement* NumberProperty::getElement(const QString& name)
 {
 	return elements.value(name);
@@ -415,6 +433,14 @@ void SwitchProperty::update(const QHash<QString, QString>& newValues,
 			elements[it.key()]->setValue(it.value());
 	}
 	setTimestamp(newTimestamp);
+}
+
+void SwitchProperty::update(const QHash<QString, QString>& newValues,
+                            const QDateTime& newTimestamp,
+                            State newState)
+{
+	setState(newState);
+	update(newValues, newTimestamp);
 }
 
 SwitchElement* SwitchProperty::getElement(const QString& name)

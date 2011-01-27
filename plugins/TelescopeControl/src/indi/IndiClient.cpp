@@ -637,7 +637,10 @@ void IndiClient::readNumberProperty()
 	}
 	if (!values.isEmpty())
 	{
-		numberProperty->update(values, timestamp);
+		if (state.isEmpty())
+			numberProperty->update(values, timestamp);
+		else
+			numberProperty->update(values, timestamp, readStateFromString(state));
 		emit propertyUpdated(device, numberProperty);;
 	}
 }
@@ -713,7 +716,10 @@ void IndiClient::readSwitchProperty()
 	}
 	if (!values.isEmpty())
 	{
-		switchProperty->update(values, timestamp);
+		if (state.isEmpty())
+			switchProperty->update(values, timestamp);
+		else
+			switchProperty->update(values, timestamp, readStateFromString(state));
 		emit propertyUpdated(device, switchProperty);
 	}
 }

@@ -173,6 +173,8 @@ public:
 	QString getLabel();
 	bool isReadable();
 	bool isWritable();
+	void setState(State newState);
+	State getCurrentState() const;
 	QDateTime getTimestamp() const;
 	qint64 getTimestampInMilliseconds() const;
 	virtual int elementCount() const = 0;
@@ -219,6 +221,9 @@ public:
 	NumberElement* getElement(const QString& name);
 	void update(const QHash<QString,QString>& newValues,
 	            const QDateTime& timestamp);
+	void update(const QHash<QString,QString>& newValues,
+	            const QDateTime& timestamp,
+	            State newState);
 	int elementCount() const;
 	QStringList getElementNames() const;
 
@@ -246,6 +251,9 @@ public:
 	//! device side.
 	void update(const QHash<QString,QString>& newValues,
 	            const QDateTime& timestamp);
+	void update(const QHash<QString,QString>& newValues,
+	            const QDateTime& timestamp,
+	            State newState);
 	SwitchElement* getElement(const QString& name);
 	int elementCount() const;
 	QStringList getElementNames() const;
