@@ -134,6 +134,8 @@ public:
 	//! Removes all connections.
 	//! \todo Make it work properly.
 	void removeAllConnections();
+	//! Lists the names of all defined connections.
+	QStringList listAllConnectionNames() const;
 	
 	//! Initializes the connection with the given id.
 	//! Uses getConnection() to get its description.
@@ -153,8 +155,6 @@ public:
 
 	//! Returns a list of the currently connected #telescopes.
 	QStringList listConnectedTelescopeNames();
-	//! Returns a list of the currently connected #connections.
-	QStringList listConnectedConnectionNames();
 
 	//! Returns a free TCP port in Stellarium's range or higher.
 	uint getFreeTcpPort();

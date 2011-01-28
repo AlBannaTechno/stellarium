@@ -445,7 +445,7 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 	QStandardItem * tempItem;
 
 	//Cycle the connections
-	QStringList connectionIds = deviceManager->listConnectedConnectionNames();
+	QStringList connectionIds = deviceManager->listAllConnectionNames();
 	foreach (const QString& id, connectionIds)
 	{
 		//Read the telescope properties

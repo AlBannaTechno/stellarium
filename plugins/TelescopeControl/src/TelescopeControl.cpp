@@ -563,6 +563,11 @@ void TelescopeControl::removeAllConnections()
 	connectionsProperties.clear();
 }
 
+QStringList TelescopeControl::listAllConnectionNames() const
+{
+	return connectionsProperties.keys();
+}
+
 bool TelescopeControl::doesClientExist(const QString& id)
 {
 	return (connections.contains(id));
@@ -1367,14 +1372,6 @@ QStringList TelescopeControl::listConnectedTelescopeNames()
 	if (!telescopes.isEmpty())
 		connectedTelescopes = telescopes.keys();
 	return connectedTelescopes;
-}
-
-QStringList TelescopeControl::listConnectedConnectionNames()
-{
-	QStringList connectedConnections;
-	if (!connections.isEmpty())
-		connectedConnections = connections.keys();
-	return connectedConnections;
 }
 
 bool TelescopeControl::restoreDeviceModelsListTo(QString deviceModelsListPath)
