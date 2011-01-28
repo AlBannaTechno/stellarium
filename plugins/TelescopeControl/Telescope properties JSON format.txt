@@ -5,8 +5,16 @@ REQUIRED values are absolutely necessary.
 ASSUMED values may be skipped - a default value will be assumed.
 SPECIFIC values are values REQUIRED by a specific client/connection type.
 OPTIONAL values provide additional, non-essential features.
- 
-== Version 0.4.0 (and later?) ==
+
+== Version 0.5.0 ==
+1. "telescopes.json" is called "connections.json"
+
+2. Instead of numbered slots, it uses string identifiers.
+
+3. Hotkey numbers are described in a special field:
+[OPTIONAL] "shortcutNumber" (number, 1-9)
+
+== Version 0.4.* ==
 1. Structure of telescopes.json: a JSON object/hash, with slot numbers as keys
 and telescope JSON objects as values. A separate "version" key provides
 a version number string.

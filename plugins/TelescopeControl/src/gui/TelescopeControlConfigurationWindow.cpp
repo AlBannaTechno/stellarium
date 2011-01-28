@@ -1,7 +1,7 @@
 /*
  * Stellarium Telescope Control Plug-in
  * 
- * Copyright (C) 2009-2010 Bogdan Marinov (this file)
+ * Copyright (C) 2009-2011 Bogdan Marinov (this file)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,15 +30,15 @@
 #include "TelescopeControlConfigurationWindow.hpp"
 #include "ui_telescopeControlConfigurationWindow.h"
 #include "StelGui.hpp"
+
 #include <QDebug>
-#include <QFrame>
-#include <QTimer>
 #include <QFile>
 #include <QFileDialog>
 #include <QHash>
 #include <QHeaderView>
 #include <QSettings>
 #include <QStandardItem>
+#include <QTimer>
 
 using namespace TelescopeControlGlobals;
 
@@ -48,10 +48,10 @@ TelescopeControlConfigurationWindow::TelescopeControlConfigurationWindow()
 	ui = new Ui_widgetTelescopeControlConfiguration;
 	
 	//TODO: Fix this - it's in the same plugin
-	telescopeManager = GETSTELMODULE(TelescopeControl);
+	deviceManager = GETSTELMODULE(TelescopeControl);
 	connectionListModel = new QStandardItemModel(0, ColumnCount);
-	
-	telescopeCount = 0;
+
+	connectionCount = 0;
 }
 
 TelescopeControlConfigurationWindow::~TelescopeControlConfigurationWindow()
@@ -102,14 +102,14 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	
 	//Page: Options:
 	connect(ui->checkBoxReticles, SIGNAL(toggled(bool)),
-	        telescopeManager, SLOT(setFlagTelescopeReticles(bool)));
+	        deviceManager, SLOT(setFlagTelescopeReticles(bool)));
 	connect(ui->checkBoxLabels, SIGNAL(toggled(bool)),
-	        telescopeManager, SLOT(setFlagTelescopeLabels(bool)));
+	        deviceManager, SLOT(setFlagTelescopeLabels(bool)));
 	connect(ui->checkBoxCircles, SIGNAL(toggled(bool)),
-	        telescopeManager, SLOT(setFlagTelescopeCircles(bool)));
+	        deviceManager, SLOT(setFlagTelescopeCircles(bool)));
 	
 	connect(ui->checkBoxEnableLogs, SIGNAL(toggled(bool)),
-	        telescopeManager, SLOT(setFlagUseTelescopeServerLogs(bool)));
+	        deviceManager, SLOT(setFlagUseTelescopeServerLogs(bool)));
 	
 	//In other dialogs:
 	connect(&propertiesWindow, SIGNAL(changesDiscarded()),
@@ -135,10 +135,10 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	populateConnectionList();
 	
 	//Checkboxes
-	ui->checkBoxReticles->setChecked(telescopeManager->getFlagTelescopeReticles());
-	ui->checkBoxLabels->setChecked(telescopeManager->getFlagTelescopeLabels());
-	ui->checkBoxCircles->setChecked(telescopeManager->getFlagTelescopeCircles());
-	ui->checkBoxEnableLogs->setChecked(telescopeManager->getFlagUseTelescopeServerLogs());
+	ui->checkBoxReticles->setChecked(deviceManager->getFlagTelescopeReticles());
+	ui->checkBoxLabels->setChecked(deviceManager->getFlagTelescopeLabels());
+	ui->checkBoxCircles->setChecked(deviceManager->getFlagTelescopeCircles());
+	ui->checkBoxEnableLogs->setChecked(deviceManager->getFlagUseTelescopeServerLogs());
 	
 	//About page
 	//TODO: Expand
@@ -186,36 +186,42 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	//Everything must be initialized by now, start the updateTimer
 	//TODO: Find if it's possible to run it only when the dialog is visible
 	QTimer* updateTimer = new QTimer(this);
-	connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateConnectionStates()));
+	connect(updateTimer, SIGNAL(timeout()),
+	        this, SLOT(updateConnectionStates()));
 	updateTimer->start(200);
 }
 
 void TelescopeControlConfigurationWindow::selectConnection(const QModelIndex & index)
 {
-	//Extract selected item index
-	int selectedSlot = connectionListModel->data( connectionListModel->index(index.row(),0) ).toInt();
-	updateStatusButtonForSlot(selectedSlot);
+	int row = index.row();
+	QModelIndex nameIndex = connectionListModel->index(row, ColumnName);
+	QString selectedId = connectionListModel->data(nameIndex).toString();
+	updateStatusButton(selectedId);
 
 	//In all cases
 	ui->pushButtonRemove->setEnabled(true);
 }
 
-void TelescopeControlConfigurationWindow::configureConnection(const QModelIndex & currentIndex)
+void TelescopeControlConfigurationWindow::configureConnection(const QModelIndex & index)
 {
-	configuredTelescopeIsNew = false;
-	configuredSlot = connectionListModel->data( connectionListModel->index(currentIndex.row(), ColumnSlot) ).toInt();
+	configuredConnectionIsNew = false;
+
+	int row = index.row();
+	QModelIndex nameIndex = connectionListModel->index(row, ColumnName);
+	configuredId = connectionListModel->data(nameIndex).toString();
 	
-	//Stop the telescope first if necessary
-	if(!telescopeManager->stopTelescopeAtSlot(configuredSlot))
+	//Stop the connection first if necessary
+	if(!deviceManager->stopConnection(configuredId))
 		return;
 
 	//Update the status in the list
 	updateConnectionStates();
 	
 	setVisible(false);
-	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
+	//This should be called first to actually create the dialog content:
+	propertiesWindow.setVisible(true);
 	
-	propertiesWindow.prepareForExistingConfiguration(configuredSlot);
+	propertiesWindow.prepareForExistingConfiguration(configuredId);
 }
 
 void TelescopeControlConfigurationWindow::toggleSelectedConnection()
@@ -223,12 +229,14 @@ void TelescopeControlConfigurationWindow::toggleSelectedConnection()
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
 	
-	//Extract selected slot
-	int selectedSlot = connectionListModel->data( connectionListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnSlot) ).toInt();
-	if(telescopeManager->isConnectedClientAtSlot(selectedSlot))
-		telescopeManager->stopTelescopeAtSlot(selectedSlot);
+	//Extract selected ID
+	int row = ui->telescopeTreeView->currentIndex().row();
+	const QModelIndex& index = connectionListModel->index(row, ColumnName);
+	QString selectedId = connectionListModel->data(index).toString();
+	if(deviceManager->isClientConnected(selectedId))
+		deviceManager->stopConnection(selectedId);
 	else
-		telescopeManager->startTelescopeAtSlot(selectedSlot);
+		deviceManager->startConnection(selectedId);
 	updateConnectionStates();
 }
 
@@ -240,55 +248,47 @@ void TelescopeControlConfigurationWindow::configureSelectedConnection()
 
 void TelescopeControlConfigurationWindow::createNewStellariumConnection()
 {
-	if(telescopeCount >= SLOT_COUNT)
-		return;
-	
-	configuredTelescopeIsNew = true;
-	configuredSlot = findFirstUnoccupiedSlot();
+	configuredConnectionIsNew = true;
+	configuredId = createDefaultId();
 	
 	setVisible(false);
-	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
-	propertiesWindow.prepareNewStellariumConfiguration(configuredSlot);
+	//This should be called first to actually create the dialog content:
+	propertiesWindow.setVisible(true);
+	propertiesWindow.prepareNewStellariumConfiguration(configuredId);
 }
 
 void TelescopeControlConfigurationWindow::createNewIndiConnection()
 {
-	if (telescopeCount >= SLOT_COUNT)
-		return;
-
-	configuredTelescopeIsNew = true;
-	configuredSlot= findFirstUnoccupiedSlot();
+	configuredConnectionIsNew = true;
+	configuredId = createDefaultId();
 
 	setVisible(false);
+	//This should be called first to actually create the dialog content:
 	propertiesWindow.setVisible(true);
-	propertiesWindow.prepareNewIndiConfiguration(configuredSlot);
+	propertiesWindow.prepareNewIndiConfiguration(configuredId);
 }
 
 void TelescopeControlConfigurationWindow::createNewVirtualConnection()
 {
-	if(telescopeCount >= SLOT_COUNT)
-		return;
-
-	configuredTelescopeIsNew = true;
-	configuredSlot = findFirstUnoccupiedSlot();
+	configuredConnectionIsNew = true;
+	configuredId = createDefaultId();
 
 	setVisible(false);
-	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
-	propertiesWindow.prepareNewVirtualConfiguration(configuredSlot);
+	//This should be called first to actually create the dialog content:
+	propertiesWindow.setVisible(true);
+	propertiesWindow.prepareNewVirtualConfiguration(configuredId);
 }
 
 #ifdef Q_OS_WIN32
 void TelescopeControlConfigurationWindow::createNewAscomConnection()
 {
-	if (telescopeCount >= SLOT_COUNT)
-		return;
-
 	configuredTelescopeIsNew = true;
-	configuredSlot = findFirstUnoccupiedSlot();
+	configuredId = createDefaultId();
 
 	setVisible(false);
-	propertiesWindow.setVisible(true); //This should be called first to actually create the dialog content
-	propertiesWindow.prepareNewAscomConfiguration(configuredSlot);
+	//This should be called first to actually create the dialog content:
+	propertiesWindow.setVisible(true);
+	propertiesWindow.prepareNewAscomConfiguration(configuredId);
 }
 #endif
 
@@ -297,14 +297,14 @@ void TelescopeControlConfigurationWindow::removeSelectedConnection()
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
 	
-	//Extract selected slot
-	int selectedSlot = connectionListModel->data( connectionListModel->index(ui->telescopeTreeView->currentIndex().row(),0) ).toInt();
+	int row = ui->telescopeTreeView->currentIndex().row();
+	QModelIndex index = connectionListModel->index(row, ColumnName);
+	QString selectedId = connectionListModel->data(index).toString();
 	
-	//Stop the telescope if necessary and remove it
-	if(telescopeManager->stopTelescopeAtSlot(selectedSlot))
+	if(deviceManager->stopConnection(selectedId))
 	{
 		//TODO: Update status?
-		if(!telescopeManager->removeTelescopeAtSlot(selectedSlot))
+		if(!deviceManager->removeConnection(selectedId))
 		{
 			//TODO: Add debug
 			return;
@@ -317,8 +317,8 @@ void TelescopeControlConfigurationWindow::removeSelectedConnection()
 	}
 	
 	//Save the changes to file
-	telescopeManager->saveTelescopes();
-	configuredTelescopeIsNew = true;//HACK!
+	deviceManager->saveConnections();
+	configuredConnectionIsNew = true;//HACK!
 	populateConnectionList();
 }
 
@@ -326,11 +326,11 @@ void TelescopeControlConfigurationWindow::saveChanges(QString name)
 {
 	Q_UNUSED(name);
 	//Save the changes to file
-	telescopeManager->saveTelescopes();
+	deviceManager->saveConnections();
 
 	populateConnectionList();
 	
-	configuredTelescopeIsNew = false;
+	configuredConnectionIsNew = false;
 	propertiesWindow.setVisible(false);
 	setVisible(true);//Brings the current window to the foreground
 }
@@ -340,42 +340,43 @@ void TelescopeControlConfigurationWindow::discardChanges()
 	propertiesWindow.setVisible(false);
 	setVisible(true);//Brings the current window to the foreground
 	
-	if (telescopeCount >= SLOT_COUNT)
-		ui->groupBoxNewButtons->setEnabled(false);
-	if (telescopeCount == 0)
+	if (connectionCount == 0)
 		ui->pushButtonRemove->setEnabled(false);
 	
-	configuredTelescopeIsNew = false;
+	configuredConnectionIsNew = false;
 }
 
 void TelescopeControlConfigurationWindow::updateConnectionStates()
 {
-	if (telescopeCount == 0)
+	if (connectionCount == 0)
 		return;
 
 	//If the dialog is not visible, don't bother updating the status
 	if (!visible())
 		return;
 	
-	int slotNumber = -1;
+	QString id;
 	for (int i=0; i<(connectionListModel->rowCount()); i++)
 	{
-		slotNumber = connectionListModel->data( connectionListModel->index(i, ColumnSlot) ).toInt();
-		QString newStatusString = getStatusStringForSlot(slotNumber);
+		QModelIndex index = connectionListModel->index(i, ColumnName);
+		id = connectionListModel->data(index).toString();
+		QString newStatusString = getStatusString(id);
 		connectionListModel->setData(connectionListModel->index(i, ColumnStatus), newStatusString, Qt::DisplayRole);
 	}
 	
 	if(ui->telescopeTreeView->currentIndex().isValid())
 	{
-		int selectedSlot = connectionListModel->data( connectionListModel->index(ui->telescopeTreeView->currentIndex().row(), ColumnSlot) ).toInt();
+		int row = ui->telescopeTreeView->currentIndex().row();
+		QModelIndex index = connectionListModel->index(row, ColumnName);
+		QString selectedId = connectionListModel->data(index).toString();
 		//Update the ChangeStatus button
-		updateStatusButtonForSlot(selectedSlot);
+		updateStatusButton(selectedId);
 	}
 }
 
-void TelescopeControlConfigurationWindow::updateStatusButtonForSlot(int slot)
+void TelescopeControlConfigurationWindow::updateStatusButton(const QString& id)
 {
-	if(telescopeManager->isConnectedClientAtSlot(slot))
+	if(deviceManager->isClientConnected(id))
 	{
 		ui->pushButtonChangeStatus->setText("Disconnect");
 		ui->pushButtonChangeStatus->setToolTip("Disconnect from the selected telescope");
@@ -389,15 +390,17 @@ void TelescopeControlConfigurationWindow::updateStatusButtonForSlot(int slot)
 	}
 }
 
-int TelescopeControlConfigurationWindow::findFirstUnoccupiedSlot()
+QString TelescopeControlConfigurationWindow::createDefaultId()
 {
-	//Find the first unoccupied slot (there is at least one)
-	for (int slot = MIN_SLOT_NUMBER; slot < SLOT_NUMBER_LIMIT; slot++)
+	QString id;
+	int i = 1;
+	do
 	{
-		if(telescopeManager->getTelescopeAtSlot(slot).isEmpty())
-			return slot;
+		//TODO: Localization
+		id = QString("New Telescope %1").arg(i++);
 	}
-	return -1;
+	while (deviceManager->doesClientExist(id));
+	return id;
 }
 
 void TelescopeControlConfigurationWindow::updateStyle()
@@ -416,16 +419,16 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 {
 	//Remember the previously selected connection, if any
 	int selectedRow = 0;
-	if (!configuredTelescopeIsNew)
+	if (!configuredConnectionIsNew)
 		selectedRow = ui->telescopeTreeView->currentIndex().row();
 
 	//Initializing the list of telescopes
 	connectionListModel->clear();
-	telescopeCount = 0;
+	connectionCount = 0;
 
 	connectionListModel->setColumnCount(ColumnCount);
 	QStringList headerStrings;
-	headerStrings << "#";
+	//headerStrings << "#";
 	//headerStrings << "Start";
 	headerStrings <<  "Status";
 	headerStrings << "Connection";
@@ -435,21 +438,19 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 
 	ui->telescopeTreeView->setModel(connectionListModel);
 	ui->telescopeTreeView->header()->setMovable(false);
-	ui->telescopeTreeView->header()->setResizeMode(ColumnSlot, QHeaderView::ResizeToContents);
+	//ui->telescopeTreeView->header()->setResizeMode(ColumnSlot, QHeaderView::ResizeToContents);
 	ui->telescopeTreeView->header()->setStretchLastSection(true);
 
 	//Populating the list
 	QStandardItem * tempItem;
 
-	//Cycle the slots
-	for (int slot = MIN_SLOT_NUMBER; slot < SLOT_NUMBER_LIMIT; slot++)
+	//Cycle the connections
+	QStringList connectionIds = deviceManager->listConnectedConnectionNames();
+	foreach (const QString& id, connectionIds)
 	{
-		//Slot #
-		//int slotNumber = (i+1)%SLOT_COUNT;//Making sure slot 0 is last
-
 		//Read the telescope properties
 		//(Minimal validation - this is supposed to have been validated once.)
-		const QVariantMap& properties = telescopeManager->getTelescopeAtSlot(slot);
+		const QVariantMap& properties = deviceManager->getConnection(id);
 		if(properties.isEmpty())
 			continue;
 
@@ -479,12 +480,7 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 			connectionTypeLabel = "direct";
 		}
 
-		//New column on a new row in the list: Slot number
 		int lastRow = connectionListModel->rowCount();
-		tempItem = new QStandardItem(QString::number(slot));
-		tempItem->setEditable(false);
-		connectionListModel->setItem(lastRow, ColumnSlot, tempItem);
-
 		//TODO: This is not updated, because it was commented out
 		//tempItem = new QStandardItem;
 		//tempItem->setEditable(false);
@@ -494,7 +490,7 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		//telescopeListModel->setItem(lastRow, ColumnStartup, tempItem);//Start-up checkbox
 
 		//New column on a new row in the list: Connection status
-		QString newStatusString = getStatusStringForSlot(slot);
+		QString newStatusString = getStatusString(id);
 		tempItem = new QStandardItem(newStatusString);
 		tempItem->setEditable(false);
 		connectionListModel->setItem(lastRow, ColumnStatus, tempItem);
@@ -515,16 +511,15 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		connectionListModel->setItem(lastRow, ColumnName, tempItem);
 
 		//After everything is done, count this as loaded
-		telescopeCount++;
+		connectionCount++;
 	}
 
-	//Finished populating the table, let's sort it by slot number
+	//Finished populating the table, let's sort it by name
 	//ui->telescopeTreeView->setSortingEnabled(true);//Set in the .ui file
-	ui->telescopeTreeView->sortByColumn(ColumnSlot, Qt::AscendingOrder);
+	ui->telescopeTreeView->sortByColumn(ColumnName, Qt::AscendingOrder);
 	//(Works even when the table is empty)
-	//(Makes redundant the delay of 0 above)
 
-	if(telescopeCount > 0)
+	if(connectionCount > 0)
 	{
 		ui->telescopeTreeView->setFocus();
 		ui->telescopeTreeView->setCurrentIndex(connectionListModel->index(selectedRow,0));
@@ -541,27 +536,20 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		ui->pushButtonRemove->setEnabled(false);
 		ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::Interactive);
 		ui->pushButtonNewStellarium->setFocus();
-		if(telescopeManager->getDeviceModels().isEmpty())
+		if(deviceManager->getDeviceModels().isEmpty())
 			ui->labelWarning->setText(LABEL_TEXT_NO_DEVICE_MODELS);
 		else
 			ui->labelWarning->setText(LABEL_TEXT_ADD_TIP);
 	}
-
-	//If there are less than the maximal number of telescopes,
-	//new ones can be added
-	if(telescopeCount < SLOT_COUNT)
-		ui->groupBoxNewButtons->setEnabled(true);
-	else
-		ui->groupBoxNewButtons->setEnabled(false);
 }
 
-QString TelescopeControlConfigurationWindow::getStatusStringForSlot(int slot)
+QString TelescopeControlConfigurationWindow::getStatusString(const QString& id)
 {
-	if (telescopeManager->isConnectedClientAtSlot(slot))
+	if (deviceManager->isClientConnected(id))
 	{
 		return "Connected";
 	}
-	else if(telescopeManager->isExistingClientAtSlot(slot))
+	else if(deviceManager->doesClientExist(id))
 	{
 		return "Connecting";
 	}

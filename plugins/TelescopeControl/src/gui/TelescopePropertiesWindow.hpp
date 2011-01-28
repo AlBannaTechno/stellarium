@@ -1,7 +1,7 @@
 /*
  * Stellarium TelescopeControl plug-in
  * 
- * Copyright (C) 2009-2010 Bogdan Marinov (this file)
+ * Copyright (C) 2009-2011 Bogdan Marinov (this file)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,12 +47,12 @@ public:
 	virtual ~TelescopePropertiesWindow();
 	void languageChanged();
 	
-	void prepareForExistingConfiguration(int slot);
-	void prepareNewStellariumConfiguration(int slot);
-	void prepareNewIndiConfiguration(int slot);
-	void prepareNewVirtualConfiguration(int slot);
+	void prepareForExistingConfiguration(const QString& id);
+	void prepareNewStellariumConfiguration(const QString& id);
+	void prepareNewIndiConfiguration(const QString& id);
+	void prepareNewVirtualConfiguration(const QString& id);
 #ifdef Q_OS_WIN32
-	void prepareNewAscomConfiguration(int slot);
+	void prepareNewAscomConfiguration(const QString& id);
 #endif
 	
 protected:
@@ -93,12 +93,12 @@ signals:
 private:
 	QStringList deviceModelNames;
 	
-	QRegExpValidator * clientNameValidator;
-	QRegExpValidator * hostNameValidator;
-	QRegExpValidator * circleListValidator;
-	QRegExpValidator * serialPortValidator;
+	QRegExpValidator* clientNameValidator;
+	QRegExpValidator* hostNameValidator;
+	QRegExpValidator* circleListValidator;
+	QRegExpValidator* serialPortValidator;
 	
-	int configuredSlot;
+	QString configuredId;
 	bool configuredConnectionIsRemote;
 	enum ConnectionInterface {
 		ConnectionVirtual = 0,//!<
@@ -109,7 +109,7 @@ private:
 #endif
 	} configuredConnectionInterface;
 	
-	TelescopeControl * telescopeManager;
+	TelescopeControl* deviceManager;
 
 #ifdef Q_OS_WIN32
 	QString ascomDriverObjectId;

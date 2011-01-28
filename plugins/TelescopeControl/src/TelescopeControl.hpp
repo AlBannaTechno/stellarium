@@ -96,12 +96,9 @@ public:
 	///////////////////////////////////////////////////////////////////////////
 	// Methods specific to TelescopeControl
 	//! Send a J2000-goto-command to the specified telescope
-	//! @param telescopeNr the number of the telescope
+	//! @param id the identifier of the telescope
 	//! @param j2000Pos the direction in equatorial J2000 frame
-	void telescopeGoto(int telescopeNr, const Vec3d &j2000Pos);
-	
-	//! Remove all currently registered telescopes
-	void deleteAllTelescopes();
+	void telescopeGoto(const QString& id, const Vec3d &j2000Pos);
 	
 	//! Safe access to the loaded list of telescope models
 	const QHash<QString, DeviceModel>& getDeviceModels();
@@ -113,36 +110,54 @@ public:
 	//! Saves the module's configuration to the configuration file.
 	void saveConfiguration();
 	
-	//! Saves to telescopes.json a list of the parameters of the active telescope clients.
-	void saveTelescopes();
-	//! Loads from telescopes.json the parameters of telescope clients and initializes them. If there are already any initialized telescope clients, they are removed.
-	void loadTelescopes();
+	//! Saves to \b connections.json the parameters of the active connections.
+	void saveConnections();
+	//! Loads \b connections.json and intializes connections from the data.
+	//! If there are already any initialized telescope clients, they are removed.
+	void loadConnections();
 	
-	//These are public, but not slots, because they don't use sufficient validation. Scripts shouldn't be able to add/remove telescopes, only to point them.
-	//! Adds a telescope description containing the given properties. DOES NOT VALIDATE its parameters. If serverName is specified, portSerial should be specified too. Call saveTelescopes() to write the modified configuration to disc. Call startTelescopeAtSlot() to start this telescope.
-	//! @param portSerial must be a valid serial port name for the particular platform, e.g. "COM1" for Microsoft Windows of "/dev/ttyS0" for Linux
-	//! TODO: Update description.
-	bool addTelescopeAtSlot(int slot, const QVariantMap& properties);
-	//! Retrieves a telescope description.
-	//! \returns empty map if there is nothing at that slot.
-	const QVariantMap getTelescopeAtSlot(int slot) const;
-	//! Removes info from the tree. Should it include stopTelescopeAtSlot()?
-	bool removeTelescopeAtSlot(int slot);
+	//These are public, but not slots, because they don't use sufficient validation.
+	//TODO: Is the above note still valid?
+	//! Adds a new device connection with the specified properties.
+	//! Connection ID is taken from the "name" property.
+	//! Call saveTelescopes() to write the modified configuration to disc.
+	//! Call startConnection() to start this telescope.
+	//! \todo Add description of the properties format.
+	//! \todo Return ID instead of bool?
+	bool addConnection(const QVariantMap& properties);
+	//! Retrieves a connection description.
+	//! \returns empty map if no connection with this identifier exists.
+	const QVariantMap getConnection(const QString& id) const;
+	//! Removes a connection description.
+	//! \todo Should it stop it first?
+	bool removeConnection(const QString& id);
+	//! Removes all connections.
+	//! \todo Make it work properly.
+	void removeAllConnections();
 	
-	//! Starts a telescope at the given slot, getting its description with getTelescopeAtSlot(). Creates a TelescopeClient object and starts a server process if necessary.
-	bool startTelescopeAtSlot(int slot);
-	//! Stops the telescope at the given slot. Destroys the TelescopeClient object and terminates the server process if necessary.
-	bool stopTelescopeAtSlot(int slot);
-	//! Stops all telescopes, but without removing them like deleteAllTelescopes().
-	bool stopAllTelescopes();
+	//! Initializes the connection with the given id.
+	//! Uses getConnection() to get its description.
+	//! Creates a TelescopeClient object and adds it to #connections.
+	bool startConnection(const QString& id);
+	//! Closes the connection with the given ID.
+	//! Destroys the TelescopeClient object.
+	bool stopConnection(const QString& id);
+	//! Closes all connections without removing them like removeAllConnections().
+	//! \todo Find which of the two methods is actually needed/used.
+	bool stopAllConnections();
 	
-	//! Checks if there's a TelescopeClient object at a given slot, i.e. if there's an active telescope at that slot.
-	bool isExistingClientAtSlot(int slot);
-	//! Checks if the TelescopeClient object at a given slot is connected to a server.
-	bool isConnectedClientAtSlot(int slot);
+	//! Checks if there's an initialized TelescopeClient object.
+	bool doesClientExist(const QString& id);
+	//! Checks if the TelescopeClient object is connected.
+	bool isClientConnected(const QString& id);
 
-	//! Returns a list of the currently connected clients
-	QHash<int, QString> getConnectedClientsNames();
+	//! Returns a list of the currently connected #telescopes.
+	QStringList listConnectedTelescopeNames();
+	//! Returns a list of the currently connected #connections.
+	QStringList listConnectedConnectionNames();
+
+	//! Returns a free TCP port in Stellarium's range or higher.
+	uint getFreeTcpPort();
 	
 	bool getFlagUseTelescopeServerLogs () {return useTelescopeServerLogs;}
 
@@ -186,26 +201,28 @@ public slots:
 	void setFontSize(int fontSize);
 	
 	//! slews a telescope to the selected object.
-	//! For use from the GUI. The telescope number will be
-	//! deduced from the name of the QAction which triggered the slot.
+	//! For use from the GUI.
 	void slewTelescopeToSelectedObject(int number);
 
 	//! slews a telescope to the point of the celestial sphere currently
 	//! in the center of the screen.
-	//! For use from the GUI. The telescope number will be
-	//! deduced from the name of the QAction which triggered the slot.
+	//! For use from the GUI.
 	void slewTelescopeToViewDirection(int number);
 	
 	//! Used in the GUI
 	void setFlagUseTelescopeServerLogs (bool b) {useTelescopeServerLogs = b;}
 
 signals:
-	void clientConnected(int slot, QString name);
-	void clientDisconnected(int slot);
+	//! Emitted when a connection has been established.
+	void clientConnected(const QString& id);
+	//! Emitted when a connection has been closed.
+	void clientDisconnected(const QString& id);
 	
 private:
 	//! Draw a nice animated pointer around the object if it's selected
-	void drawPointer(const StelProjectorP& prj, const StelNavigator* nav, StelPainter& sPainter);
+	void drawPointer(const StelProjectorP& prj,
+	                 const StelNavigator* nav,
+	                 StelPainter& sPainter);
 
 	//! Perform the communication with the telescope servers
 	void communicate();
@@ -215,6 +232,9 @@ private:
 	QString getPluginDirectoryPath() const;
 	//! Returns the path to the "connections.json" file
 	QString getConnectionsFilePath() const;
+
+	//! De-selects the currently selected objects if they contain a telescope.
+	void unselectTelescopes();
 	
 	LinearFader labelFader;
 	LinearFader reticleFader;
@@ -252,12 +272,18 @@ private:
 	//! Telescope selection marker texture
 	StelTextureSP selectionTexture;
 	
-	//! Contains the initialized telescope client objects representing the telescopes that Stellarium is connected to or attempting to connect to.
-	QMap<int, TelescopeClientP> telescopeClients;
+	//! Stores internally all the information from the connections file.
+	QVariantMap connectionsProperties;
+	//! All initialized objects representing current connections.
+	QHash<QString, TelescopeClientP> connections;
+	//! All initialized objects that actually represent a steerable device.
+	//! A "steerable device" is any device that can send and/or accept
+	//! coordinates. #telescopes should be a subset of #connections.
+	QHash<QString, TelescopeClientP> telescopes;
 
 
 	QStringList telescopeServers;
-	QVariantMap telescopeDescriptions;
+
 	QHash<QString, DeviceModel> deviceModels;
 	//! \todo Temporary.
 	QHash<QString, QString> indiDeviceModels;
@@ -265,17 +291,18 @@ private:
 	QStringList interfaceTypeNames;
 	
 	bool useTelescopeServerLogs;
-	QHash<int, QFile*> telescopeServerLogFiles;
-	QHash<int, QTextStream*> telescopeServerLogStreams;
+	QHash<QString, QFile*> telescopeServerLogFiles;
+	QHash<QString, QTextStream*> telescopeServerLogStreams;
 	
 	//GUI
 	TelescopeControlConfigurationWindow* configurationWindow;
 	SlewWindow* slewWindow;
 	
 	//! Checks if the argument is a valid slot number. Used internally.
+	//! \todo remove
 	bool isValidSlotNumber(int slot) const;
 	//! Checks if the argument is a TCP port number in IANA's allowed range.
-	bool isValidPort(uint port);
+	bool isValidTcpPort(uint port);
 	//! Checks if the argument is a valid delay value in microseconds.
 	bool isValidDelay(int delay);
 
@@ -283,20 +310,20 @@ private:
 	QSignalMapper gotoDirectionShortcutMapper;
 
 	//! A wrapper for TelescopeControl::createClient(). Used internally by
-	//! loadTelescopes() and startTelescopeAtSlot().
+	//! loadTelescopes() and startConnection().
 	//! Does not perform any validation on its arguments.
 	//! It is separate because the previous implementation separated clients
 	//! from servers.
 	//! TODO: Do away with this?
-	bool startClientAtSlot(int slot, const QVariantMap& properties);
+	bool startClient(const QString& id, const QVariantMap& properties);
+
+	//! Returns true if the client has been stopped successfully or doesn't exist.
+	bool stopClient(const QString& id);
 
 	//! Creates a client object belonging to a subclass of TelescopeClient.
 	//! Replaces TelescopeClient::create().
 	//! \returns a base class pointer to the client object.
 	TelescopeClient* createClient(const QVariantMap& properties);
-	
-	//! Returns true if the client has been stopped successfully or doesn't exist.
-	bool stopClientAtSlot(int slot);
 	
 
 	//! Loads the list of supported telescope models.
@@ -309,9 +336,9 @@ private:
 	//! \returns true if the file has been copied successfully
 	bool restoreDeviceModelsListTo(QString deviceModelsListPath);
 	
-	void addLogAtSlot(int slot);
-	void logAtSlot(int slot);
-	void removeLogAtSlot(int slot);
+	void addLogForClient(const QString& id);
+	void removeLogForClient(const QString& id);
+	void setCurrentLog(const QString& id);
 
 #ifdef Q_OS_WIN32
 	bool ascomPlatformIsInstalled;

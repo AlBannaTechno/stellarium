@@ -1,7 +1,7 @@
 /*
  * Stellarium Telescope Control Plug-in
  * 
- * Copyright (C) 2010 Bogdan Marinov (this file)
+ * Copyright (C) 2010-2011 Bogdan Marinov (this file)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,15 +62,21 @@ void SlewWindow::createDialogContent()
 	//Inherited connect
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 
-	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)), this, SLOT(setFormatHMS(bool)));
-	connect(ui->radioButtonDMS, SIGNAL(toggled(bool)), this, SLOT(setFormatDMS(bool)));
-	connect(ui->radioButtonDecimal, SIGNAL(toggled(bool)), this, SLOT(setFormatDecimal(bool)));
+	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)),
+	        this, SLOT(setFormatHMS(bool)));
+	connect(ui->radioButtonDMS, SIGNAL(toggled(bool)),
+	        this, SLOT(setFormatDMS(bool)));
+	connect(ui->radioButtonDecimal, SIGNAL(toggled(bool)),
+	        this, SLOT(setFormatDecimal(bool)));
 
 	connect(ui->pushButtonSlew, SIGNAL(pressed()), this, SLOT(slew()));
-	connect(ui->pushButtonConfigure, SIGNAL(pressed()), this, SLOT(showConfiguration()));
+	connect(ui->pushButtonConfigure, SIGNAL(pressed()),
+	        this, SLOT(showConfiguration()));
 
-	connect(telescopeManager, SIGNAL(clientConnected(int, QString)), this, SLOT(addTelescope(int, QString)));
-	connect(telescopeManager, SIGNAL(clientDisconnected(int)), this, SLOT(removeTelescope(int)));
+	connect(telescopeManager, SIGNAL(clientConnected(const QString&)),
+	        this, SLOT(addTelescope(const QString&)));
+	connect(telescopeManager, SIGNAL(clientDisconnected(const QString&)),
+	        this, SLOT(removeTelescope(const QString&)));
 
 	//Coordinates are in HMS by default:
 	ui->radioButtonHMS->setChecked(true);
@@ -107,15 +113,14 @@ void SlewWindow::setFormatDecimal(bool set)
 
 void SlewWindow::updateTelescopeList()
 {
-	connectedSlotsByName.clear();
+	connectedTelescopes.clear();
 	ui->comboBoxTelescope->clear();
 
-	QHash<int, QString> connectedSlotsByNumber = telescopeManager->getConnectedClientsNames();
-	foreach(const int slot, connectedSlotsByNumber.keys())
+	QStringList telescopes = telescopeManager->listConnectedTelescopeNames();
+	if (!telescopes.isEmpty())
 	{
-		QString telescopeName = connectedSlotsByNumber.value(slot);
-		connectedSlotsByName.insert(telescopeName, slot);
-		ui->comboBoxTelescope->addItem(telescopeName);
+		connectedTelescopes = telescopes;
+		ui->comboBoxTelescope->addItems(telescopes);
 	}
 	
 	updateTelescopeControls();
@@ -123,33 +128,32 @@ void SlewWindow::updateTelescopeList()
 
 void SlewWindow::updateTelescopeControls()
 {
-	bool connectedTelescopeAvailable = !connectedSlotsByName.isEmpty();
+	bool connectedTelescopeAvailable = !connectedTelescopes.isEmpty();
 	ui->groupBoxSlew->setVisible(connectedTelescopeAvailable);
 	ui->labelNoTelescopes->setVisible(!connectedTelescopeAvailable);
 	if (connectedTelescopeAvailable)
 		ui->comboBoxTelescope->setCurrentIndex(0);
 }
 
-void SlewWindow::addTelescope(int slot, QString name)
+void SlewWindow::addTelescope(const QString& name)
 {
-	if (slot <=0 || name.isEmpty())
+	if (name.isEmpty())
+		return;
+	if (connectedTelescopes.contains(name))
 		return;
 
-	connectedSlotsByName.insert(name, slot);
+	connectedTelescopes.append(name);
 	ui->comboBoxTelescope->addItem(name);
 
 	updateTelescopeControls();
 }
 
-void SlewWindow::removeTelescope(int slot)
+void SlewWindow::removeTelescope(const QString& name)
 {
-	if (slot <= 0)
-		return;
-
-	QString name = connectedSlotsByName.key(slot, QString());
 	if (name.isEmpty())
 		return;
-	connectedSlotsByName.remove(name);
+
+	connectedTelescopes.removeAll(name);
 
 	int index = ui->comboBoxTelescope->findText(name);
 	if (index != -1)
@@ -170,10 +174,12 @@ void SlewWindow::slew()
 {
 	double radiansRA = ui->spinBoxRA->valueRadians();
 	double radiansDec = ui->spinBoxDec->valueRadians();
-	int slot = connectedSlotsByName.value(ui->comboBoxTelescope->currentText());
+	QString id = ui->comboBoxTelescope->currentText();
+	if (id.isEmpty())
+		return;
 
 	Vec3d targetPosition;
 	StelUtils::spheToRect(radiansRA, radiansDec, targetPosition);
 
-	telescopeManager->telescopeGoto(slot, targetPosition);
+	telescopeManager->telescopeGoto(id, targetPosition);
 }

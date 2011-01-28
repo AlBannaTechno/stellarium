@@ -1,7 +1,7 @@
 /*
  * Stellarium Telescope Control Plug-in
  * 
- * Copyright (C) 2009-2010 Bogdan Marinov (this file)
+ * Copyright (C) 2009-2011 Bogdan Marinov (this file)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,10 +58,10 @@ private:
 	void populateConnectionList();
 
 	//! Update the text and the tooltip of the ChangeStatus button
-	void updateStatusButtonForSlot(int slot);
+	void updateStatusButton(const QString& id);
 
-	int findFirstUnoccupiedSlot();
-	QString getStatusStringForSlot(int slot);
+	QString createDefaultId();
+	QString getStatusString(const QString& id);
 	
 private slots:
 	//! Connects or disconnects the connection selected in the list.
@@ -95,9 +95,9 @@ private slots:
 private:
 	//! @enum ModelColumns This enum defines the number and the order of the columns in the table that lists active telescopes
 	enum ModelColumns {
-		ColumnSlot = 0, //!< slot number column
+		//ColumnSlot = 0, //!< slot number column
 		//ColumnStartup, //!< startup checkbox column
-		ColumnStatus, //!< connection status (connected/disconnected)
+		ColumnStatus = 0, //!< connection status (connected/disconnected)
 		ColumnType, //!< connection type column
 		ColumnInterface, //!< connection interface column
 		ColumnName, //!< telescope name column
@@ -106,13 +106,13 @@ private:
 	
 	TelescopePropertiesWindow propertiesWindow;
 	
-	QStandardItemModel * connectionListModel;
+	QStandardItemModel* connectionListModel;
 	
-	TelescopeControl * telescopeManager;
+	TelescopeControl* deviceManager;
 	
-	int telescopeCount;
-	int configuredSlot;
-	bool configuredTelescopeIsNew;
+	int connectionCount;
+	QString configuredId;
+	bool configuredConnectionIsNew;
 };
 
 #endif // _TELESCOPE_CONTROL_CONFIGURATION_WINDOW_

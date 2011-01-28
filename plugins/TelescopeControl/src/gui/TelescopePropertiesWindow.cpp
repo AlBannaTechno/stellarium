@@ -1,7 +1,7 @@
 /*
  * Stellarium TelescopeControl plug-in
  * 
- * Copyright (C) 2009-2010 Bogdan Marinov (this file)
+ * Copyright (C) 2009-2011 Bogdan Marinov (this file)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,12 +38,12 @@ TelescopePropertiesWindow::TelescopePropertiesWindow()
 {
 	ui = new Ui_widgetTelescopeProperties;
 	
-	telescopeManager = GETSTELMODULE(TelescopeControl);
+	deviceManager = GETSTELMODULE(TelescopeControl);
 	//After the removal of the separate telescope server executables,
 	//this list can't be changed after Stellarium has been started:
 	//TODO: Simply call telescopeManager->getDeviceModels every time instead of
 	//storing it?
-	deviceModelNames = telescopeManager->getDeviceModels().keys();
+	deviceModelNames = deviceManager->getDeviceModels().keys();
 	deviceModelNames.sort();
 
 	//Test the update for JSON
@@ -113,9 +113,9 @@ void TelescopePropertiesWindow::createDialogContent()
 	ui->lineEditSerialPort->setValidator(serialPortValidator);
 }
 
-void TelescopePropertiesWindow::prepareNewStellariumConfiguration(int slot)
+void TelescopePropertiesWindow::prepareNewStellariumConfiguration(const QString& id)
 {
-	configuredSlot = slot;
+	configuredId = id;
 	configuredConnectionInterface = ConnectionStellarium;
 
 	ui->stelWindowTitle->setText("New Stellarium Telescope");
@@ -131,7 +131,7 @@ void TelescopePropertiesWindow::prepareNewStellariumConfiguration(int slot)
 
 	//Prepare the rest of the window
 	ui->tabWidget->setCurrentWidget(ui->tabGeneral);
-	ui->lineEditName->setText(QString("New Telescope %1").arg(configuredSlot));
+	ui->lineEditName->setText(configuredId);
 	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 	ui->radioButtonJ2000->setChecked(true);
 	ui->checkBoxConnectAtStartup->setChecked(false);
@@ -143,9 +143,9 @@ void TelescopePropertiesWindow::prepareNewStellariumConfiguration(int slot)
 	showIndiTab(false);
 }
 
-void TelescopePropertiesWindow::prepareNewIndiConfiguration(int slot)
+void TelescopePropertiesWindow::prepareNewIndiConfiguration(const QString& id)
 {
-	configuredSlot = slot;
+	configuredId = id;
 	configuredConnectionInterface = ConnectionIndi;
 
 	ui->stelWindowTitle->setText("New INDI Connection");
@@ -161,7 +161,7 @@ void TelescopePropertiesWindow::prepareNewIndiConfiguration(int slot)
 
 	//Prepare the rest of the window
 	ui->tabWidget->setCurrentWidget(ui->tabGeneral);
-	ui->lineEditName->setText(QString("New Telescope %1").arg(configuredSlot));
+	ui->lineEditName->setText(configuredId);
 	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 	ui->radioButtonJ2000->setChecked(true);
 	ui->checkBoxConnectAtStartup->setChecked(false);
@@ -172,9 +172,9 @@ void TelescopePropertiesWindow::prepareNewIndiConfiguration(int slot)
 	showAscomTab(false);
 }
 
-void TelescopePropertiesWindow::prepareNewVirtualConfiguration(int slot)
+void TelescopePropertiesWindow::prepareNewVirtualConfiguration(const QString& id)
 {
-	configuredSlot = slot;
+	configuredId = id;
 	configuredConnectionInterface = ConnectionVirtual;
 	configuredConnectionIsRemote = false;
 
@@ -187,7 +187,7 @@ void TelescopePropertiesWindow::prepareNewVirtualConfiguration(int slot)
 	showAscomTab(false);
 	showIndiTab(false);
 
-	ui->lineEditName->setText(QString("New Telescope %1").arg(configuredSlot));
+	ui->lineEditName->setText(configuredId);
 	ui->checkBoxConnectAtStartup->setChecked(true);
 	ui->groupBoxFovCircles->setChecked(false);
 	ui->lineEditFovCircleSizes->clear();
@@ -196,7 +196,7 @@ void TelescopePropertiesWindow::prepareNewVirtualConfiguration(int slot)
 }
 
 #ifdef Q_OS_WIN32
-void TelescopePropertiesWindow::prepareNewAscomConfiguration(int slot)
+void TelescopePropertiesWindow::prepareNewAscomConfiguration(const QString& id)
 {
 	if (!telescopeManager->canUseAscom())
 	{
@@ -204,7 +204,7 @@ void TelescopePropertiesWindow::prepareNewAscomConfiguration(int slot)
 		return;
 	}
 
-	configuredSlot = slot;
+	configuredId = id;
 	configuredConnectionInterface = ConnectionAscom;
 	configuredConnectionIsRemote = false;
 
@@ -217,7 +217,7 @@ void TelescopePropertiesWindow::prepareNewAscomConfiguration(int slot)
 	showNetworkTab(false);
 	showIndiTab(false);
 
-	ui->lineEditName->setText(QString("New Telescope %1").arg(configuredSlot));
+	ui->lineEditName->setText(configuredId);
 	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 	ui->radioButtonJ2000->setChecked(true);
 	ui->checkBoxConnectAtStartup->setChecked(false);
@@ -231,9 +231,9 @@ void TelescopePropertiesWindow::prepareNewAscomConfiguration(int slot)
 }
 #endif
 
-void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
+void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& id)
 {
-	configuredSlot = slot;
+	configuredId = id;
 
 	ui->stelWindowTitle->setText("Connection configuration");
 	ui->tabWidget->setCurrentWidget(ui->tabGeneral);
@@ -241,7 +241,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
 	
 	//Read the telescope properties
-	const QVariantMap& properties = telescopeManager->getTelescopeAtSlot(slot);
+	const QVariantMap& properties = deviceManager->getConnection(id);
 	if(properties.isEmpty())
 	{
 		//TODO: Add debug
@@ -292,7 +292,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 			showSerialTab(false);
 
 			//TCP port
-			int tcpPort = properties.value("tcpPort", DEFAULT_TCP_PORT_FOR_SLOT(configuredSlot)).toInt();
+			int tcpPort = properties.value("tcpPort", deviceManager->getFreeTcpPort()).toInt();
 			ui->spinBoxTcpPort->setValue(tcpPort);
 
 			//Host name/address
@@ -316,7 +316,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 			{
 				foreach (QString name, deviceModelNames)
 				{
-					if (telescopeManager->getDeviceModels().value(name).driver == driver)
+					if (deviceManager->getDeviceModels().value(name).driver == driver)
 					{
 						deviceModelName = name;
 						break;
@@ -366,7 +366,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 			showIndiTab(false);
 
 			//TCP port
-			int tcpPort = properties.value("tcpPort", DEFAULT_TCP_PORT_FOR_SLOT(configuredSlot)).toInt();
+			int tcpPort = properties.value("tcpPort", deviceManager->getFreeTcpPort()).toInt();
 			ui->spinBoxTcpPort->setValue(tcpPort);
 
 			//Host name/address
@@ -390,7 +390,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(int slot)
 			{
 				foreach (QString name, deviceModelNames)
 				{
-					if (telescopeManager->getIndiDeviceModels().value(name) == driver)
+					if (deviceManager->getIndiDeviceModels().value(name) == driver)
 					{
 						deviceModelName = name;
 						break;
@@ -510,7 +510,7 @@ void TelescopePropertiesWindow::prepareIndirectConnection(bool prepare)
 		//TODO: Remove the magic number
 		ui->spinBoxTcpPort->setValue(7624);
 	}
-	ui->spinBoxTcpPort->setValue(DEFAULT_TCP_PORT_FOR_SLOT(configuredSlot));
+	ui->spinBoxTcpPort->setValue(deviceManager->getFreeTcpPort());
 
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
 }
@@ -595,7 +595,7 @@ void TelescopePropertiesWindow::saveChanges()
 			QString deviceModel = ui->comboBoxDeviceModel->currentText();
 			newTelescopeProperties.insert("deviceModel", deviceModel);
 
-			QString driver = telescopeManager->getDeviceModels().value(deviceModel).driver;
+			QString driver = deviceManager->getDeviceModels().value(deviceModel).driver;
 			newTelescopeProperties.insert("driverId", driver);
 		}
 	}
@@ -622,7 +622,7 @@ void TelescopePropertiesWindow::saveChanges()
 			QString deviceModel = ui->comboBoxIndiDeviceModel->currentText();
 			newTelescopeProperties.insert("deviceModel", deviceModel);
 
-			QString driver = telescopeManager->getIndiDeviceModels().value(deviceModel);
+			QString driver = deviceManager->getIndiDeviceModels().value(deviceModel);
 			newTelescopeProperties.insert("driverId", driver);
 		}
 	}
@@ -639,8 +639,12 @@ void TelescopePropertiesWindow::saveChanges()
 #endif
 
 	newTelescopeProperties.insert("interface", interface);
-	telescopeManager->addTelescopeAtSlot(configuredSlot, newTelescopeProperties);
-	
+
+	//Deal with renaming:
+	if (configuredId != name)
+		deviceManager->removeConnection(configuredId);
+	deviceManager->addConnection(newTelescopeProperties);
+
 	emit changesSaved(name);
 }
 
@@ -651,8 +655,8 @@ void TelescopePropertiesWindow::discardChanges()
 
 void TelescopePropertiesWindow::deviceModelSelected(const QString& deviceModelName)
 {
-	ui->labelDeviceModelDescription->setText(telescopeManager->getDeviceModels().value(deviceModelName).description);
-	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(telescopeManager->getDeviceModels().value(deviceModelName).defaultDelay));
+	ui->labelDeviceModelDescription->setText(deviceManager->getDeviceModels().value(deviceModelName).description);
+	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(deviceManager->getDeviceModels().value(deviceModelName).defaultDelay));
 }
 
 void TelescopePropertiesWindow::showTab(QWidget *tab, const QString& label)
@@ -679,7 +683,7 @@ void TelescopePropertiesWindow::populateDeviceModelList()
 void TelescopePropertiesWindow::populateIndiDeviceModelList()
 {
 	ui->comboBoxIndiDeviceModel->clear();
-	QStringList indiModelNames = telescopeManager->getIndiDeviceModels().keys();
+	QStringList indiModelNames = deviceManager->getIndiDeviceModels().keys();
 	if (!indiModelNames.isEmpty())
 	{
 		indiModelNames.sort();
