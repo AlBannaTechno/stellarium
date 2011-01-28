@@ -2,7 +2,7 @@
  * Stellarium Telescope Control Plug-in
  * 
  * Copyright (C) 2006 Johannes Gajdosik
- * Copyright (C) 2009-2010 Bogdan Marinov
+ * Copyright (C) 2009-2011 Bogdan Marinov
  * 
  * This module was originally written by Johannes Gajdosik in 2006
  * as a core module of Stellarium. In 2009 it was significantly extended with
@@ -43,6 +43,7 @@
 #include <QMap>
 #include <QProcess>
 #include <QSettings>
+#include <QSignalMapper>
 #include <QString>
 #include <QStringList>
 #include <QTextStream>
@@ -187,13 +188,13 @@ public slots:
 	//! slews a telescope to the selected object.
 	//! For use from the GUI. The telescope number will be
 	//! deduced from the name of the QAction which triggered the slot.
-	void slewTelescopeToSelectedObject();
+	void slewTelescopeToSelectedObject(int number);
 
 	//! slews a telescope to the point of the celestial sphere currently
 	//! in the center of the screen.
 	//! For use from the GUI. The telescope number will be
 	//! deduced from the name of the QAction which triggered the slot.
-	void slewTelescopeToViewDirection();
+	void slewTelescopeToViewDirection(int number);
 	
 	//! Used in the GUI
 	void setFlagUseTelescopeServerLogs (bool b) {useTelescopeServerLogs = b;}
@@ -263,11 +264,15 @@ private:
 	TelescopeControlConfigurationWindow * configurationWindow;
 	SlewWindow * slewWindow;
 	
-	//! Used internally. Checks if the argument is a valid slot number.
+	//! Checks if the argument is a valid slot number. Used internally.
 	bool isValidSlotNumber(int slot) const;
+	//! Checks if the argument is a TCP port number in IANA's allowed range.
 	bool isValidPort(uint port);
+	//! Checks if the argument is a valid delay value in microseconds.
 	bool isValidDelay(int delay);
 
+	QSignalMapper gotoSelectedShortcutMapper;
+	QSignalMapper gotoDirectionShortcutMapper;
 
 	//! A wrapper for TelescopeControl::createClient(). Used internally by
 	//! loadTelescopes() and startTelescopeAtSlot().

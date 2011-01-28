@@ -2,7 +2,7 @@
  * Stellarium Telescope Control Plug-in
  *
  * Copyright (C) 2006 Johannes Gajdosik
- * Copyright (C) 2009-2010 Bogdan Marinov
+ * Copyright (C) 2009-2011 Bogdan Marinov
  *
  * This module was originally written by Johannes Gajdosik in 2006
  * as a core module of Stellarium. In 2009 it was significantly extended with
@@ -167,8 +167,9 @@ void TelescopeControl::init()
 		loadTelescopes();
 		
 		//Load OpenGL textures
-		reticleTexture = StelApp::getInstance().getTextureManager().createTexture(":/telescopeControl/telescope_reticle.png");
-		selectionTexture = StelApp::getInstance().getTextureManager().createTexture("textures/pointeur2.png");
+		StelTextureMgr& textureMgr = StelApp::getInstance().getTextureManager();
+		reticleTexture = textureMgr.createTexture(":/telescopeControl/telescope_reticle.png");
+		selectionTexture = textureMgr.createTexture("textures/pointeur2.png");
 		
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 		
@@ -182,31 +183,54 @@ void TelescopeControl::init()
 			QString name = QString("actionMove_Telescope_To_Selection_%1").arg(i);
 			QString description = q_("Move telescope #%1 to selected object").arg(i);
 			QString shortcut = QString("Ctrl+%1").arg(i);
-			gui->addGuiActions(name, description, shortcut, group, false, false);
-			connect(gui->getGuiActions(name), SIGNAL(triggered()), this, SLOT(slewTelescopeToSelectedObject()));
+			QAction* action = gui->addGuiActions(name,
+			                                     description,
+			                                     shortcut,
+			                                     group, false, false);
+			connect(action, SIGNAL(triggered()),
+			        &gotoSelectedShortcutMapper, SLOT(map()));
+			gotoSelectedShortcutMapper.setMapping(action, i);
 
 			// "Slew to the center of the screen" commands
 			name = QString("actionSlew_Telescope_To_Direction_%1").arg(i);
 			description = q_("Move telescope #%1 to the point currently in the center of the screen").arg(i);
 			shortcut = QString("Alt+%1").arg(i);
-			gui->addGuiActions(name, description, shortcut, group, false, false);
-			connect(gui->getGuiActions(name), SIGNAL(triggered()), this, SLOT(slewTelescopeToViewDirection()));
+			action = gui->addGuiActions(name,
+			                            description,
+			                            shortcut,
+			                            group, false, false);
+			connect(gui->getGuiActions(name), SIGNAL(triggered()),
+			        &gotoDirectionShortcutMapper, SLOT(map()));
+			gotoDirectionShortcutMapper.setMapping(action, i);
 		}
+		connect(&gotoSelectedShortcutMapper, SIGNAL(mapped(int)),
+		        this, SLOT(slewTelescopeToSelectedObject(int)));
+		connect(&gotoDirectionShortcutMapper, SIGNAL(mapped(int)),
+		        this, SLOT(slewTelescopeToViewDirection(int)));
 	
 		//Create and initialize dialog windows
 		configurationWindow = new TelescopeControlConfigurationWindow();
 		slewWindow = new SlewWindow();
 		
 		//TODO: Think of a better keyboard shortcut
-		gui->addGuiActions("actionShow_Slew_Window", N_("Move a telescope to a given set of coordinates"), "Ctrl+0", group, true, false);
-		connect(gui->getGuiActions("actionShow_Slew_Window"), SIGNAL(toggled(bool)), slewWindow, SLOT(setVisible(bool)));
-		connect(slewWindow, SIGNAL(visibleChanged(bool)), gui->getGuiActions("actionShow_Slew_Window"), SLOT(setChecked(bool)));
+		QAction* slewWindowAction = gui->addGuiActions(
+			"actionShow_Slew_Window",
+			N_("Move a telescope to a given set of coordinates"),
+			"Ctrl+0", group, true, false);
+		connect(slewWindowAction, SIGNAL(toggled(bool)),
+		        slewWindow, SLOT(setVisible(bool)));
+		connect(slewWindow, SIGNAL(visibleChanged(bool)),
+		        slewWindowAction, SLOT(setChecked(bool)));
 		
 		//Create toolbar button
 		pixmapHover =	new QPixmap(":/graphicGui/glow32x32.png");
 		pixmapOnIcon =	new QPixmap(":/telescopeControl/button_Slew_Dialog_on.png");
 		pixmapOffIcon =	new QPixmap(":/telescopeControl/button_Slew_Dialog_off.png");
-		toolbarButton =	new StelButton(NULL, *pixmapOnIcon, *pixmapOffIcon, *pixmapHover, gui->getGuiActions("actionShow_Slew_Window"));
+		toolbarButton =	new StelButton(NULL,
+		                               *pixmapOnIcon,
+		                               *pixmapOffIcon,
+		                               *pixmapHover,
+		                               slewWindowAction);
 		gui->getButtonBar()->addButton(toolbarButton, "065-pluginsGroup");
 	}
 	catch (std::runtime_error &e)
@@ -410,13 +434,8 @@ void TelescopeControl::setFontSize(int fontSize)
 	 labelFont.setPixelSize(fontSize);
 }
 
-void TelescopeControl::slewTelescopeToSelectedObject()
+void TelescopeControl::slewTelescopeToSelectedObject(int number)
 {
-	// Find out for which telescope is the command
-	if (sender() == NULL)
-		return;
-	int slotNumber = sender()->objectName().right(1).toInt();
-
 	// Find out the coordinates of the target
 	StelObjectMgr* omgr = GETSTELMODULE(StelObjectMgr);
 	if (omgr->getSelectedObject().isEmpty())
@@ -426,22 +445,18 @@ void TelescopeControl::slewTelescopeToSelectedObject()
 	if (!selectObject)  // should never happen
 		return;
 
-	Vec3d objectPosition = selectObject->getJ2000EquatorialPos(StelApp::getInstance().getCore()->getNavigator());
+	const StelNavigator* nav = StelApp::getInstance().getCore()->getNavigator();
+	Vec3d objectPosition = selectObject->getJ2000EquatorialPos(nav);
 
-	telescopeGoto(slotNumber, objectPosition);
+	telescopeGoto(number, objectPosition);
 }
 
-void TelescopeControl::slewTelescopeToViewDirection()
+void TelescopeControl::slewTelescopeToViewDirection(int number)
 {
-	// Find out for which telescope is the command
-	if (sender() == NULL)
-		return;
-	int slotNumber = sender()->objectName().right(1).toInt();
-
 	// Find out the coordinates of the target
 	Vec3d centerPosition = GETSTELMODULE(StelMovementMgr)->getViewDirectionJ2000();
 
-	telescopeGoto(slotNumber, centerPosition);
+	telescopeGoto(number, centerPosition);
 }
 
 void TelescopeControl::drawPointer(const StelProjectorP& prj, const StelNavigator * nav, StelPainter& sPainter)
