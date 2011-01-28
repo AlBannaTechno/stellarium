@@ -208,7 +208,13 @@ private:
 	void drawPointer(const StelProjectorP& prj, const StelNavigator* nav, StelPainter& sPainter);
 
 	//! Perform the communication with the telescope servers
-	void communicate(void);
+	void communicate();
+
+	//! Returns the path to the "modules/TelescopeControl" directory.
+	//! Returns an empty string if it doesn't exist.
+	QString getPluginDirectoryPath() const;
+	//! Returns the path to the "connections.json" file
+	QString getConnectionsFilePath() const;
 	
 	LinearFader labelFader;
 	LinearFader reticleFader;
@@ -248,6 +254,8 @@ private:
 	
 	//! Contains the initialized telescope client objects representing the telescopes that Stellarium is connected to or attempting to connect to.
 	QMap<int, TelescopeClientP> telescopeClients;
+
+
 	QStringList telescopeServers;
 	QVariantMap telescopeDescriptions;
 	QHash<QString, DeviceModel> deviceModels;
@@ -261,8 +269,8 @@ private:
 	QHash<int, QTextStream*> telescopeServerLogStreams;
 	
 	//GUI
-	TelescopeControlConfigurationWindow * configurationWindow;
-	SlewWindow * slewWindow;
+	TelescopeControlConfigurationWindow* configurationWindow;
+	SlewWindow* slewWindow;
 	
 	//! Checks if the argument is a valid slot number. Used internally.
 	bool isValidSlotNumber(int slot) const;

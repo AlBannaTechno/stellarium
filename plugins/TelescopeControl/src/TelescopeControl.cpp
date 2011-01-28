@@ -223,10 +223,10 @@ void TelescopeControl::init()
 		        slewWindowAction, SLOT(setChecked(bool)));
 		
 		//Create toolbar button
-		pixmapHover =	new QPixmap(":/graphicGui/glow32x32.png");
-		pixmapOnIcon =	new QPixmap(":/telescopeControl/button_Slew_Dialog_on.png");
-		pixmapOffIcon =	new QPixmap(":/telescopeControl/button_Slew_Dialog_off.png");
-		toolbarButton =	new StelButton(NULL,
+		pixmapHover =   new QPixmap(":/graphicGui/glow32x32.png");
+		pixmapOnIcon =  new QPixmap(":/telescopeControl/button_Slew_Dialog_on.png");
+		pixmapOffIcon = new QPixmap(":/telescopeControl/button_Slew_Dialog_off.png");
+		toolbarButton = new StelButton(NULL,
 		                               *pixmapOnIcon,
 		                               *pixmapOffIcon,
 		                               *pixmapHover,
@@ -461,10 +461,6 @@ void TelescopeControl::slewTelescopeToViewDirection(int number)
 
 void TelescopeControl::drawPointer(const StelProjectorP& prj, const StelNavigator * nav, StelPainter& sPainter)
 {
-	#ifndef COMPATIBILITY_001002
-	//Leaves this whole routine empty if this is the backport version.
-	//Otherwise, there will be two concentric selection markers drawn around the telescope pointer.
-	//In 0.10.3, the plug-in unloads the module that draws the surplus marker.
 	const QList<StelObjectP> newSelected = GETSTELMODULE(StelObjectMgr)->getSelectedObject("Telescope");
 	if (!newSelected.empty())
 	{
@@ -483,7 +479,6 @@ void TelescopeControl::drawPointer(const StelProjectorP& prj, const StelNavigato
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
 		sPainter.drawSprite2dMode(screenpos[0], screenpos[1], 25., StelApp::getInstance().getTotalRunTime() * 40.);
 	}
-	#endif //COMPATIBILITY_001002
 }
 
 void TelescopeControl::telescopeGoto(int slotNumber, const Vec3d &j2000Pos)
@@ -493,7 +488,7 @@ void TelescopeControl::telescopeGoto(int slotNumber, const Vec3d &j2000Pos)
 		telescopeClients.value(slotNumber)->telescopeGoto(j2000Pos);
 }
 
-void TelescopeControl::communicate(void)
+void TelescopeControl::communicate()
 {
 	if (!telescopeClients.empty())
 	{
@@ -510,12 +505,42 @@ void TelescopeControl::communicate(void)
 	}
 }
 
+QString TelescopeControl::getPluginDirectoryPath() const
+{
+	QString name = "modules/TelescopeControl";
+	//TODO: Add the Qt flag mechanism to StelFileMgr
+	StelFileMgr::Flags flags = StelFileMgr::Flags(StelFileMgr::Directory |
+	                                              StelFileMgr::Writable);
+	try
+	{
+		QString path = StelFileMgr::findFile(name, flags);
+		return path;
+	}
+	catch (std::runtime_error& e)
+	{
+		qWarning() << "Error finding" << name << ":" << e.what();
+		return QString();
+	}
+}
+
+QString TelescopeControl::getConnectionsFilePath() const
+{
+	QString directoryPath = getPluginDirectoryPath();
+	if (directoryPath.isEmpty())
+		return directoryPath;
+
+	QString path = directoryPath.append("/telescopes.json");
+	return path;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods for managing telescope client objects
 //
 void TelescopeControl::deleteAllTelescopes()
 {
+	//TODO: Deselect the selected
+
 	//TODO: I really hope that this won't cause a memory leak...
 	//foreach (TelescopeClient* telescope, telescopeClients)
 	//	delete telescope;
@@ -607,7 +632,7 @@ void TelescopeControl::saveTelescopes()
 	try
 	{
 		//Open/create the JSON file
-		QString telescopesJsonPath = StelFileMgr::findFile("modules/TelescopeControl", (StelFileMgr::Flags)(StelFileMgr::Directory|StelFileMgr::Writable)) + "/telescopes.json";
+		QString telescopesJsonPath = getConnectionsFilePath();
 		QFile telescopesJsonFile(telescopesJsonPath);
 		if(!telescopesJsonFile.open(QFile::WriteOnly|QFile::Text))
 		{
@@ -635,7 +660,7 @@ void TelescopeControl::loadTelescopes()
 	//TODO: Determine what exactly needed to be in a try/catch
 	try
 	{
-		QString telescopesJsonPath = StelFileMgr::findFile("modules/TelescopeControl", (StelFileMgr::Flags)(StelFileMgr::Directory|StelFileMgr::Writable)) + "/telescopes.json";
+		QString telescopesJsonPath = getConnectionsFilePath();
 
 		if(!QFileInfo(telescopesJsonPath).exists())
 		{
@@ -1203,7 +1228,7 @@ void TelescopeControl::loadDeviceModels()
 	
 	//Make sure that the device models file exists
 	bool useDefaultList = false;
-	QString deviceModelsJsonPath = StelFileMgr::findFile("modules/TelescopeControl", (StelFileMgr::Flags)(StelFileMgr::Directory|StelFileMgr::Writable)) + "/device_models.json";
+	QString deviceModelsJsonPath = getPluginDirectoryPath() + "/device_models.json";
 	if(!QFileInfo(deviceModelsJsonPath).exists())
 	{
 		if(!restoreDeviceModelsListTo(deviceModelsJsonPath))
