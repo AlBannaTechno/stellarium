@@ -156,6 +156,9 @@ public:
 	//! Returns a list of the currently connected #telescopes.
 	QStringList listConnectedTelescopeNames();
 
+	//!
+	QList<int> listUsedShortcutNumbers() const;
+
 	//! Returns a free TCP port in Stellarium's range or higher.
 	uint getFreeTcpPort();
 	
@@ -287,6 +290,8 @@ private:
 	QHash<QString, DeviceModel> deviceModels;
 	//! \todo Temporary.
 	QHash<QString, QString> indiDeviceModels;
+
+	QHash<int, QString> idFromShortcutNumber;
 	
 	QStringList interfaceTypeNames;
 	

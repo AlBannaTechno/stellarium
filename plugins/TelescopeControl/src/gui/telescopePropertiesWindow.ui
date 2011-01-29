@@ -244,7 +244,7 @@
              <property name="title">
               <string>Properties</string>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayoutTelescope">
+             <layout class="QVBoxLayout" name="verticalLayoutBoxProperties">
               <property name="margin">
                <number>0</number>
               </property>
@@ -301,6 +301,33 @@
                  <string>Connect at startup</string>
                 </property>
                </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="QLabel" name="labelShortcutNumber">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Keyboard shortcut number:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="comboBoxShortcutNumber">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </widget>
@@ -898,6 +925,7 @@ Increase this value if the reticle is skipping.</string>
   <tabstop>tabWidget</tabstop>
   <tabstop>lineEditName</tabstop>
   <tabstop>checkBoxConnectAtStartup</tabstop>
+  <tabstop>comboBoxShortcutNumber</tabstop>
   <tabstop>groupBoxFovCircles</tabstop>
   <tabstop>lineEditFovCircleSizes</tabstop>
   <tabstop>doubleSpinBoxDelay</tabstop>
@@ -906,6 +934,7 @@ Increase this value if the reticle is skipping.</string>
   <tabstop>lineEditAscomControlId</tabstop>
   <tabstop>pushButtonAscomSelect</tabstop>
   <tabstop>pushButtonAscomDeviceSetup</tabstop>
+  <tabstop>comboBoxIndiDeviceModel</tabstop>
   <tabstop>lineEditSerialPort</tabstop>
   <tabstop>comboBoxDeviceModel</tabstop>
   <tabstop>lineEditHostName</tabstop>

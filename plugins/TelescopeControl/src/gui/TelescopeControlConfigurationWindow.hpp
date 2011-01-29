@@ -100,6 +100,7 @@ private:
 		ColumnStatus = 0, //!< connection status (connected/disconnected)
 		ColumnType, //!< connection type column
 		ColumnInterface, //!< connection interface column
+		ColumnShortcuts, //!< column listing the two shortcuts
 		ColumnName, //!< telescope name column
 		ColumnCount //!< total number of columns
 	};

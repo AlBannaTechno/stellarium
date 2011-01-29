@@ -70,6 +70,7 @@ private:
 	void hideTab(QWidget* tab);
 	void populateDeviceModelList();
 	void populateIndiDeviceModelList();
+	void populateShortcutNumberList();
 	
 private slots:
 	void saveChanges();

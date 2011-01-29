@@ -137,6 +137,7 @@ void TelescopePropertiesWindow::prepareNewStellariumConfiguration(const QString&
 	ui->checkBoxConnectAtStartup->setChecked(false);
 	ui->groupBoxFovCircles->setChecked(false);
 	ui->lineEditFovCircleSizes->clear();
+	populateShortcutNumberList();
 
 	showConnectionTab(true);
 	showAscomTab(false);
@@ -167,6 +168,7 @@ void TelescopePropertiesWindow::prepareNewIndiConfiguration(const QString& id)
 	ui->checkBoxConnectAtStartup->setChecked(false);
 	ui->groupBoxFovCircles->setChecked(false);
 	ui->lineEditFovCircleSizes->clear();
+	populateShortcutNumberList();
 
 	showConnectionTab(true);
 	showAscomTab(false);
@@ -191,6 +193,7 @@ void TelescopePropertiesWindow::prepareNewVirtualConfiguration(const QString& id
 	ui->checkBoxConnectAtStartup->setChecked(true);
 	ui->groupBoxFovCircles->setChecked(false);
 	ui->lineEditFovCircleSizes->clear();
+	populateShortcutNumberList();
 
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
 }
@@ -223,6 +226,7 @@ void TelescopePropertiesWindow::prepareNewAscomConfiguration(const QString& id)
 	ui->checkBoxConnectAtStartup->setChecked(false);
 	ui->groupBoxFovCircles->setChecked(false);
 	ui->lineEditFovCircleSizes->clear();
+	populateShortcutNumberList();
 
 	ui->lineEditAscomControlId->clear();
 	ascomDriverObjectId.clear();
@@ -274,6 +278,21 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& i
 		ui->groupBoxFovCircles->setChecked(false);
 		ui->lineEditFovCircleSizes->clear();
 	}
+
+	populateShortcutNumberList();
+	int shortcutNumber = properties.value("shortcutNumber").toInt();
+	QString shortcutNumberString = QString::number(shortcutNumber);
+	if (shortcutNumber > 0 && shortcutNumber < 10)
+	{
+		ui->comboBoxShortcutNumber->addItem(shortcutNumberString,
+		                                    shortcutNumber);
+	}
+	else
+	{
+		shortcutNumber = 0;
+	}
+	int index = ui->comboBoxShortcutNumber->findData(shortcutNumber);
+	ui->comboBoxShortcutNumber->setCurrentIndex(index);
 
 	//Detecting protocol/interface and connection type
 	QString interface = properties.value("interface").toString();
@@ -549,6 +568,11 @@ void TelescopePropertiesWindow::saveChanges()
 		if (!fovCircles.isEmpty())
 			newTelescopeProperties.insert("fovCircles", fovCircles);
 	}
+
+	int index = ui->comboBoxShortcutNumber->currentIndex();
+	int shortcutNumber = ui->comboBoxShortcutNumber->itemData(index).toInt();
+	if (shortcutNumber > 0)
+		newTelescopeProperties.insert("shortcutNumber", shortcutNumber);
 	
 	//Interface properties
 	//TODO: When adding, check for success!
@@ -689,6 +713,26 @@ void TelescopePropertiesWindow::populateIndiDeviceModelList()
 		indiModelNames.sort();
 		ui->comboBoxIndiDeviceModel->addItems(indiModelNames);
 	}
+}
+
+void TelescopePropertiesWindow::populateShortcutNumberList()
+{
+	ui->comboBoxShortcutNumber->clear();
+	ui->comboBoxShortcutNumber->addItem("None", 0);
+	QList<int> usedShortcutNumbers = deviceManager->listUsedShortcutNumbers();
+	for (int i = 1; i < 10; i++)
+	{
+		if (!usedShortcutNumbers.contains(i))
+		{
+			ui->comboBoxShortcutNumber->addItem(QString::number(i), i);
+		}
+	}
+	if (configuredConnectionInterface == ConnectionIndi)
+		ui->comboBoxShortcutNumber->setCurrentIndex(0);
+	else if (ui->comboBoxShortcutNumber->count() > 1)
+		ui->comboBoxShortcutNumber->setCurrentIndex(1);
+	else
+		ui->comboBoxShortcutNumber->setCurrentIndex(0);
 }
 
 void TelescopePropertiesWindow::showConnectionTab(bool show)

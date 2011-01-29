@@ -433,12 +433,16 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 	headerStrings <<  "Status";
 	headerStrings << "Connection";
 	headerStrings << "Interface";
+	headerStrings << "Keys";
 	headerStrings << "Name";
 	connectionListModel->setHorizontalHeaderLabels(headerStrings);
 
 	ui->telescopeTreeView->setModel(connectionListModel);
 	ui->telescopeTreeView->header()->setMovable(false);
-	//ui->telescopeTreeView->header()->setResizeMode(ColumnSlot, QHeaderView::ResizeToContents);
+	ui->telescopeTreeView->header()->setResizeMode(ColumnInterface, QHeaderView::ResizeToContents);
+	ui->telescopeTreeView->header()->setResizeMode(ColumnStatus, QHeaderView::ResizeToContents);
+	ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::ResizeToContents);
+	ui->telescopeTreeView->header()->setResizeMode(ColumnShortcuts, QHeaderView::ResizeToContents);
 	ui->telescopeTreeView->header()->setStretchLastSection(true);
 
 	//Populating the list
@@ -504,6 +508,16 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		tempItem = new QStandardItem(interfaceTypeLabel);
 		tempItem->setEditable(false);
 		connectionListModel->setItem(lastRow, ColumnInterface, tempItem);
+
+		int shortcutNumber = properties.value("shortcutNumber").toInt();
+		QString shortcutString;
+		if (shortcutNumber > 0 && shortcutNumber < 10)
+		{
+			shortcutString = QString("Ctrl+%1, Alt+%1").arg(shortcutNumber);
+		}
+		tempItem = new QStandardItem(shortcutString);
+		tempItem->setEditable(false);
+		connectionListModel->setItem(lastRow, ColumnShortcuts, tempItem);
 
 		//New column on a new row in the list: Telescope name
 		tempItem = new QStandardItem(name);

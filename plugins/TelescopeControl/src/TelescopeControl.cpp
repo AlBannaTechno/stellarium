@@ -436,7 +436,6 @@ void TelescopeControl::setFontSize(int fontSize)
 
 void TelescopeControl::slewTelescopeToSelectedObject(int number)
 {
-	Q_UNUSED(number)
 	// Find out the coordinates of the target
 	StelObjectMgr* omgr = GETSTELMODULE(StelObjectMgr);
 	if (omgr->getSelectedObject().isEmpty())
@@ -449,18 +448,15 @@ void TelescopeControl::slewTelescopeToSelectedObject(int number)
 	const StelNavigator* nav = StelApp::getInstance().getCore()->getNavigator();
 	Vec3d objectPosition = selectObject->getJ2000EquatorialPos(nav);
 
-	//TODO:
-	telescopeGoto(QString(), objectPosition);
+	telescopeGoto(idFromShortcutNumber.value(number), objectPosition);
 }
 
 void TelescopeControl::slewTelescopeToViewDirection(int number)
 {
-	Q_UNUSED(number)
 	// Find out the coordinates of the target
 	Vec3d centerPosition = GETSTELMODULE(StelMovementMgr)->getViewDirectionJ2000();
 
-	//TODO:
-	telescopeGoto(QString(), centerPosition);
+	telescopeGoto(idFromShortcutNumber.value(number), centerPosition);
 }
 
 void TelescopeControl::drawPointer(const StelProjectorP& prj, const StelNavigator * nav, StelPainter& sPainter)
@@ -580,6 +576,7 @@ bool TelescopeControl::isClientConnected(const QString& id)
 	else
 		return false;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Methods for reading from and writing to the configuration file
@@ -953,6 +950,14 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 			newProperties.insert("fovCircles", newFovCircles);
 	}
 
+	int shortcutNumber = properties.value("shortcutNumber").toInt();
+	if (shortcutNumber > 0 && shortcutNumber < 10)
+	{
+		newProperties.insert("shortcutNumber", shortcutNumber);
+		if (!idFromShortcutNumber.contains(shortcutNumber))
+			idFromShortcutNumber.insert(shortcutNumber, name);
+	}
+
 	connectionsProperties.insert(name, newProperties);
 
 	return true;
@@ -973,6 +978,7 @@ bool TelescopeControl::removeConnection(const QString& id)
 	if(id.isEmpty())
 		return false;
 
+	idFromShortcutNumber.remove(idFromShortcutNumber.key(id));
 	return (connectionsProperties.remove(id) == 1);
 }
 
@@ -1372,6 +1378,11 @@ QStringList TelescopeControl::listConnectedTelescopeNames()
 	if (!telescopes.isEmpty())
 		connectedTelescopes = telescopes.keys();
 	return connectedTelescopes;
+}
+
+QList<int> TelescopeControl::listUsedShortcutNumbers() const
+{
+	return idFromShortcutNumber.keys();
 }
 
 bool TelescopeControl::restoreDeviceModelsListTo(QString deviceModelsListPath)
