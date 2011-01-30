@@ -56,6 +56,7 @@ class StelProjector;
 class TelescopeClient;
 class TelescopeControlConfigurationWindow;
 class SlewWindow;
+class DeviceControlPanel;
 
 using namespace TelescopeControlGlobals;
 
@@ -268,7 +269,8 @@ private:
 	QPixmap* pixmapHover;
 	QPixmap* pixmapOnIcon;
 	QPixmap* pixmapOffIcon;
-	StelButton* toolbarButton;
+	StelButton* slewWindowButton;
+	StelButton* controlPanelButton;
 	
 	//! Telescope reticle texture
 	StelTextureSP reticleTexture;
@@ -305,6 +307,7 @@ private:
 	//GUI
 	TelescopeControlConfigurationWindow* configurationWindow;
 	SlewWindow* slewWindow;
+	DeviceControlPanel* controlPanelWindow;
 	
 	//! Checks if the argument is a TCP port number in IANA's allowed range.
 	bool isValidTcpPort(uint port);

@@ -36,6 +36,7 @@
 #include "TelescopeClientAscom.hpp"
 #endif
 #include "TelescopeControlConfigurationWindow.hpp"
+#include "DeviceControlPanel.hpp"
 #include "SlewWindow.hpp"
 #include "LogFile.hpp"
 
@@ -211,6 +212,7 @@ void TelescopeControl::init()
 		//Create and initialize dialog windows
 		configurationWindow = new TelescopeControlConfigurationWindow();
 		slewWindow = new SlewWindow();
+		controlPanelWindow = new DeviceControlPanel();
 		
 		//TODO: Think of a better keyboard shortcut
 		QAction* slewWindowAction = gui->addGuiActions(
@@ -226,12 +228,24 @@ void TelescopeControl::init()
 		pixmapHover =   new QPixmap(":/graphicGui/glow32x32.png");
 		pixmapOnIcon =  new QPixmap(":/telescopeControl/button_Slew_Dialog_on.png");
 		pixmapOffIcon = new QPixmap(":/telescopeControl/button_Slew_Dialog_off.png");
-		toolbarButton = new StelButton(NULL,
-		                               *pixmapOnIcon,
-		                               *pixmapOffIcon,
-		                               *pixmapHover,
-		                               slewWindowAction);
-		gui->getButtonBar()->addButton(toolbarButton, "065-pluginsGroup");
+		slewWindowButton = new StelButton(NULL,
+		                                  *pixmapOnIcon,
+		                                  *pixmapOffIcon,
+		                                  *pixmapHover,
+		                                  slewWindowAction);
+		gui->getButtonBar()->addButton(slewWindowButton, "065-pluginsGroup");
+
+		QAction* controlPanelAction = gui->addGuiActions("actionShow_Control_Panel", "Device Control Panel", "", group, true, false);
+		connect(controlPanelAction, SIGNAL(toggled(bool)),
+		        controlPanelWindow, SLOT(setVisible(bool)));
+		connect(controlPanelWindow, SIGNAL(visibleChanged(bool)),
+		        controlPanelAction, SLOT(setChecked(bool)));
+		controlPanelButton = new StelButton(NULL,
+		                                    *pixmapOnIcon,
+		                                    *pixmapOffIcon,
+		                                    *pixmapHover,
+		                                    controlPanelAction);
+		gui->getButtonBar()->addButton(controlPanelButton, "065-pluginsGroup");
 	}
 	catch (std::runtime_error &e)
 	{

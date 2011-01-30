@@ -38,6 +38,8 @@ SET(TelescopeControl_SRCS
   gui/TelescopePropertiesWindow.cpp
   gui/StelDialogTelescopeControl.hpp
   gui/StelDialogTelescopeControl.cpp
+  gui/DeviceControlPanel.hpp
+  gui/DeviceControlPanel.cpp
   indi/Indi.hpp
   indi/Indi.cpp
   indi/IndiClient.hpp
@@ -73,7 +75,8 @@ ENDIF(WIN32)
 SET(TelescopeControl_UIS
   gui/slewWindow.ui
   gui/telescopeControlConfigurationWindow.ui
-  gui/telescopePropertiesWindow.ui)
+  gui/telescopePropertiesWindow.ui
+  gui/deviceControlPanel.ui)
 
 QT4_WRAP_UI(TelescopeControl_UIS_H ${TelescopeControl_UIS})
 
@@ -96,6 +99,7 @@ SET(TelescopeControl_MOC_HDRS
   gui/StelDialogTelescopeControl.hpp
   gui/TelescopePropertiesWindow.hpp
   gui/TelescopeControlConfigurationWindow.hpp
+  gui/DeviceControlPanel.hpp
   gui/SlewWindow.hpp
   indi/IndiClient.hpp
   )
