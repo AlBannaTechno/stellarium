@@ -392,6 +392,7 @@ void TelescopeControlConfigurationWindow::updateStatusButton(const QString& id)
 
 QString TelescopeControlConfigurationWindow::createDefaultId()
 {
+	QStringList existingIds = deviceManager->listAllConnectionNames();
 	QString id;
 	int i = 1;
 	do
@@ -399,7 +400,7 @@ QString TelescopeControlConfigurationWindow::createDefaultId()
 		//TODO: Localization
 		id = QString("New Telescope %1").arg(i++);
 	}
-	while (deviceManager->doesClientExist(id));
+	while (existingIds.contains(id));
 	return id;
 }
 
