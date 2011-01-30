@@ -291,7 +291,10 @@ private:
 	//! \todo Temporary.
 	QHash<QString, QString> indiDeviceModels;
 
+	//! Matches shortcut numbers and connection IDs.
 	QHash<int, QString> idFromShortcutNumber;
+	//!
+	QList<uint> usedTcpPorts;
 	
 	QStringList interfaceTypeNames;
 	
@@ -303,9 +306,6 @@ private:
 	TelescopeControlConfigurationWindow* configurationWindow;
 	SlewWindow* slewWindow;
 	
-	//! Checks if the argument is a valid slot number. Used internally.
-	//! \todo remove
-	bool isValidSlotNumber(int slot) const;
 	//! Checks if the argument is a TCP port number in IANA's allowed range.
 	bool isValidTcpPort(uint port);
 	//! Checks if the argument is a valid delay value in microseconds.

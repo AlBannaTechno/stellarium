@@ -1,7 +1,7 @@
 /*
  * Stellarium TelescopeControl Plug-in
  * 
- * Copyright (C) 2009-2010 Bogdan Marinov (this file)
+ * Copyright (C) 2009-2011 Bogdan Marinov (this file)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,10 +29,6 @@ namespace TelescopeControlGlobals {
 	const int SLOT_COUNT = 9;
 	const int SLOT_NUMBER_LIMIT = MIN_SLOT_NUMBER + SLOT_COUNT;
 	const int MAX_SLOT_NUMBER = SLOT_NUMBER_LIMIT - 1;
-
-	const int BASE_TCP_PORT = 10000;
-	#define DEFAULT_TCP_PORT_FOR_SLOT(X) (BASE_TCP_PORT + X)
-	const int DEFAULT_TCP_PORT = DEFAULT_TCP_PORT_FOR_SLOT(MIN_SLOT_NUMBER);
 	
 	const int MAX_CIRCLE_COUNT = 10;
 	
@@ -60,8 +56,6 @@ namespace TelescopeControlGlobals {
 	const QString LABEL_TEXT_CONTROL_TIP = QString("To slew a connected telescope to an object (for example, a star), select that object, then hold down the Ctrl key and press the key with that telescope's number. To slew it to the center of the current view, hold down the Alt key and press the key with that telescope's number.");
 	const QString LABEL_TEXT_NO_DEVICE_MODELS = QString("No device model descriptions are available. Stellarium will not be able to control a telescope on its own, but it is still possible to do it through an external application or to connect to a remote host.");
 	const QString LABEL_TEXT_ADD_TIP = QString("Press the \"Add\" button to set up a new telescope connection.");
-	
-	const QString TOOL_TIP_CONTROL = QString("Select an object, then press <strong>Ctrl+%1</strong> to slew this telescope to that object. Press <strong>Alt+%1</strong> to slew to the center of the current view.");
 	
 	#ifdef Q_OS_WIN32
 	const QStringList SERIAL_PORT_NAMES = QString("COM1 COM2 COM3 COM4").split(' ', QString::SkipEmptyParts);

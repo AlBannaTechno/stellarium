@@ -821,7 +821,7 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 
 	bool isRemote = properties.value("isRemoteConnection", false).toBool();
 	QString host = properties.value("host", "localhost").toString();
-	int tcpPort = properties.value("tcpPort").toInt();
+	uint tcpPort = properties.value("tcpPort").toUInt();
 
 	QString driver = properties.value("driverId").toString();
 	QString deviceModel = properties.value("deviceModel").toString();
@@ -957,6 +957,8 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 		if (!idFromShortcutNumber.contains(shortcutNumber))
 			idFromShortcutNumber.insert(shortcutNumber, name);
 	}
+	if (isValidTcpPort(tcpPort))
+		usedTcpPorts.append(tcpPort);
 
 	connectionsProperties.insert(name, newProperties);
 
@@ -977,6 +979,10 @@ bool TelescopeControl::removeConnection(const QString& id)
 	//Validation
 	if(id.isEmpty())
 		return false;
+
+	uint tcpPort = getConnection(id).value("tcpPort").toUInt();
+	if (tcpPort > 0)
+		usedTcpPorts.removeOne(tcpPort);
 
 	idFromShortcutNumber.remove(idFromShortcutNumber.key(id));
 	return (connectionsProperties.remove(id) == 1);
@@ -1044,11 +1050,6 @@ bool TelescopeControl::stopAllConnections()
 	return allStoppedSuccessfully;
 }
 
-bool TelescopeControl::isValidSlotNumber(int slot) const
-{
-	return ((slot < MIN_SLOT_NUMBER || slot >  MAX_SLOT_NUMBER) ? false : true);
-}
-
 bool TelescopeControl::isValidTcpPort(uint port)
 {
 	//Check if the port number is in IANA's allowed range
@@ -1057,8 +1058,18 @@ bool TelescopeControl::isValidTcpPort(uint port)
 
 uint TelescopeControl::getFreeTcpPort()
 {
-	//TODO: For now...
-	return DEFAULT_TCP_PORT_FOR_SLOT(1);
+	uint slot;
+	for (slot = 10001; slot < 10010; slot++)
+	{
+		if (!usedTcpPorts.contains(slot))
+			return slot;
+	}
+	for (slot = 49152; slot <= 65535; slot++)
+	{
+		if (!usedTcpPorts.contains(slot))
+			return slot;
+	}
+	return 10001;
 }
 
 bool TelescopeControl::isValidDelay(int delay)
