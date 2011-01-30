@@ -461,6 +461,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& i
 
 		showConnectionTab(false);
 		showAscomTab(false);
+		showIndiTab(false);
 		showSerialTab(false);
 		showNetworkTab(false);
 	}
