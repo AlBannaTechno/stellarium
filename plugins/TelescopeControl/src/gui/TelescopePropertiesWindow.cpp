@@ -85,10 +85,10 @@ void TelescopePropertiesWindow::createDialogContent()
 	connect(dialog, SIGNAL(rejected()), this, SLOT(discardChanges()));
 	
 	//Connect: sender, signal, receiver, member
-	connect(ui->radioButtonDirectConnection, SIGNAL(toggled(bool)),
-	        this, SLOT(prepareDirectConnection(bool)));
-	connect(ui->radioButtonIndirectConnection, SIGNAL(toggled(bool)),
-	        this, SLOT(prepareIndirectConnection(bool)));
+	connect(ui->pushButtonDirectConnection, SIGNAL(clicked()),
+	        this, SLOT(prepareDirectConnection()));
+	connect(ui->pushButtonIndirectConnection, SIGNAL(clicked()),
+	        this, SLOT(prepareIndirectConnection()));
 	connect(ui->pushButtonSave, SIGNAL(clicked()),
 	        this, SLOT(saveChanges()));
 	connect(ui->pushButtonDiscard, SIGNAL(clicked()),
@@ -122,12 +122,6 @@ void TelescopePropertiesWindow::prepareNewStellariumConfiguration(const QString&
 
 	//The user must choose between direct and indirect connection
 	ui->stackedWidget->setCurrentWidget(ui->pageType);
-	ui->radioButtonDirectConnection->blockSignals(true);
-	ui->radioButtonDirectConnection->setChecked(false);
-	ui->radioButtonDirectConnection->blockSignals(false);
-	ui->radioButtonIndirectConnection->blockSignals(true);
-	ui->radioButtonIndirectConnection->setChecked(false);
-	ui->radioButtonIndirectConnection->blockSignals(false);
 
 	//Prepare the rest of the window
 	ui->tabWidget->setCurrentWidget(ui->tabGeneral);
@@ -153,12 +147,6 @@ void TelescopePropertiesWindow::prepareNewIndiConfiguration(const QString& id)
 
 	//The user must choose between direct and indirect connection
 	ui->stackedWidget->setCurrentWidget(ui->pageType);
-	ui->radioButtonDirectConnection->blockSignals(true);
-	ui->radioButtonDirectConnection->setChecked(false);
-	ui->radioButtonDirectConnection->blockSignals(false);
-	ui->radioButtonIndirectConnection->blockSignals(true);
-	ui->radioButtonIndirectConnection->setChecked(false);
-	ui->radioButtonIndirectConnection->blockSignals(false);
 
 	//Prepare the rest of the window
 	ui->tabWidget->setCurrentWidget(ui->tabGeneral);
@@ -478,11 +466,8 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& i
 	}
 }
 
-void TelescopePropertiesWindow::prepareDirectConnection(bool prepare)
+void TelescopePropertiesWindow::prepareDirectConnection()
 {
-	if(!prepare)
-		return;
-
 	configuredConnectionIsRemote = false;
 	showConnectionTab(true);
 	showAscomTab(false);
@@ -512,11 +497,8 @@ void TelescopePropertiesWindow::prepareDirectConnection(bool prepare)
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
 }
 
-void TelescopePropertiesWindow::prepareIndirectConnection(bool prepare)
+void TelescopePropertiesWindow::prepareIndirectConnection()
 {
-	if(!prepare)
-		return;
-
 	configuredConnectionIsRemote = true;
 	showConnectionTab(true);
 	showNetworkTab(true);

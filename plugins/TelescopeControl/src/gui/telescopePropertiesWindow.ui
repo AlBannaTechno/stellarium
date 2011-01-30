@@ -118,6 +118,12 @@
     <widget class="QStackedWidget" name="stackedWidget">
      <widget class="QWidget" name="pageType">
       <layout class="QVBoxLayout" name="verticalLayout_10">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="margin">
+        <number>0</number>
+       </property>
        <item>
         <widget class="QGroupBox" name="groupBoxConnectionType">
          <property name="sizePolicy">
@@ -127,7 +133,7 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string>Connection type</string>
+          <string>Select connection type</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayoutConnectionType">
           <property name="spacing">
@@ -137,7 +143,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QRadioButton" name="radioButtonDirectConnection">
+           <widget class="QPushButton" name="pushButtonDirectConnection">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -175,7 +181,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QRadioButton" name="radioButtonIndirectConnection">
+           <widget class="QPushButton" name="pushButtonIndirectConnection">
             <property name="font">
              <font>
               <weight>75</weight>
@@ -920,8 +926,8 @@ Increase this value if the reticle is skipping.</string>
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>radioButtonDirectConnection</tabstop>
-  <tabstop>radioButtonIndirectConnection</tabstop>
+  <tabstop>pushButtonDirectConnection</tabstop>
+  <tabstop>pushButtonIndirectConnection</tabstop>
   <tabstop>tabWidget</tabstop>
   <tabstop>lineEditName</tabstop>
   <tabstop>checkBoxConnectAtStartup</tabstop>

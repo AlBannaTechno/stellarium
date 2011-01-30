@@ -76,8 +76,8 @@ private slots:
 	void saveChanges();
 	void discardChanges();
 	
-	void prepareDirectConnection(bool);
-	void prepareIndirectConnection(bool);
+	void prepareDirectConnection();
+	void prepareIndirectConnection();
 	
 	void deviceModelSelected(const QString&);
 	//void indiDeviceModelSelected(const QString&);
