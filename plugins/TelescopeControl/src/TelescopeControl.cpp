@@ -1232,7 +1232,7 @@ bool TelescopeControl::stopClient(const QString& id)
 	//If it doesn't exist, it is stopped :)
 	if(id.isEmpty() ||
 	   !connections.contains(id))
-		return false;
+		return true;
 
 	//If a telescope is selected, deselect it first.
 	//(Otherwise trying to delete a selected telescope client causes Stellarium to crash.)
