@@ -40,6 +40,23 @@ SET(TelescopeControl_SRCS
   gui/StelDialogTelescopeControl.cpp
   gui/DeviceControlPanel.hpp
   gui/DeviceControlPanel.cpp
+  gui/IndiDeviceWidget.hpp
+  gui/IndiDeviceWidget.cpp
+  gui/IndiGroupWidget.hpp
+  gui/IndiGroupWidget.cpp
+  gui/IndiPropertyWidget.hpp
+  gui/IndiTextPropertyWidget.hpp
+  gui/IndiTextPropertyWidget.cpp
+  gui/IndiNumberPropertyWidget.hpp
+  gui/IndiNumberPropertyWidget.cpp
+  gui/IndiSwitchPropertyWidget.hpp
+  gui/IndiSwitchPropertyWidget.cpp
+  gui/IndiLightPropertyWidget.hpp
+  gui/IndiLightPropertyWidget.cpp
+  gui/IndiBlobPropertyWidget.hpp
+  gui/IndiBlobPropertyWidget.cpp
+  gui/IndiStateWidget.hpp
+  gui/IndiStateWidget.cpp
   indi/Indi.hpp
   indi/Indi.cpp
   indi/IndiClient.hpp
@@ -101,6 +118,15 @@ SET(TelescopeControl_MOC_HDRS
   gui/TelescopeControlConfigurationWindow.hpp
   gui/DeviceControlPanel.hpp
   gui/SlewWindow.hpp
+  gui/IndiDeviceWidget.hpp
+  gui/IndiGroupWidget.hpp
+  gui/IndiPropertyWidget.hpp
+  gui/IndiTextPropertyWidget.hpp
+  gui/IndiNumberPropertyWidget.hpp
+  gui/IndiSwitchPropertyWidget.hpp
+  gui/IndiLightPropertyWidget.hpp
+  gui/IndiBlobPropertyWidget.hpp
+  gui/IndiStateWidget.hpp
   indi/IndiClient.hpp
   )
 
