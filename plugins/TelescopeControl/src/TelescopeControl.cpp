@@ -835,7 +835,7 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 
 	bool isRemote = properties.value("isRemoteConnection", false).toBool();
 	QString host = properties.value("host", "localhost").toString();
-	uint tcpPort = properties.value("tcpPort").toUInt();
+	int tcpPort = properties.value("tcpPort").toInt();
 
 	QString driver = properties.value("driverId").toString();
 	QString deviceModel = properties.value("deviceModel").toString();
@@ -1070,9 +1070,9 @@ bool TelescopeControl::isValidTcpPort(uint port)
 	return (port > 1023 && port <= 65535);
 }
 
-uint TelescopeControl::getFreeTcpPort()
+int TelescopeControl::getFreeTcpPort()
 {
-	uint slot;
+	int slot;
 	for (slot = 10001; slot < 10010; slot++)
 	{
 		if (!usedTcpPorts.contains(slot))

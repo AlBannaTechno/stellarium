@@ -161,7 +161,7 @@ public:
 	QList<int> listUsedShortcutNumbers() const;
 
 	//! Returns a free TCP port in Stellarium's range or higher.
-	uint getFreeTcpPort();
+	int getFreeTcpPort();
 	
 	bool getFlagUseTelescopeServerLogs () {return useTelescopeServerLogs;}
 
@@ -296,7 +296,7 @@ private:
 	//! Matches shortcut numbers and connection IDs.
 	QHash<int, QString> idFromShortcutNumber;
 	//!
-	QList<uint> usedTcpPorts;
+	QList<int> usedTcpPorts;
 	
 	QStringList interfaceTypeNames;
 	
