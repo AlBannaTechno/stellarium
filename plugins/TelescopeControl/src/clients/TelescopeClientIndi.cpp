@@ -75,10 +75,10 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	{
 		hasQueuedGoto = true;
 		queuedGotoJ2000Pos = j2000Coordinates;
-		QHash<QString,bool> elements;
+		QVariantHash elements;
 		elements.insert(IndiClient::SP_CONNECT, true);
 		elements.insert(IndiClient::SP_DISCONNECT, false);
-		indiClient.writeSwitchProperty(deviceName, IndiClient::SP_CONNECTION, elements);
+		indiClient.writeProperty(deviceName, IndiClient::SP_CONNECTION, elements);
 		//(isDefinedConnection == true ensures that deviceName is not empty)
 		return;
 	}
@@ -114,10 +114,10 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	const double decDegrees = decRadians * (180 / M_PI);
 
 	//Send the "go to" command
-	QHash<QString,double> newValues;
+	QVariantHash newValues;
 	newValues.insert("RA", raHours);
 	newValues.insert("DEC", decDegrees);
-	indiClient.writeNumberProperty(deviceName, property, newValues);
+	indiClient.writeProperty(deviceName, property, newValues);
 }
 
 void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Property* property)

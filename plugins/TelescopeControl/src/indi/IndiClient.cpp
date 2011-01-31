@@ -764,104 +764,150 @@ void IndiClient::writeGetProperties(const QString& device,
 	xmlWriter.writeEndDocument();
 }
 
-void IndiClient::writeTextProperty(const QString &device, const QString &property, const QHash<QString, QString> &newValues)
+void IndiClient::writeProperty(const QString& deviceName,
+                               const QString& propertyName,
+                               const QVariantHash& newValues)
 {
+	if (!deviceProperties.contains(deviceName) ||
+	    !deviceProperties[deviceName].contains(propertyName) ||
+	    newValues.isEmpty())
+	{
+		//TODO: Log?
+		return;
+	}
+
+	Property* property = deviceProperties[deviceName][propertyName];
+	Q_ASSERT(property); //TODO: Check this!
+
+	QXmlStreamWriter xmlWriter(ioDevice);
+	xmlWriter.writeStartDocument();
+
+	Property::PropertyType type = property->getType();
+	switch (type)
+	{
+		case Property::TextProperty:
+		{
+			break;
+		}
+
+		case Property::NumberProperty:
+		{
+			NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
+			if (numberProperty)
+				writeNumberProperty(xmlWriter, deviceName,
+				                    numberProperty, newValues);
+			break;
+		}
+
+		case Property::SwitchProperty:
+		{
+			SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
+			if (switchProperty)
+				writeSwitchProperty(xmlWriter, deviceName,
+				                    switchProperty, newValues);
+			break;
+		}
+
+		case Property::BlobProperty:
+		{
+			break;
+		}
+
+		default:
+		{
+			//TODO: Log?
+			break;
+		}
+	}
+
+	xmlWriter.writeEndDocument();
+}
+
+void IndiClient::writeTextProperty(QXmlStreamWriter& xmlWriter,
+                                   const QString& device,
+                                   Property *property,
+                                   const QVariantHash& newValues)
+{
+	Q_UNUSED(xmlWriter)
 	Q_UNUSED(device)
 	Q_UNUSED(property)
 	Q_UNUSED(newValues)
 }
 
-//TODO: Look into using a template function
-void IndiClient::writeNumberProperty(const QString& device,
-                                     const QString& property,
-                                     const QHash<QString, double>& newValues)
+void IndiClient::writeNumberProperty(QXmlStreamWriter& xmlWriter,
+                                     const QString& device,
+                                     NumberProperty* property,
+                                     const QVariantHash& newValues)
 {
-	if (!deviceProperties.contains(device) ||
-	    !deviceProperties[device].contains(property) ||
-	    newValues.isEmpty())
+	Q_ASSERT(property); //TODO: Proper check!
+
+	xmlWriter.writeStartElement(T_NEW_NUMBER_VECTOR);
+	xmlWriter.writeAttribute(A_DEVICE, device);
+	xmlWriter.writeAttribute(A_NAME, property->getName());
+	//TODO: Add timestamp?
+
+	QStringList elements = property->getElementNames();//TODO: Optimize this
+	foreach (const QString& element, elements)
 	{
-		//TODO: Log?
-		return;
-	}
-
-	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(deviceProperties[device][property]);
-	if (numberProperty)
-	{
-		QXmlStreamWriter xmlWriter(ioDevice);
-		xmlWriter.writeStartDocument();
-		xmlWriter.writeStartElement(T_NEW_NUMBER_VECTOR);
-		xmlWriter.writeAttribute(A_DEVICE, device);
-		xmlWriter.writeAttribute(A_NAME, property);
-		//TODO: Add timestamp?
-
-		QStringList elements = numberProperty->getElementNames();//TODO: Optimize this
-		foreach (const QString& element, elements)
-		{
-			xmlWriter.writeStartElement(T_ONE_NUMBER);
-			xmlWriter.writeAttribute(A_NAME, element);
-			double value;
-			//TODO: Check if this is actually necessary
-			if (newValues.contains(element))
-				value = newValues[element];
-			else
-				value = numberProperty->getElement(element)->getValue();
-			xmlWriter.writeCharacters(QString::number(value, 'f'));
-			xmlWriter.writeEndElement();
-		}
-
+		xmlWriter.writeStartElement(T_ONE_NUMBER);
+		xmlWriter.writeAttribute(A_NAME, element);
+		double value;
+		QVariant elementValue = newValues.value(element, QVariant());
+		//Doubles as a check if such an element exists:
+		//an empty QVariant is of type Invalid.
+		if (elementValue.type() == QVariant::Double)
+			value = elementValue.toDouble();
+		else
+			value = property->getElement(element)->getValue();
+		xmlWriter.writeCharacters(QString::number(value, 'f'));
 		xmlWriter.writeEndElement();
-		xmlWriter.writeEndDocument();
-
-		//TODO: Update property state and send it to the UI (additional signal?)
 	}
+
+	xmlWriter.writeEndElement();
+
+	//TODO: Update property state and send it to the UI (additional signal?)
 }
 
-void IndiClient::writeSwitchProperty(const QString &device,
-                                     const QString &property,
-                                     const QHash<QString, bool> &newValues)
+void IndiClient::writeSwitchProperty(QXmlStreamWriter& xmlWriter,
+                                     const QString& device,
+                                     SwitchProperty* property,
+                                     const QVariantHash& newValues)
 {
-	if (!deviceProperties.contains(device) ||
-	    !deviceProperties[device].contains(property) ||
-	    newValues.isEmpty())
+	Q_ASSERT(property); //TODO: Proper check!
+
+	xmlWriter.writeStartElement(T_NEW_SWITCH_VECTOR);
+	xmlWriter.writeAttribute(A_DEVICE, device);
+	xmlWriter.writeAttribute(A_NAME, property->getName());
+	//TODO: Add timestamp?
+
+	QStringList elements = property->getElementNames();//TODO: Optimize this
+	foreach (const QString& element, elements)
 	{
-		//TODO: Log?
-		return;
-	}
-
-	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(deviceProperties[device][property]);
-	if (switchProperty)
-	{
-		QXmlStreamWriter xmlWriter(ioDevice);
-		xmlWriter.writeStartDocument();
-		xmlWriter.writeStartElement(T_NEW_SWITCH_VECTOR);
-		xmlWriter.writeAttribute(A_DEVICE, device);
-		xmlWriter.writeAttribute(A_NAME, property);
-		//TODO: Add timestamp?
-
-		QStringList elements = switchProperty->getElementNames();//TODO: Optimize this
-		foreach (const QString& element, elements)
-		{
-			xmlWriter.writeStartElement(T_ONE_SWITCH);
-			xmlWriter.writeAttribute(A_NAME, element);
-			bool value;
-			//TODO: Check if this is actually necessary
-			if (newValues.contains(element))
-				value = newValues[element];
-			else
-				value = switchProperty->getElement(element)->isOn();
-			xmlWriter.writeCharacters((value)?"On":"Off");
-			xmlWriter.writeEndElement();
-		}
-
+		xmlWriter.writeStartElement(T_ONE_SWITCH);
+		xmlWriter.writeAttribute(A_NAME, element);
+		bool value;
+		QVariant elementValue = newValues.value(element, QVariant());
+		//Doubles as a check if such an element exists:
+		//an empty QVariant is of type Invalid.
+		if (elementValue.type() == QVariant::Bool)
+			value = elementValue.toBool();
+		else
+			value = property->getElement(element)->isOn();
+		xmlWriter.writeCharacters((value)?"On":"Off");
 		xmlWriter.writeEndElement();
-		xmlWriter.writeEndDocument();
-
-		//TODO: Update property state and send it to the UI (additional signal?)
 	}
+
+	xmlWriter.writeEndElement();
+
+	//TODO: Update property state and send it to the UI (additional signal?)
 }
 
-void IndiClient::writeBlobProperty(const QString &device, const QString &property, const QHash<QString, QByteArray> &newValues)
+void IndiClient::writeBlobProperty(QXmlStreamWriter& xmlWriter,
+                                   const QString& device,
+                                   Property* property,
+                                   const QVariantHash& newValues)
 {
+	Q_UNUSED(xmlWriter)
 	Q_UNUSED(device)
 	Q_UNUSED(property)
 	Q_UNUSED(newValues)

@@ -162,6 +162,14 @@ class BlobElement
 class Property
 {
 public:
+	enum PropertyType {
+		TextProperty,
+		NumberProperty,
+		SwitchProperty,
+		LightProperty,
+		BlobProperty
+	};
+
 	Property(const QString& propertyName,
 	         State propertyState,
 	         Permission accessPermission,
@@ -169,10 +177,13 @@ public:
 	         const QString& propertyGroup = QString(),
 	         const QDateTime& timestamp = QDateTime());
 	virtual ~Property();
+	PropertyType getType() const;
 	QString getName();
 	QString getLabel();
+	QString getGroup();
 	bool isReadable();
 	bool isWritable();
+	Permission getPermission() const;
 	void setState(State newState);
 	State getCurrentState() const;
 	QDateTime getTimestamp() const;
@@ -184,6 +195,8 @@ protected:
 	//! Sets the timestamp value. If necessary, reinterprets the data as UTC.
 	//! If the argument is not a valid QDateTime, uses the current moment.
 	void setTimestamp(const QDateTime& timestamp);
+	//! Property type
+	PropertyType type;
 
 private:
 	//! Name used to identify the property internally.

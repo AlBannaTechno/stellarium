@@ -260,6 +260,11 @@ Property::~Property()
 {
 }
 
+Property::PropertyType Property::getType() const
+{
+	return type;
+}
+
 QString Property::getName()
 {
 	return name;
@@ -270,6 +275,11 @@ QString Property::getLabel()
 	return label;
 }
 
+QString Property::getGroup()
+{
+	return group;
+}
+
 bool Property::isReadable()
 {
 	return (permission == PermissionReadOnly || permission == PermissionReadWrite);
@@ -278,6 +288,11 @@ bool Property::isReadable()
 bool Property::isWritable()
 {
 	return (permission == PermissionWriteOnly || permission == PermissionReadWrite);
+}
+
+Permission Property::getPermission() const
+{
+	return permission;
 }
 
 void Property::setState(State newState)
@@ -334,7 +349,7 @@ NumberProperty::NumberProperty(const QString& propertyName,
 	         propertyGroup,
 	         timestamp)
 {
-	//
+	type = Property::TextProperty;
 }
 
 NumberProperty::~NumberProperty()
@@ -404,7 +419,7 @@ SwitchProperty::SwitchProperty(const QString &propertyName,
 	         timestamp),
 	rule(switchRule)
 {
-	//
+	type = Property::SwitchProperty;
 }
 
 SwitchProperty::~SwitchProperty()
