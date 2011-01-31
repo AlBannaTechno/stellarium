@@ -47,6 +47,26 @@ const QString& Element::getLabel() const
 	return label;
 }
 
+TextElement::TextElement(const QString& elementName,
+                         const QString& initialValue,
+                         const QString& label)
+	: Element(elementName, label),
+	value(initialValue)
+{
+	//
+}
+
+QString TextElement::getValue() const
+{
+	return value;
+}
+
+void TextElement::setValue(const QString& stringValue)
+{
+	//TODO: Validation?
+	value = stringValue;
+}
+
 /* ********************************************************************* */
 #if 0
 #pragma mark -
@@ -231,6 +251,83 @@ void SwitchElement::setValue(const QString& string)
 	//TODO: Output?
 }
 
+
+LightElement::LightElement(const QString& elementName,
+                           const QString& initialValue,
+                           const QString& label)
+	: Element(elementName, label)
+{
+	setValue(initialValue);
+}
+
+State LightElement::getValue() const
+{
+	return state;
+}
+
+void LightElement::setValue(const QString& stringValue)
+{
+	if (stringValue == "Idle")
+		state = StateIdle;
+	else if (stringValue == "Ok")
+		state = StateOk;
+	else if (stringValue == "Busy")
+		state = StateBusy;
+	else if (stringValue == "Alert")
+		state = StateAlert;
+	else
+		return;
+}
+
+BlobElement::BlobElement(const QString& elementName,
+                         const QString& label)
+	: Element(elementName, label)
+{
+	//
+}
+
+void BlobElement::setValue(const QString& blobLength,
+                           const QString& blobFormat,
+                           const QString& blobData)
+{
+	//TODO: This is just a sketch.
+	//TODO: What happens if the device deliberately sends empty data?
+	int length = blobLength.toInt();
+	if (length <= 0)
+	{
+		//TODO: Debug
+		return;
+	}
+	//Length is the length of the binary file *after decompression*.
+
+	if (blobFormat.isEmpty())
+	{
+		//TODO: Debug
+		return;
+	}
+	format = blobFormat;
+
+	if (blobData.isEmpty())
+	{
+		//TODO: Debug
+		return;
+	}
+	QByteArray newBinaryData = QByteArray::fromBase64(blobData.toAscii());
+
+	//TODO: Recognizing format?
+	//TODO: Decompressing, if necessary?
+}
+
+QString BlobElement::getFormat() const
+{
+	return format;
+}
+
+int BlobElement::getSize() const
+{
+	return binaryData.size();
+}
+
 /* ********************************************************************* */
 #if 0
 #pragma mark -
@@ -328,6 +425,38 @@ void Property::setTimestamp(const QDateTime& newTimestamp)
 	{
 		timestamp = QDateTime::currentDateTimeUtc();
 	}
+}
+
+
+TextProperty::TextProperty(const QString& propertyName,
+                           State propertyState,
+                           Permission accessPermission,
+                           const QString& propertyLabel,
+                           const QString& propertyGroup,
+                           const QDateTime& timestamp) :
+	Property(propertyName,
+	         propertyState,
+	         accessPermission,
+	         propertyLabel,
+	         propertyGroup,
+	         timestamp)
+{
+	type = Property::TextProperty;
+}
+
+TextProperty::~TextProperty()
+{
+	qDeleteAll(elements);
+}
+
+int TextProperty::elementCount() const
+{
+	return elements.count();
+}
+
+QStringList TextProperty::getElementNames() const
+{
+	return elements.keys();
 }
 
 /* ********************************************************************* */
@@ -469,6 +598,69 @@ int SwitchProperty::elementCount() const
 }
 
 QStringList SwitchProperty::getElementNames() const
+{
+	return elements.keys();
+}
+
+
+LightProperty::LightProperty(const QString& propertyName,
+                               State propertyState,
+                               const QString& propertyLabel,
+                               const QString& propertyGroup,
+                               const QDateTime& timestamp) :
+	Property(propertyName,
+	         propertyState,
+	         PermissionReadOnly,
+	         propertyLabel,
+	         propertyGroup,
+	         timestamp)
+{
+	type = Property::LightProperty;
+}
+
+LightProperty::~LightProperty()
+{
+	qDeleteAll(elements);
+}
+
+int LightProperty::elementCount() const
+{
+	return elements.count();
+}
+
+QStringList LightProperty::getElementNames() const
+{
+	return elements.keys();
+}
+
+
+BlobProperty::BlobProperty(const QString& propertyName,
+                           State propertyState,
+                           Permission accessPermission,
+                           const QString& propertyLabel,
+                           const QString& propertyGroup,
+                           const QDateTime& timestamp) :
+	Property(propertyName,
+	         propertyState,
+	         accessPermission,
+	         propertyLabel,
+	         propertyGroup,
+	         timestamp)
+{
+	type = Property::BlobProperty;
+}
+
+BlobProperty::~BlobProperty()
+{
+	qDeleteAll(elements);
+}
+
+int BlobProperty::elementCount() const
+{
+	return elements.count();
+}
+
+QStringList BlobProperty::getElementNames() const
 {
 	return elements.keys();
 }

@@ -71,14 +71,13 @@ private:
 //! Sub-property representing a single string.
 class TextElement : public Element
 {
-	//! \param elementName is required.
-	//! \param elementValue is required.
-	//! \param elementLabel is not required. If it is not specified, the value
-	//! of Element::name (i.e. #elementName) will be used as a value
-	//! for Element::label.
-	TextElement(const QString& elementName, const QString& elementValue, const QString& elementLabel = QString());
+public:
+	TextElement(const QString& elementName,
+	            const QString& initialValue,
+	            const QString& label = QString());
 
-	const QString& getText() const;
+	QString getValue() const;
+	void setValue(const QString& stringValue);
 
 private:
 	QString value;
@@ -124,7 +123,6 @@ private:
 };
 
 //! Sub-property representing a single switch/button.
-//! Despite being defined as a class, this is just a data structure.
 //! \todo Is there a point of this existing, or it can be replaced with a hash
 //! of booleans?
 class SwitchElement : public Element
@@ -143,18 +141,51 @@ private:
 };
 
 //! Sub-property representing a single indicator light.
-//! Despite being defined as a class, this is just a data structure.
-class LightElement
+class LightElement : public Element
 {
+public:
+	LightElement(const QString& elementName,
+	             const QString& initialValue,
+	             const QString& label = QString());
+
+	State getValue() const;
+	//! \todo Decide what to do with the duplication with
+	//! IndiClient::readStateFromString().
+	//! \todo Decide how to handle wrong values. (At the moment if the parameter
+	//! is not recognised it ignores it).
+	void setValue(const QString& stringValue);
+
+private:
+	State state;
 };
 
 //! Sub-property representing a single BLOB (Binary Large OBject, e.g. a photo).
-//! Despite being defined as a class, this is just a data structure.
-class BlobElement
+//! \todo Think what to make of this - it may be massive.
+//! \todo Is there a point of it existing? It is not handled as the rest of the
+//! elements - it has no initial value.
+class BlobElement : public Element
 {
-	QString name;
-	QString label;
+	BlobElement(const QString& elementName,
+	            const QString& label = QString());
+
+	//! Decodes the string to a QByteArray?
+	//! And saves it to disk? Emits a signal to the previewer?
+	void setValue(const QString& blobLength,
+	              const QString& blobFormat,
+	              const QString& blobData);
+
+	//! Example: Returns the decoded data?
+	QByteArray getValue() const;
+
+	//! Example
+	QString getFormat() const;
+	//! Example
+	//! \todo Isn't int too small?
+	int getSize() const;
+
+private:
 	QByteArray binaryData;
+	QString format;
 };
 
 //! Base class of all property classes.
@@ -216,6 +247,27 @@ private:
 	QDateTime timestamp;
 };
 
+//! A vector/array of string values (TextElement-s).
+class TextProperty : public Property
+{
+public:
+	TextProperty(const QString& propertyName,
+	             State propertyState,
+	             Permission accessPermission,
+	             const QString& propertyLabel = QString(),
+	             const QString& propertyGroup = QString(),
+	             const QDateTime& timestamp = QDateTime());
+	~TextProperty();
+
+	//TODO
+
+	int elementCount() const;
+	QStringList getElementNames() const;
+
+private:
+	QHash<QString,TextElement*> elements;
+};
+
 //! A vector/array of numeric values (NumberElement-s).
 class NumberProperty : public Property
 {
@@ -274,6 +326,48 @@ public:
 private:
 	SwitchRule rule;
 	QHash<QString,SwitchElement*> elements;
+};
+
+//! A vector/array of lights (LightElement-s).
+class LightProperty : public Property
+{
+public:
+	//! Lights are always read-only
+	LightProperty(const QString& propertyName,
+	              State propertyState,
+	              const QString& propertyLabel = QString(),
+	              const QString& propertyGroup = QString(),
+	              const QDateTime& timestamp = QDateTime());
+	~LightProperty();
+
+	//TODO:
+
+	int elementCount() const;
+	QStringList getElementNames() const;
+
+private:
+	QHash<QString,LightElement*> elements;
+};
+
+//! A vector/array of BLOBs (BlobElement-s).
+class BlobProperty : public Property
+{
+public:
+	BlobProperty(const QString& propertyName,
+	             State propertyState,
+	             Permission accessPermission,
+	             const QString& propertyLabel = QString(),
+	             const QString& propertyGroup = QString(),
+	             const QDateTime& timestamp = QDateTime());
+	~BlobProperty();
+
+	//TODO
+
+	int elementCount() const;
+	QStringList getElementNames() const;
+
+private:
+	QHash<QString,BlobElement*> elements;
 };
 
 #endif//_INDI_HPP_
