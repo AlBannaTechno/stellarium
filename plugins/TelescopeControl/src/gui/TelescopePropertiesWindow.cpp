@@ -504,6 +504,7 @@ void TelescopePropertiesWindow::prepareIndirectConnection()
 	showConnectionTab(true);
 	showNetworkTab(true);
 	showAscomTab(false);
+	showIndiTab(false);
 	showSerialTab(false);
 
 	ui->lineEditHostName->setText("localhost");
@@ -512,7 +513,8 @@ void TelescopePropertiesWindow::prepareIndirectConnection()
 		//TODO: Remove the magic number
 		ui->spinBoxTcpPort->setValue(7624);
 	}
-	ui->spinBoxTcpPort->setValue(deviceManager->getFreeTcpPort());
+	else
+		ui->spinBoxTcpPort->setValue(deviceManager->getFreeTcpPort());
 
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
 }
