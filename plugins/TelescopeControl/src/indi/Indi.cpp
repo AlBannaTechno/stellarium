@@ -349,7 +349,7 @@ NumberProperty::NumberProperty(const QString& propertyName,
 	         propertyGroup,
 	         timestamp)
 {
-	type = Property::TextProperty;
+	type = Property::NumberProperty;
 }
 
 NumberProperty::~NumberProperty()
