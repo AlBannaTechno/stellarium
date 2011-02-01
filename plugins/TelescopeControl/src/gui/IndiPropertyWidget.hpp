@@ -38,6 +38,8 @@ public:
 	IndiPropertyWidget(const QString& title, QWidget* parent = 0) : QGroupBox(title, parent) {;}
 	//virtual ~IndiPropertyWidget() = 0;
 
+	QString getGroup() const {return group;}
+
 public slots:
 	//What calls this?
 	virtual void updateProperty(Property* property) = 0;
@@ -46,6 +48,7 @@ signals:
 	void newPropertyValue(const QVariantHash& elements);
 
 protected:
+	QString group;
 	QHBoxLayout* mainLayout;
 	IndiStateWidget* stateWidget;
 };

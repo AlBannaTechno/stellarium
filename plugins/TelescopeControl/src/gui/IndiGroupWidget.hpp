@@ -40,6 +40,7 @@ public:
 
 	void addPropertyWidget(IndiPropertyWidget* widget);
 	void removePropertyWidget(IndiPropertyWidget* widget);
+	int propertyWidgetsCount() const;
 
 private:
 	QVBoxLayout* layout;

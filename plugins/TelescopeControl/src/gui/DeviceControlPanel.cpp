@@ -80,8 +80,9 @@ void DeviceControlPanel::createDialogContent()
 
 	logWidget->appendPlainText("Does everything look OK?");
 
+	//TEST
 	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget();
-	NumberProperty np("test", StateIdle, PermissionReadWrite, "Test", "Command");
+	NumberProperty np("test", StateIdle, PermissionReadWrite, "Equatorial EOD Coordinates", "Group");
 	deviceWidget->defineProperty(&np);
 	deviceTabWidget->addTab(deviceWidget, "Test");
 }

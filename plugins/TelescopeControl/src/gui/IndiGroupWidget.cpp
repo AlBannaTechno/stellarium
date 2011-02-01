@@ -41,3 +41,8 @@ void IndiGroupWidget::removePropertyWidget(IndiPropertyWidget* widget)
 {
 	layout->removeWidget(widget);
 }
+
+int IndiGroupWidget::propertyWidgetsCount()
+{
+	return layout->count();
+}

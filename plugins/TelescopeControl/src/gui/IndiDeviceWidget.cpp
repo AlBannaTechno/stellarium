@@ -144,9 +144,20 @@ void IndiDeviceWidget::removeProperty(const QString& propertyName)
 {
 	if (propertyWidgets.contains(propertyName))
 	{
-		//TODO: Handle removing from the group widget
-		IndiPropertyWidget* propertyWidget = propertyWidgets.take(propertyName);
+		IndiPropertyWidget* widget = propertyWidgets.take(propertyName);
+		QString group = widget->getGroup();
+		if (groupWidgets.contains(group))
+		{
+			IndiGroupWidget* groupWidget = groupWidgets[group];
+			groupWidget->removePropertyWidget(widget);
+			if (groupWidget->propertyWidgetsCount() == 0)
+			{
+				int index = groupsTabWidget->indexOf(groupWidget);
+				groupsTabWidget->removeTab(index);
+				delete groupWidget;
+			}
+		}
 		//TODO: Disconnect connected signals
-		delete propertyWidget;
+		delete widget;
 	}
 }
