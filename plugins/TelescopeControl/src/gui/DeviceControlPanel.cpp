@@ -82,9 +82,13 @@ void DeviceControlPanel::createDialogContent()
 
 	//TEST
 	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget();
-	NumberProperty np("test", StateIdle, PermissionReadWrite, "Equatorial EOD Coordinates", "Group");
+	NumberProperty np("test", StateIdle, PermissionReadWrite, "Equatorial EOD Coordinates");
+	NumberElement* ne1 = new NumberElement("RA", "15:0:0", "%9.6m", "0", "0", "0", "Right Ascension");
+	NumberElement* ne2 = new NumberElement("DEC", "0:0:0", "%9.6m", "0", "0", "0", "Declination");
+	np.addElement(ne1);
+	np.addElement(ne2);
 	deviceWidget->defineProperty(&np);
-	deviceTabWidget->addTab(deviceWidget, "Test");
+	deviceTabWidget->addTab(deviceWidget, "Simulated");
 }
 
 
