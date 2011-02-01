@@ -28,7 +28,10 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
 {
 	Q_ASSERT(property);
 
+	setGroup(property->getGroup());
+
 	mainLayout = new QHBoxLayout();
+	mainLayout->setContentsMargins(0, 0, 0, 0);
 
 	//State
 	stateWidget = new IndiStateWidget(property->getCurrentState());

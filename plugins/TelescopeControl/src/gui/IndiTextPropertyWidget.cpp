@@ -26,8 +26,8 @@ IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
 {
 	Q_ASSERT(property);
 
+	setGroup(property->getGroup());
 	//TODO
-	Q_UNUSED(property);
 }
 
 IndiTextPropertyWidget::~IndiTextPropertyWidget()

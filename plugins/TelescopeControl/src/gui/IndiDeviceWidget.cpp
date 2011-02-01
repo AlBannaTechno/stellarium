@@ -118,9 +118,7 @@ void IndiDeviceWidget::defineProperty(Property* property)
 
 	//TODO: Connect signals/slots
 
-	QString group = property->getGroup();
-	if (group.isEmpty())
-		group = "Main";//TODO: Default name.
+	QString group = propertyWidget->getGroup();
 	if (!groupWidgets.contains(group))
 	{
 		IndiGroupWidget* widget = new IndiGroupWidget();

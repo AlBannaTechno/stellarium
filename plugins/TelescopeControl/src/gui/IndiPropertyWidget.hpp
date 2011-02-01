@@ -39,6 +39,13 @@ public:
 	//virtual ~IndiPropertyWidget() = 0;
 
 	QString getGroup() const {return group;}
+	void setGroup(const QString& groupName)
+	{
+		if (groupName.isEmpty())
+			group = "Main";//TODO: Default name.
+		else
+			group = groupName;
+	}
 
 public slots:
 	//What calls this?

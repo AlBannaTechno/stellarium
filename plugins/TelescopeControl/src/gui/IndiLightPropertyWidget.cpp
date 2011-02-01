@@ -25,7 +25,8 @@ IndiLightPropertyWidget::IndiLightPropertyWidget(LightProperty* property,
 	: IndiPropertyWidget(title, parent)
 {
 	Q_ASSERT(property);
-	Q_UNUSED(property);
+
+	setGroup(property->getGroup());
 }
 
 IndiLightPropertyWidget::~IndiLightPropertyWidget()
