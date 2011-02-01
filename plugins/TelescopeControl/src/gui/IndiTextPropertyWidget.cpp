@@ -27,7 +27,13 @@ IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
 	Q_ASSERT(property);
 
 	setGroup(property->getGroup());
+
+	mainLayout = new QHBoxLayout();
+	mainLayout->setContentsMargins(0, 0, 0, 0);
+
 	//TODO
+
+	this->setLayout(mainLayout);
 }
 
 IndiTextPropertyWidget::~IndiTextPropertyWidget()

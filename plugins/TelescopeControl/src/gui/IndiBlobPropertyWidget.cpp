@@ -27,6 +27,13 @@ IndiBlobPropertyWidget::IndiBlobPropertyWidget(BlobProperty *property,
 	Q_ASSERT(property);
 
 	setGroup(property->getGroup());
+
+	mainLayout = new QHBoxLayout();
+	mainLayout->setContentsMargins(0, 0, 0, 0);
+
+	//TODO
+
+	this->setLayout(mainLayout);
 }
 
 void IndiBlobPropertyWidget::updateProperty(Property* property)

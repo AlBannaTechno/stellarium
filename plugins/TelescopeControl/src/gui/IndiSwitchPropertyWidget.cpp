@@ -27,6 +27,13 @@ IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
 	Q_ASSERT(property);
 
 	setGroup(property->getGroup());
+
+	mainLayout = new QHBoxLayout();
+	mainLayout->setContentsMargins(0, 0, 0, 0);
+
+	//TODO
+
+	this->setLayout(mainLayout);
 }
 
 IndiSwitchPropertyWidget::~IndiSwitchPropertyWidget()
