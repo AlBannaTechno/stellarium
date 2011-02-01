@@ -18,3 +18,22 @@
  */
 
 #include "IndiSwitchPropertyWidget.hpp"
+
+IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
+                                                   const QString& title,
+                                                   QWidget* parent)
+	: IndiPropertyWidget(title, parent)
+{
+	Q_ASSERT(property);
+	Q_UNUSED(property);
+}
+
+IndiSwitchPropertyWidget::~IndiSwitchPropertyWidget()
+{
+	//
+}
+
+void IndiSwitchPropertyWidget::updateProperty(Property *property)
+{
+	Q_UNUSED(property);
+}

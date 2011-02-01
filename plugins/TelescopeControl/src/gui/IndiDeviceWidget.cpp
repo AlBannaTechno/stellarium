@@ -22,6 +22,12 @@
 #include <QTabWidget>
 #include <QVBoxLayout>
 
+#include "IndiTextPropertyWidget.hpp"
+#include "IndiNumberPropertyWidget.hpp"
+#include "IndiSwitchPropertyWidget.hpp"
+#include "IndiLightPropertyWidget.hpp"
+#include "IndiBlobPropertyWidget.hpp"
+
 IndiDeviceWidget::IndiDeviceWidget(QWidget* parent)
 	: QWidget(parent)
 {
@@ -30,6 +36,8 @@ IndiDeviceWidget::IndiDeviceWidget(QWidget* parent)
 	                               QSizePolicy::Expanding);
 
 	QVBoxLayout* layout = new QVBoxLayout();
+	layout->setContentsMargins(0, 0, 0, 0);
+	layout->setSpacing(0);
 	layout->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
 	layout->addWidget(groupsTabWidget);
 	this->setLayout(layout);
@@ -38,14 +46,79 @@ IndiDeviceWidget::IndiDeviceWidget(QWidget* parent)
 void IndiDeviceWidget::defineProperty(Property* property)
 {
 	QString name = property->getName();
+	QString label = property->getLabel();
 	//TODO: Handle duplicate names.
 
-	//TODO: Create a property widget from the necessary type
+	//TODO: Exception handling?
+	//TODO: Isn't the label thing redundant?
 	IndiPropertyWidget* propertyWidget;
+	Property::PropertyType type = property->getType();
+	switch (type)
+	{
+		case Property::TextProperty:
+		{
+			TextProperty* tp = dynamic_cast<TextProperty*>(property);
+			if (tp)
+			{
+				propertyWidget = new IndiTextPropertyWidget(tp, label);
+				break;
+			}
+			else
+				return;
+		}
+		case Property::NumberProperty:
+		{
+			NumberProperty* np = dynamic_cast<NumberProperty*>(property);
+			if (np)
+			{
+				propertyWidget = new IndiNumberPropertyWidget(np, label);
+				break;
+			}
+			else
+				return;
+		}
+		case Property::SwitchProperty:
+		{
+			SwitchProperty* sp = dynamic_cast<SwitchProperty*>(property);
+			if (sp)
+			{
+				propertyWidget = new IndiSwitchPropertyWidget(sp, label);
+				break;
+			}
+			else
+				return;
+		}
+		case Property::LightProperty:
+		{
+			LightProperty* lp = dynamic_cast<LightProperty*>(property);
+			if (lp)
+			{
+				propertyWidget = new IndiLightPropertyWidget(lp, label);
+				break;
+			}
+			else
+				return;
+		}
+		case Property::BlobProperty:
+		{
+			BlobProperty* bp = dynamic_cast<BlobProperty*>(property);
+			if (bp)
+			{
+				propertyWidget = new IndiBlobPropertyWidget(bp, label);
+				break;
+			}
+			else
+				return;
+		}
+		default:
+			return;
+	}
+	//TODO: Connect signals/slots
+	propertyWidgets.insert(name, propertyWidget);
+
 	//TODO: Connect signals/slots
 
-	//TODO: Handle group name
-	QString group;
+	QString group = property->getGroup();
 	if (group.isEmpty())
 		group = "Main";//TODO: Default name.
 	if (!groupWidgets.contains(group))

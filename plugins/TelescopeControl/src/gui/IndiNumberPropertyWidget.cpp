@@ -18,3 +18,37 @@
  */
 
 #include "IndiNumberPropertyWidget.hpp"
+
+#include <stdexcept>
+
+IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
+                                                   const QString& title,
+                                                   QWidget* parent)
+	: IndiPropertyWidget(title, parent)
+{
+	Q_ASSERT(property);
+
+	mainLayout = new QHBoxLayout();
+
+	//State
+	stateWidget = new IndiStateWidget(property->getCurrentState());
+	mainLayout->addWidget(stateWidget);
+
+	this->setLayout(mainLayout);
+}
+
+IndiNumberPropertyWidget::~IndiNumberPropertyWidget()
+{
+	//TODO
+}
+
+void IndiNumberPropertyWidget::updateProperty(Property *property)
+{
+	Q_UNUSED(property);
+	//TODO
+}
+
+void IndiNumberPropertyWidget::setNewPropertyValue()
+{
+	//TODO
+}

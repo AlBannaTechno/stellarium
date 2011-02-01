@@ -18,3 +18,17 @@
  */
 
 #include "IndiBlobPropertyWidget.hpp"
+
+IndiBlobPropertyWidget::IndiBlobPropertyWidget(BlobProperty *property,
+                                               const QString& title,
+                                               QWidget* parent)
+	: IndiPropertyWidget(title, parent)
+{
+	Q_ASSERT(property);
+	Q_UNUSED(property);
+}
+
+void IndiBlobPropertyWidget::updateProperty(Property* property)
+{
+	Q_UNUSED(property);
+}

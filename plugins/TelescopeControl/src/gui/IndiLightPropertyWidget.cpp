@@ -18,3 +18,22 @@
  */
 
 #include "IndiLightPropertyWidget.hpp"
+
+IndiLightPropertyWidget::IndiLightPropertyWidget(LightProperty* property,
+                                                 const QString& title,
+                                                 QWidget* parent)
+	: IndiPropertyWidget(title, parent)
+{
+	Q_ASSERT(property);
+	Q_UNUSED(property);
+}
+
+IndiLightPropertyWidget::~IndiLightPropertyWidget()
+{
+	//
+}
+
+void IndiLightPropertyWidget::updateProperty(Property* property)
+{
+	Q_UNUSED(property);
+}

@@ -18,3 +18,29 @@
  */
 
 #include "IndiTextPropertyWidget.hpp"
+
+IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
+                                               const QString& title,
+                                               QWidget* parent)
+	: IndiPropertyWidget(title, parent)
+{
+	Q_ASSERT(property);
+
+	//TODO
+	Q_UNUSED(property);
+}
+
+IndiTextPropertyWidget::~IndiTextPropertyWidget()
+{
+	//TODO
+}
+
+void IndiTextPropertyWidget::updateProperty(Property* property)
+{
+	Q_UNUSED(property);
+}
+
+void IndiTextPropertyWidget::setNewPropertyValue()
+{
+	//TODO
+}

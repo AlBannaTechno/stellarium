@@ -28,6 +28,8 @@
 #include "StelApp.hpp"
 #include "StelGui.hpp"
 
+#include "IndiDeviceWidget.hpp"
+
 DeviceControlPanel::DeviceControlPanel()
 {
 	ui = new Ui_deviceControlPanelWidget;
@@ -68,7 +70,7 @@ void DeviceControlPanel::createDialogContent()
 	//Log widget
 	logWidget = new QPlainTextEdit(dialog);
 	logWidget->setReadOnly(true);
-	logWidget->setMaximumBlockCount(100);//Can displa 100 lines/paragraphs maximum
+	logWidget->setMaximumBlockCount(100);//Can display 100 lines/paragraphs maximum
 	splitter->addWidget(logWidget);
 	splitter->setCollapsible(1, true);
 
@@ -77,6 +79,11 @@ void DeviceControlPanel::createDialogContent()
 	splitter->show();
 
 	logWidget->appendPlainText("Does everything look OK?");
+
+	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget();
+	NumberProperty np("test", StateIdle, PermissionReadWrite, "Test", "Command");
+	deviceWidget->defineProperty(&np);
+	deviceTabWidget->addTab(deviceWidget, "Test");
 }
 
 
@@ -87,6 +94,7 @@ void DeviceControlPanel::updateStyle()
 	{
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 		Q_ASSERT(gui);
+		Q_UNUSED(gui);
 	}
 }
 

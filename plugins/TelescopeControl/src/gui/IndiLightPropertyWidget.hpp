@@ -21,13 +21,33 @@
 #define _INDI_LIGHT_PROPERTY_WIDGET_HPP_
 
 #include <QObject>
+#include <QHash>
+#include <QVBoxLayout>
 
 #include "IndiPropertyWidget.hpp"
 
+//! Widget representing a Light property in the control panel window.
+//! A Light property has an indicator displaying its current state
+//! (IndiStateWidget) and a single array of similar indicators,
+//! one for each Light.
+//! \todo Write a proper description when not sleepy.
+//! \author Bogdan Marinov
 class IndiLightPropertyWidget : public IndiPropertyWidget
 {
 	Q_OBJECT
-	//
+
+public:
+	IndiLightPropertyWidget(LightProperty* property,
+	                        const QString& title,
+	                        QWidget* parent = 0);
+	~IndiLightPropertyWidget();
+
+	//Slot implementation:
+	void updateProperty(Property* property);
+
+private:
+	QVBoxLayout* lightsColumnLayout;
+	QHash<QString,IndiStateWidget*> lightsWidgets;
 };
 
 #endif//_INDI_LIGHT_PROPERTY_WIDGET_HPP_

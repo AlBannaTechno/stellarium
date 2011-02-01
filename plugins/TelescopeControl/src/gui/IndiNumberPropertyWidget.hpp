@@ -21,13 +21,44 @@
 #define _INDI_NUMBER_PROPERTY_WIDGET_HPP_
 
 #include <QObject>
+#include <QPushButton>
+#include <QVBoxLayout>
 
-#include <IndiPropertyWidget.hpp>
+#include "Indi.hpp"
+#include "IndiPropertyWidget.hpp"
 
+//! Widget representing a Number property in the control panel window.
+//! A Number property has an indicator displaying its current state
+//! (IndiStateWidget) and a number of other controls depending on permissions.
+//! \todo Write a proper description when not sleepy.
+//! \author Bogdan Marinov
 class IndiNumberPropertyWidget : public IndiPropertyWidget
 {
 	Q_OBJECT
-	//
+
+public:
+	IndiNumberPropertyWidget(NumberProperty* property,
+	                         const QString& title,
+	                         QWidget* parent = 0);
+	~IndiNumberPropertyWidget();
+
+	//Slot implementation:
+	void updateProperty(Property* property);
+
+public slots:
+	//! Called by #setButton.
+	//! Reads the current contents of the user-editable fields and emits
+	//! newPropertyValue().
+	void setNewPropertyValue();
+
+private:
+	//! Button for setting a new value for the property.
+	//! Unused if the property is read-only.
+	QPushButton* setButton;
+	//! Layout for the "device values" column.
+	QVBoxLayout* deviceColumnLayout;
+	//! Layout for the "user values" column.
+	QVBoxLayout* userColumnLayout;
 };
 
 #endif//_INDI_NUMBER_PROPERTY_WIDGET_HPP_

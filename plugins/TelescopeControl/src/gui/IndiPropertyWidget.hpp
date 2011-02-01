@@ -23,9 +23,11 @@
 #include <QGroupBox>
 #include <QObject>
 #include <QVariant>
+#include <QHBoxLayout>
 #include <QWidget>
 
 #include "Indi.hpp"
+#include "IndiStateWidget.hpp"
 
 //! Abstract base class for property widgets in the control panel window.
 //! Each property vector is represented as a QGroupBox.
@@ -33,15 +35,19 @@ class IndiPropertyWidget : public QGroupBox
 {
 	Q_OBJECT
 public:
-	virtual ~IndiPropertyWidget() = 0;
+	IndiPropertyWidget(const QString& title, QWidget* parent = 0) : QGroupBox(title, parent) {;}
+	//virtual ~IndiPropertyWidget() = 0;
 
 public slots:
+	//What calls this?
 	virtual void updateProperty(Property* property) = 0;
 
 signals:
 	void newPropertyValue(const QVariantHash& elements);
 
 protected:
+	QHBoxLayout* mainLayout;
+	IndiStateWidget* stateWidget;
 };
 
 #endif//_INDI_PROPERTY_WIDGET_HPP_

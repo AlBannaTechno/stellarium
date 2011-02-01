@@ -31,7 +31,9 @@ class IndiBlobPropertyWidget : public IndiPropertyWidget
 	Q_OBJECT
 
 public:
-
+	IndiBlobPropertyWidget(BlobProperty* property,
+	                       const QString& title,
+	                       QWidget* parent = 0);
 
 //Slots:
 	void updateProperty(Property* property);

@@ -18,3 +18,15 @@
  */
 
 #include "IndiStateWidget.hpp"
+
+IndiStateWidget::IndiStateWidget(State initialState, QWidget* parent)
+	: QWidget(parent),
+	state(initialState)
+{
+	//
+}
+
+void IndiStateWidget::setState(State newState)
+{
+	state = newState;
+}

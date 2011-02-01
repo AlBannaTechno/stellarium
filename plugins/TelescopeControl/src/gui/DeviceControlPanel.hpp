@@ -50,6 +50,8 @@ private:
 	QSplitter* splitter;
 	QTabWidget* deviceTabWidget;
 	QPlainTextEdit* logWidget;
+
+
 	
 private slots:
 	//

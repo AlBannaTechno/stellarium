@@ -41,6 +41,7 @@ public:
 
 private:
 	State state;
+	//TODO: Layout
 	QLabel* label;
 };
 

@@ -21,13 +21,25 @@
 #define _INDI_SWITCH_PROPERTY_WIDGET_HPP_
 
 #include <QObject>
+#include <QVBoxLayout>
 
 #include "IndiPropertyWidget.hpp"
 
 class IndiSwitchPropertyWidget : public IndiPropertyWidget
 {
 	Q_OBJECT
-	//
+
+public:
+	IndiSwitchPropertyWidget(SwitchProperty* property,
+	                         const QString& title,
+	                         QWidget* parent = 0);
+	~IndiSwitchPropertyWidget();
+
+	//Slot implementation:
+	void updateProperty(Property* property);
+
+private:
+	QVBoxLayout* buttonsColumnLayout;
 };
 
 #endif//_INDI_SWITCH_PROPERTY_WIDGET_HPP_
