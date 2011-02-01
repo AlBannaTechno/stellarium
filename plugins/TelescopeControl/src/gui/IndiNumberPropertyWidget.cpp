@@ -32,6 +32,7 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
 
 	mainLayout = new QHBoxLayout();
 	mainLayout->setContentsMargins(0, 0, 0, 0);
+	mainLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
 
 	//State
 	stateWidget = new IndiStateWidget(property->getCurrentState());

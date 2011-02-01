@@ -30,6 +30,7 @@ IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
 
 	mainLayout = new QHBoxLayout();
 	mainLayout->setContentsMargins(0, 0, 0, 0);
+	mainLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
 
 	//TODO
 
