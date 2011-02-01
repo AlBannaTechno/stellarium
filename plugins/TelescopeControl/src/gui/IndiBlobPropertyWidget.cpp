@@ -32,6 +32,10 @@ IndiBlobPropertyWidget::IndiBlobPropertyWidget(BlobProperty *property,
 	mainLayout->setContentsMargins(0, 0, 0, 0);
 	mainLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
 
+	//State
+	stateWidget = new IndiStateWidget(property->getCurrentState());
+	mainLayout->addWidget(stateWidget);
+
 	//TODO
 
 	this->setLayout(mainLayout);
