@@ -20,13 +20,38 @@
 #include "IndiStateWidget.hpp"
 
 IndiStateWidget::IndiStateWidget(State initialState, QWidget* parent)
-	: QWidget(parent),
-	state(initialState)
+	: QWidget(parent)
 {
-	//
+	this->setMaximumWidth(50);
+	this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+
+	layout = new QHBoxLayout();
+	layout->setContentsMargins(0, 0, 3, 0);
+
+	label = new QLabel();
+	label->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+	setState(initialState);
+	layout->addWidget(label);
+
+	this->setLayout(layout);
 }
 
 void IndiStateWidget::setState(State newState)
 {
 	state = newState;
+	switch (state)
+	{
+		case StateIdle:
+			label->setText("Idle");
+			break;
+		case StateOk:
+			label->setText("OK");
+			break;
+		case StateBusy:
+			label->setText("Busy");
+			break;
+		case StateAlert:
+			label->setText("Alert");
+			break;
+	}
 }

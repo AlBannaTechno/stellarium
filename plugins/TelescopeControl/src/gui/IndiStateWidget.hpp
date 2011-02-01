@@ -21,6 +21,7 @@
 #define _INDI_STATE_WIDGET_HPP_
 
 #include <QLabel>
+#include <QHBoxLayout>
 #include <QObject>
 #include <QWidget>
 
@@ -41,7 +42,7 @@ public:
 
 private:
 	State state;
-	//TODO: Layout
+	QHBoxLayout* layout;
 	QLabel* label;
 };
 
