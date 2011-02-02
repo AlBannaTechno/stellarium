@@ -73,6 +73,7 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	ui->setupUi(dialog);
 	
 	//Inherited connect
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 	
 	//Connect: sender, signal, receiver, method

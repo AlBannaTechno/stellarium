@@ -45,7 +45,6 @@ class TelescopePropertiesWindow : public StelDialogTelescopeControl
 public:
 	TelescopePropertiesWindow();
 	virtual ~TelescopePropertiesWindow();
-	void languageChanged();
 	
 	void prepareForExistingConfiguration(const QString& id);
 	void prepareNewStellariumConfiguration(const QString& id);
@@ -54,7 +53,10 @@ public:
 #ifdef Q_OS_WIN32
 	void prepareNewAscomConfiguration(const QString& id);
 #endif
-	
+
+public slots:
+	void languageChanged();
+
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();

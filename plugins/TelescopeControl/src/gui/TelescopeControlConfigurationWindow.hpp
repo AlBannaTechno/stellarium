@@ -46,9 +46,11 @@ class TelescopeControlConfigurationWindow : public StelDialogTelescopeControl
 public:
 	TelescopeControlConfigurationWindow();
 	virtual ~TelescopeControlConfigurationWindow();
-	void languageChanged();
 	void updateStyle();
-	
+
+public slots:
+	void languageChanged();
+
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();

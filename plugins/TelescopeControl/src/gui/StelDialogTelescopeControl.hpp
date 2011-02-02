@@ -30,8 +30,6 @@ class StelDialogTelescopeControl : public QObject
 public:
 	StelDialogTelescopeControl(QObject* parent=NULL);
 	virtual ~StelDialogTelescopeControl();
-	//! Retranslate the content of the dialog
-	virtual void languageChanged()=0;
 	
 	bool visible() const;
 
