@@ -36,7 +36,26 @@ IndiLightPropertyWidget::IndiLightPropertyWidget(LightProperty* property,
 	stateWidget = new IndiStateWidget(property->getCurrentState());
 	mainLayout->addWidget(stateWidget);
 
-	//TODO
+	gridLayout = new QGridLayout();
+	gridLayout->setContentsMargins(0, 0, 0, 0);
+	QStringList elementNames = property->getElementNames();
+	int row = 0;
+	foreach (const QString& elementName, elementNames)
+	{
+		LightElement* element = property->getElement(elementName);
+
+		IndiStateWidget* stateWidget = new IndiStateWidget(element->getValue());
+		lightsWidgets.insert(elementName, stateWidget);
+		gridLayout->addWidget(stateWidget, row, 0, 1, 1);
+
+		//Labels are immutable and die with the widget
+		QLabel* label = new QLabel(element->getLabel());
+		label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+		label->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+		gridLayout->addWidget(label, row, 1, 1, 1);
+
+		row++;
+	}
 
 	this->setLayout(mainLayout);
 }

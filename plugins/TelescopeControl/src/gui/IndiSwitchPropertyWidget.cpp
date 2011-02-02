@@ -19,6 +19,10 @@
 
 #include "IndiSwitchPropertyWidget.hpp"
 
+#include <QCheckBox>
+#include <QPushButton>
+#include <QRadioButton>
+
 IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
                                                    const QString& title,
                                                    QWidget* parent)
@@ -27,6 +31,7 @@ IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
 	Q_ASSERT(property);
 
 	setGroup(property->getGroup());
+	switchRule = property->getSwitchRule();
 
 	mainLayout = new QHBoxLayout();
 	mainLayout->setContentsMargins(0, 0, 0, 0);
@@ -36,7 +41,47 @@ IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
 	stateWidget = new IndiStateWidget(property->getCurrentState());
 	mainLayout->addWidget(stateWidget);
 
-	//TODO
+	buttonsLayout = new QVBoxLayout();
+	buttonsLayout->setContentsMargins(0, 0, 0, 0);
+	buttonsLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+	mainLayout->addLayout(buttonsLayout);
+
+	QStringList elementNames = property->getElementNames();
+	foreach (const QString& elementName, elementNames)
+	{
+		SwitchElement* element = property->getElement(elementName);
+		QString label = element->getLabel();
+		QAbstractButton* button;
+		if (switchRule == SwitchOnlyOne)
+		{
+			button = new QRadioButton(label);
+		}
+		else if (switchRule == SwitchAny)
+		{
+			button = new QCheckBox(label);
+		}
+		else //switchRule == SwitchAtMostOne
+		{
+			button = new QPushButton(label);
+			button->setCheckable(true);
+			//Note: this requires changes to the stylesheet to display properly
+			//checked buttons.
+		}
+
+		bool checked = element->isOn();
+		button->setChecked(checked);
+
+		if (property->isWritable())
+		{
+			connect(button, SIGNAL(clicked()),
+			        this, SLOT(setNewPropertyValue()));
+		}
+		else
+		{
+			button->setDisabled(true);
+		}
+		buttonsLayout->addWidget(button);
+	}
 
 	this->setLayout(mainLayout);
 }
@@ -49,4 +94,9 @@ IndiSwitchPropertyWidget::~IndiSwitchPropertyWidget()
 void IndiSwitchPropertyWidget::updateProperty(Property *property)
 {
 	Q_UNUSED(property);
+}
+
+void IndiSwitchPropertyWidget::setNewPropertyValue()
+{
+	//
 }

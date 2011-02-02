@@ -25,11 +25,10 @@
 #include <QLineEdit>
 #include <QPushButton>
 
-#include "Indi.hpp"
 #include "IndiPropertyWidget.hpp"
 
 //! Widget representing a Number property in the control panel window.
-//! A Number property has an indicator displaying its current state
+//! It contains an indicator displaying its current state
 //! (IndiStateWidget), a column of labels of the sub-properties, and:
 //!  - a column of read-only QLineEdit-s if the property can be read;
 //!  - a column of QLineEdits and a "set" button if the property can be written.
@@ -48,7 +47,7 @@ public:
 	//Slot implementation:
 	void updateProperty(Property* property);
 
-public slots:
+private slots:
 	//! Called by #setButton.
 	//! Reads the current contents of the user-editable fields and emits
 	//! newPropertyValue().

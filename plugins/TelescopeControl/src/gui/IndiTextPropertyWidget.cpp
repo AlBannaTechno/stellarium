@@ -22,7 +22,9 @@
 IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
                                                const QString& title,
                                                QWidget* parent)
-	: IndiPropertyWidget(title, parent)
+	: IndiPropertyWidget(title, parent),
+	setButton(0),
+	gridLayout(0)
 {
 	Q_ASSERT(property);
 
@@ -36,7 +38,54 @@ IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
 	stateWidget = new IndiStateWidget(property->getCurrentState());
 	mainLayout->addWidget(stateWidget);
 
-	//TODO
+	gridLayout = new QGridLayout();
+	gridLayout->setContentsMargins(0, 0, 0, 0);
+	QStringList elementNames = property->getElementNames();
+	int row = 0;
+	foreach (const QString& elementName, elementNames)
+	{
+		TextElement* element = property->getElement(elementName);
+		int column = 0;
+
+		//Labels are immutable and die with the widget
+		QLabel* label = new QLabel(element->getLabel());
+		gridLayout->addWidget(label, row, column, 1, 1);
+
+		if (property->isReadable())
+		{
+			column++;
+			QLineEdit* lineEdit = new QLineEdit();
+			lineEdit->setReadOnly(true);
+			lineEdit->setAlignment(Qt::AlignRight);
+			lineEdit->setText(element->getValue());
+			displayWidgets.insert(elementName, lineEdit);
+			gridLayout->addWidget(lineEdit, row, column, 1, 1);
+		}
+
+		if (property->isWritable())
+		{
+			column++;
+			QLineEdit* lineEdit = new QLineEdit();
+			//TODO: Some kind of validation?
+			lineEdit->setAlignment(Qt::AlignRight);
+			lineEdit->setText(element->getValue());//Only for init!
+			displayWidgets.insert(elementName, lineEdit);
+			gridLayout->addWidget(lineEdit, row, column, 1, 1);
+		}
+
+		row++;
+	}
+	mainLayout->addLayout(gridLayout);
+
+	if (property->isWritable())
+	{
+		setButton = new QPushButton("Set");
+		setButton->setSizePolicy(QSizePolicy::Expanding,
+		                         QSizePolicy::Preferred);
+		connect(setButton, SIGNAL(clicked()),
+		        this, SLOT(setNewPropertyValue()));
+		mainLayout->addWidget(setButton);
+	}
 
 	this->setLayout(mainLayout);
 }

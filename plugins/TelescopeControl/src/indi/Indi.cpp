@@ -449,6 +449,11 @@ TextProperty::~TextProperty()
 	qDeleteAll(elements);
 }
 
+TextElement* TextProperty::getElement(const QString& name)
+{
+	return elements.value(name);
+}
+
 int TextProperty::elementCount() const
 {
 	return elements.count();
@@ -621,6 +626,11 @@ LightProperty::LightProperty(const QString& propertyName,
 LightProperty::~LightProperty()
 {
 	qDeleteAll(elements);
+}
+
+LightElement* LightProperty::getElement(const QString& name)
+{
+	return elements.value(name);
 }
 
 int LightProperty::elementCount() const

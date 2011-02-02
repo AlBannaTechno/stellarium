@@ -21,14 +21,17 @@
 #define _INDI_TEXT_PROPERTY_WIDGET_HPP_
 
 #include <QObject>
+#include <QGridLayout>
+#include <QLineEdit>
 #include <QPushButton>
-#include <QVBoxLayout>
 
 #include "IndiPropertyWidget.hpp"
 
 //! Widget representing a Text property in the control panel window.
-//! A Text property has an indicator displaying its current state
-//! (IndiStateWidget) and a number of other controls depending on permissions.
+//! It contains an indicator displaying its current state (IndiStateWidget),
+//!  a column of labels of the sub-properties, and:
+//!  - a column of read-only QLineEdit-s if the property can be read;
+//!  - a column of QLineEdits and a "set" button if the property can be written.
 //! \todo Write a proper description when not sleepy.
 //! \author Bogdan Marinov
 class IndiTextPropertyWidget : public IndiPropertyWidget
@@ -44,7 +47,7 @@ public:
 	//Slot implementation:
 	void updateProperty(Property* property);
 
-public slots:
+private slots:
 	//! Called by #setButton.
 	//! Reads the current contents of the user-editable fields and emits
 	//! newPropertyValue().
@@ -54,10 +57,12 @@ private:
 	//! Button for setting a new value for the property.
 	//! Unused if the property is read-only.
 	QPushButton* setButton;
-	//! Layout for the "device values" column.
-	QVBoxLayout* deviceColumnLayout;
-	//! Layout for the "user values" column.
-	QVBoxLayout* userColumnLayout;
+	//! Layout for the display and input widgets.
+	QGridLayout* gridLayout;
+	//! Widgets to display the device values (updated by updateProperty()).
+	QHash<QString,QLineEdit*> displayWidgets;
+	//! Widgets to allow the user to enter new values.
+	QHash<QString,QLineEdit*> inputWidgets;
 };
 
 #endif//_INDI_TEXT_PROPERTY_WIDGET_HPP_

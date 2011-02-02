@@ -21,10 +21,20 @@
 #define _INDI_SWITCH_PROPERTY_WIDGET_HPP_
 
 #include <QObject>
+#include <QAbstractButton>
 #include <QVBoxLayout>
 
 #include "IndiPropertyWidget.hpp"
 
+//! Widget representing a Switch property in the control panel window.
+//! It contains an indicator displaying its current state (IndiStateWidget) and
+//! a column of buttons. The exact class of the buttons depends on the
+//! SwitchRule of the original SwitchProperty:
+//!  - SwitchAny uses QCheckBox;
+//!  - SwitchAtMostOne uses QPushButton;
+//!  - SwitchOnlyOne uses QRadioButton.
+//! \todo Better description.
+//! \author Bogdan Marinov
 class IndiSwitchPropertyWidget : public IndiPropertyWidget
 {
 	Q_OBJECT
@@ -38,8 +48,15 @@ public:
 	//Slot implementation:
 	void updateProperty(Property* property);
 
+private slots:
+	//! Called when one of the buttons is clicked.
+	//! Reads the current states of the buttons and emits newPropertyValue().
+	void setNewPropertyValue();
+
 private:
-	QVBoxLayout* buttonsColumnLayout;
+	QVBoxLayout* buttonsLayout;
+	QHash<QString,QAbstractButton*> buttons;
+	SwitchRule switchRule;
 };
 
 #endif//_INDI_SWITCH_PROPERTY_WIDGET_HPP_

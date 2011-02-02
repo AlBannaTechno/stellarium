@@ -260,6 +260,7 @@ public:
 	~TextProperty();
 
 	//TODO
+	TextElement* getElement(const QString& name);
 
 	int elementCount() const;
 	QStringList getElementNames() const;
@@ -340,6 +341,7 @@ public:
 	              const QDateTime& timestamp = QDateTime());
 	~LightProperty();
 
+	LightElement* getElement(const QString& name);
 	//TODO:
 
 	int elementCount() const;

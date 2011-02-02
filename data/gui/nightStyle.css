@@ -201,7 +201,7 @@ QPushButton {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(129, 0, 0), stop: 1 rgb(79, 0, 0));
 }
 
-QPushButton:pressed {
+QPushButton:pressed, QPushButton:checked {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(29, 0, 0), stop: 0.2 rgb(52, 0, 0), stop: 1 rgb(42, 0, 0));
 }
 

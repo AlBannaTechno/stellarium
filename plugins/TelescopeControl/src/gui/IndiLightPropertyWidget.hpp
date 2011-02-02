@@ -21,8 +21,7 @@
 #define _INDI_LIGHT_PROPERTY_WIDGET_HPP_
 
 #include <QObject>
-#include <QHash>
-#include <QVBoxLayout>
+#include <QGridLayout>
 
 #include "IndiPropertyWidget.hpp"
 
@@ -46,7 +45,7 @@ public:
 	void updateProperty(Property* property);
 
 private:
-	QVBoxLayout* lightsColumnLayout;
+	QGridLayout* gridLayout;
 	QHash<QString,IndiStateWidget*> lightsWidgets;
 };
 
