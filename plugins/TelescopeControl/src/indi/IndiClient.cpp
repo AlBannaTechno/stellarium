@@ -23,6 +23,7 @@
 #include <QRegExp>
 #include <QStringList>
 #include <QXmlStreamWriter>
+#include <stdexcept>
 
 const char* IndiClient::T_MESSAGE = "message";
 const char* IndiClient::T_GET_PROPERTIES = "getProperties";
@@ -61,11 +62,42 @@ const char* IndiClient::SP_JNOW_COORDINATES = "EQUATORIAL_EOD_COORD";
 const char* IndiClient::SP_J2000_COORDINATES_REQUEST = "EQUATORIAL_COORD_REQUEST";
 const char* IndiClient::SP_JNOW_COORDINATES_REQUEST = "EQUATORIAL_EOD_COORD_REQUEST";
 
-IndiClient::IndiClient(QObject* parent)
+IndiClient::IndiClient(const QString& _clientId, QObject* parent)
 	: QObject(parent),
+	clientId(_clientId),
 	ioDevice(0),
 	textStream(0)
 {
+	//Make the parser think it's parsing parts of a large document
+	//(otherwise it thinks that the first tag in the message is the root one)
+	//"Extra content at end of document."
+	//TODO: Think of a better way?
+	xmlReader.addData("<indi>");
+}
+
+IndiClient::IndiClient(const QString& _clientId,
+                       QIODevice* _ioDevice,
+                       QObject* parent)
+	: QObject(parent),
+	clientId(_clientId),
+	ioDevice(0),
+	textStream(0)
+{
+	if (_ioDevice == 0 ||
+		!_ioDevice->isOpen() ||
+		!_ioDevice->isReadable() ||
+		!_ioDevice->isWritable())
+	{
+		throw std::invalid_argument(std::string("ioDevice is not ready."));
+	}
+	else
+		ioDevice = _ioDevice;
+
+	textStream = new QTextStream(ioDevice);
+
+	connect(ioDevice, SIGNAL(readyRead()),
+	        this, SLOT(handleIncomingCommands()));
+
 	//Make the parser think it's parsing parts of a large document
 	//(otherwise it thinks that the first tag in the message is the root one)
 	//"Extra content at end of document."
@@ -446,7 +478,7 @@ void IndiClient::readNumberPropertyDefinition()
 	if (numberProperty->elementCount() > 0)
 	{
 		deviceProperties[device].insert(name, numberProperty);
-		emit propertyDefined(device, numberProperty);
+		emit propertyDefined(clientId, device, numberProperty);
 	}
 	else
 	{
@@ -549,7 +581,7 @@ void IndiClient::readSwitchPropertyDefinition()
 	if (switchProperty->elementCount() > 0)
 	{
 		deviceProperties[device].insert(name, switchProperty);
-		emit propertyDefined(device, switchProperty);
+		emit propertyDefined(clientId, device, switchProperty);
 	}
 	else
 	{
@@ -641,7 +673,7 @@ void IndiClient::readNumberProperty()
 			numberProperty->update(values, timestamp);
 		else
 			numberProperty->update(values, timestamp, readStateFromString(state));
-		emit propertyUpdated(device, numberProperty);;
+		emit propertyUpdated(clientId, device, numberProperty);;
 	}
 }
 
@@ -720,7 +752,7 @@ void IndiClient::readSwitchProperty()
 			switchProperty->update(values, timestamp);
 		else
 			switchProperty->update(values, timestamp, readStateFromString(state));
-		emit propertyUpdated(device, switchProperty);
+		emit propertyUpdated(clientId, device, switchProperty);
 	}
 }
 

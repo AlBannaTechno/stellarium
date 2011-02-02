@@ -42,17 +42,22 @@ class IndiDeviceWidget : public QWidget
 	Q_OBJECT
 
 public:
-	IndiDeviceWidget(QWidget* parent = 0);
+	IndiDeviceWidget(const QString& deviceName, QWidget* parent = 0);
 
-public slots:
 	void defineProperty(Property* property);
 	void updateProperty(Property* property);
 	void removeProperty(const QString& propertyName);
+	//! Are there any properties defined in this device?
+	bool isEmpty() const;
 
 signals:
-	void propertySet(const QString& propertyName, const QVariantHash& elements);
+	void propertySet(const QString& deviceName,
+	                 const QString& propertyName,
+	                 const QVariantHash& elements);
 
 private:
+	QString deviceName;
+	//! Contains a tab for each property group defined for the device.
 	QTabWidget* groupsTabWidget;
 	//! Groups are rendered as tabs inside the device tab.
 	QHash<QString, IndiGroupWidget*> groupWidgets;

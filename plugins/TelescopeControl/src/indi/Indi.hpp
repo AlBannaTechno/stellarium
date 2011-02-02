@@ -159,7 +159,7 @@ private:
 	State state;
 };
 
-//! Sub-property representing a single BLOB (Binary Large OBject, e.g. a photo).
+//! Sub-property representing a single BLOB (Binary Large OBject).
 //! \todo Think what to make of this - it may be massive.
 //! \todo Is there a point of it existing? It is not handled as the rest of the
 //! elements - it has no initial value.

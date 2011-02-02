@@ -28,8 +28,9 @@
 #include "IndiLightPropertyWidget.hpp"
 #include "IndiBlobPropertyWidget.hpp"
 
-IndiDeviceWidget::IndiDeviceWidget(QWidget* parent)
-	: QWidget(parent)
+IndiDeviceWidget::IndiDeviceWidget(const QString& _deviceName, QWidget* parent)
+	: QWidget(parent),
+	deviceName(_deviceName)
 {
 	groupsTabWidget = new QTabWidget();
 	groupsTabWidget->setSizePolicy(QSizePolicy::Expanding,
@@ -150,6 +151,7 @@ void IndiDeviceWidget::removeProperty(const QString& propertyName)
 			groupWidget->removePropertyWidget(widget);
 			if (groupWidget->propertyWidgetsCount() == 0)
 			{
+				groupWidgets.remove(group);
 				int index = groupsTabWidget->indexOf(groupWidget);
 				groupsTabWidget->removeTab(index);
 				delete groupWidget;
@@ -158,4 +160,9 @@ void IndiDeviceWidget::removeProperty(const QString& propertyName)
 		//TODO: Disconnect connected signals
 		delete widget;
 	}
+}
+
+bool IndiDeviceWidget::isEmpty() const
+{
+	return propertyWidgets.isEmpty();
 }

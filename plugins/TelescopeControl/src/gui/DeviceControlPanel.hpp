@@ -22,10 +22,17 @@
 #define _DEVICE_CONTROL_PANEL_HPP_
 
 #include <QObject>
+#include <QDateTime>
+#include <QHash>
+#include <QPair>
+#include <QSignalMapper>
 
 #include "StelDialog.hpp"
 
 class Ui_deviceControlPanelWidget;
+class IndiClient;
+class IndiDeviceWidget;
+class Property;
 class QPlainTextEdit;
 class QSplitter;
 class QTabWidget;
@@ -40,6 +47,26 @@ public:
 	virtual ~DeviceControlPanel();
 	void languageChanged();
 	void updateStyle();
+
+public slots:
+	//! \param clientName must be unique among client names.
+	//! \param client must point to a valid client.
+	void addClient(const QString& clientName, IndiClient* client);
+	void removeClient(const QString& clientName);
+	void defineProperty(const QString& clientName,
+	                    const QString& deviceName,
+	                    Property* property);
+	void updateProperty(const QString& clientName,
+	                    const QString& deviceName,
+	                    Property* property);
+	void removeProperty(const QString& clientName,
+	                    const QString& deviceName,
+	                    const QString& propertyName);
+	void logMessage(const QString& deviceName,
+	                const QDateTime& timestamp,
+	                const QString& message);
+	//! Adds directly this string to the log.
+	void logMessage(const QString& message);
 	
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
@@ -51,7 +78,12 @@ private:
 	QTabWidget* deviceTabWidget;
 	QPlainTextEdit* logWidget;
 
-
+	//! All INDI clients connected to this control panel.
+	QHash<QString, IndiClient*> indiClients;
+	//! A device (widget) is identified by its name and the name of the client.
+	typedef QPair<QString,QString> DeviceId;
+	//! All device widgets displayed in this control panel.
+	QHash<DeviceId, IndiDeviceWidget*> deviceWidgets;
 	
 private slots:
 	//

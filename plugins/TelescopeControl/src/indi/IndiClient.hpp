@@ -43,7 +43,10 @@ class IndiClient : public QObject
 	Q_OBJECT
 
 public:
-	IndiClient(QObject* parent = 0);
+	IndiClient(const QString& clientId = QString(), QObject* parent = 0);
+	IndiClient(const QString& clientId,
+	           QIODevice* ioDevice,
+	           QObject* parent = 0);
 	~IndiClient();
 
 	//! Error handling on the device level should be done by the caller.
@@ -117,13 +120,19 @@ public slots:
 
 signals:
 	//! Emitted when a \b def[type]Vector element has been parsed.
-	void propertyDefined(const QString& deviceName, Property* property);
+	void propertyDefined(const QString& clientId,
+	                     const QString& deviceName,
+	                     Property* property);
 	//! Emitted when a \b new[type]Vector element has been parsed.
 	//! Such a message is sent by the device to notify that a given property
 	//! or its attributes have changed and have a \b new value.
-	void propertyUpdated(const QString& deviceName, Property* property);
+	void propertyUpdated(const QString& clientId,
+	                     const QString& deviceName,
+	                     Property* property);
 	//! Emitted when a \b delProperty message has been parsed.
-	void propertyRemoved(const QString& deviceName, const QString& propertyName);
+	void propertyRemoved(const QString& clientId,
+	                     const QString& deviceName,
+	                     const QString& propertyName);
 	//! Emitted when a property definition or update contains a message, or when
 	//! a \b message element has been received.
 	//! \param timestamp uses QDateTime for now. It supports millisecond
@@ -139,6 +148,8 @@ private slots:
 	                const QString& message);
 
 private:
+	QString clientId;
+
 	//!
 	Permission readPermissionFromString(const QString& string);
 	//!
