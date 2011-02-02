@@ -107,6 +107,11 @@ IndiClient::~IndiClient()
 	}
 }
 
+QString IndiClient::getId() const
+{
+	return clientId;
+}
+
 void IndiClient::sendRawCommand(const QString& command)
 {
 	if (textStream == 0)

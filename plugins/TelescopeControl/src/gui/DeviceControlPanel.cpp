@@ -64,8 +64,6 @@ void DeviceControlPanel::createDialogContent()
 
 	//Main tabs
 	deviceTabWidget = new QTabWidget(dialog);
-	QWidget* fakeTab = new QWidget();
-	deviceTabWidget->addTab(fakeTab, "Device!");
 	splitter->addWidget(deviceTabWidget);
 
 	//Log widget
@@ -79,9 +77,10 @@ void DeviceControlPanel::createDialogContent()
 	ui->verticalLayout->addWidget(splitter);
 	splitter->show();
 
+	//TEST
+	/*
 	logMessage("Does everything look OK?");
 
-	//TEST
 	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget("Simulated");
 	NumberProperty np("numtest", StateIdle, PermissionReadWrite, "Equatorial EOD Coordinates");
 	NumberElement* ne1 = new NumberElement("RA", "15:0:0", "%9.6m", "0", "0", "0", "Right Ascension");
@@ -95,7 +94,7 @@ void DeviceControlPanel::createDialogContent()
 	sp.addElement(se1);
 	sp.addElement(se2);
 	deviceWidget->defineProperty(&sp);
-	deviceTabWidget->addTab(deviceWidget, "Simulated");
+	deviceTabWidget->addTab(deviceWidget, "Simulated");*/
 }
 
 void DeviceControlPanel::updateStyle()
@@ -108,9 +107,11 @@ void DeviceControlPanel::updateStyle()
 	}
 }
 
-void DeviceControlPanel::addClient(const QString& clientName,
-                                   IndiClient* client)
+void DeviceControlPanel::addClient(IndiClient* client)
 {
+	Q_ASSERT(client);
+
+	QString clientName = client->getId();
 	if (indiClients.contains(clientName))
 	{
 		//TODO
@@ -118,18 +119,22 @@ void DeviceControlPanel::addClient(const QString& clientName,
 	}
 	else
 	{
-		if (client)
+		if (!dialog)
 		{
-			indiClients.insert(clientName, client);
-			connect(client, SIGNAL(propertyDefined(QString,QString,Property*)),
-			        this, SLOT(defineProperty(QString,QString,Property*)));
-			connect(client, SIGNAL(propertyUpdated(QString,QString,Property*)),
-			        this, SLOT(updateProperty(QString,QString,Property*)));
-			connect(client, SIGNAL(propertyRemoved(QString,QString,QString)),
-			        this, SLOT(removeProperty(QString,QString,QString)));
-			connect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
-			        this, SLOT(logMessage(QString,QDateTime,QString)));
+			setVisible(true);
+			setVisible(false);
 		}
+
+		indiClients.insert(clientName, client);
+		connect(client, SIGNAL(propertyDefined(QString,QString,Property*)),
+		        this, SLOT(defineProperty(QString,QString,Property*)));
+		connect(client, SIGNAL(propertyUpdated(QString,QString,Property*)),
+		        this, SLOT(updateProperty(QString,QString,Property*)));
+		connect(client, SIGNAL(propertyRemoved(QString,QString,QString)),
+		        this, SLOT(removeProperty(QString,QString,QString)));
+		connect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
+		        this, SLOT(logMessage(QString,QDateTime,QString)));
+		client->writeGetProperties();
 	}
 }
 
@@ -184,6 +189,11 @@ void DeviceControlPanel::defineProperty(const QString& clientName,
 		return;
 	}
 
+	//Show the window if it hasn't been initialized.
+	if (!visible())
+		setVisible(true);
+
+	//Add a new device widget/tab
 	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget(deviceName);
 	deviceWidgets.insert(deviceId, deviceWidget);
 	deviceTabWidget->addTab(deviceWidget, deviceName);

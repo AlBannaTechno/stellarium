@@ -51,7 +51,7 @@ public:
 public slots:
 	//! \param clientName must be unique among client names.
 	//! \param client must point to a valid client.
-	void addClient(const QString& clientName, IndiClient* client);
+	void addClient(IndiClient* client);
 	void removeClient(const QString& clientName);
 	void defineProperty(const QString& clientName,
 	                    const QString& deviceName,

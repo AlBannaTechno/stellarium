@@ -99,6 +99,9 @@ Q_EXPORT_PLUGIN2(TelescopeControl, TelescopeControlStelPluginInterface)
 ////////////////////////////////////////////////////////////////////////////////
 // Constructor and destructor
 TelescopeControl::TelescopeControl()
+	: configurationWindow(0),
+	slewWindow(0),
+	controlPanelWindow(0)
 {
 	setObjectName("TelescopeControl");
 
@@ -108,9 +111,6 @@ TelescopeControl::TelescopeControl()
 	interfaceTypeNames.append("INDI Pointer");
 	//TODO: Ifdef?
 	interfaceTypeNames.append("ASCOM");
-
-	configurationWindow = NULL;
-	slewWindow = NULL;
 
 #ifdef Q_OS_WIN32
 	ascomPlatformIsInstalled = false;
@@ -214,6 +214,10 @@ void TelescopeControl::init()
 		configurationWindow = new TelescopeControlConfigurationWindow();
 		slewWindow = new SlewWindow();
 		controlPanelWindow = new DeviceControlPanel();
+		foreach (IndiClient* indiClient, indiClients)
+		{
+			controlPanelWindow->addClient(indiClient);
+		}
 		
 		//TODO: Think of a better keyboard shortcut
 		QAction* slewWindowAction = gui->addGuiActions(
@@ -265,11 +269,11 @@ void TelescopeControl::init()
 void TelescopeControl::deinit()
 {
 	//Close the interface
-	if (configurationWindow != NULL)
+	if (configurationWindow)
 	{
 		delete configurationWindow;
 	}
-	if (slewWindow != NULL)
+	if (slewWindow)
 	{
 		delete slewWindow;
 	}
@@ -1227,7 +1231,8 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 			IndiClient* indiClient = static_cast<TelescopeClientIndi*>(newTelescope)->getIndiClient();
 			//TODO: Name == ID? This will be used in removing it!
 			indiClients.insert(name, indiClient);
-			controlPanelWindow->addClient(name, indiClient);
+			if (controlPanelWindow)
+				controlPanelWindow->addClient(indiClient);
 		}
 	}
 	else if (interfaceType == "INDI Pointer")

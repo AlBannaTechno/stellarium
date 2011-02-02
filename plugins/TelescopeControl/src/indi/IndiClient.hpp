@@ -48,6 +48,8 @@ public:
 	           QObject* parent = 0);
 	~IndiClient();
 
+	QString getId() const;
+
 	//! \todo A temporary function to fill the gap.
 	void sendRawCommand(const QString& command);
 
