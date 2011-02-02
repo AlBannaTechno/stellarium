@@ -19,11 +19,8 @@
 
 #include "TelescopeClientIndiLocal.hpp"
 
-#include <cmath>
 #include <QFile>
 #include <QFileInfo>
-
-#include "StelUtils.hpp"
 
 TelescopeClientIndiLocal::TelescopeClientIndiLocal(const QString& name, const QString& driverName, Equinox eq):
 	TelescopeClientIndi(name, eq),
@@ -46,11 +43,17 @@ TelescopeClientIndiLocal::TelescopeClientIndiLocal(const QString& name, const QS
 	driverProcess->start(driverPath, driverArguments);
 	connect(driverProcess, SIGNAL(error(QProcess::ProcessError)),
 			  this, SLOT(handleDriverError(QProcess::ProcessError)));
-	indiClient.addConnection(driverProcess);
+
+	indiClient = new IndiClient(name, driverProcess);
 }
 
 TelescopeClientIndiLocal::~TelescopeClientIndiLocal()
 {
+	if (indiClient)
+	{
+		delete indiClient;
+	}
+
 	//TODO: Disconnect stuff
 	if (driverProcess)
 	{
@@ -67,7 +70,9 @@ TelescopeClientIndiLocal::~TelescopeClientIndiLocal()
 bool TelescopeClientIndiLocal::isInitialized() const
 {
 	//TODO: Improve the checks.
-	if (driverProcess->state() == QProcess::Running && driverProcess->isOpen())
+	if (indiClient &&
+	    driverProcess->state() == QProcess::Running &&
+	    driverProcess->isOpen())
 		return true;
 	else
 		return false;

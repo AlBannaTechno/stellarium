@@ -43,15 +43,10 @@ class IndiClient : public QObject
 	Q_OBJECT
 
 public:
-	IndiClient(const QString& clientId = QString(), QObject* parent = 0);
 	IndiClient(const QString& clientId,
-	           QIODevice* ioDevice,
+	           QIODevice* ioDevice = 0,
 	           QObject* parent = 0);
 	~IndiClient();
-
-	//! Error handling on the device level should be done by the caller.
-	//! IndiClient only handles the command streams.
-	void addConnection(QIODevice* ioDevice);
 
 	//! \todo A temporary function to fill the gap.
 	void sendRawCommand(const QString& command);

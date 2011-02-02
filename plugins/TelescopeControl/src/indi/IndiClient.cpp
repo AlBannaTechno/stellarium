@@ -62,19 +62,6 @@ const char* IndiClient::SP_JNOW_COORDINATES = "EQUATORIAL_EOD_COORD";
 const char* IndiClient::SP_J2000_COORDINATES_REQUEST = "EQUATORIAL_COORD_REQUEST";
 const char* IndiClient::SP_JNOW_COORDINATES_REQUEST = "EQUATORIAL_EOD_COORD_REQUEST";
 
-IndiClient::IndiClient(const QString& _clientId, QObject* parent)
-	: QObject(parent),
-	clientId(_clientId),
-	ioDevice(0),
-	textStream(0)
-{
-	//Make the parser think it's parsing parts of a large document
-	//(otherwise it thinks that the first tag in the message is the root one)
-	//"Extra content at end of document."
-	//TODO: Think of a better way?
-	xmlReader.addData("<indi>");
-}
-
 IndiClient::IndiClient(const QString& _clientId,
                        QIODevice* _ioDevice,
                        QObject* parent)
@@ -118,32 +105,6 @@ IndiClient::~IndiClient()
 	{
 		delete textStream;
 	}
-}
-
-void IndiClient::addConnection(QIODevice* newIoDevice)
-{
-	if (newIoDevice == 0 ||
-		!newIoDevice->isOpen() ||
-		!newIoDevice->isReadable() ||
-		!newIoDevice->isWritable())
-		return;
-
-	//TODO: For now, only one device stream is supported.
-	if (ioDevice || textStream)
-		return; //A device is already defined?
-
-	ioDevice = newIoDevice;
-	textStream = new QTextStream(ioDevice);
-
-	connect(ioDevice, SIGNAL(readyRead()),
-	        this, SLOT(handleIncomingCommands()));
-
-	//TODO: This should be done actually by the app using the class.
-	connect(this, SIGNAL(messageReceived(QString,QDateTime,QString)),
-	        this, SLOT(logMessage(QString,QDateTime,QString)));
-
-	//TODO: Call it here, or somewhere/sometime else?
-	writeGetProperties();
 }
 
 void IndiClient::sendRawCommand(const QString& command)

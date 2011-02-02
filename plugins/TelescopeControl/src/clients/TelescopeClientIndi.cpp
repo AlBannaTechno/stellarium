@@ -20,19 +20,17 @@
 #include "TelescopeClientIndi.hpp"
 #include "TelescopeClientIndiLocal.hpp"
 #include "TelescopeClientIndiTcp.hpp"
+#include "TelescopeClientIndiPointer.hpp"
 
 #include <cmath>
-#include <QFile>
-#include <QFileInfo>
-
 #include "StelUtils.hpp"
 
 TelescopeClientIndi::TelescopeClientIndi(const QString& name, Equinox eq):
 	TelescopeClient(name),
-	equinox(eq)
+	equinox(eq),
+	indiClient(0)
 {
 }
-
 
 TelescopeClientIndi::~TelescopeClientIndi()
 {
@@ -46,10 +44,15 @@ void TelescopeClientIndi::initialize()
 	isDefinedJNowCoordinateRequest = false;
 	hasQueuedGoto = false;
 
-	connect(&indiClient, SIGNAL(propertyDefined(QString,Property*)),
+	connect(indiClient, SIGNAL(propertyDefined(QString,Property*)),
 	        this, SLOT(handlePropertyDefinition(QString,Property*)));
-	connect(&indiClient, SIGNAL(propertyUpdated(QString,Property*)),
+	connect(indiClient, SIGNAL(propertyUpdated(QString,Property*)),
 	        this, SLOT(handlePropertyUpdate(QString,Property*)));
+}
+
+IndiClient* TelescopeClientIndi::getIndiClient() const
+{
+	return indiClient;
 }
 
 Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelNavigator *nav) const
@@ -78,7 +81,7 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 		QVariantHash elements;
 		elements.insert(IndiClient::SP_CONNECT, true);
 		elements.insert(IndiClient::SP_DISCONNECT, false);
-		indiClient.writeProperty(deviceName, IndiClient::SP_CONNECTION, elements);
+		indiClient->writeProperty(deviceName, IndiClient::SP_CONNECTION, elements);
 		//(isDefinedConnection == true ensures that deviceName is not empty)
 		return;
 	}
@@ -117,18 +120,13 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	QVariantHash newValues;
 	newValues.insert("RA", raHours);
 	newValues.insert("DEC", decDegrees);
-	indiClient.writeProperty(deviceName, property, newValues);
+	indiClient->writeProperty(deviceName, property, newValues);
 }
 
 void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Property* property)
 {
-	//Autodetect device name: first device that provides defintions :)
-	//TODO: Alternative: first device that provides coordinate information?
-	if (deviceName.isEmpty())
-		deviceName = device;
-
 	//Ignore this property if it belongs to another device.
-	if (deviceName != device)
+	if (device != deviceName)
 		return;
 
 	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
@@ -233,14 +231,22 @@ void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* 
 TelescopeClientIndi* TelescopeClientIndi::telescopeClient(const QString& name, const QString& driverName, Equinox eq)
 {
 	TelescopeClientIndi* client = new TelescopeClientIndiLocal(name, driverName, eq);
-	client->initialize();
 	return client;
 }
 
 TelescopeClientIndi* TelescopeClientIndi::telescopeClient(const QString& name, const QString& host, int port, Equinox eq)
 {
 	TelescopeClientIndi* client = new TelescopeClientIndiTcp(name, host, port, eq);
-	client->initialize();
+	return client;
+}
+
+TelescopeClientIndi* TelescopeClientIndi::telescopeClient
+	(const QString& name,
+	 const QString& deviceId,
+	 IndiClient* indiClient,
+	 Equinox eq)
+{
+	TelescopeClientIndi* client = new TelescopeClientIndiPointer(name, deviceId, indiClient, eq);
 	return client;
 }
 

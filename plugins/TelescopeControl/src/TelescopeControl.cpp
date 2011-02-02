@@ -105,6 +105,7 @@ TelescopeControl::TelescopeControl()
 	interfaceTypeNames.append("virtual");
 	interfaceTypeNames.append("Stellarium");
 	interfaceTypeNames.append("INDI");
+	interfaceTypeNames.append("INDI Pointer");
 	//TODO: Ifdef?
 	interfaceTypeNames.append("ASCOM");
 
@@ -902,6 +903,27 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 			}
 		}
 	}
+	else if (interfaceType == "INDI Pointer")
+	{
+		QString indiDeviceId = properties.value("indiDevice").toString();
+		if (indiDeviceId.isEmpty())
+		{
+			qDebug() << "TelescopeControl: Unable to add connection: "
+			         << "No INDI device ID specified for" << name;
+			return false;
+		}
+
+		QString indiConnectionId = properties.value("indiConnection").toString();
+		if (indiConnectionId.isEmpty())
+		{
+			qDebug() << "TelescopeControl: Unable to add connection: "
+			         << "No parent INDI connection ID specified for" << name;
+			return false;
+		}
+
+		newProperties.insert("indiDevice", indiDeviceId);
+		newProperties.insert("indiConnection", indiConnectionId);
+	}
 #ifdef Q_OS_WIN32
 	else if (interfaceType == "ASCOM")
 	{
@@ -1199,6 +1221,29 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 			parameters = QString("%1:%2").arg(driver).arg(delay);
 			newTelescope = TelescopeClientIndi::telescopeClient(name, driver, equinox);
 		}
+
+		if (newTelescope && newTelescope->isInitialized())
+		{
+			IndiClient* indiClient = static_cast<TelescopeClientIndi*>(newTelescope)->getIndiClient();
+			//TODO: Name == ID? This will be used in removing it!
+			indiClients.insert(name, indiClient);
+			controlPanelWindow->addClient(name, indiClient);
+		}
+	}
+	else if (interfaceType == "INDI Pointer")
+	{
+		QString indiDevice = properties.value("indiDevice").toString();
+		QString indiConnection = properties.value("indiConnection").toString();
+		if (indiClients.contains(indiConnection))
+		{
+			IndiClient* indiClient = indiClients[indiConnection];
+			newTelescope = TelescopeClientIndi::telescopeClient(name,
+			                                                    indiDevice,
+			                                                    indiClient,
+			                                                    equinox);
+		}
+		else
+			return newTelescope;
 	}
 #ifdef Q_OS_WIN32
 	else if (interfaceType == "ASCOM")
@@ -1248,6 +1293,28 @@ bool TelescopeControl::stopClient(const QString& id)
 	if(id.isEmpty() ||
 	   !connections.contains(id))
 		return true;
+
+	//If this is one of the INDI clients that provide a connection...
+	if (indiClients.contains(id))
+	{
+		IndiClient* indiClient = indiClients.take(id);
+		//Remove the sub-clients (all will be in "telescopes")
+		QHashIterator<QString, TelescopeClientP> i(telescopes);
+		while (i.hasNext())
+		{
+			i.next();
+			TelescopeClient* tc = i.value().data();
+			TelescopeClientIndi* tci = dynamic_cast<TelescopeClientIndi*>(tc);
+			if (tci)
+			{
+				if (tci->getIndiClient() == indiClient)
+				{
+					stopClient(i.key());
+				}
+			}
+		}
+		controlPanelWindow->removeClient(id);
+	}
 
 	//If a telescope is selected, deselect it first.
 	//(Otherwise trying to delete a selected telescope client causes Stellarium to crash.)

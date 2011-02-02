@@ -25,27 +25,39 @@
 #include "IndiClient.hpp"
 
 #include <QObject>
-#include <QProcess>
 #include <QString>
-#include <QTcpSocket>
 
-//! Telescope client that uses the INDI protocol.
+//! Base class for telescope clients that use the INDI protocol.
 //! The INDI protocol is an XML-like, platform-independent interface for
 //! communication between (astronomical) device drivers and clients.
 //! This implementation allows communication via TCP/IP and input/output streams
 //! on all platforms, though for now there are no INDI drivers for Windows.
-//! This class includes a simplified client that covers a limited subset of
-//! the INDI "standard" properties (see
+//! An actual connection is implemented in TelescopeClientIndiLocal (runs an
+//! INDI driver in a separate process) and TelescopeClientIndiTcp (connects over
+//! a network connection to an INDI server).
+//! An actual TelescopeClient that can read the commands and display a reticle
+//! is implemented in TelescopeClientIndiPointer.
+//! This class' implementation of the standard TelescopeClient methods is based
+//! on a limited subset of the INDI "standard property" names (see
 //! http://www.indilib.org/index.php?title=Standard_Properties):
 //!  - CONNECTION
 //!  - EQUATORIAL_COORD
 //!  - EQUATORIAL_EOD_COORD
+//! \todo Support custom property names.
+//! \todo Get rid of the auto-connection.
 class TelescopeClientIndi : public TelescopeClient
 {
 	Q_OBJECT
 public:
+	//! Creates a TelescopeClientIndiLocal.
 	static TelescopeClientIndi* telescopeClient(const QString& name, const QString& driverName, Equinox eq);
+	//! Creates a TelescopeClientIndiTcp.
 	static TelescopeClientIndi* telescopeClient(const QString& name, const QString& host, int port, Equinox eq);
+	//! Creates a TelescopeClientIndiPointer.
+	static TelescopeClientIndi* telescopeClient(const QString& name,
+	                                            const QString& deviceId,
+	                                            IndiClient* client,
+	                                            Equinox eq);
 	virtual ~TelescopeClientIndi();
 	virtual bool isConnected() const = 0;
 	virtual bool isInitialized() const = 0;
@@ -55,6 +67,8 @@ public:
 	//! telescope reticle smoother.
 	Vec3d getJ2000EquatorialPos(const StelNavigator *nav) const;
 	void telescopeGoto(const Vec3d &j2000Pos);
+
+	IndiClient* getIndiClient() const;
 
 signals:
 
@@ -74,9 +88,9 @@ protected:
 
 	Equinox equinox;
 
-	IndiClient indiClient;
-	//! The device name used by INDI properties.
-	//! \todo Set in the constructor? At the moment, it's auto-detected.
+	IndiClient* indiClient;
+	//! The name identifying this device's properties.
+	//! Properties belonging to other devices are ignored.
 	QString deviceName;
 
 	bool isDefinedConnection;

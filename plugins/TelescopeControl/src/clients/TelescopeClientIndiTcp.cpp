@@ -19,13 +19,12 @@
 
 #include "TelescopeClientIndiTcp.hpp"
 
-#include <cmath>
-#include <QFile>
-#include <QFileInfo>
 
-#include "StelUtils.hpp"
 
-TelescopeClientIndiTcp::TelescopeClientIndiTcp(const QString& name, const QString& host, int port, Equinox eq):
+TelescopeClientIndiTcp::TelescopeClientIndiTcp(const QString& name,
+                                               const QString& host,
+                                               int port,
+                                               Equinox eq):
 	TelescopeClientIndi(name, eq),
 	tcpSocket(0)
 {
@@ -47,7 +46,7 @@ TelescopeClientIndiTcp::TelescopeClientIndiTcp(const QString& name, const QStrin
 					  SIGNAL(error(QAbstractSocket::SocketError)),
 					  this,
 					  SLOT(handleConnectionError(QAbstractSocket::SocketError)));
-			indiClient.addConnection(tcpSocket);
+			indiClient = new IndiClient(name, tcpSocket);
 			break;
 		}
 	}
@@ -55,6 +54,11 @@ TelescopeClientIndiTcp::TelescopeClientIndiTcp(const QString& name, const QStrin
 
 TelescopeClientIndiTcp::~TelescopeClientIndiTcp()
 {
+	if (indiClient)
+	{
+		delete indiClient;
+	}
+
 	//TODO: Disconnect stuff
 	if (tcpSocket)
 	{
@@ -70,9 +74,10 @@ TelescopeClientIndiTcp::~TelescopeClientIndiTcp()
 bool TelescopeClientIndiTcp::isInitialized() const
 {
 	//TODO: Improve the checks.
-	if (tcpSocket->isOpen() &&
-		 tcpSocket->isReadable() &&
-		 tcpSocket->isWritable())
+	if (indiClient &&
+	    tcpSocket->isOpen() &&
+	    tcpSocket->isReadable() &&
+	    tcpSocket->isWritable())
 	{
 		return true;
 	}

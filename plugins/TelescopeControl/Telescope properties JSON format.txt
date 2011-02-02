@@ -14,6 +14,10 @@ OPTIONAL values provide additional, non-essential features.
 3. Hotkey numbers are described in a special field:
 [OPTIONAL] "shortcutNumber" (number, 1-9)
 
+3. New interface type with its specific fields: "INDI Pointer"
+[SPECIFIC] "indiConnection" (string) the ID of the INDI connection it listens to
+[SPECIFIC] "indiDevice" (string) the INDI device name to which it listens
+
 == Version 0.4.* ==
 1. Structure of telescopes.json: a JSON object/hash, with slot numbers as keys
 and telescope JSON objects as values. A separate "version" key provides

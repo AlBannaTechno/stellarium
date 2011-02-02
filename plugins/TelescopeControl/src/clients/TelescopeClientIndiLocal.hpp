@@ -28,7 +28,7 @@
 #include <QProcess>
 #include <QString>
 
-//! Telescope client that uses the INDI protocol.
+//! Telescope client that uses a local INDI driver.
 //! This class is a specialization of the TelescopeClientIndi class, that starts a local INDI
 //! driver for its communication medium.
 class TelescopeClientIndiLocal : public TelescopeClientIndi
