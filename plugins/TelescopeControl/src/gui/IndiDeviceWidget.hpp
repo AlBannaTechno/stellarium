@@ -55,6 +55,10 @@ signals:
 	                 const QString& propertyName,
 	                 const QVariantHash& elements);
 
+private slots:
+	void handleNewPropertyValue(const QString& propertyName,
+	                            const QVariantHash& elements);
+
 private:
 	QString deviceName;
 	//! Contains a tab for each property group defined for the device.

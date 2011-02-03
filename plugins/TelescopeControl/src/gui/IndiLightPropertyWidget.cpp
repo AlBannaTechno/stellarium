@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *
@@ -26,6 +26,7 @@ IndiLightPropertyWidget::IndiLightPropertyWidget(LightProperty* property,
 {
 	Q_ASSERT(property);
 
+	propertyName = property->getName();
 	setGroup(property->getGroup());
 
 	mainLayout = new QHBoxLayout();
@@ -67,5 +68,22 @@ IndiLightPropertyWidget::~IndiLightPropertyWidget()
 
 void IndiLightPropertyWidget::updateProperty(Property* property)
 {
-	Q_UNUSED(property);
+	LightProperty* lightProperty = dynamic_cast<LightProperty*>(property);
+	if (lightProperty)
+	{
+		//State
+		State newState = lightProperty->getCurrentState();
+		stateWidget->setState(newState);
+
+		QStringList elementNames = lightProperty->getElementNames();
+		foreach (const QString& elementName, elementNames)
+		{
+			if (lightsWidgets.contains(elementName))
+			{
+				LightElement* element = lightProperty->getElement(elementName);
+				State value = element->getValue();
+				lightsWidgets[elementName]->setState(value);
+			}
+		}
+	}
 }

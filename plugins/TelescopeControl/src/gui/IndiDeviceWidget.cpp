@@ -114,7 +114,8 @@ void IndiDeviceWidget::defineProperty(Property* property)
 		default:
 			return;
 	}
-	//TODO: Connect signals/slots
+	connect(propertyWidget, SIGNAL(newPropertyValue(QString,QVariantHash)),
+	        this, SLOT(handleNewPropertyValue(QString,QVariantHash)));
 	propertyWidgets.insert(name, propertyWidget);
 
 	//TODO: Connect signals/slots
@@ -165,4 +166,10 @@ void IndiDeviceWidget::removeProperty(const QString& propertyName)
 bool IndiDeviceWidget::isEmpty() const
 {
 	return propertyWidgets.isEmpty();
+}
+
+void IndiDeviceWidget::handleNewPropertyValue(const QString& propertyName,
+                                              const QVariantHash& elements)
+{
+	emit propertySet(deviceName, propertyName, elements);
 }

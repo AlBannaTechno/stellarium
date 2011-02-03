@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *
@@ -22,6 +22,7 @@
 
 #include <QObject>
 #include <QAbstractButton>
+#include <QSignalMapper>
 #include <QVBoxLayout>
 
 #include "IndiPropertyWidget.hpp"
@@ -52,10 +53,14 @@ private slots:
 	//! Called when one of the buttons is clicked.
 	//! Reads the current states of the buttons and emits newPropertyValue().
 	void setNewPropertyValue();
+	//! Called when a button is clicked and the switch rule is "at most one".
+	void handleClickedButton(const QString& buttonId);
 
 private:
 	QVBoxLayout* buttonsLayout;
 	QHash<QString,QAbstractButton*> buttons;
+	//! Used to enforce the "at most one" switch rule.
+	QSignalMapper* signalMapper;
 	SwitchRule switchRule;
 };
 

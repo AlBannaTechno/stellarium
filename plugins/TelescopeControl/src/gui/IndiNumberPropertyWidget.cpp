@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *
@@ -30,6 +30,7 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
 {
 	Q_ASSERT(property);
 
+	propertyName = property->getName();
 	setGroup(property->getGroup());
 
 	mainLayout = new QHBoxLayout();
@@ -71,7 +72,7 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
 			//TODO: Some kind of validation?
 			lineEdit->setAlignment(Qt::AlignRight);
 			lineEdit->setText(element->getFormattedValue());//Only for init!
-			displayWidgets.insert(elementName, lineEdit);
+			inputWidgets.insert(elementName, lineEdit);
 			gridLayout->addWidget(lineEdit, row, column, 1, 1);
 		}
 
@@ -99,11 +100,39 @@ IndiNumberPropertyWidget::~IndiNumberPropertyWidget()
 
 void IndiNumberPropertyWidget::updateProperty(Property *property)
 {
-	Q_UNUSED(property);
-	//TODO
+	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
+	if (numberProperty)
+	{
+		//State
+		State newState = numberProperty->getCurrentState();
+		stateWidget->setState(newState);
+
+		if (numberProperty->isReadable())
+		{
+			QStringList elementNames = numberProperty->getElementNames();
+			foreach (const QString& elementName, elementNames)
+			{
+				if (displayWidgets.contains(elementName))
+				{
+					NumberElement* element = numberProperty->getElement(elementName);
+					QString value = element->getFormattedValue();
+					displayWidgets[elementName]->setText(value);
+				}
+			}
+		}
+	}
 }
 
 void IndiNumberPropertyWidget::setNewPropertyValue()
 {
-	//TODO
+	QVariantHash elements;
+	QHashIterator<QString,QLineEdit*> i(inputWidgets);
+	while (i.hasNext())
+	{
+		i.next();
+		QString value = i.value()->text();
+		//TODO: Somehow validate these.
+		elements.insert(i.key(), value);
+	}
+	emit newPropertyValue(propertyName, elements);
 }

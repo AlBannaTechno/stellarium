@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *
@@ -28,6 +28,7 @@ IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
 {
 	Q_ASSERT(property);
 
+	propertyName = property->getName();
 	setGroup(property->getGroup());
 
 	mainLayout = new QHBoxLayout();
@@ -97,10 +98,38 @@ IndiTextPropertyWidget::~IndiTextPropertyWidget()
 
 void IndiTextPropertyWidget::updateProperty(Property* property)
 {
-	Q_UNUSED(property);
+	TextProperty* textProperty = dynamic_cast<TextProperty*>(property);
+	if (textProperty)
+	{
+		//State
+		State newState = textProperty->getCurrentState();
+		stateWidget->setState(newState);
+
+		if (textProperty->isReadable())
+		{
+			QStringList elementNames = textProperty->getElementNames();
+			foreach (const QString& elementName, elementNames)
+			{
+				if (displayWidgets.contains(elementName))
+				{
+					TextElement* element = textProperty->getElement(elementName);
+					QString value = element->getValue();
+					displayWidgets[elementName]->setText(value);
+				}
+			}
+		}
+	}
 }
 
 void IndiTextPropertyWidget::setNewPropertyValue()
 {
-	//TODO
+	QVariantHash elements;
+	QHashIterator<QString,QLineEdit*> i(inputWidgets);
+	while (i.hasNext())
+	{
+		i.next();
+		QString value = i.value()->text();
+		elements.insert(i.key(), value);
+	}
+	emit newPropertyValue(propertyName, elements);
 }

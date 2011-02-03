@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *

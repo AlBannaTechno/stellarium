@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *
@@ -35,16 +35,17 @@ class IndiPropertyWidget : public QGroupBox
 {
 	Q_OBJECT
 public:
-	IndiPropertyWidget(const QString& title, QWidget* parent = 0) : QGroupBox(title, parent) {;}
+	IndiPropertyWidget(const QString& title,
+	                   QWidget* parent = 0) : QGroupBox(title, parent) {;}
 	//virtual ~IndiPropertyWidget() = 0;
 
-	QString getGroup() const {return group;}
-	void setGroup(const QString& groupName)
+	QString getGroup() const {return groupName;}
+	void setGroup(const QString& _groupName)
 	{
-		if (groupName.isEmpty())
-			group = "Main";//TODO: Default name.
+		if (_groupName.isEmpty())
+			groupName = "Main";//TODO: Default name.
 		else
-			group = groupName;
+			groupName = _groupName;
 	}
 
 public slots:
@@ -52,10 +53,11 @@ public slots:
 	virtual void updateProperty(Property* property) = 0;
 
 signals:
-	void newPropertyValue(const QVariantHash& elements);
+	void newPropertyValue(const QString& property, const QVariantHash& elements);
 
 protected:
-	QString group;
+	QString propertyName;
+	QString groupName;
 	QHBoxLayout* mainLayout;
 	IndiStateWidget* stateWidget;
 };

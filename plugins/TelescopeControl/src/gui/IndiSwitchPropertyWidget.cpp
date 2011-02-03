@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *
@@ -26,10 +26,12 @@
 IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
                                                    const QString& title,
                                                    QWidget* parent)
-	: IndiPropertyWidget(title, parent)
+	: IndiPropertyWidget(title, parent),
+	signalMapper(0)
 {
 	Q_ASSERT(property);
 
+	propertyName = property->getName();
 	setGroup(property->getGroup());
 	switchRule = property->getSwitchRule();
 
@@ -45,6 +47,8 @@ IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
 	buttonsLayout->setContentsMargins(0, 0, 0, 0);
 	buttonsLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
 	mainLayout->addLayout(buttonsLayout);
+
+	signalMapper = new QSignalMapper(this);
 
 	QStringList elementNames = property->getElementNames();
 	foreach (const QString& elementName, elementNames)
@@ -73,14 +77,30 @@ IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
 
 		if (property->isWritable())
 		{
-			connect(button, SIGNAL(clicked()),
-			        this, SLOT(setNewPropertyValue()));
+			if (switchRule == SwitchAtMostOne)
+			{
+				connect(button, SIGNAL(clicked()),
+				        signalMapper, SLOT(map()));
+				signalMapper->setMapping(button, elementName);
+			}
+			else
+			{
+				connect(button, SIGNAL(clicked()),
+				        this, SLOT(setNewPropertyValue()));
+			}
 		}
 		else
 		{
 			button->setDisabled(true);
 		}
 		buttonsLayout->addWidget(button);
+		buttons.insert(elementName, button);
+	}
+
+	if (switchRule == SwitchAtMostOne)
+	{
+		connect(signalMapper, SIGNAL(mapped(QString)),
+		        this, SLOT(handleClickedButton(QString)));
 	}
 
 	this->setLayout(mainLayout);
@@ -93,10 +113,57 @@ IndiSwitchPropertyWidget::~IndiSwitchPropertyWidget()
 
 void IndiSwitchPropertyWidget::updateProperty(Property *property)
 {
-	Q_UNUSED(property);
+	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
+	if (switchProperty)
+	{
+		//State
+		State newState = switchProperty->getCurrentState();
+		stateWidget->setState(newState);
+
+		QStringList elementNames = switchProperty->getElementNames();
+		foreach (const QString& elementName, elementNames)
+		{
+			if (buttons.contains(elementName))
+			{
+				SwitchElement* element = switchProperty->getElement(elementName);
+				bool value = element->isOn();
+				buttons[elementName]->setChecked(value);;
+			}
+		}
+	}
 }
 
 void IndiSwitchPropertyWidget::setNewPropertyValue()
 {
-	//
+	QVariantHash elements;
+	QHashIterator<QString,QAbstractButton*> i(buttons);
+	while (i.hasNext())
+	{
+		i.next();
+		bool value = i.value()->isChecked();
+		elements.insert(i.key(), value);
+	}
+	emit newPropertyValue(propertyName, elements);
+}
+
+void IndiSwitchPropertyWidget::handleClickedButton(const QString& buttonId)
+{
+	if (buttonId.isEmpty() || !buttons.contains(buttonId))
+		return;
+
+	//If the button has been checked, uncheck everything else.
+	if (buttons[buttonId]->isChecked())
+	{
+		QHashIterator<QString,QAbstractButton*> i(buttons);
+		while (i.hasNext())
+		{
+			i.next();
+			if (i.key() != buttonId && i.value()->isChecked())
+			{
+				i.value()->setChecked(false);
+			}
+		}
+	}
+
+	setNewPropertyValue();
 }
