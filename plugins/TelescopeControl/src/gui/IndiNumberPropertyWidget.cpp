@@ -20,6 +20,9 @@
 #include "IndiNumberPropertyWidget.hpp"
 
 #include <stdexcept>
+#include <QDoubleValidator>
+#include <QRegExp>
+#include <QRegExpValidator>
 
 IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
                                                    const QString& title,
@@ -69,11 +72,61 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
 		{
 			column++;
 			QLineEdit* lineEdit = new QLineEdit();
-			//TODO: Some kind of validation?
 			lineEdit->setAlignment(Qt::AlignRight);
 			lineEdit->setText(element->getFormattedValue());//Only for init!
 			inputWidgets.insert(elementName, lineEdit);
 			gridLayout->addWidget(lineEdit, row, column, 1, 1);
+
+			//Validator
+			//TODO: Is there any sense in this? There will be a separate widget
+			//for the standard coordinates properties.
+			QRegExp indiFormat("^\\%(\\d+)\\.(\\d)\\m$");
+			if (indiFormat.exactMatch(element->getFormatString()))
+			{
+				int precision = indiFormat.cap(2).toInt();
+
+				QString str;
+				switch (precision)
+				{
+					case 3:
+						str = "\\s*\\-?\\d{1,3}\\:\\d{1,2}\\s*";
+						break;
+					case 5:
+						str = "\\s*\\-?\\d{1,3}\\:\\d{1,2}(\\.\\d)?\\s*";
+						break;
+					case 6:
+						str = "\\s*\\-?\\d{1,3}\\:\\d{1,2}\\:\\d{1,2}\\s*";
+						break;
+					case 8:
+						str = "\\s*\\-?\\d{1,3}\\:\\d{1,2}\\:\\d{1,2}(\\.\\d)?\\s*";
+						break;
+					case 9:
+						str = "\\s*\\-?\\d{1,3}\\:\\d{1,2}\\:\\d{1,2}(\\.\\d{1,2})?\\s*";
+						break;
+					default:
+						str.clear();
+				}
+
+				if (!str.isEmpty())
+				{
+					QRegExp regExp(str);
+					QRegExpValidator* validator = new QRegExpValidator(regExp,
+					                                                   this);
+					lineEdit->setValidator(validator);
+				}
+			}
+
+			if (lineEdit->validator() == 0)
+			{
+				QDoubleValidator* validator = new QDoubleValidator(this);
+				validator->setDecimals(4);
+				double min = element->getMinValue();
+				double max = element->getMaxValue();
+				validator->setBottom(min);
+				if (min < max)
+					validator->setTop(max);
+				lineEdit->setValidator(validator);
+			}
 		}
 
 		row++;

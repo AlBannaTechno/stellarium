@@ -107,6 +107,11 @@ public:
 	QString getFormattedValue() const;
 	void setValue(const QString& stringValue);
 
+	QString getFormatString() const;
+	double getMinValue() const;
+	double getMaxValue() const;
+	double getStep() const;
+
 	static double readDoubleFromString(const QString& string);
 
 private:

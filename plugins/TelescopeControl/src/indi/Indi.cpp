@@ -220,6 +220,26 @@ void NumberElement::setValue(const QString& stringValue)
 	value = newValue;
 }
 
+QString NumberElement::getFormatString() const
+{
+	return formatString;
+}
+
+double NumberElement::getMinValue() const
+{
+	return minValue;
+}
+
+double NumberElement::getMaxValue() const
+{
+	return maxValue;
+}
+
+double NumberElement::getStep() const
+{
+	return step;
+}
+
 /* ********************************************************************* */
 #if 0
 #pragma mark -
