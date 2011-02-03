@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *
@@ -21,6 +21,7 @@
 #define _INDI_GROUP_WIDGET_HPP_
 
 #include <QObject>
+#include <QScrollArea>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -30,7 +31,7 @@
 //! At the moment, it is a sub-tab in a IndiDeviceWidget.
 //! It doesn't handle property widget updates directly - it just adds them.
 //! \todo Think of a good mechanism for removing property widgets from groups.
-class IndiGroupWidget : public QWidget
+class IndiGroupWidget : public QScrollArea
 {
 	Q_OBJECT
 

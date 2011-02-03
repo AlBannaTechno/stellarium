@@ -1,5 +1,5 @@
 /*
- * Qt-based INDI wire protocol client
+ * Device Control plug-in for Stellarium
  * 
  * Copyright (C) 2011 Bogdan Marinov
  *
@@ -19,12 +19,21 @@
 
 #include "IndiGroupWidget.hpp"
 
-IndiGroupWidget::IndiGroupWidget(QWidget* parent) : QWidget(parent)
+IndiGroupWidget::IndiGroupWidget(QWidget* parent) : QScrollArea(parent)
 {
+	setBackgroundRole(QPalette::Dark);
+	setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setWidgetResizable(true);
+
 	layout = new QVBoxLayout();
 	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(0);
-	this->setLayout(layout);
+
+	QWidget* innerWidget = new QWidget(this);
+	innerWidget->setLayout(layout);
+
+	setWidget(innerWidget);
 }
 
 IndiGroupWidget::~IndiGroupWidget()
