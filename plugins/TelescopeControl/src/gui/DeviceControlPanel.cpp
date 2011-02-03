@@ -191,7 +191,10 @@ void DeviceControlPanel::defineProperty(const QString& clientName,
 
 	//Show the window if it hasn't been initialized.
 	if (!visible())
+	{
 		setVisible(true);
+		emit visibleChanged(true);//StelDialog doesn't do this
+	}
 
 	//Add a new device widget/tab
 	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget(deviceName);
