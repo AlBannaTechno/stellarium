@@ -1122,7 +1122,7 @@ bool TelescopeControl::startClient(const QString& id,
                                    const QVariantMap& properties)
 {
 	//Validation
-	if(id.isEmpty())
+	if(id.isEmpty() || properties.isEmpty())
 		return false;
 
 	//TODO: Check if it's not already running
@@ -1133,39 +1133,22 @@ bool TelescopeControl::startClient(const QString& id,
 		return false;
 	}
 
-	//TODO: Refactor to differentiate between connections and telescopes.
-	TelescopeClient* newTelescope = createClient(properties);
-	if (newTelescope)
-	{
-		TelescopeClientP newTelescopeP(newTelescope);
-		connections.insert(id, newTelescopeP);
-		//TODO: Temporary:
-		telescopes.insert(id, newTelescopeP);
-		return true;
-	}
-
-	return false;
-}
-
-TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
-{
-	TelescopeClient * newTelescope = 0;
-
-	if (properties.isEmpty())
-		return newTelescope;
+	TelescopeClient* newTelescope = 0;
 
 	//At least two values should exist: name and connection type
 	QString name = properties.value("name").toString();
 	if (name.isEmpty())
-		return newTelescope;
+		return false;
 
 	QString interfaceType = properties.value("interface").toString();
 	if (interfaceType.isEmpty())
-		return newTelescope;
+		return false;
 
 	bool isRemote = properties.value("isRemoteConnection", false).toBool();
 
-	qDebug() << "Attempting to create a telescope client:" << properties;
+	//Isn't this a bit redundand?
+	qDebug() << "Attempting to create a telescope client: ID:" << id
+	         << properties;
 
 	int delay = properties.value("delay", DEFAULT_DELAY).toInt();
 	QString equinoxString = properties.value("equinox", "J2000").toString();
@@ -1189,7 +1172,7 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 		{
 			QString driver = properties.value("driverId").toString();
 			if (driver.isEmpty() || !EMBEDDED_TELESCOPE_SERVERS.contains(driver))
-				return newTelescope;
+				return false;
 			QString serialPort = properties.value("serialPort").toString();
 
 			//TODO: Change driver names when the whole mechanism depends on it.
@@ -1221,7 +1204,7 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 			if (driver.isEmpty()
 				|| !QFile::exists("/usr/bin/" + driver)
 				|| !QFileInfo("/usr/bin/" + driver).isExecutable())
-				return newTelescope;
+				return false;
 			parameters = QString("%1:%2").arg(driver).arg(delay);
 			newTelescope = TelescopeClientIndi::telescopeClient(name, driver, equinox);
 		}
@@ -1230,7 +1213,7 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 		{
 			IndiClient* indiClient = static_cast<TelescopeClientIndi*>(newTelescope)->getIndiClient();
 			//TODO: Name == ID? This will be used in removing it!
-			indiClients.insert(name, indiClient);
+			indiClients.insert(id, indiClient);
 			if (controlPanelWindow)
 				controlPanelWindow->addClient(indiClient);
 		}
@@ -1248,14 +1231,18 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 			                                                    equinox);
 		}
 		else
-			return newTelescope;
+		{
+			//TODO: Better warning.
+			qDebug() << "No such connection exists.";
+			return false;
+		}
 	}
 #ifdef Q_OS_WIN32
 	else if (interfaceType == "ASCOM")
 	{
 		QString ascomDriverObjectId = properties.value("driverId").toString();
 		if (ascomDriverObjectId.isEmpty())
-			return newTelescope;
+			return false;
 
 		//parameters = QString("%1:%2").arg(ascomDriverObjectId).arg(delay);
 		parameters = QString("%1").arg(ascomDriverObjectId);
@@ -1265,30 +1252,40 @@ TelescopeClient* TelescopeControl::createClient(const QVariantMap &properties)
 	else
 	{
 		qWarning() << "TelescopeControl: unable to create a client of type"
-				<< interfaceType;
-		qDebug() << "Additional parameters are:";
-		foreach (QString key, properties.keys())
-		{
-			qDebug() << key << "=" << properties.value(key);
-		}
+		           << interfaceType << properties;
 	}
 
+	//TODO: Replace with a try/catch?
 	if (newTelescope && !newTelescope->isInitialized())
 	{
-		qDebug() << "TelescopeClient::create(): Unable to create a telescope client.";
 		delete newTelescope;
 		newTelescope = 0;
 	}
 
-	//Read and add FOV circles
-	QVariantList circleList = properties.value("fovCircles").toList();
-	if(!circleList.isEmpty() && circleList.size() <= MAX_CIRCLE_COUNT)
+	if (newTelescope)
 	{
-		for(int i = 0; i < circleList.size(); i++)
-			newTelescope->addOcular(circleList.value(i, -1.0).toDouble());
-	}
+		//Read and add FOV circles
+		QVariantList circleList = properties.value("fovCircles").toList();
+		if(!circleList.isEmpty() && circleList.size() <= MAX_CIRCLE_COUNT)
+		{
+			for(int i = 0; i < circleList.size(); i++)
+				newTelescope->addOcular(circleList.value(i, -1.0).toDouble());
+		}
 
-	return newTelescope;
+		TelescopeClientP newTelescopeP(newTelescope);
+		if (interfaceType != "INDI Pointer")
+			connections.insert(id, newTelescopeP);
+		if (interfaceType != "INDI")//Only TCP connections?
+			telescopes.insert(id, newTelescopeP);
+
+		return true;
+	}
+	else
+	{
+		qDebug() << "TelescopeControl: Unable to create a telescope client:"
+		         << id;
+		return false;
+	}
 }
 
 bool TelescopeControl::stopClient(const QString& id)

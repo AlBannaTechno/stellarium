@@ -322,22 +322,12 @@ private:
 	QSignalMapper gotoSelectedShortcutMapper;
 	QSignalMapper gotoDirectionShortcutMapper;
 
-	//! A wrapper for TelescopeControl::createClient(). Used internally by
-	//! loadTelescopes() and startConnection().
-	//! Does not perform any validation on its arguments.
-	//! It is separate because the previous implementation separated clients
-	//! from servers.
-	//! TODO: Do away with this?
+	//! Creates a client object belonging to a subclass of TelescopeClient.
+	//! Used internally by loadTelescopes() and startConnection().
 	bool startClient(const QString& id, const QVariantMap& properties);
 
 	//! Returns true if the client has been stopped successfully or doesn't exist.
 	bool stopClient(const QString& id);
-
-	//! Creates a client object belonging to a subclass of TelescopeClient.
-	//! Replaces TelescopeClient::create().
-	//! \returns a base class pointer to the client object.
-	TelescopeClient* createClient(const QVariantMap& properties);
-	
 
 	//! Loads the list of supported telescope models.
 	void loadDeviceModels();
