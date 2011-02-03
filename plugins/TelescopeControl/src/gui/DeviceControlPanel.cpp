@@ -201,6 +201,9 @@ void DeviceControlPanel::defineProperty(const QString& clientName,
 	IndiClient* indiClient = indiClients[clientName];
 	connect(deviceWidget, SIGNAL(propertySet(QString,QString,QVariantHash)),
 	        indiClient, SLOT(writeProperty(QString,QString,QVariantHash)));
+
+	//And pass the received property to it.
+	deviceWidget->defineProperty(property);
 }
 
 void DeviceControlPanel::updateProperty(const QString& clientName,
