@@ -105,8 +105,9 @@ public:
 
 	double getValue() const;
 	QString getFormattedValue() const;
-
 	void setValue(const QString& stringValue);
+
+	static double readDoubleFromString(const QString& string);
 
 private:
 	// For unit tests
@@ -118,8 +119,6 @@ private:
 	double minValue;
 	double step;
 	QString formatString;
-
-	double readDoubleFromString(const QString& string);
 };
 
 //! Sub-property representing a single switch/button.

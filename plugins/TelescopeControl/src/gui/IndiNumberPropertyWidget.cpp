@@ -130,8 +130,8 @@ void IndiNumberPropertyWidget::setNewPropertyValue()
 	while (i.hasNext())
 	{
 		i.next();
-		QString value = i.value()->text();
-		//TODO: Somehow validate these.
+		QString stringValue = i.value()->text().trimmed();
+		double value = NumberElement::readDoubleFromString(stringValue);
 		elements.insert(i.key(), value);
 	}
 	emit newPropertyValue(propertyName, elements);
