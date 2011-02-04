@@ -25,18 +25,34 @@
 #include <QXmlStreamWriter>
 #include <stdexcept>
 
-const char* IndiClient::T_MESSAGE = "message";
 const char* IndiClient::T_GET_PROPERTIES = "getProperties";
+const char* IndiClient::T_DEL_PROPERTY = "delProperty";
+const char* IndiClient::T_ENABLE_BLOB = "enableBLOB";
+const char* IndiClient::T_MESSAGE = "message";
+const char* IndiClient::T_DEF_TEXT_VECTOR = "defTextVector";
 const char* IndiClient::T_DEF_NUMBER_VECTOR = "defNumberVector";
 const char* IndiClient::T_DEF_SWITCH_VECTOR = "defSwitchVector";
+const char* IndiClient::T_DEF_LIGHT_VECTOR = "defLightVector";
+const char* IndiClient::T_DEF_BLOB_VECTOR = "defBLOBVector";
+const char* IndiClient::T_SET_TEXT_VECTOR = "setTextVector";
 const char* IndiClient::T_SET_NUMBER_VECTOR = "setNumberVector";
 const char* IndiClient::T_SET_SWITCH_VECTOR = "setSwitchVector";
+const char* IndiClient::T_SET_LIGHT_VECTOR = "setLightVector";
+const char* IndiClient::T_SET_BLOB_VECTOR = "setBLOBVector";
+const char* IndiClient::T_NEW_TEXT_VECTOR = "newTextVector";
 const char* IndiClient::T_NEW_NUMBER_VECTOR = "newNumberVector";
 const char* IndiClient::T_NEW_SWITCH_VECTOR = "newSwitchVector";
+const char* IndiClient::T_NEW_BLOB_VECTOR = "newBLOBVector";
+const char* IndiClient::T_DEF_TEXT = "defText";
 const char* IndiClient::T_DEF_NUMBER = "defNumber";
 const char* IndiClient::T_DEF_SWITCH = "defSwitch";
+const char* IndiClient::T_DEF_LIGHT = "defLight";
+const char* IndiClient::T_DEF_BLOB = "defBLOB";
+const char* IndiClient::T_ONE_TEXT = "oneText";
 const char* IndiClient::T_ONE_NUMBER = "oneNumber";
 const char* IndiClient::T_ONE_SWITCH = "oneSwitch";
+const char* IndiClient::T_ONE_LIGHT = "oneLight";
+const char* IndiClient::T_ONE_BLOB = "oneBLOB";
 
 const char* IndiClient::A_VERSION = "version";
 const char* IndiClient::A_DEVICE = "device";
@@ -399,6 +415,58 @@ void IndiClient::readMessageElement()
 		xmlReader.readNext();
 }
 
+void IndiClient::readTextPropertyDefinition()
+{
+	QString device;
+	QString name;
+	QString label;
+	QString group;
+	QString stateString;
+	QString permissionString;
+	QString timeoutString;
+	bool hasAllRequiredAttributes = readPropertyAttributes(device,
+	                                                       name,
+	                                                       label,
+	                                                       group,
+	                                                       stateString,
+	                                                       permissionString,
+	                                                       timeoutString,
+	                                                       true);
+	if (!hasAllRequiredAttributes)
+	{
+		xmlReader.skipCurrentElement();
+		return;
+	}
+	QDateTime timestamp = readTimestampAttribute();
+	readMessageAttribute(device, timestamp);
+
+	State initialState = readStateFromString(stateString);
+	Permission permission = readPermissionFromString(permissionString);
+
+	TextProperty* textProperty = new TextProperty(name, initialState, permission, label, group, timestamp);
+	while (true)
+	{
+		xmlReader.readNext();
+		if (xmlReader.name() == T_DEF_TEXT_VECTOR && xmlReader.isEndElement())
+			break;
+		else if (xmlReader.name() == T_DEF_TEXT)
+		{
+			//TODO: Add some mechanism for detecting errors
+			readTextElementDefinition(textProperty);
+		}
+	}
+
+	if (textProperty->elementCount() > 0)
+	{
+		deviceProperties[device].insert(name, textProperty);
+		emit propertyDefined(clientId, device, textProperty);
+	}
+	else
+	{
+		delete textProperty;
+	}
+}
+
 void IndiClient::readNumberPropertyDefinition()
 {
 	QString device;
@@ -428,7 +496,7 @@ void IndiClient::readNumberPropertyDefinition()
 	Permission permission = readPermissionFromString(permissionString);
 
 	//TODO: Handle timestamp, timeout, etc.
-	NumberProperty* numberProperty = new NumberProperty(name, initialState, permission, label, group);
+	NumberProperty* numberProperty = new NumberProperty(name, initialState, permission, label, group, timestamp);
 	while (true)
 	{
 		xmlReader.readNext();
@@ -450,6 +518,11 @@ void IndiClient::readNumberPropertyDefinition()
 	{
 		delete numberProperty;
 	}
+}
+
+void IndiClient::readTextElementDefinition(TextProperty* textProperty)
+{
+	//
 }
 
 void IndiClient::readNumberElementDefinition(NumberProperty* numberProperty)
@@ -629,7 +702,7 @@ void IndiClient::readNumberProperty()
 	{
 		if (xmlReader.name() == T_ONE_NUMBER)
 		{
-			readNumberElement(values);
+			readOneElement(T_ONE_NUMBER, values);
 		}
 		xmlReader.readNext();
 	}
@@ -643,12 +716,17 @@ void IndiClient::readNumberProperty()
 	}
 }
 
-void IndiClient::readNumberElement(QHash<QString, QString>& newValues)
+void IndiClient::readOneElement(const QString& tag,
+                                   QHash<QString, QString>& newValues)
 {
 	QString name = xmlReader.attributes().value(A_NAME).toString();
-	//TODO: Validation
+	if (name.isEmpty())
+	{
+		xmlReader.skipCurrentElement();
+		return;
+	}
 	QString value;
-	while (!(xmlReader.name() == T_ONE_NUMBER && xmlReader.isEndElement()))
+	while (!(xmlReader.name() == tag && xmlReader.isEndElement()))
 	{
 		if (xmlReader.isCharacters())
 			value = xmlReader.text().toString().trimmed();
@@ -656,8 +734,6 @@ void IndiClient::readNumberElement(QHash<QString, QString>& newValues)
 	}
 	if (value.isEmpty())
 	{
-		//TODO
-		qDebug() << "oneNumber element is empty?";
 		return;
 	}
 	newValues.insert(name, value);
@@ -708,7 +784,7 @@ void IndiClient::readSwitchProperty()
 	{
 		if (xmlReader.name() == T_ONE_SWITCH)
 		{
-			readSwitchElement(values);
+			readOneElement(T_ONE_SWITCH, values);
 		}
 		xmlReader.readNext();
 	}
@@ -720,23 +796,6 @@ void IndiClient::readSwitchProperty()
 			switchProperty->update(values, timestamp, readStateFromString(state));
 		emit propertyUpdated(clientId, device, switchProperty);
 	}
-}
-
-void IndiClient::readSwitchElement(QHash<QString,QString>& newValues)
-{
-	QString name = xmlReader.attributes().value(A_NAME).toString();
-	QString value;
-	while(!(xmlReader.name() == T_ONE_SWITCH && xmlReader.isEndElement()))
-	{
-		if (xmlReader.isCharacters())
-			value = xmlReader.text().toString().trimmed();
-		xmlReader.readNext();
-	}
-	if (value.isEmpty())
-	{
-		return;
-	}
-	newValues.insert(name, value);
 }
 
 void IndiClient::writeGetProperties(const QString& device,

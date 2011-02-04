@@ -34,10 +34,10 @@
 //! Class implementing a client for the INDI wire protocol.
 //! Properties are stored internally. Qt signals are emitted when a property
 //! is changed or defined.
-//! \todo Decide whether to use only one instance of IndiClient to handle all
-//! INDI connections, or to use one copy per connection. (In the second case,
-//! pointer to the QIODevice should be given to the constructor, not via a
-//! separate method.
+//! A single instance of IndiClient represents one connection.
+//! \todo Device snooping!
+//! \todo Split the Indi.hpp file.
+//! \todo Use shared pointers.
 class IndiClient : public QObject
 {
 	Q_OBJECT
@@ -61,17 +61,33 @@ public:
 
 	//INDI XML tags
 	static const char* T_GET_PROPERTIES;
+	static const char* T_DEL_PROPERTY;
+	static const char* T_ENABLE_BLOB;
 	static const char* T_MESSAGE;
+	static const char* T_DEF_TEXT_VECTOR;
 	static const char* T_DEF_NUMBER_VECTOR;
 	static const char* T_DEF_SWITCH_VECTOR;
+	static const char* T_DEF_LIGHT_VECTOR;
+	static const char* T_DEF_BLOB_VECTOR;
+	static const char* T_SET_TEXT_VECTOR;
 	static const char* T_SET_NUMBER_VECTOR;
 	static const char* T_SET_SWITCH_VECTOR;
+	static const char* T_SET_LIGHT_VECTOR;
+	static const char* T_SET_BLOB_VECTOR;
+	static const char* T_NEW_TEXT_VECTOR;
 	static const char* T_NEW_NUMBER_VECTOR;
 	static const char* T_NEW_SWITCH_VECTOR;
+	static const char* T_NEW_BLOB_VECTOR;
+	static const char* T_DEF_TEXT;
 	static const char* T_DEF_NUMBER;
 	static const char* T_DEF_SWITCH;
+	static const char* T_DEF_LIGHT;
+	static const char* T_DEF_BLOB;
+	static const char* T_ONE_TEXT;
 	static const char* T_ONE_NUMBER;
 	static const char* T_ONE_SWITCH;
+	static const char* T_ONE_LIGHT;
+	static const char* T_ONE_BLOB;
 
 
 	//INDI XML attributes
@@ -179,21 +195,41 @@ private:
 	//!
 	void readMessageElement();
 	//!
-	void readNumberPropertyDefinition();
+	void readTextPropertyDefinition();
 	//!
-	void readNumberElementDefinition(NumberProperty* numberProperty);
+	void readNumberPropertyDefinition();
 	//!
 	void readSwitchPropertyDefinition();
 	//!
+	void readLightPropertyDefinition();
+	//!
+	void readBlobPropertyDefinition();
+	//!
+	void readTextElementDefinition(TextProperty* textProperty);
+	//!
+	void readNumberElementDefinition(NumberProperty* numberProperty);
+	//!
 	void readSwitchElementDefinition(SwitchProperty* switchProperty);
+	//!
+	void readLightElementDefinition(LightProperty* lightProperty);
+	//!
+	void readBlobElementDefinition(BlobProperty* blobProperty);
+	//!
+	void readTextProperty();
 	//!
 	void readNumberProperty();
 	//!
-	void readNumberElement(QHash<QString,QString>& newValues);
-	//!
 	void readSwitchProperty();
 	//!
-	void readSwitchElement(QHash<QString,QString>& newValues);
+	void readLightProperty();
+	//!
+	void readBlobProperty();
+	//! Reads all \b oneX tags except \b onewBLOB.
+	//! \param[in] tag
+	//! \param[out] newValues
+	void readOneElement(const QString& tag, QHash<QString,QString>& newValues);
+	//! Reads a \b oneBLOB tag.
+	void readBlobElement(BlobProperty* blobProperty);
 
 	//! Helper for writeProperty().
 	//! Writes \b newTextVector element, including a series of \b oneText
