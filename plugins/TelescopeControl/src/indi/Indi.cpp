@@ -20,6 +20,7 @@
 #include "Indi.hpp"
 
 #include <cmath>
+#include <QDir>
 #include <QStringList>
 
 /* ********************************************************************* */
@@ -667,6 +668,7 @@ QStringList LightProperty::getElementNames() const
 BlobProperty::BlobProperty(const QString& propertyName,
                            State propertyState,
                            Permission accessPermission,
+                           const QString& directoryPath,
                            const QString& propertyLabel,
                            const QString& propertyGroup,
                            const QDateTime& timestamp) :
@@ -675,7 +677,8 @@ BlobProperty::BlobProperty(const QString& propertyName,
 	         accessPermission,
 	         propertyLabel,
 	         propertyGroup,
-	         timestamp)
+	         timestamp),
+	directoryPath(directoryPath)
 {
 	type = Property::BlobProperty;
 }
@@ -693,4 +696,23 @@ int BlobProperty::elementCount() const
 QStringList BlobProperty::getElementNames() const
 {
 	return elements.keys();
+}
+
+BlobElement* BlobProperty::getElement(const QString& name)
+{
+	return elements[name];
+}
+
+QString BlobProperty::getDirectoryPath() const
+{
+	return directoryPath;
+}
+
+void BlobProperty::setDirectoryPath(const QString& newPath)
+{
+	QDir newDirectory(newPath);
+	if (newDirectory.exists())
+	{
+		directoryPath = newPath;
+	}
 }
