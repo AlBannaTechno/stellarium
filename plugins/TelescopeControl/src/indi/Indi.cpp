@@ -301,10 +301,11 @@ void LightElement::setValue(const QString& stringValue)
 }
 
 BlobElement::BlobElement(const QString& elementName,
+                         const QString& initialValue,
                          const QString& label)
 	: Element(elementName, label)
 {
-	//
+	Q_UNUSED(initialValue);
 }
 
 void BlobElement::setValue(const QString& blobLength,
@@ -468,6 +469,11 @@ TextProperty::TextProperty(const QString& propertyName,
 TextProperty::~TextProperty()
 {
 	qDeleteAll(elements);
+}
+
+void TextProperty::addElement(TextElement* element)
+{
+	elements.insert(element->getName(), element);
 }
 
 TextElement* TextProperty::getElement(const QString& name)
@@ -649,6 +655,11 @@ LightProperty::~LightProperty()
 	qDeleteAll(elements);
 }
 
+void LightProperty::addElement(LightElement* element)
+{
+	elements.insert(element->getName(), element);
+}
+
 LightElement* LightProperty::getElement(const QString& name)
 {
 	return elements.value(name);
@@ -696,6 +707,11 @@ int BlobProperty::elementCount() const
 QStringList BlobProperty::getElementNames() const
 {
 	return elements.keys();
+}
+
+void BlobProperty::addElement(BlobElement* element)
+{
+	elements.insert(element->getName(), element);
 }
 
 BlobElement* BlobProperty::getElement(const QString& name)

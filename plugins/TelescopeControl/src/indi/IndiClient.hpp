@@ -171,14 +171,19 @@ private:
 	SwitchRule readSwitchRuleFromString(const QString& string);
 
 	//!
+	//! \param checkPermission should be false when reading a LightProperty.
+	//! \param checkSwitchRule should be true when reading a SwitchProperty.
 	bool readPropertyAttributes(QString& device,
 	                            QString& property,
 	                            QString& label,
 	                            QString& group,
-	                            QString& state,
-	                            QString& permission,
+	                            State& state,
+	                            Permission& permission,
+	                            SwitchRule& switchRule,
 	                            QString& timeout,
-	                            bool checkPermission);
+	                            QDateTime& timestamp,
+	                            bool checkPermission,
+	                            bool checkSwitchRule);
 	//!
 	bool readPropertyAttributes(QString& device,
 	                            QString& name,
@@ -201,19 +206,18 @@ private:
 	//!
 	void readSwitchPropertyDefinition();
 	//!
-	void readLightPropertyDefinition();
+	void readLightPropertyDefintion();
 	//!
 	void readBlobPropertyDefinition();
 	//!
-	void readTextElementDefinition(TextProperty* textProperty);
+	template<class P,class E> void readPropertyElementsDefinitions
+		(const QString& propertyName,
+		 const QString& deviceName,
+		 P* property,
+		 const QString& propertyTagName,
+		 const QString& elementTagName);
 	//!
-	void readNumberElementDefinition(NumberProperty* numberProperty);
-	//!
-	void readSwitchElementDefinition(SwitchProperty* switchProperty);
-	//!
-	void readLightElementDefinition(LightProperty* lightProperty);
-	//!
-	void readBlobElementDefinition(BlobProperty* blobProperty);
+	QString	readElementRawValue(const QString& tag);
 	//!
 	void readTextProperty();
 	//!

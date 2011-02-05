@@ -169,7 +169,10 @@ private:
 //! elements - it has no initial value.
 class BlobElement : public Element
 {
+public:
+	//! \param intialValue is ignored.
 	BlobElement(const QString& elementName,
+	            const QString& initialValue,
 	            const QString& label = QString());
 
 	//! Decodes the string to a QByteArray?
@@ -263,7 +266,7 @@ public:
 	             const QDateTime& timestamp = QDateTime());
 	~TextProperty();
 
-	//TODO
+	void addElement(TextElement* element);
 	TextElement* getElement(const QString& name);
 
 	int elementCount() const;
@@ -345,8 +348,8 @@ public:
 	              const QDateTime& timestamp = QDateTime());
 	~LightProperty();
 
+	void addElement(LightElement* element);
 	LightElement* getElement(const QString& name);
-	//TODO:
 
 	int elementCount() const;
 	QStringList getElementNames() const;
@@ -368,6 +371,7 @@ public:
 	             const QDateTime& timestamp = QDateTime());
 	~BlobProperty();
 
+	void addElement(BlobElement* element);
 	BlobElement* getElement(const QString& name);
 
 	void setDirectoryPath(const QString& newPath);
