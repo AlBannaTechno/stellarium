@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#include "Indi.hpp"
+#include "IndiProperty.hpp"
 #include "tests/testINDI.hpp"
 
 #include <QTest>

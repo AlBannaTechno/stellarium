@@ -29,14 +29,16 @@
 #include <QVariant>
 #include <QXmlStreamReader>
 
-#include "Indi.hpp"
+#include "IndiTypes.hpp"
+#include "IndiElement.hpp"
+#include "IndiProperty.hpp"
 
 //! Class implementing a client for the INDI wire protocol.
 //! Properties are stored internally. Qt signals are emitted when a property
 //! is changed or defined.
 //! A single instance of IndiClient represents one connection.
 //! \todo Device snooping!
-//! \todo Split the Indi.hpp file.
+//! \todo Split the Indi.hpp file. (Partially DONE.)
 //! \todo Use shared pointers.
 class IndiClient : public QObject
 {

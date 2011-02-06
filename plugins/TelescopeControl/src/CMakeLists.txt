@@ -59,8 +59,11 @@ SET(TelescopeControl_SRCS
   gui/IndiBlobPropertyWidget.cpp
   gui/IndiStateWidget.hpp
   gui/IndiStateWidget.cpp
-  indi/Indi.hpp
-  indi/Indi.cpp
+  indi/IndiTypes.hpp
+  indi/IndiElement.hpp
+  indi/IndiElement.cpp
+  indi/IndiProperty.hpp
+  indi/IndiProperty.cpp
   indi/IndiClient.hpp
   indi/IndiClient.cpp
   servers/LogFile.hpp
@@ -186,8 +189,11 @@ ADD_CUSTOM_TARGET(buildTelescopeControlTests)
 
 # INDI tests
 SET(tests_testINDI_SRCS
-	indi/Indi.hpp
-	indi/Indi.cpp
+	indi/IndiTypes.hpp
+	indi/IndiElement.hpp
+	indi/IndiElement.cpp
+	indi/IndiProperty.hpp
+    indi/IndiProperty.cpp
         tests/testINDI.hpp
         tests/testINDI.cpp)
     QT4_WRAP_CPP(testINDI_MOC_SRCS tests/testINDI.hpp)

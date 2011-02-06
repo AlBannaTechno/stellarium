@@ -26,7 +26,7 @@
 #include <QVariant>
 #include <QWidget>
 
-#include "Indi.hpp"
+#include "IndiProperty.hpp"
 
 //Control panel GUI elements:
 #include "IndiGroupWidget.hpp"

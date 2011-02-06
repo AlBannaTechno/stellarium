@@ -26,7 +26,7 @@
 #include <QHBoxLayout>
 #include <QWidget>
 
-#include "Indi.hpp"
+#include "IndiProperty.hpp"
 #include "IndiStateWidget.hpp"
 
 //! Abstract base class for property widgets in the control panel window.

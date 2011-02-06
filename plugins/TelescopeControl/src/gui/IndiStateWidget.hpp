@@ -25,7 +25,7 @@
 #include <QObject>
 #include <QWidget>
 
-#include "Indi.hpp"
+#include "IndiTypes.hpp"
 
 //! A widget to display one of the INDI states (Idle, Busy, OK, Alert).
 //! Used as a representation of a Light in IndiLightPropertyWidget and

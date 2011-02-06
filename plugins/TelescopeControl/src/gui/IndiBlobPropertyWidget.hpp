@@ -24,7 +24,7 @@
 
 #include "IndiPropertyWidget.hpp"
 
-#include "Indi.hpp"
+#include "IndiProperty.hpp"
 
 class IndiBlobPropertyWidget : public IndiPropertyWidget
 {
