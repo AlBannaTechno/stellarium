@@ -207,6 +207,9 @@ void DeviceControlPanel::defineProperty(const QString& clientName,
 
 	//And pass the received property to it.
 	deviceWidget->defineProperty(property);
+	//TODO: Place somewhere else.
+	//TODO: IndiClient should support "accept BLOBs" flags.
+	indiClient->writeEnableBlob(AlsoSendBlobs, deviceName);
 }
 
 void DeviceControlPanel::updateProperty(const QString& clientName,

@@ -153,12 +153,12 @@ public:
 
 	//! Decodes the string to a QByteArray?
 	//! And saves it to disk? Emits a signal to the previewer?
-	void setValue(const QString& blobLength,
+	void setValue(const QString& blobSize,
 	              const QString& blobFormat,
 	              const QString& blobData);
 
 	//! Example: Returns the decoded data?
-	QByteArray getValue() const;
+	const QByteArray& getValue() const;
 
 	//! Example
 	QString getFormat() const;

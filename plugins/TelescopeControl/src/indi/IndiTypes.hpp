@@ -37,11 +37,18 @@ enum State {
 	StateAlert
 };
 
-//! Rules governing the behaviour of vectors (arrays) of switches 
+//! Rules governing the behaviour of vectors (arrays) of switches.
 enum SwitchRule {
 	SwitchOnlyOne,
 	SwitchAtMostOne,
 	SwitchAny
+};
+
+//! Different modes of sending BLOBs.
+enum SendBlobs {
+	NeverSendBlobs,
+	AlsoSendBlobs,
+	OnlySendBlobs
 };
 
 #endif//_INDI_HPP_

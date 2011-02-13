@@ -351,7 +351,6 @@ QStringList LightProperty::getElementNames() const
 BlobProperty::BlobProperty(const QString& propertyName,
                            State propertyState,
                            Permission accessPermission,
-                           const QString& directoryPath,
                            const QString& propertyLabel,
                            const QString& propertyGroup,
                            const QDateTime& timestamp) :
@@ -360,8 +359,7 @@ BlobProperty::BlobProperty(const QString& propertyName,
 	         accessPermission,
 	         propertyLabel,
 	         propertyGroup,
-	         timestamp),
-	directoryPath(directoryPath)
+	         timestamp)
 {
 	type = Property::BlobProperty;
 }
@@ -391,16 +389,13 @@ BlobElement* BlobProperty::getElement(const QString& name)
 	return elements[name];
 }
 
-QString BlobProperty::getDirectoryPath() const
+void BlobProperty::update(const QDateTime& newTimestamp)
 {
-	return directoryPath;
+	setTimestamp(newTimestamp);
 }
 
-void BlobProperty::setDirectoryPath(const QString& newPath)
+void BlobProperty::update(const QDateTime& newTimestamp, State newState)
 {
-	QDir newDirectory(newPath);
-	if (newDirectory.exists())
-	{
-		directoryPath = newPath;
-	}
+	setState(newState);
+	setTimestamp(newTimestamp);
 }

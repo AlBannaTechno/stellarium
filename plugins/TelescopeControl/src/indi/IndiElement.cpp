@@ -20,8 +20,12 @@
 #include "IndiElement.hpp"
 
 #include <cmath>
+#include <QBuffer>
+#include <QDebug>
 #include <QRegExp>
 #include <QStringList>
+#include "kzip.h"
+
 
 /* ********************************************************************* */
 #if 0
@@ -308,14 +312,14 @@ BlobElement::BlobElement(const QString& elementName,
 	Q_UNUSED(initialValue);
 }
 
-void BlobElement::setValue(const QString& blobLength,
+void BlobElement::setValue(const QString& blobSize,
                            const QString& blobFormat,
                            const QString& blobData)
 {
 	//TODO: This is just a sketch.
 	//TODO: What happens if the device deliberately sends empty data?
-	int length = blobLength.toInt();
-	if (length <= 0)
+	int size = blobSize.toInt();
+	if (size <= 0)
 	{
 		//TODO: Debug
 		return;
@@ -337,7 +341,51 @@ void BlobElement::setValue(const QString& blobLength,
 	QByteArray newBinaryData = QByteArray::fromBase64(blobData.toAscii());
 
 	//TODO: Recognizing format?
+	/*if (format.endsWith(".z"))
+	{
+		qDebug() << "Compressed blob";
+		QByteArray decompressedData;
+		QBuffer* buffer = new QBuffer(&newBinaryData);
+		KZip compressedFile(buffer);
+		if (compressedFile.open(QIODevice::ReadOnly))
+		{
+			const KArchiveDirectory* directory = compressedFile.directory();
+			QStringList contents = directory->entries();
+			if (contents.count() > 1)
+			{
+				qDebug() << "Multiple files are not supported.";
+				compressedFile.close();
+				return;
+			}
+			const KArchiveEntry* file = directory->entry(contents.first());
+			if(file->isFile())
+			{
+				decompressedData = static_cast<const KZipFileEntry*>(file)->data();
+			}
+		}
+		else
+		{
+			delete buffer;
+			return;
+		}
+		compressedFile.close();
+		delete buffer;
+		newBinaryData = decompressedData;
+	}*/
 	//TODO: Decompressing, if necessary?
+
+	if (newBinaryData.size() == size)
+		binaryData = newBinaryData;
+	else
+	{
+		qDebug() << "BLOB size mismatch: From XML:" << size
+		         << "Actual data length:" << newBinaryData.size();
+	}
+}
+
+const QByteArray& BlobElement::getValue() const
+{
+	return binaryData;
 }
 
 QString BlobElement::getFormat() const

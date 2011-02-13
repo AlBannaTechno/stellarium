@@ -18,6 +18,7 @@
  */
 
 #include "IndiBlobPropertyWidget.hpp"
+#include <QFile>
 
 IndiBlobPropertyWidget::IndiBlobPropertyWidget(BlobProperty *property,
                                                const QString& title,
@@ -44,5 +45,34 @@ IndiBlobPropertyWidget::IndiBlobPropertyWidget(BlobProperty *property,
 
 void IndiBlobPropertyWidget::updateProperty(Property* property)
 {
-	Q_UNUSED(property);
+	BlobProperty* blobProperty = dynamic_cast<BlobProperty*>(property);
+	if (blobProperty)
+	{
+		//State
+		State newState = blobProperty->getCurrentState();
+		stateWidget->setState(newState);
+
+		//This is rather poorly thought-out. Though I doubt that it will often
+		//encounter vectors of multiple BLOBs.
+		//TODO: Remember format/fileaname extension so you don't have to
+		//generate them every time.
+		QDateTime timestamp = blobProperty->getTimestamp();
+		QString timestampString = timestamp.toString(Qt::ISODate);
+		QStringList elementNames = blobProperty->getElementNames();
+		foreach (const QString& elementName, elementNames)
+		{
+			BlobElement* element = blobProperty->getElement(elementName);
+			if (element->getSize() == 0)
+				continue;
+			//TODO: Temporary
+			QString filename = QString("~/Desktop/blob_%1.%2.%3")
+				.arg(element->getName(), timestampString, element->getFormat());
+			QFile blobFile(filename);
+			if (blobFile.open(QFile::WriteOnly))
+			{
+				blobFile.write(element->getValue());
+				blobFile.close();
+			}
+		}
+	}
 }

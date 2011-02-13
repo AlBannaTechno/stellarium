@@ -108,6 +108,7 @@ public:
 	static const char* A_MAXIMUM;
 	static const char* A_STEP;
 	static const char* A_RULE;
+	static const char* A_SIZE;
 
 	//INDI standard properties
 	//TODO: Move to the telescope client?
@@ -132,6 +133,10 @@ public slots:
 	void writeProperty(const QString& device,
 	                   const QString& property,
 	                   const QVariantHash& newValues);
+	//!
+	void writeEnableBlob(SendBlobs sendBlobs,
+	                     const QString& device,
+	                     const QString& property = QString());
 
 signals:
 	//! Emitted when a \b def[type]Vector element has been parsed.
@@ -175,7 +180,8 @@ private:
 	//!
 	//! \param checkPermission should be false when reading a LightProperty.
 	//! \param checkSwitchRule should be true when reading a SwitchProperty.
-	bool readPropertyAttributes(QString& device,
+	bool readPropertyAttributes(const QXmlStreamAttributes& attributes,
+	                            QString& device,
 	                            QString& property,
 	                            QString& label,
 	                            QString& group,
@@ -187,55 +193,61 @@ private:
 	                            bool checkPermission,
 	                            bool checkSwitchRule);
 	//!
-	bool readPropertyAttributes(QString& device,
+	bool readPropertyAttributes(const QXmlStreamAttributes& attributes,
+	                            QString& device,
 	                            QString& name,
 	                            QString& state,
 	                            QString& timeout);
 	//! Attempts to read the \b timestamp attribute of the current element.
 	//! \returns a UTC datetime if the timestamp can be parsed, otherwise
 	//! an invalid QDateTime object.
-	QDateTime readTimestampAttribute();
+	QDateTime readTimestampAttribute(const QXmlStreamAttributes& attributes);
 	//! Attempts to read the \b message attribute of the current element.
 	//! Emits messageReceived() if it's not empty.
-	void readMessageAttribute(const QString& device,
+	void readMessageAttribute(const QXmlStreamAttributes& attributes,
+	                          const QString& device,
 	                          const QDateTime& timestamp);
 	//!
-	void readMessageElement();
+	void readMessageElement(QXmlStreamReader& xmlReader);
 	//!
-	void readTextPropertyDefinition();
+	void readTextPropertyDefinition(QXmlStreamReader& xmlReader);
 	//!
-	void readNumberPropertyDefinition();
+	void readNumberPropertyDefinition(QXmlStreamReader& xmlReader);
 	//!
-	void readSwitchPropertyDefinition();
+	void readSwitchPropertyDefinition(QXmlStreamReader& xmlReader);
 	//!
-	void readLightPropertyDefintion();
+	void readLightPropertyDefintion(QXmlStreamReader& xmlReader);
 	//!
-	void readBlobPropertyDefinition();
+	void readBlobPropertyDefinition(QXmlStreamReader& xmlReader);
 	//!
 	template<class P,class E> void readPropertyElementsDefinitions
-		(const QString& propertyName,
+		(QXmlStreamReader& xmlReader,
+		 const QString& propertyName,
 		 const QString& deviceName,
 		 P* property,
 		 const QString& propertyTagName,
 		 const QString& elementTagName);
 	//!
-	QString	readElementRawValue(const QString& tag);
+	QString	readElementRawValue(QXmlStreamReader& xmlReader, const QString& tag);
 	//!
-	void readTextProperty();
+	void readTextProperty(QXmlStreamReader& xmlReader);
 	//!
-	void readNumberProperty();
+	void readNumberProperty(QXmlStreamReader& xmlReader);
 	//!
-	void readSwitchProperty();
+	void readSwitchProperty(QXmlStreamReader& xmlReader);
 	//!
-	void readLightProperty();
+	void readLightProperty(QXmlStreamReader& xmlReader);
 	//!
-	void readBlobProperty();
+	void readBlobProperty(QXmlStreamReader& xmlReader);
 	//! Reads all \b oneX tags except \b onewBLOB.
 	//! \param[in] tag
 	//! \param[out] newValues
-	void readOneElement(const QString& tag, QHash<QString,QString>& newValues);
+	void readOneElement(QXmlStreamReader& xmlReader,
+	                    const QString& tag,
+	                    QHash<QString,QString>& newValues);
 	//! Reads a \b oneBLOB tag.
-	void readBlobElement(BlobProperty* blobProperty);
+	void readBlobElement(QXmlStreamReader& xmlReader,
+	                     BlobProperty* blobProperty);
 
 	//! Helper for writeProperty().
 	//! Writes \b newTextVector element, including a series of \b oneText
@@ -277,10 +289,14 @@ private:
 	//! May be a QProcess or a QTcpSocket.
 	QIODevice* ioDevice;
 
+	//! \todo Do I really need this?
 	QTextStream* textStream;
 
 	//! \todo Better name...
-	QXmlStreamReader xmlReader;
+	//QXmlStreamReader xmlReader;
+
+	//!
+	QString buffer;
 
 	//! Represents all the named properties of a single device.
 	typedef QHash<QString,Property*> DeviceProperties;

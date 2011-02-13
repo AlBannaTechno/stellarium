@@ -197,7 +197,6 @@ public:
 	BlobProperty(const QString& propertyName,
 	             State propertyState,
 	             Permission accessPermission,
-	             const QString& directoryPath,
 	             const QString& propertyLabel = QString(),
 	             const QString& propertyGroup = QString(),
 	             const QDateTime& timestamp = QDateTime());
@@ -206,15 +205,14 @@ public:
 	void addElement(BlobElement* element);
 	BlobElement* getElement(const QString& name);
 
-	void setDirectoryPath(const QString& newPath);
-	QString getDirectoryPath() const;
+	void update(const QDateTime& timestamp);
+	void update(const QDateTime& timestamp, State newState);
+
 
 	int elementCount() const;
 	QStringList getElementNames() const;
 
 private:
-	//! Path to the directory where the received BLOBs are saved.
-	QString directoryPath;
 	QHash<QString,BlobElement*> elements;
 };
 
