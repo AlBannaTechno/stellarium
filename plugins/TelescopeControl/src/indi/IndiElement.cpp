@@ -340,7 +340,9 @@ void BlobElement::setValue(const QString& blobSize,
 	}
 	QByteArray newBinaryData = QByteArray::fromBase64(blobData.toAscii());
 
-	//TODO: Recognizing format?
+	//TODO: Detect compression
+	//TODO: Use zlib to decompress the stream
+	//The following doesn't work
 	/*if (format.endsWith(".z"))
 	{
 		qDebug() << "Compressed blob";
@@ -372,7 +374,6 @@ void BlobElement::setValue(const QString& blobSize,
 		delete buffer;
 		newBinaryData = decompressedData;
 	}*/
-	//TODO: Decompressing, if necessary?
 
 	if (newBinaryData.size() == size)
 		binaryData = newBinaryData;

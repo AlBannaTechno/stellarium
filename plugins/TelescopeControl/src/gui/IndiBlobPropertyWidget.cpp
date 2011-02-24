@@ -18,6 +18,7 @@
  */
 
 #include "IndiBlobPropertyWidget.hpp"
+#include <QDesktopServices>
 #include <QFile>
 
 IndiBlobPropertyWidget::IndiBlobPropertyWidget(BlobProperty *property,
@@ -56,8 +57,7 @@ void IndiBlobPropertyWidget::updateProperty(Property* property)
 		//encounter vectors of multiple BLOBs.
 		//TODO: Remember format/fileaname extension so you don't have to
 		//generate them every time.
-		QDateTime timestamp = blobProperty->getTimestamp();
-		QString timestampString = timestamp.toString(Qt::ISODate);
+		QString timestamp = blobProperty->getTimestamp().toString(Qt::ISODate);
 		QStringList elementNames = blobProperty->getElementNames();
 		foreach (const QString& elementName, elementNames)
 		{
@@ -65,8 +65,11 @@ void IndiBlobPropertyWidget::updateProperty(Property* property)
 			if (element->getSize() == 0)
 				continue;
 			//TODO: Temporary
-			QString filename = QString("~/Desktop/blob_%1.%2.%3")
-				.arg(element->getName(), timestampString, element->getFormat());
+			QString desktopPath = QDesktopServices::storageLocation(QDesktopServices::DesktopLocation);
+			QString name = element->getName();
+			QString format =  element->getFormat();
+			QString filename = QString("%1/blob_%2.%3%4")
+				.arg(desktopPath, name, timestamp, format);
 			QFile blobFile(filename);
 			if (blobFile.open(QFile::WriteOnly))
 			{

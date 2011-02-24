@@ -129,14 +129,24 @@ QString IndiClient::getId() const
 	return clientId;
 }
 
-void IndiClient::sendRawCommand(const QString& command)
+bool IndiClient::isConnected() const
 {
+	//TODO: Rewrite
 	if (textStream == 0)
-		return;
+		return false;
 
 	if (ioDevice == 0 ||
 		!ioDevice->isOpen() ||
+		!ioDevice->isReadable() ||
 		!ioDevice->isWritable())
+		return false;
+
+	return true;
+}
+
+void IndiClient::sendRawCommand(const QString& command)
+{
+	if (!isConnected())
 		return;
 
 	QTextStream outgoing(ioDevice);
@@ -206,32 +216,29 @@ QHash<QString,QString> IndiClient::loadDeviceDescriptions()
 
 void IndiClient::handleIncomingCommands()
 {
-	if (textStream == 0)
-		return;
-
-	if (ioDevice == 0 ||
-		!ioDevice->isOpen() ||
-		!ioDevice->isReadable() ||
-		!ioDevice->isWritable())
+	if (!isConnected())
 		return;
 
 	//Get rid of "XML declaration not at start of document." errors
 	//(Damn INDI and badly formed code!)
-	//TODO: Hack! Think of a better way!
-	QString buffer = textStream->readAll();
+
 	//const QRegExp xmlDeclaration("<\\?[^>]+>");
 	//buffer.remove(xmlDeclaration);
 	//xmlReader.addData(buffer);
-	QXmlStreamReader xmlReader(buffer);
 
-	qint64 startPos = 0;
-	while (!xmlReader.isEndDocument())
+	buffer.append(textStream->readAll());
+	QXmlStreamReader xmlReader(buffer);
+	qint64 startPos = 0, offset = 0;
+
+	while (!xmlReader.atEnd())
 	{
 		xmlReader.readNext();
-		qDebug() << xmlReader.tokenString();
-		//TODO: Ugly. Must be rewritten.
+		//qDebug() << xmlReader.tokenString();
+		//TODO: Is this check necessary? Will it work?
 		if (xmlReader.isEndDocument())
 		{
+			//TODO
+			buffer.clear();
 			break;
 		}
 		else if (xmlReader.tokenType() == QXmlStreamReader::Invalid)
@@ -243,12 +250,20 @@ void IndiClient::handleIncomingCommands()
 				//reached.
 				//TODO: Better way of handling this.
 				//qDebug() << "Command segment read.";
-				break;
+				//break;
+				return;
 			}
 			else if (errorCode == QXmlStreamReader::NotWellFormedError
 			         && xmlReader.errorString() == "Extra content at end of document.")
 			{
-				break;
+				QString command = buffer.mid(startPos, offset-startPos);
+				parseIndiCommand(command);
+				//qDebug() << "Command:" << command;
+				buffer = buffer.mid(offset);
+				xmlReader.clear();
+				xmlReader.addData(buffer);
+				offset = 0;
+				startPos = 0;
 			}
 			else
 			{
@@ -264,11 +279,27 @@ void IndiClient::handleIncomingCommands()
 		else if (xmlReader.isWhitespace())
 			continue;
 
-		qint64 offset = xmlReader.characterOffset();
-		qDebug() << buffer.mid(startPos, offset-startPos);
-		startPos = offset;
+		offset = xmlReader.characterOffset();
+	}
+}
 
-		/*if (xmlReader.isStartElement())
+void IndiClient::parseIndiCommand(const QString& command)
+{
+	QXmlStreamReader xmlReader(command);
+
+	while (!xmlReader.atEnd())
+	{
+		if (xmlReader.isWhitespace())
+			continue;
+
+		if (xmlReader.tokenType() == QXmlStreamReader::Invalid)
+		{
+			QXmlStreamReader::Error errorCode = xmlReader.error();
+			qDebug() << errorCode << xmlReader.errorString();
+			break;
+		}
+
+		if (xmlReader.isStartElement())
 		{
 			//TODO: Sort by frequence.
 			if (xmlReader.name() == T_DEF_TEXT_VECTOR)
@@ -297,7 +328,7 @@ void IndiClient::handleIncomingCommands()
 			}
 			else if (xmlReader.name() == T_SET_SWITCH_VECTOR)
 			{
-				readSwitchProperty()xmlReader;
+				readSwitchProperty(xmlReader);
 			}
 			else if (xmlReader.name() == T_SET_BLOB_VECTOR)
 			{
@@ -310,7 +341,7 @@ void IndiClient::handleIncomingCommands()
 			//TODO: To be continued...
 		}
 
-	*/
+		xmlReader.readNext();
 	}
 }
 
@@ -785,7 +816,7 @@ QString IndiClient::readElementRawValue(QXmlStreamReader& xmlReader,
 		}
 		xmlReader.readNext();
 	}*/
-	qDebug() << "readCharacters";
+	//qDebug() << "readCharacters";
 	value = xmlReader.readElementText().trimmed();
 	return value;
 }
@@ -895,7 +926,7 @@ void IndiClient::readBlobElement(QXmlStreamReader& xmlReader,
 		qDebug() << "Callin readElementRawValue()";
 		QString value = readElementRawValue(xmlReader, T_ONE_BLOB);
 		qDebug() << name << size << format;
-		qDebug() << value;
+		//qDebug() << value;
 		if (!value.isEmpty())
 		{
 			qDebug() << "setValue called";

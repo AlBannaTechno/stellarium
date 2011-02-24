@@ -52,6 +52,8 @@ public:
 
 	QString getId() const;
 
+	bool isConnected() const;
+
 	//! \todo A temporary function to fill the gap.
 	void sendRawCommand(const QString& command);
 
@@ -168,7 +170,28 @@ private slots:
 	                const QString& message);
 
 private:
+	//! Identifier of the INDI client represented by the current object.
 	QString clientId;
+
+	//! May be a QProcess or a QTcpSocket.
+	QIODevice* ioDevice;
+
+	//! \todo Do I really need this?
+	QTextStream* textStream;
+
+	//! \todo Better name...
+	//QXmlStreamReader xmlReader;
+
+	//!
+	QString buffer;
+
+	//! Represents all the named properties of a single device.
+	typedef QHash<QString,Property*> DeviceProperties;
+	//! The properties of all named devices.
+	QHash<QString,DeviceProperties> deviceProperties;
+
+	//!
+	void parseIndiCommand(const QString& command);
 
 	//!
 	Permission readPermissionFromString(const QString& string);
@@ -284,24 +307,6 @@ private:
 	                       const QString& device,
 	                       Property* property,
 	                       const QVariantHash& newValues);
-
-
-	//! May be a QProcess or a QTcpSocket.
-	QIODevice* ioDevice;
-
-	//! \todo Do I really need this?
-	QTextStream* textStream;
-
-	//! \todo Better name...
-	//QXmlStreamReader xmlReader;
-
-	//!
-	QString buffer;
-
-	//! Represents all the named properties of a single device.
-	typedef QHash<QString,Property*> DeviceProperties;
-	//! The properties of all named devices.
-	QHash<QString,DeviceProperties> deviceProperties;
 };
 
 #endif //_INDI_CLIENT_HPP_
