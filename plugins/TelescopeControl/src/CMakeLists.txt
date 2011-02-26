@@ -18,6 +18,8 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClientDirectNexStar.cpp
   clients/TelescopeClientDirectServoCat.hpp
   clients/TelescopeClientDirectServoCat.cpp
+  clients/TelescopeClientDirectUltima2000.hpp
+  clients/TelescopeClientDirectUltima2000.cpp
   TelescopeControl.hpp
   TelescopeControl.cpp
   gui/SlewDialog.hpp
@@ -50,6 +52,10 @@ SET(TelescopeControl_SRCS
   servers/ServoCatConnection.cpp
   servers/ServoCatCommand.hpp
   servers/ServoCatCommand.cpp
+  servers/Ultima2000Connection.hpp
+  servers/Ultima2000Connection.cpp
+  servers/Ultima2000Command.hpp
+  servers/Ultima2000Command.cpp
   )
 
 # Add here all the .ui files
@@ -76,6 +82,7 @@ SET(TelescopeControl_MOC_HDRS
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectNexStar.hpp
   clients/TelescopeClientDirectServoCat.hpp
+  clients/TelescopeClientDirectUltima2000.hpp
   )
 
 # After this call, TelescopeControl_MOC_SRCS = moc_TelescopeControl.cxx

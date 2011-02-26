@@ -27,6 +27,7 @@
 #include "TelescopeClientDirectLx200.hpp"
 #include "TelescopeClientDirectNexStar.hpp"
 #include "TelescopeClientDirectServoCat.hpp"
+#include "TelescopeClientDirectUltima2000.hpp"
 #include "StelUtils.hpp"
 #include "StelTranslator.hpp"
 #include "StelCore.hpp"
@@ -105,6 +106,10 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 	else if (type == "TelescopeServerServoCat")
 	{
 		newTelescope= new TelescopeClientDirectServoCat(name, params, eq);
+	}
+	else if (type == "TelescopeServerUltima2000")
+	{
+		newTelescope= new TelescopeClientDirectUltima2000(name, params, eq);
 	}
 	else
 	{

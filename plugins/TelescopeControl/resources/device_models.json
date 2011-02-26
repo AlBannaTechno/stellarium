@@ -1,5 +1,5 @@
 {
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"list" :
 	[
 		{
@@ -54,6 +54,12 @@
 			"name" : "StellarCAT ServoCAT",
 			"description" : "StellarCAT's ServoCAT GOTO kit.",
 			"server" : "TelescopeServerServoCat",
+			"default_delay" : 500000
+		},
+		{
+			"name" : "Celestron Ultima 2000",
+			"description" : "Celestron's Ultima 2000 GOTO telescope.",
+			"server" : "TelescopeServerUltima2000",
 			"default_delay" : 500000
 		}
 	]
