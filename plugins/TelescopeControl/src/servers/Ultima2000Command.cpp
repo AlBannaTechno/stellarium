@@ -133,7 +133,10 @@ int Ultima2000CommandGetRaDec::readAnswerFromBuffer(const char *&buff, const cha
 	if (end-buff < 10)
 		return 0;
 
-	qint16 ra, dec;
+	//Note: the parameters of TelescopeClientDirectUltima2000::raDecReceived()
+	//are "unsigned int" at the moment, so something has to be changed in the
+	//future.
+	quint32 ra, dec;
 	const char *p = buff;
 
 	// Next 4 bytes are RA as hexadecimal digits
