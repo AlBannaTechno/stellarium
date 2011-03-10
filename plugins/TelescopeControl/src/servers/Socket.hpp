@@ -70,7 +70,7 @@ static inline int SetNonblocking(int s)
 
 #endif //Q_OS_WIN32
 
-long long int GetNow(void);
+long long int GetNow();
 
 class Server;
 

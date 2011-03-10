@@ -45,9 +45,9 @@ class Socket;
 class Server
 {
 public:
-	Server(void) {}
+	Server() {}
 	Server(int port);
-	virtual ~Server(void) {}
+	virtual ~Server() {}
 	virtual void step(long long int timeout_micros);
 	
 protected:
@@ -62,7 +62,7 @@ protected:
 		if (s)
 			socket_list.push_back(s);
 	}
-	void closeAcceptedConnections(void);
+	void closeAcceptedConnections();
 	friend class Listener;
 	
 private:
@@ -73,8 +73,8 @@ private:
 	class SocketList : public list<Socket*>
 	{
 		public:
-		~SocketList(void) { clear(); }
-		void clear(void);
+		~SocketList() { clear(); }
+		void clear();
 	};
 	//! A list of the connections maintained by the server.
 	SocketList socket_list;

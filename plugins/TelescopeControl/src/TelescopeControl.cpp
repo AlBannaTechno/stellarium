@@ -457,7 +457,7 @@ void TelescopeControl::telescopeGoto(int slotNumber, const Vec3d &j2000Pos)
 		telescopeClients.value(slotNumber)->telescopeGoto(j2000Pos);
 }
 
-void TelescopeControl::communicate(void)
+void TelescopeControl::communicate()
 {
 	if (!telescopeClients.empty())
 	{
@@ -504,7 +504,7 @@ bool TelescopeControl::isConnectedClientAtSlot(int slotNumber)
 // Methods for managing telescope server process objects
 //
 
-void TelescopeControl::loadTelescopeServerExecutables(void)
+void TelescopeControl::loadTelescopeServerExecutables()
 {
 	telescopeServers = QStringList();
 

@@ -32,23 +32,23 @@ class Connection : public Socket
 {
 public:
 	Connection(Server &server, SOCKET fd);
-	long long int getServerMinusClientTime(void) const
+	long long int getServerMinusClientTime() const
 	{
 		return server_minus_client_time;
 	}
 	
 protected:
 	//! Receives data from a TCP/IP connection and stores it in the read buffer.
-	void performReading(void);
+	void performReading();
 	//! Sends the contents of the write buffer over a TCP/IP connection.
-	void performWriting(void);
+	void performWriting();
 	void prepareSelectFds(fd_set &read_fds, fd_set &write_fds, int &fd_max);
 	
 private:
 	//! Returns true, as by default Connection implements a TCP/IP connection.
-	virtual bool isTcpConnection(void) const {return true;}
+	virtual bool isTcpConnection() const {return true;}
 	//! Returns false, as by default Connection implements a TCP/IP connection.
-	virtual bool isAsciiConnection(void) const {return false;}
+	virtual bool isAsciiConnection() const {return false;}
 	void handleSelectFds(const fd_set &read_fds, const fd_set &write_fds);
 	//! Parses the read buffer and handles any messages contained within it.
 	//! If the data contains a Stellarium telescope control command,

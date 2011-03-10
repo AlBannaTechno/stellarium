@@ -151,7 +151,7 @@ QString TelescopeClient::getInfoString(const StelCore* core, const InfoStringGro
 //! Prior to revision 6308, it was necessary to put put this method in an
 //! #ifdef block, as duplicate function definition caused errors during static
 //! linking.
-qint64 getNow(void)
+qint64 getNow()
 {
 // At the moment this can't be done in a platform-independent way with Qt
 // (QDateTime and QTime don't support microsecond precision)
@@ -242,7 +242,7 @@ TelescopeTCP::TelescopeTCP(const QString &name, const QString &params, Equinox e
 	connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketFailed(QAbstractSocket::SocketError)));
 }
 
-void TelescopeTCP::hangup(void)
+void TelescopeTCP::hangup()
 {
 	if (tcpSocket->isValid())
 	{
@@ -325,7 +325,7 @@ void TelescopeTCP::telescopeGoto(const Vec3d &j2000Pos)
 	}
 }
 
-void TelescopeTCP::performWriting(void)
+void TelescopeTCP::performWriting()
 {
 	const int to_write = writeBufferEnd - writeBuffer;
 	const int rc = tcpSocket->write(writeBuffer, to_write);
@@ -353,7 +353,7 @@ void TelescopeTCP::performWriting(void)
 }
 
 //! try to read some data from the telescope server
-void TelescopeTCP::performReading(void)
+void TelescopeTCP::performReading()
 {
 	const int to_read = readBuffer + sizeof(readBuffer) - readBufferEnd;
 	const int rc = tcpSocket->read(readBufferEnd, to_read);

@@ -34,14 +34,14 @@ class ServoCatConnection : public SerialPort
 {
 public:
 	ServoCatConnection(Server &server, const char *serial_device);
-	~ServoCatConnection(void) { resetCommunication(); }
+	~ServoCatConnection() { resetCommunication(); }
 	void sendGoto(unsigned int ra_int, int dec_int);
 	void sendCommand(ServoCatCommand * command);
 	
 private:
 	void dataReceived(const char *&p, const char *read_buff_end);
 	void sendPosition(unsigned int ra_int, int dec_int, int status) {Q_UNUSED(ra_int); Q_UNUSED(dec_int); Q_UNUSED(status);}
-	void resetCommunication(void);
+	void resetCommunication();
 	
 private:
 	list<ServoCatCommand*> command_list;

@@ -34,7 +34,7 @@ NexStarConnection::NexStarConnection(Server &server, const char *serial_device) 
 {
 }
 
-void NexStarConnection::resetCommunication(void)
+void NexStarConnection::resetCommunication()
 {
 	while (!command_list.empty())
 	{

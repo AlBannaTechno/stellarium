@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   #include <sys/time.h>
 #endif
 
-long long int GetNow(void)
+long long int GetNow()
 {
 #ifdef Q_OS_WIN32
 	union
@@ -47,7 +47,7 @@ long long int GetNow(void)
 #endif
 }
 
-void Socket::hangup(void)
+void Socket::hangup()
 {
 	if (!IS_INVALID_SOCKET(fd))
 	{

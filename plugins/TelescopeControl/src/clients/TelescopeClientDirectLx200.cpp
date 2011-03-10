@@ -148,7 +148,7 @@ void TelescopeClientDirectLx200::performCommunication()
 	step(10000);
 }
 
-void TelescopeClientDirectLx200::communicationResetReceived(void)
+void TelescopeClientDirectLx200::communicationResetReceived()
 {
 	long_format_used = false;
 	queue_get_position = true;
@@ -212,12 +212,12 @@ void TelescopeClientDirectLx200::step(long long int timeout_micros)
 	Server::step(timeout_micros);
 }
 
-bool TelescopeClientDirectLx200::isConnected(void) const
+bool TelescopeClientDirectLx200::isConnected() const
 {
 	return (!lx200->isClosed());//TODO
 }
 
-bool TelescopeClientDirectLx200::isInitialized(void) const
+bool TelescopeClientDirectLx200::isInitialized() const
 {
 	return (!lx200->isClosed());
 }

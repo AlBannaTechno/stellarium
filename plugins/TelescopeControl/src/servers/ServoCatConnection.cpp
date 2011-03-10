@@ -32,7 +32,7 @@ ServoCatConnection::ServoCatConnection(Server &server, const char *serial_device
 {
 }
 
-void ServoCatConnection::resetCommunication(void)
+void ServoCatConnection::resetCommunication()
 {
 	while (!command_list.empty())
 	{

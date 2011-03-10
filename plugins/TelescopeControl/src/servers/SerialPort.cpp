@@ -141,7 +141,7 @@ SerialPort::SerialPort(Server &server, const char *serial_device) : Connection(s
 #endif //Q_OS_WIN32
 }
 
-SerialPort::~SerialPort(void)
+SerialPort::~SerialPort()
 {
 #ifdef Q_OS_WIN32
 	if (handle != INVALID_HANDLE_VALUE)

@@ -207,7 +207,7 @@ private:
 	void drawPointer(const StelProjectorP& prj, const StelNavigator* nav, StelPainter& sPainter);
 
 	//! Perform the communication with the telescope servers
-	void communicate(void);
+	void communicate();
 	
 	LinearFader labelFader;
 	LinearFader reticleFader;

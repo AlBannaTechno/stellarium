@@ -27,12 +27,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <QTextStream>
 
-long long int GetNow(void);
+long long int GetNow();
 
 class Now
 {
 public:
-	Now(void) : time(GetNow()) {}
+	Now() : time(GetNow()) {}
 	const long long int time;
 };
 

@@ -42,10 +42,10 @@ public:
 	//! On UNIX systems, this should be something like "/dev/ttyS0".
 	//! On Microsoft Windows systems, this should be something like "COM1:".
 	SerialPort(Server &server, const char *serial_device);
-	~SerialPort(void);
+	~SerialPort();
 	//! Returns true if the connection is closed.
 	//! This method has different platform-dependent implementations.
-	virtual bool isClosed(void) const
+	virtual bool isClosed() const
 	{
 	#ifdef Q_OS_WIN32
 		return (handle == INVALID_HANDLE_VALUE);
@@ -59,9 +59,9 @@ protected:
 	
 private:
 	//! Returns false, as SerialPort implements a serial port connection.
-	bool isTcpConnection(void) const {return false;}
+	bool isTcpConnection() const {return false;}
 	//! Returns true, as SerialPort implements a serial port connection.
-	bool isAsciiConnection(void) const {return true;}
+	bool isAsciiConnection() const {return true;}
 	
 private:
 #ifdef Q_OS_WIN32

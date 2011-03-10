@@ -36,14 +36,14 @@ class TelescopeClientDirectLx200;
 class Lx200Command
 {
 public:
-	virtual ~Lx200Command(void) {}
+	virtual ~Lx200Command() {}
 	virtual bool writeCommandToBuffer(char *&buff, char *end) = 0;
-	bool hasBeenWrittenToBuffer(void) const {return has_been_written_to_buffer;}
+	bool hasBeenWrittenToBuffer() const {return has_been_written_to_buffer;}
 	virtual int readAnswerFromBuffer(const char *&buff, const char *end) = 0;
-	virtual bool needsNoAnswer(void) const {return false;}
+	virtual bool needsNoAnswer() const {return false;}
 	virtual void print(QTextStream &o) const = 0;
-	virtual bool isCommandGotoSelected(void) const {return false;}
-	virtual bool shortAnswerReceived(void) const {return false;}
+	virtual bool isCommandGotoSelected() const {return false;}
+	virtual bool shortAnswerReceived() const {return false;}
 	//returns true when reading is finished
 	
 protected:
@@ -68,7 +68,7 @@ public:
 private:
 	bool writeCommandToBuffer(char *&buff, char *end);
 	int readAnswerFromBuffer(const char*&, const char*) {return 1;}
-	bool needsNoAnswer(void) const {return true;}
+	bool needsNoAnswer() const {return true;}
 	void print(QTextStream &o) const;
 };
 
@@ -82,7 +82,7 @@ public:
 private:
 	bool writeCommandToBuffer(char *&buff, char *end);
 	int readAnswerFromBuffer(const char*&, const char*) {return 1;}
-	bool needsNoAnswer(void) const {return true;}
+	bool needsNoAnswer() const {return true;}
 	void print(QTextStream &o) const;
 };
 
@@ -123,8 +123,8 @@ public:
 	bool writeCommandToBuffer(char *&buff, char *end);
 	int readAnswerFromBuffer(const char *&buff, const char *end);
 	void print(QTextStream &o) const;
-	bool isCommandGotoSelected(void) const {return true;}
-	bool shortAnswerReceived(void) const {return (first_byte != 256);}
+	bool isCommandGotoSelected() const {return true;}
+	bool shortAnswerReceived() const {return (first_byte != 256);}
 	
 private:
 	int first_byte;

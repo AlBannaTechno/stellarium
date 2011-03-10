@@ -145,7 +145,7 @@ void TelescopeClientDirectUltima2000::performCommunication()
 	step(10000);
 }
 
-void TelescopeClientDirectUltima2000::communicationResetReceived(void)
+void TelescopeClientDirectUltima2000::communicationResetReceived()
 {
 	queue_get_position = true;
 	next_pos_time = -0x8000000000000000LL;
@@ -179,12 +179,12 @@ void TelescopeClientDirectUltima2000::step(long long int timeout_micros)
 	Server::step(timeout_micros);
 }
 
-bool TelescopeClientDirectUltima2000::isConnected(void) const
+bool TelescopeClientDirectUltima2000::isConnected() const
 {
 	return (!ultima2000->isClosed());//TODO
 }
 
-bool TelescopeClientDirectUltima2000::isInitialized(void) const
+bool TelescopeClientDirectUltima2000::isInitialized() const
 {
 	return (!ultima2000->isClosed());
 }

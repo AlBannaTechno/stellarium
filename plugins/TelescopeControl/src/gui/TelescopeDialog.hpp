@@ -64,18 +64,18 @@ private:
 	void setStatusButtonToDisconnect();
 	
 private slots:
-	void buttonChangeStatusPressed(void);
-	void buttonConfigurePressed(void);
-	void buttonAddPressed(void);
-	void buttonRemovePressed(void);
+	void buttonChangeStatusPressed();
+	void buttonConfigurePressed();
+	void buttonAddPressed();
+	void buttonRemovePressed();
 	
 	void checkBoxUseExecutablesToggled(bool);
-	void buttonBrowseServerDirectoryPressed(void);
+	void buttonBrowseServerDirectoryPressed();
 	
 	//! Slot for receiving information from TelescopeConfigurationDialog
 	void saveChanges(QString name, ConnectionType type);
 	//! Slot for receiving information from TelescopeConfigurationDialog
-	void discardChanges(void);
+	void discardChanges();
 	
 	void toggleReticles(int);
 	void toggleLabels(int);
@@ -84,7 +84,7 @@ private slots:
 	void configureTelescope(const QModelIndex &);
 	
 	//! Update the list of telescopes with their current states
-	void updateTelescopeStates(void);
+	void updateTelescopeStates();
 
 private:
 	enum TelescopeStatus {

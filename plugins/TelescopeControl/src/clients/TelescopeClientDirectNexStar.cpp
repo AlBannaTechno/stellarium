@@ -146,7 +146,7 @@ void TelescopeClientDirectNexStar::performCommunication()
 	step(10000);
 }
 
-void TelescopeClientDirectNexStar::communicationResetReceived(void)
+void TelescopeClientDirectNexStar::communicationResetReceived()
 {
 	queue_get_position = true;
 	next_pos_time = -0x8000000000000000LL;
@@ -189,12 +189,12 @@ void TelescopeClientDirectNexStar::step(long long int timeout_micros)
 	Server::step(timeout_micros);
 }
 
-bool TelescopeClientDirectNexStar::isConnected(void) const
+bool TelescopeClientDirectNexStar::isConnected() const
 {
 	return (!nexstar->isClosed());//TODO
 }
 
-bool TelescopeClientDirectNexStar::isInitialized(void) const
+bool TelescopeClientDirectNexStar::isInitialized() const
 {
 	return (!nexstar->isClosed());
 }

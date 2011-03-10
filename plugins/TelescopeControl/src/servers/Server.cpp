@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //#include "Listener.hpp"
 #include "LogFile.hpp"
 
-void Server::SocketList::clear(void)
+void Server::SocketList::clear()
 {
 	for (const_iterator it(begin()); it != end(); it++)
 	{
@@ -93,7 +93,7 @@ void Server::step(long long int timeout_micros)
 	}
 }
 
-void Server::closeAcceptedConnections(void)
+void Server::closeAcceptedConnections()
 {
 	for (SocketList::iterator it(socket_list.begin());
 	     it != socket_list.end();

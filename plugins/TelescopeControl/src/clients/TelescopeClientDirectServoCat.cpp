@@ -145,7 +145,7 @@ void TelescopeClientDirectServoCat::performCommunication()
 	step(10000);
 }
 
-void TelescopeClientDirectServoCat::communicationResetReceived(void)
+void TelescopeClientDirectServoCat::communicationResetReceived()
 {
 	queue_get_position = true;
 	next_pos_time = -0x8000000000000000LL;
@@ -179,12 +179,12 @@ void TelescopeClientDirectServoCat::step(long long int timeout_micros)
 	Server::step(timeout_micros);
 }
 
-bool TelescopeClientDirectServoCat::isConnected(void) const
+bool TelescopeClientDirectServoCat::isConnected() const
 {
 	return (!servoCat->isClosed());//TODO
 }
 
-bool TelescopeClientDirectServoCat::isInitialized(void) const
+bool TelescopeClientDirectServoCat::isInitialized() const
 {
 	return (!servoCat->isClosed());
 }

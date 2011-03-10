@@ -33,11 +33,11 @@ class TelescopeClientDirectServoCat;
 class ServoCatCommand
 {
 public:
-	virtual ~ServoCatCommand(void) {}
+	virtual ~ServoCatCommand() {}
 	virtual bool writeCommandToBuffer(char *&buff, char *end) = 0;
-	bool hasBeenWrittenToBuffer(void) const { return has_been_written_to_buffer; }
+	bool hasBeenWrittenToBuffer() const { return has_been_written_to_buffer; }
 	virtual int readAnswerFromBuffer(const char *&buff, const char *end) const = 0;
-	virtual bool needsNoAnswer(void) const { return false; }
+	virtual bool needsNoAnswer() const { return false; }
 	virtual void print(QTextStream &o) const = 0;
 	// returns true when reading is finished
 	
@@ -60,7 +60,7 @@ public:
 	ServoCatCommandGotoPosition(Server &server, double ra, double dec);
 	bool writeCommandToBuffer(char *&buff, char *end);
 	int readAnswerFromBuffer(const char *&buff, const char *end) const;
-	virtual bool needsNoAnswer(void) const { return true; }
+	virtual bool needsNoAnswer() const { return true; }
 	void print(QTextStream &o) const;
 	
 private:

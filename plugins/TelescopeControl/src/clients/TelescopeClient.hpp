@@ -39,7 +39,7 @@
 #include "StelNavigator.hpp"
 #include "InterpolatedPosition.hpp"
 
-qint64 getNow(void);
+qint64 getNow();
 
 enum Equinox {
 	EquinoxJ2000,
@@ -54,13 +54,13 @@ class TelescopeClient : public QObject, public StelObject
 {
 	Q_OBJECT
 public:
-	static TelescopeClient *create(const QString &url);
-	virtual ~TelescopeClient(void) {}
+	static TelescopeClient *create(const QString& url);
+	virtual ~TelescopeClient() {}
 	
 	// Method inherited from StelObject
-	QString getEnglishName(void) const {return name;}
-	QString getNameI18n(void) const {return nameI18n;}
-	Vec3f getInfoColor(void) const
+	QString getEnglishName() const {return name;}
+	QString getNameI18n() const {return nameI18n;}
+	Vec3f getInfoColor() const
 	{
 		return StelApp::getInstance().getVisionModeNight() ? Vec3f(0.8, 0.2, 0.2) : Vec3f(1, 1, 1);
 	}
@@ -73,15 +73,15 @@ public:
 	//! @param flags a set of InfoStringGroup items to include in the return value.
 	//! @return a QString containing an HMTL encoded description of the Telescope.
 	QString getInfoString(const StelCore* core, const InfoStringGroup& flags) const;
-	QString getType(void) const {return "Telescope";}
+	QString getType() const {return "Telescope";}
 	virtual double getAngularSize(const StelCore*) const {Q_ASSERT(0); return 0;}	// TODO
 		
 	// Methods specific to telescope
 	virtual void telescopeGoto(const Vec3d &j2000Pos) = 0;
-	virtual bool isConnected(void) const = 0;
-	virtual bool hasKnownPosition(void) const = 0;
+	virtual bool isConnected() const = 0;
+	virtual bool hasKnownPosition() const = 0;
 	void addOcular(double fov) {if (fov>=0.0) oculars.push_back(fov);}
-	const QList<double> &getOculars(void) const {return oculars;}
+	const QList<double> &getOculars() const {return oculars;}
 	
 	virtual bool prepareCommunication() {return false;}
 	virtual void performCommunication() {}
@@ -91,7 +91,7 @@ protected:
 	QString nameI18n;
 	const QString name;
 private:
-	virtual bool isInitialized(void) const {return true;}
+	virtual bool isInitialized() const {return true;}
 	float getSelectPriority(const StelNavigator*) const {return -10.f;}
 private:
 	QList<double> oculars; // fov of the oculars
@@ -112,12 +112,12 @@ public:
 		desired_pos[1] = XYZ[1] = 0.0;
 		desired_pos[2] = XYZ[2] = 0.0;
 	}
-	~TelescopeClientDummy(void) {}
-	bool isConnected(void) const
+	~TelescopeClientDummy() {}
+	bool isConnected() const
 	{
 		return true;
 	}
-	bool prepareCommunication(void)
+	bool prepareCommunication()
 	{
 		XYZ = XYZ * 31.0 + desired_pos;
 		const double lq = XYZ.lengthSquared();
@@ -132,7 +132,7 @@ public:
 		desired_pos = j2000Pos;
 		desired_pos.normalize();
 	}
-	bool hasKnownPosition(void) const
+	bool hasKnownPosition() const
 	{
 		return true;
 	}
@@ -156,11 +156,11 @@ class TelescopeTCP : public TelescopeClient
 	Q_OBJECT
 public:
 	TelescopeTCP(const QString &name, const QString &params, Equinox eq = EquinoxJ2000);
-	~TelescopeTCP(void)
+	~TelescopeTCP()
 	{
 		hangup();
 	}
-	bool isConnected(void) const
+	bool isConnected() const
 	{
 		//return (tcpSocket->isValid() && !wait_for_connection_establishment);
 		return (tcpSocket->state() == QAbstractSocket::ConnectedState);
@@ -171,15 +171,15 @@ private:
 	bool prepareCommunication();
 	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
-	bool isInitialized(void) const
+	bool isInitialized() const
 	{
 		return (!address.isNull());
 	}
-	void performReading(void);
-	void performWriting(void);
+	void performReading();
+	void performWriting();
 	
 private:
-	void hangup(void);
+	void hangup();
 	QHostAddress address;
 	unsigned int port;
 	QTcpSocket * tcpSocket;
@@ -192,7 +192,7 @@ private:
 	int time_delay;
 
 	InterpolatedPosition interpolatedPosition;
-	virtual bool hasKnownPosition(void) const
+	virtual bool hasKnownPosition() const
 	{
 		return interpolatedPosition.isKnown();
 	}

@@ -127,7 +127,7 @@ void Connection::handleSelectFds(const fd_set &read_fds,
 }
 
 
-void Connection::performWriting(void)
+void Connection::performWriting()
 {
 	const int to_write = write_buff_end - write_buff;
 	const int rc = writeNonblocking(write_buff, to_write);
@@ -167,7 +167,7 @@ void Connection::performWriting(void)
 	}
 }
 
-void Connection::performReading(void)
+void Connection::performReading()
 {
 	const int to_read = read_buff + sizeof(read_buff) - read_buff_end;
 	const int rc = readNonblocking(read_buff_end, to_read);

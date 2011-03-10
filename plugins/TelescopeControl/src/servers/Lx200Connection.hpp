@@ -49,14 +49,14 @@ private:
 	void dataReceived(const char *&p, const char *read_buff_end);
 	//! Not implemented, as this is not a connection to a client.
 	void sendPosition(unsigned int ra_int, int dec_int, int status) {Q_UNUSED(ra_int); Q_UNUSED(dec_int); Q_UNUSED(status);}
-	void resetCommunication(void);
+	void resetCommunication();
 	void prepareSelectFds(fd_set &read_fds, fd_set &write_fds, int &fd_max);
-	bool writeFrontCommandToBuffer(void);
+	bool writeFrontCommandToBuffer();
 	//! Flushes the command queue, sending commands to the write buffer.
 	//! This method iterates over the queue, writing to the write buffer
 	//! as many commands as possible, until it reaches a command that
 	//! requires an answer.
-	void flushCommandList(void);
+	void flushCommandList();
 	
 private:
 	list<Lx200Command*> command_list;

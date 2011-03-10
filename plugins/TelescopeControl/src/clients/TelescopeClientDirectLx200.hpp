@@ -46,19 +46,19 @@ class TelescopeClientDirectLx200 : public TelescopeClient, public Server
 	Q_OBJECT
 public:
 	TelescopeClientDirectLx200(const QString &name, const QString &parameters, Equinox eq = EquinoxJ2000);
-	~TelescopeClientDirectLx200(void)
+	~TelescopeClientDirectLx200()
 	{
 		//hangup();
 	}
 	
 	//======================================================================
 	// Methods inherited from TelescopeClient
-	bool isConnected(void) const;
+	bool isConnected() const;
 	
 	//======================================================================
 	// Methods inherited from Server
 	virtual void step(long long int timeout_micros);
-	void communicationResetReceived(void);
+	void communicationResetReceived();
 	void longFormatUsedReceived(bool long_format);
 	void raReceived(unsigned int ra_int);
 	void decReceived(unsigned int dec_int);
@@ -70,7 +70,7 @@ private:
 	bool prepareCommunication();
 	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
-	bool isInitialized(void) const;
+	bool isInitialized() const;
 	
 	//======================================================================
 	// Methods inherited from Server
@@ -79,11 +79,11 @@ private:
 	void gotoReceived(unsigned int ra_int, int dec_int);
 	
 private:
-	void hangup(void);
+	void hangup();
 	int time_delay;
 	
 	InterpolatedPosition interpolatedPosition;
-	virtual bool hasKnownPosition(void) const
+	virtual bool hasKnownPosition() const
 	{
 		return interpolatedPosition.isKnown();
 	}

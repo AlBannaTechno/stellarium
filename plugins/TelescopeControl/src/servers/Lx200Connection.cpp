@@ -43,7 +43,7 @@ Lx200Connection::Lx200Connection(Server &server, const char *serial_device) : Se
 //! Resets the connection.
 //! Removes all commands in the queue without executing them and
 //! cleans both the read and the write buffers.
-void Lx200Connection::resetCommunication(void)
+void Lx200Connection::resetCommunication()
 {
 	while (!command_list.empty())
 	{
@@ -99,7 +99,7 @@ void Lx200Connection::sendGoto(unsigned int ra_int, int dec_int)
 	}
 }
 
-bool Lx200Connection::writeFrontCommandToBuffer(void)
+bool Lx200Connection::writeFrontCommandToBuffer()
 {
 	if(command_list.empty())
 	{
@@ -263,7 +263,7 @@ void Lx200Connection::prepareSelectFds(fd_set &read_fds,
 	SerialPort::prepareSelectFds(read_fds, write_fds, fd_max);
 }
 
-void Lx200Connection::flushCommandList(void)
+void Lx200Connection::flushCommandList()
 {
 	if (!command_list.empty())
 	{
