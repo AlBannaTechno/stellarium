@@ -78,7 +78,7 @@ bool Ultima2000CommandGotoPosition::writeCommandToBuffer(char *&p,char *end)
 	*p++ = NIBTOASCII ((x>>8) & 0x0f); 
 	*p++ = NIBTOASCII ((x>>4) & 0x0f); 
 	*p++ = NIBTOASCII (x & 0x0f);
-	*p++ = '\r';//The command should be termiated with a carriage return.
+	*p++ = 0x0D;//'\r';//The command should be termiated with a carriage return.
 	//*p = 0;
 
 	has_been_written_to_buffer = true;
@@ -124,7 +124,7 @@ bool Ultima2000CommandGetRaDec::writeCommandToBuffer(char *&p, char *end)
 		return false;
 
 	*p++ = 'E';
-	*p++ = '\r';//The command should be termiated with a carriage return.
+	*p++ = 0x0D;//'\r';//The command should be termiated with a carriage return.
 	has_been_written_to_buffer = true;
 	return true;
 }
