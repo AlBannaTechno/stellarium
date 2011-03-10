@@ -131,6 +131,15 @@ bool Ultima2000CommandGetRaDec::writeCommandToBuffer(char *&p, char *end)
 
 int Ultima2000CommandGetRaDec::readAnswerFromBuffer(const char *&buff, const char *end) const
 {
+	//Skip possible carriage returns:
+	while (buff < end && *buff=='\r')
+	{
+		//TODO: Remove log
+		*log_file << Now() << "Ultima2000CommandGetRaDec::readAnswerFromBuffer:"
+		          << " Carriage return skipped." << endl;
+		buff++;
+	}
+
 	//Is there enough space in the buffer? The answer is 10 bytes long.
 	if (end-buff < 10)
 		return 0;

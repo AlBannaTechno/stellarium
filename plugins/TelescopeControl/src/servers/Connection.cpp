@@ -188,6 +188,9 @@ void Connection::performReading(void)
 	} 
 	else if (rc == 0)
 	{
+		//TODO: Remove!
+		*log_file << Now() << "Connection::performReading: readNonblocking"
+		          << " returned zero bytes." << endl;
 		if (isTcpConnection())
 		{
 			*log_file << Now() << "Connection::performReading: "
@@ -214,13 +217,13 @@ void Connection::performReading(void)
 		if (p >= read_buff_end)
 		{
 			// everything handled
-			//*log_file << Now() << "Connection::performReading: everything handled" << endl;
+			*log_file << Now() << "Connection::performReading: everything handled" << endl;
 			read_buff_end = read_buff;
 		}
 		else if (p > read_buff)
 		{
-			//*log_file << Now() << "Connection::performReading: partly handled: "
-			//          << (p-read_buff) << endl;
+			*log_file << Now() << "Connection::performReading: partly handled: "
+			          << (p-read_buff) << endl;
 			// partly handled
 			memmove(read_buff, p, read_buff_end - p);
 			read_buff_end -= (p - read_buff);
