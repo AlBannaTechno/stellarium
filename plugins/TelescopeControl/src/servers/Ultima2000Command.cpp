@@ -52,6 +52,7 @@ bool Ultima2000CommandGotoPosition::writeCommandToBuffer(char *&p,char *end)
 	
 	//Is there enough space in the buffer? The GOTO command is 10 bytes long.
 	if (end-p < 11)
+	//if (end-p < 12)
 		return false;
 
 	*p++ = 'R';
@@ -79,6 +80,7 @@ bool Ultima2000CommandGotoPosition::writeCommandToBuffer(char *&p,char *end)
 	*p++ = NIBTOASCII ((x>>4) & 0x0f); 
 	*p++ = NIBTOASCII (x & 0x0f);
 	*p++ = 0x0D;//'\r';//The command should be termiated with a carriage return.
+	//*p++ = 0x0A;//'\n'
 	//*p = 0;
 
 	has_been_written_to_buffer = true;
@@ -121,10 +123,12 @@ void Ultima2000CommandGotoPosition::print(QTextStream &o) const
 bool Ultima2000CommandGetRaDec::writeCommandToBuffer(char *&p, char *end)
 {
 	if (end-p < 2)
+	//if (end-p < 3)
 		return false;
 
 	*p++ = 'E';
 	*p++ = 0x0D;//'\r';//The command should be termiated with a carriage return.
+	//*p++ = 0x0A;//'\n'
 	has_been_written_to_buffer = true;
 	return true;
 }
