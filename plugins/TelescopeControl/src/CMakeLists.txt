@@ -40,6 +40,8 @@ SET(TelescopeControl_SRCS
   servers/Connection.cpp
   servers/SerialPort.hpp
   servers/SerialPort.cpp
+  servers/SerialPortUltima2000.hpp
+  servers/SerialPortUltima2000.cpp
   servers/Lx200Connection.hpp
   servers/Lx200Connection.cpp
   servers/Lx200Command.hpp

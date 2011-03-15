@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef _ULTIMA_2000_CONNECTION_HPP_
 #define _ULTIMA_2000_CONNECTION_HPP_
 
-#include "SerialPort.hpp"
+#include "SerialPortUltima2000.hpp"
 
 #include <list>
 using namespace std;
@@ -30,7 +30,7 @@ using namespace std;
 class Ultima2000Command;
 
 //! Serial port connection to a Celestron Ultima 2000 or a compatible telescope.
-class Ultima2000Connection : public SerialPort
+class Ultima2000Connection : public SerialPortUltima2000
 {
 public:
 	Ultima2000Connection(Server &server, const char *serial_device);

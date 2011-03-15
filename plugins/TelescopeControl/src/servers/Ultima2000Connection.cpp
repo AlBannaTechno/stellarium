@@ -27,7 +27,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <iostream>
 using namespace std;
 
-Ultima2000Connection::Ultima2000Connection(Server &server, const char *serial_device) : SerialPort(server, serial_device)
+Ultima2000Connection::Ultima2000Connection(Server &server,
+                                           const char *serial_device)
+	: SerialPortUltima2000(server, serial_device)
 {
 }
 
