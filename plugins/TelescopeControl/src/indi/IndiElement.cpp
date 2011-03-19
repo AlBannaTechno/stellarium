@@ -307,14 +307,18 @@ void LightElement::setValue(const QString& stringValue)
 BlobElement::BlobElement(const QString& elementName,
                          const QString& initialValue,
                          const QString& label)
-	: Element(elementName, label)
+	: Element(elementName, label),
+	compressed(false)
 {
 	Q_UNUSED(initialValue);
 }
 
+#include "zlib.h"
+#define ZLIB_CHUNK (16*1024)
+
 void BlobElement::setValue(const QString& blobSize,
                            const QString& blobFormat,
-                           const QString& blobData)
+                           const QString& blobDataString)
 {
 	//TODO: This is just a sketch.
 	//TODO: What happens if the device deliberately sends empty data?
@@ -333,54 +337,82 @@ void BlobElement::setValue(const QString& blobSize,
 	}
 	format = blobFormat;
 
-	if (blobData.isEmpty())
+	if (blobDataString.isEmpty())
 	{
 		//TODO: Debug
 		return;
 	}
-	QByteArray newBinaryData = QByteArray::fromBase64(blobData.toAscii());
+	QByteArray rawBinaryData = QByteArray::fromBase64(blobDataString.toAscii());
 
-	//TODO: Detect compression
-	//TODO: Use zlib to decompress the stream
-	//The following doesn't work
-	/*if (format.endsWith(".z"))
+	if (format.endsWith(".z"))
 	{
 		qDebug() << "Compressed blob";
 		QByteArray decompressedData;
-		QBuffer* buffer = new QBuffer(&newBinaryData);
-		KZip compressedFile(buffer);
-		if (compressedFile.open(QIODevice::ReadOnly))
+
+		int returnCode;
+		unsigned int deflatedBytes;
+		char outputBuffer[ZLIB_CHUNK];
+		z_stream zstream;
+		zstream.zalloc = Z_NULL;
+		zstream.zfree = Z_NULL;
+		zstream.opaque = Z_NULL;
+		zstream.avail_in = 0;
+		zstream.next_in = Z_NULL;
+
+		returnCode = inflateInit(&zstream);
+		if (returnCode != Z_OK)
 		{
-			const KArchiveDirectory* directory = compressedFile.directory();
-			QStringList contents = directory->entries();
-			if (contents.count() > 1)
-			{
-				qDebug() << "Multiple files are not supported.";
-				compressedFile.close();
-				return;
-			}
-			const KArchiveEntry* file = directory->entry(contents.first());
-			if(file->isFile())
-			{
-				decompressedData = static_cast<const KZipFileEntry*>(file)->data();
-			}
-		}
-		else
-		{
-			delete buffer;
+			qDebug() << "BlobElement::setValue(): inflateInit failed with code"
+			         << returnCode;
 			return;
 		}
-		compressedFile.close();
-		delete buffer;
-		newBinaryData = decompressedData;
-	}*/
 
-	if (newBinaryData.size() == size)
-		binaryData = newBinaryData;
+		zstream.avail_in = rawBinaryData.size();//+1 ?
+		zstream.next_in = (Bytef*)rawBinaryData.data();
+		do
+		{
+			zstream.avail_out = ZLIB_CHUNK;
+			zstream.next_out = (Bytef*)outputBuffer;
+
+			returnCode = inflate(&zstream, Z_NO_FLUSH);
+			Q_ASSERT(zstream.state != Z_STREAM_ERROR);//TODO!
+			switch (returnCode)
+			{
+				case Z_NEED_DICT:
+				case Z_DATA_ERROR:
+				case Z_MEM_ERROR:
+					(void)inflateEnd(&zstream);
+					qDebug() << "BlobElement::setValue(): inflate failed with code"
+					         << returnCode;
+					return;
+				default:
+					;
+			}
+
+			deflatedBytes = ZLIB_CHUNK - zstream.avail_out;
+			decompressedData.append(outputBuffer, deflatedBytes);
+		}
+		while (zstream.avail_out == 0);
+
+		if (returnCode != Z_STREAM_END)
+		{
+			qDebug() << "WTF? The z-compressed stream hasn't finished yet?" << returnCode;
+		}
+		(void)inflateEnd(&zstream);
+
+		binaryData = decompressedData;
+		compressed = true;
+		//Remove the ".z" suffix, as the format strung will be used for the file extension
+		format.chop(2);
+	}
 	else
+		binaryData = rawBinaryData;
+
+	if (binaryData.size() != size)
 	{
 		qDebug() << "BLOB size mismatch: From XML:" << size
-		         << "Actual data length:" << newBinaryData.size();
+		         << "Actual data length:" << binaryData.size();
+		binaryData.clear();
 	}
 }
 

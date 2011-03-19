@@ -165,10 +165,13 @@ public:
 	//! Example
 	//! \todo Isn't int too small?
 	int getSize() const;
+	//! Was the BLOB compressed when it was received?
+	bool isCompressed() const {return compressed;}
 
 private:
 	QByteArray binaryData;
 	QString format;
+	bool compressed;
 };
 
 #endif//_ELEMENT_HPP_
