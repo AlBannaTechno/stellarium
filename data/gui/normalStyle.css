@@ -52,6 +52,12 @@ QFrame#TitleBar {
 	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgb(41, 47, 50), stop:1 rgb(31, 33, 36));
 }
 
+IndiStateWidget {
+	background: rgba(149, 150, 152, 20%);
+	border-radius: 10px;
+	padding: 1ex;
+}
+
 /*********************************************dateTimedialog*********************************************************/
 
 #dateTimeDialogForm #dateTimeBox QFrame {

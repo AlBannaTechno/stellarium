@@ -31,7 +31,7 @@
 //! Used as a representation of a Light in IndiLightPropertyWidget and
 //! as a state indicator in all other child classes of IndiPropertyWidget.
 //! \todo Add a graphical component, like in KStars. Static QPixMaps?
-class IndiStateWidget : public QWidget
+class IndiStateWidget : public QFrame
 {
 	Q_OBJECT
 

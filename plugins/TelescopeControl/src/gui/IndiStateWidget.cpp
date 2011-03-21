@@ -20,13 +20,13 @@
 #include "IndiStateWidget.hpp"
 
 IndiStateWidget::IndiStateWidget(State initialState, QWidget* parent)
-	: QWidget(parent)
+	: QFrame(parent)
 {
 	this->setMaximumWidth(50);
 	this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 
 	layout = new QHBoxLayout();
-	layout->setContentsMargins(0, 0, 3, 0);
+	layout->setContentsMargins(0, 0, 0, 0);
 
 	label = new QLabel();
 	label->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
