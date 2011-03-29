@@ -89,7 +89,7 @@ bool ServoCatCommandGotoPosition::writeCommandToBuffer(char *&p,char *end)
 	checksum ^= ch; *p++ = ch;
 	x = dec;
 	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
-	checksum = ch; *p++ = ch;
+	checksum ^= ch; *p++ = ch;
 	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
 	checksum ^= ch; *p++ = ch;
 	ch = '.';
