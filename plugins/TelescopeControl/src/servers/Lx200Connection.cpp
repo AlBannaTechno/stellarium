@@ -313,8 +313,13 @@ void Lx200Connection::sendCommand(Lx200Command *command)
 		#endif
 		command_list.push_back(command);
 		flushCommandList();
-		//*log_file << Now() << "Lx200Connection::sendCommand(" << *command << ") end"
-		//          << endl;
+		/*
+		*log_file << Now()
+		          << "Lx200Connection::sendCommand("
+		          << *command
+		          << ") end"
+		          << endl;
+		*/
 	}
 }
 

@@ -39,6 +39,7 @@ public:
 	virtual int readAnswerFromBuffer(const char *&buff, const char *end) const = 0;
 	virtual bool needsNoAnswer() const { return false; }
 	virtual void print(QTextStream &o) const = 0;
+	virtual bool isCommandGoto() const {return false;}
 	// returns true when reading is finished
 	
 protected:
@@ -62,6 +63,7 @@ public:
 	bool writeCommandToBuffer(char *&buff, char *end);
 	int readAnswerFromBuffer(const char *&buff, const char *end) const;
 	void print(QTextStream &o) const;
+	bool isCommandGoto() const {return true;}
 	
 private:
 	quint16 ra;

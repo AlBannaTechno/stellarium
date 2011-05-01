@@ -1,7 +1,6 @@
 /*
 Stellarium telescope control
 Copyright (c) 2006 Johannes Gajdosik
-Copyright (c) 2006 Michael Heinz (NexStar modifications)
 Copyright (c) 2011 Bogdan Marinov (Ultima2000 modifications)
 
 This library is free software; you can redistribute it and/or
@@ -37,14 +36,31 @@ public:
 	~Ultima2000Connection() { resetCommunication(); }
 	void sendGoto(unsigned int ra_int, int dec_int);
 	void sendCommand(Ultima2000Command * command);
+	void setTimeBetweenCommands(long long int micro_seconds)
+	{
+		time_between_commands = micro_seconds;
+	}
 	
 private:
+	//! Parses read buffer data received from the telescope.
 	void dataReceived(const char *&p, const char *read_buff_end);
+	//! Not implemented, as this is not a connection to a client.
 	void sendPosition(unsigned int ra_int, int dec_int, int status) {Q_UNUSED(ra_int); Q_UNUSED(dec_int); Q_UNUSED(status);}
 	void resetCommunication();
+	void prepareSelectFds(fd_set &read_fds, fd_set &write_fds, int &fd_max);
+	bool writeFrontCommandToBuffer();
+	//! Flushes the command queue, sending commands to the write buffer.
+	//! This method iterates over the queue, writing to the write buffer
+	//! as many commands as possible, until it reaches a command that
+	//! requires an answer.
+	void flushCommandList();
 	
 private:
-	list<Ultima2000Command*> command_list;
+	list<Ultima2000Command*> commandQueue;
+	long long int time_between_commands;
+	long long int next_send_time;
+	long long int read_timeout_endtime;
+	int goto_commands_queued;
 };
 
 #endif //_ULTIMA_2000_CONNECTION_HPP_
