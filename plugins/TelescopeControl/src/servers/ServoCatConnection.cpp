@@ -64,6 +64,8 @@ void ServoCatConnection::sendGoto(unsigned int ra_int, int dec_int)
 	double ra = 0.5 + (ra_int * 24.0) / 4294967296.0;
 	if (ra >= 24.0)
 		ra -= 24.0;
+	if (ra <0)
+		ra += 24.0;
 
 	sendCommand(new ServoCatCommandGotoPosition(server, ra, dec));
 }

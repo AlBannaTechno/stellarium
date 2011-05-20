@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "TelescopeClientDirectServoCat.hpp"
 #include "LogFile.hpp"
 
-#include <math.h>
+#include <cmath>
 
 using namespace std;
 
@@ -60,18 +60,18 @@ bool ServoCatCommandGotoPosition::writeCommandToBuffer(char *&p,char *end)
 
 	//[6] Right ascension
 	//TODO: Better digit extraction?
-	double x = ra;
-	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
+	int x = ra * 1000;
+	ch = UINTTOASCII(x/10000); x%=10000;
 	checksum = ch; *p++ = ch;
-	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
+	ch = UINTTOASCII(x/1000); x%=1000;
 	checksum ^= ch; *p++ = ch;
 	ch = '.';
 	checksum ^= ch; *p++ = ch;
-	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
+	ch = UINTTOASCII(x/100); x%=100;
 	checksum ^= ch; *p++ = ch;
-	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
+	ch = UINTTOASCII(x/10); x%=10;
 	checksum ^= ch; *p++ = ch;
-	ch = UINTTOASCII(floor(x / 10.0));
+	ch = UINTTOASCII(x);
 	checksum ^= ch; *p++ = ch;
 
 	//[1] Separator
@@ -87,18 +87,19 @@ bool ServoCatCommandGotoPosition::writeCommandToBuffer(char *&p,char *end)
 	else
 		ch = '+';
 	checksum ^= ch; *p++ = ch;
-	x = dec;
-	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
-	checksum ^= ch; *p++ = ch;
-	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
+
+	x = dec * 1000;
+	ch = UINTTOASCII(x/10000); x%=10000;
+	checksum = ch; *p++ = ch;
+	ch = UINTTOASCII(x/1000); x%=1000;
 	checksum ^= ch; *p++ = ch;
 	ch = '.';
 	checksum ^= ch; *p++ = ch;
-	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
+	ch = UINTTOASCII(x/100); x%=100;
 	checksum ^= ch; *p++ = ch;
-	ch = UINTTOASCII(floor(x / 10.0)); x*=10.0;
+	ch = UINTTOASCII(x/10); x%=10;
 	checksum ^= ch; *p++ = ch;
-	ch = UINTTOASCII(floor(x / 10.0));
+	ch = UINTTOASCII(x);
 	checksum ^= ch; *p++ = ch;
 
 	//[1] Checksum byte
