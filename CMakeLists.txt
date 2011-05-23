@@ -9,7 +9,7 @@ IF(COMMAND cmake_policy)
 ENDIF()
 
 ########### Project name ###########
-PROJECT(Printsky)
+PROJECT(Stellarium)
 SET(STELLARIUM_MAJOR "0")
 SET(STELLARIUM_MINOR "10")
 SET(STELLARIUM_PATCH "6")

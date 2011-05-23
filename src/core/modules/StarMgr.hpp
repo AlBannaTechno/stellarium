@@ -171,11 +171,6 @@ public:
 	//! @return false in case of failure.
 	bool checkAndLoadCatalog(QVariantMap m);
 
-	//! Get relations between magnitude stars and draw radius
-	//! @param core the instance of stellarium's core
-	//! @return a list of pairs magnitude-radius
-	QList< QPair<float, float> > getListMagnitudeRadius(StelCore *core);
-
 private slots:
 	void setStelStyle(const QString& section);
 	//! Translate text.
