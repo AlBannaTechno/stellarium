@@ -50,7 +50,7 @@ void ServoCatConnection::resetCommunication()
 void ServoCatConnection::sendGoto(unsigned int ra_int, int dec_int)
 {
 	//De-conversion from the strange way of encoding
-	double dec = 0.5 + (dec_int * 360.0)/4294967296.0;
+	double dec = (dec_int * 360.0)/4294967296.0;
 	if (dec < -90.0)
 	{
 		dec = -180.0 - dec;
@@ -61,7 +61,7 @@ void ServoCatConnection::sendGoto(unsigned int ra_int, int dec_int)
 		dec = 180.0 - dec;
 		ra_int += 0x80000000;
 	}
-	double ra = 0.5 + (ra_int * 24.0) / 4294967296.0;
+	double ra = (ra_int * 24.0) / 4294967296.0;
 	if (ra >= 24.0)
 		ra -= 24.0;
 	if (ra <0)
