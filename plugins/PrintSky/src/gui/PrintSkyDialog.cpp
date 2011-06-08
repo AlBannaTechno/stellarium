@@ -31,7 +31,7 @@
 #include "StelModuleMgr.hpp"
 #include "StelMainGraphicsView.hpp"
 #include "StelTranslator.hpp"
-#include "StelNavigator.hpp"
+//#include "StelNavigator.hpp"
 #include "StelCore.hpp"
 #include "StelLocaleMgr.hpp"
 #include "StelMovementMgr.hpp"
@@ -316,8 +316,10 @@ void PrintSkyDialog::printDataSky(QPrinter * printer)
 	painter.drawImage(imageXPos, 0, img);
 
 	StelCore* core = StelApp::getInstance().getCore();
-	StelLocation locationData=core->getNavigator()->getCurrentLocation();
-	double jd = core->getNavigator()->getJDay();
+//	StelLocation locationData=core->getNavigator()->getCurrentLocation();
+	StelLocation locationData=core->getCurrentLocation();
+//	double jd = core->getNavigator()->getJDay();
+	double jd = core->getJDay();
 
 	QFont font("DejaVu Sans", 10, QFont::Normal);
 	font.setPixelSize(printer->pageRect().width()/60);
@@ -407,7 +409,8 @@ void PrintSkyDialog::printDataSky(QPrinter * printer)
 			QString englishName=allBodiesNames.at(iBodyName-1);
 			PlanetP p=ssmgr->searchByEnglishName(englishName);
 			double dec, ra;
-			StelUtils::rectToSphe(&ra,&dec, p->getEquinoxEquatorialPos(core->getNavigator()));
+//			StelUtils::rectToSphe(&ra,&dec, p->getEquinoxEquatorialPos(core->getNavigator()));
+			StelUtils::rectToSphe(&ra,&dec, p->getEquinoxEquatorialPos(core));
 			double standardAltitude=-0.5667;
 			if (englishName=="Sun")
 				standardAltitude=-0.8333;
@@ -484,7 +487,8 @@ void PrintSkyDialog::printDataSky(QPrinter * printer)
 				painter.drawText(QRect(xPos+=ratioWidth, yPos, ratioWidth, font.pixelSize()), Qt::AlignCenter, QString("%1").arg(printableTime(transit, shift)));
 				painter.drawText(QRect(xPos+=ratioWidth, yPos, ratioWidth, font.pixelSize()), Qt::AlignCenter, QString("%1").arg(printableTime(setting, shift)));
 				painter.drawText(QRect(xPos+=ratioWidth, yPos, ratioWidth, font.pixelSize()), Qt::AlignRight, QString("%1").arg(p->getDistance(), 0, 'g', 5));
-				painter.drawText(QRect(xPos+=ratioWidth, yPos, ratioWidth, font.pixelSize()), Qt::AlignRight, QString("%1").arg(p->getVMagnitude(core->getNavigator()), 0, 'g', 3));
+//				painter.drawText(QRect(xPos+=ratioWidth, yPos, ratioWidth, font.pixelSize()), Qt::AlignRight, QString("%1").arg(p->getVMagnitude(core->getNavigator()), 0, 'g', 3));
+				painter.drawText(QRect(xPos+=ratioWidth, yPos, ratioWidth, font.pixelSize()), Qt::AlignRight, QString("%1").arg(p->getVMagnitude(core), 0, 'g', 3));
 
 				yPos+=lineSpacing;
 				if (yPos+((lineSpacing)*3)>=printer->pageRect().top()+printer->pageRect().height())
