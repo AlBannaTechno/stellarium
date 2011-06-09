@@ -2,7 +2,7 @@
  * Stellarium Telescope Control plug-in
  * 
  * Copyright (C) 2006 Johannes Gajdosik
- * Copyright (C) 2009-2010 Bogdan Marinov
+ * Copyright (C) 2009-2011 Bogdan Marinov
  * 
  * This module was originally written by Johannes Gajdosik in 2006
  * as a core module of Stellarium. In 2009 it was significantly extended with
