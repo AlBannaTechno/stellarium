@@ -55,9 +55,9 @@ IndiClient* TelescopeClientIndi::getIndiClient() const
 	return indiClient;
 }
 
-Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelNavigator *nav) const
+Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelCore *core) const
 {
-	Q_UNUSED(nav);
+	Q_UNUSED(core);
 	//TODO: see what to do about time_delay
 	const qint64 now = getNow() - 500000;// - time_delay;
 	return interpolatedPosition.get(now);
@@ -97,8 +97,8 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	}
 	else if (isDefinedJNowCoordinateRequest)
 	{
-		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
-		targetCoordinates = navigator->j2000ToEquinoxEqu(j2000Coordinates);
+		const StelCore* core = StelApp::getInstance().getCore();
+		targetCoordinates = core->j2000ToEquinoxEqu(j2000Coordinates);
 		property = IndiClient::SP_JNOW_COORDINATES_REQUEST;
 	}
 	else
@@ -203,8 +203,8 @@ void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* 
 			Vec3d j2000Coordinates = coordinates;
 			if (coordinatesAreInEod)
 			{
-				const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
-				j2000Coordinates = navigator->equinoxEquToJ2000(coordinates);
+				const StelCore* core = StelApp::getInstance().getCore();
+				j2000Coordinates = core->equinoxEquToJ2000(coordinates);
 			}
 
 			interpolatedPosition.add(j2000Coordinates, getNow(), serverTime);

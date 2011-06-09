@@ -60,7 +60,7 @@ bool TelescopeClientDummy::hasKnownPosition() const
 	return true;
 }
 
-Vec3d TelescopeClientDummy::getJ2000EquatorialPos(const StelNavigator*) const
+Vec3d TelescopeClientDummy::getJ2000EquatorialPos(const StelCore*) const
 {
 	return XYZ;
 }

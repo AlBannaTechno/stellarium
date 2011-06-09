@@ -65,7 +65,7 @@ public:
 	//! Estimates a current position from the stored previous positions.
 	//! InterpolatedPosition is used to make the apparent movement of the
 	//! telescope reticle smoother.
-	Vec3d getJ2000EquatorialPos(const StelNavigator *nav) const;
+	Vec3d getJ2000EquatorialPos(const StelCore* core) const;
 	void telescopeGoto(const Vec3d &j2000Pos);
 
 	IndiClient* getIndiClient() const;

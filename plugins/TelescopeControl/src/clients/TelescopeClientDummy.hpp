@@ -45,7 +45,7 @@ public:
 	bool prepareCommunication();
 	void telescopeGoto(const Vec3d& j2000Pos);
 	bool hasKnownPosition() const;
-	Vec3d getJ2000EquatorialPos(const StelNavigator*) const;
+	Vec3d getJ2000EquatorialPos(const StelCore*) const;
 	
 private:
 	Vec3d XYZ; // j2000 position

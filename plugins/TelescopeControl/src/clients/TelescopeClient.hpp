@@ -87,7 +87,7 @@ protected:
 	QString nameI18n;
 	const QString name;
 private:
-	float getSelectPriority(const StelNavigator*) const {return -10.f;}
+	float getSelectPriority(const StelCore*) const {return -10.f;}
 private:
 	QList<double> oculars; // fov of the oculars
 };
