@@ -2,6 +2,7 @@
  * Stellarium
  * Copyright (C) 2002 Fabien Chereau
  * Copyright (C) 2010 Bogdan Marinov
+ * Copyright (C) 2011 Alexander Wolf
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +23,7 @@
 #include "StelTexture.hpp"
 #include "stellplanet.h"
 #include "Orbit.hpp"
-#include "StelNavigator.hpp"
+
 #include "StelProjector.hpp"
 #include "StelApp.hpp"
 #include "StelCore.hpp"
@@ -36,11 +37,12 @@
 #include "Planet.hpp"
 #include "MinorPlanet.hpp"
 #include "Comet.hpp"
-#include "StelNavigator.hpp"
+
 #include "StelSkyDrawer.hpp"
 #include "StelUtils.hpp"
 #include "StelPainter.hpp"
 #include "TrailGroup.hpp"
+#include "RefractionExtinction.hpp"
 
 #include <functional>
 #include <algorithm>
@@ -154,14 +156,14 @@ void SolarSystem::recreateTrails()
 
 void SolarSystem::drawPointer(const StelCore* core)
 {
-	const StelNavigator* nav = core->getNavigator();
 	const StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
 
 	const QList<StelObjectP> newSelected = GETSTELMODULE(StelObjectMgr)->getSelectedObject("Planet");
 	if (!newSelected.empty())
 	{
 		const StelObjectP obj = newSelected[0];
-		Vec3d pos=obj->getJ2000EquatorialPos(nav);
+		Vec3d pos=obj->getJ2000EquatorialPos(core);
+
 		Vec3d screenpos;
 		// Compute 2D pos and return if outside screen
 		if (!prj->project(pos, screenpos))
@@ -366,7 +368,7 @@ bool SolarSystem::loadPlanets(const QString& filePath)
 		const QString funcName = pd.value(secname+"/coord_func").toString();
 		posFuncType posfunc=NULL;
 		void* userDataPtr=NULL;
-		OsulatingFunctType *osculatingFunc = 0;
+		OsculatingFunctType *osculatingFunc = 0;
 		bool closeOrbit = pd.value(secname+"/closeOrbit", true).toBool();
 
 		if (funcName=="ell_orbit")
@@ -434,7 +436,7 @@ bool SolarSystem::loadPlanets(const QString& filePath)
 				mean_longitude = mean_anomaly + long_of_pericenter;
 			}
 
-			// when the parent is the sun use ecliptic rathe than sun equator:
+			// when the parent is the sun use ecliptic rather than sun equator:
 			const double parentRotObliquity = parent->getParent()
 											  ? parent->getRotObliquity()
 											  : 0.0;
@@ -450,7 +452,7 @@ bool SolarSystem::loadPlanets(const QString& filePath)
 				const Vec3d OrbitAxis0( c_nod,       s_nod,        0.0);
 				const Vec3d OrbitAxis1(-s_nod*c_obl, c_nod*c_obl,s_obl);
 				const Vec3d OrbitPole(  s_nod*s_obl,-c_nod*s_obl,c_obl);
-				const Vec3d J2000Pole(StelNavigator::matJ2000ToVsop87.multiplyWithoutTranslation(Vec3d(0,0,1)));
+				const Vec3d J2000Pole(StelCore::matJ2000ToVsop87.multiplyWithoutTranslation(Vec3d(0,0,1)));
 				Vec3d J2000NodeOrigin(J2000Pole^OrbitPole);
 				J2000NodeOrigin.normalize();
 				parent_rot_j2000_longitude = atan2(J2000NodeOrigin*OrbitAxis1,J2000NodeOrigin*OrbitAxis0);
@@ -558,7 +560,7 @@ bool SolarSystem::loadPlanets(const QString& filePath)
 						   const Vec3d OrbitAxis0( c_nod,       s_nod,        0.0);
 						   const Vec3d OrbitAxis1(-s_nod*c_obl, c_nod*c_obl,s_obl);
 						   const Vec3d OrbitPole(  s_nod*s_obl,-c_nod*s_obl,c_obl);
-						   const Vec3d J2000Pole(StelNavigator::matJ2000ToVsop87.multiplyWithoutTranslation(Vec3d(0,0,1)));
+						   const Vec3d J2000Pole(StelCore::matJ2000ToVsop87.multiplyWithoutTranslation(Vec3d(0,0,1)));
 						   Vec3d J2000NodeOrigin(J2000Pole^OrbitPole);
 						   J2000NodeOrigin.normalize();
 						   parent_rot_j2000_longitude = atan2(J2000NodeOrigin*OrbitAxis1,J2000NodeOrigin*OrbitAxis0);
@@ -816,7 +818,7 @@ bool SolarSystem::loadPlanets(const QString& filePath)
 			Vec3d J2000NPole;
 			StelUtils::spheToRect(J2000NPoleRA,J2000NPoleDE,J2000NPole);
 
-			Vec3d vsop87Pole(StelNavigator::matJ2000ToVsop87.multiplyWithoutTranslation(J2000NPole));
+			Vec3d vsop87Pole(StelCore::matJ2000ToVsop87.multiplyWithoutTranslation(J2000NPole));
 
 			double ra, de;
 			StelUtils::rectToSphe(&ra, &de, vsop87Pole);
@@ -925,10 +927,8 @@ void SolarSystem::draw(StelCore* core)
 	if (!flagShow)
 		return;
 
-	StelNavigator* nav = core->getNavigator();
-
 	// Compute each Planet distance to the observer
-	Vec3d obsHelioPos = nav->getObserverHeliocentricEclipticPos();
+	Vec3d obsHelioPos = core->getObserverHeliocentricEclipticPos();
 
 	foreach (PlanetP p, systemPlanets)
 	{
@@ -1014,7 +1014,7 @@ StelObjectP SolarSystem::search(Vec3d pos, const StelCore* core) const
 
 	foreach (const PlanetP& p, systemPlanets)
 	{
-		equPos = p->getEquinoxEquatorialPos(core->getNavigator());
+		equPos = p->getEquinoxEquatorialPos(core);
 		equPos.normalize();
 		double cos_ang_dist = equPos*pos;
 		if (cos_ang_dist>cos_angle_closest)
@@ -1038,14 +1038,14 @@ QList<StelObjectP> SolarSystem::searchAround(const Vec3d& vv, double limitFov, c
 	if (!getFlagPlanets())
 		return result;
 
-	Vec3d v = core->getNavigator()->j2000ToEquinoxEqu(vv);
+	Vec3d v = core->j2000ToEquinoxEqu(vv);
 	v.normalize();
 	double cosLimFov = std::cos(limitFov * M_PI/180.);
 	Vec3d equPos;
 
 	foreach (const PlanetP& p, systemPlanets)
 	{
-		equPos = p->getEquinoxEquatorialPos(core->getNavigator());
+		equPos = p->getEquinoxEquatorialPos(core);
 		equPos.normalize();
 		if (equPos*v>=cosLimFov)
 		{
@@ -1055,7 +1055,7 @@ QList<StelObjectP> SolarSystem::searchAround(const Vec3d& vv, double limitFov, c
 	return result;
 }
 
-// Update i18 names from english names according to passed translator
+// Update i18 names from english names according to current translator
 void SolarSystem::updateI18n()
 {
 	StelTranslator& trans = StelApp::getInstance().getLocaleMgr().getAppStelTranslator();
@@ -1265,13 +1265,20 @@ void SolarSystem::setSelected(const QString& englishName)
 	setSelected(searchByEnglishName(englishName));
 }
 
-
 // Get the list of all the planet english names
 QStringList SolarSystem::getAllPlanetEnglishNames() const
 {
 	QStringList res;
 	foreach (const PlanetP& p, systemPlanets)
 		res.append(p->englishName);
+	return res;
+}
+
+QStringList SolarSystem::getAllPlanetLocalizedNames() const
+{
+	QStringList res;
+	foreach (const PlanetP& p, systemPlanets)
+		res.append(p->nameI18);
 	return res;
 }
 
