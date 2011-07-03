@@ -174,17 +174,17 @@ double Nebula::getCloseViewFov(const StelNavigator*) const
 
 void Nebula::drawHints(StelPainter& sPainter, float maxMagHints)
 {
-	if (mag>maxMagHints)
-		return;
+	//if (mag>maxMagHints)
+	//	return;
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	float lum = 1.f;//qMin(1,4.f/getOnScreenSize(core))*0.8;
 	sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
 	Nebula::texCircle->bind();
-	//sPainter.drawSprite2dMode(XY[0], XY[1], 4);
-	float pixelPerDegree = M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
+	sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+	//float pixelPerDegree = M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
 	//sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree, sizeY*pixelPerDegree);
-	sPainter.drawCircle(XY[0], XY[1], sizeX*pixelPerDegree);
+	//sPainter.drawCircle(XY[0], XY[1], sizeX*pixelPerDegree);
 	//qDebug("x=%f y=%f color[0]=%f", XY[0], XY[1], circleColor[0]*lum*hintsBrightness);
 }
 
@@ -219,7 +219,7 @@ bool Nebula::readNGC(QString& record)
 
 	// TODO: No longer purely numeric, e.g. NGC 5144A and NGC 5144B
 	// TODO: Number of components also
-	nb = record.mid(1,4).toInt();
+	nb = record.mid(2,6).toInt();
 
 	// Is it NGC or IC object?
 	if (record.mid(0,1) == QString("I"))
@@ -239,7 +239,7 @@ bool Nebula::readNGC(QString& record)
 
 void Nebula::readIdentifiers(const QString& record)
 {
-	int NGCType = record.mid(8,1).toInt();
+	int NGCType = record.mid(15, 2).toInt();
 	
 	// this is a huge performance drag if called every frame, so cache here
 	switch (NGCType)
@@ -281,35 +281,34 @@ struct DMS
 //		o Type
 void Nebula::parseRecord(const QString& record, int idx)
 {
+	// In NGC catalogue?
+	bNGCObject = (record.mid(0, 1) == QString("N")) ? true : false;
+	
 	// Dreyer object?
-	if (record.mid(7,1) == QString("*"))
+	if (record.mid(12, 1) == QString("*"))
 		bDreyerObject = true;
 	else
 		bDreyerObject = false;
 	
-	// Identification (object type) -- see above
-	
-	// Precision flags
-	
 	// Constellation
-	constellationAbbr = record.mid(11,3);
+	constellationAbbr = record.mid(20, 3);
 	
 	// right ascension
-	const float raHrs = record.mid(15, 2).toFloat();
-	const float raMins = record.mid(18, 2).toFloat();
-	const float raSecs = record.mid(20, 3).toFloat();
+	const float raHrs = record.mid(27, 2).toFloat();
+	const float raMins = record.mid(31, 2).toFloat();
+	const float raSecs = record.mid(34, 4).toFloat();
 	float ra = DMS(raHrs, raMins, raSecs).toDecimal();
 	
 	// declination
-	const float decDegs = record.mid(24, 2).toFloat();
-	const float decMins = record.mid(27, 2).toFloat();
-	const float decSecs = record.mid(29, 2).toFloat();
-	const QString decSgn = record.mid(23,1);
+	const float decDegs = record.mid(42, 2).toFloat();
+	const float decMins = record.mid(46, 2).toFloat();
+	const float decSecs = record.mid(50, 2).toFloat();
+	const QString decSgn = record.mid(39, 1);
 	float dec = DMS(decDegs, decMins, decSecs).toDecimal();
 	if ( decSgn == QString("-")) dec *= -1.;
 	
 	// debug
-	if (idx==5139)
+	if (idx==5139 || idx==2168)
 	{
 		qDebug("data: %s", record.toLatin1().data() );
 		debugNGC(ra);
@@ -322,20 +321,23 @@ void Nebula::parseRecord(const QString& record, int idx)
 	StelUtils::spheToRect(ra, dec, XYZ);	
 
 	// Read the blue (photographic) and visual magnitude
-	magB = record.mid(33, 4).toFloat();
-	mag = magV = record.mid(38, 4).toFloat();
+	magB = record.mid(56, 4).toFloat();
+	mag = magV = record.mid(64, 4).toFloat();
 
+	// B-V colour
+	BmV = record.mid(70, 3).toFloat();
+	
 	// surface brightness
-	SBrightness = record.mid(42,4).toFloat();
+	SBrightness = record.mid(74,4).toFloat();
 	
 	// Calc the angular size in radian
 	// TODO: this should be independant of tex_angular_size
 	// TODO: now have major and minor axes and PA available for galaxies
 	// TODO: also have surface brightness (rendering option?)
 	
-	sizeX = record.mid(46, 4).toFloat();
-	sizeY = record.mid(51, 3).toFloat();
-	PAdeg = record.mid(54, 3).toFloat();
+	sizeX = record.mid(81, 5).toFloat();
+	sizeY = record.mid(89, 5).toFloat();
+	PAdeg = record.mid(95, 3).toFloat();
 	float size;		// size (arcmin)
 	if (sizeY > 0)
 		size = 0.5 * (sizeX + sizeY);
@@ -343,13 +345,19 @@ void Nebula::parseRecord(const QString& record, int idx)
 		size = sizeX;
 
 	angularSize = size/60;
-	if (angularSize<=0)
-		angularSize=0.01;
 
 	// Hubble classification
-	hubbleType = record.mid(57,6);
+	hubbleType = record.mid(98, 9);
 	
 	// TODO: PGC/GCGC/ other designations
+	PGC_nb = record.mid(113, 6).toInt();
+	altDesig1 = record.mid(119, 27);
+	
+	// Messier number
+	if (altDesig1.contains("M "))
+	{
+		M_nb = altDesig1.mid(2, 3).toInt();
+	}
 
 	// TODO: where is this used?
 	pointRegion = SphericalRegionP(new SphericalPoint(getJ2000EquatorialPos(NULL)));

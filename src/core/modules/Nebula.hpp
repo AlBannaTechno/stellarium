@@ -118,6 +118,11 @@ private:
 	Vec3d XY;                       // Store temporary 2D position
 	NebulaType nType;
 
+	bool bNGCObject;
+	float BmV;
+	int PGC_nb;
+	QString altDesig1;			//!< alternative designation 1
+
 	SphericalRegionP pointRegion;
 
 	// Additional data from W. Steinicke's catalogue
@@ -126,8 +131,8 @@ private:
 	float magB;					//!< blue magnitude
 	float magV;					//!< visual magnitude
 	float SBrightness;			//!< surface brightness (mag/arcmin2)
-	float sizeX;
-	float sizeY;
+	float sizeX;				//!< major axis (arcmin)
+	float sizeY;				//!< minor axis (arcmin)
 	float PAdeg;				//!< principal angle (range 0..360 degrees)
 	QString hubbleType;			//!< Hubble type for galaxies
 

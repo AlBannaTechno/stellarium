@@ -229,7 +229,7 @@ void NebulaMgr::loadNebulaSet(const QString& setName)
 	{
 		//loadNGC(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000.dat"));
 		// TODO: convert W Steinitz's catalogue to binary format
-		loadNGCOld(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000steinitz.dat"));
+		loadNGCOld(StelFileMgr::findFile("nebulae/" + setName + "/ngc2011steinicke.dat"));
 		loadNGCNames(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000names.dat"));
 	}
 	catch (std::runtime_error& e)
