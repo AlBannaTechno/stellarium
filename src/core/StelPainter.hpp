@@ -188,6 +188,9 @@ public:
 	//! Draw a simple circle, 2d viewport coordinates in pixel
 	void drawCircle(float x, float y, float r);
 
+	//! Draw an ellipse, semimajor axis r1, semiminor axis r2, principal angle
+	void drawEllipse(float x, float y, float r1, float r2, float PA);
+	
 	//! Draw a square using the current texture at the given projected 2d position.
 	//! This method is not thread safe.
 	//! @param x x position in the viewport in pixel.

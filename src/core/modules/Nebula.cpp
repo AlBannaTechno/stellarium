@@ -140,9 +140,13 @@ QString Nebula::getInfoString(const StelCore *core, const InfoStringGroup& flags
 
 	oss << getPositionInfoString(core, flags);
 
-	if (angularSize>0 && flags&Size)
-		oss << q_("Size: %1").arg(StelUtils::radToDmsStr(angularSize*M_PI/180.)) << "<br>";
-
+	if (sizeX>0 && flags&Size)
+	{
+		if (sizeY>0)
+			oss << q_("Size: %1 x %2").arg(StelUtils::radToDmsStr(sizeX/60. * M_PI/180.)).arg(StelUtils::radToDmsStr(sizeY/60. * M_PI/180.)) << "<br>";
+		else
+			oss << q_("Size: %1").arg(StelUtils::radToDmsStr(sizeX/60. * M_PI/180.)) << "<br>";
+	}
 	postProcessInfoString(str, flags);
 
 	return str;
@@ -179,13 +183,34 @@ void Nebula::drawHints(StelPainter& sPainter, float maxMagHints)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	float lum = 1.f;//qMin(1,4.f/getOnScreenSize(core))*0.8;
-	sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
-	Nebula::texCircle->bind();
-	sPainter.drawSprite2dMode(XY[0], XY[1], 4);
-	//float pixelPerDegree = M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
+
+	Vec3f circleColorGx = Vec3f(1.0, 0.0, 0.0);
+	float pixelPerDegree = M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
+
+	switch(nType)
+	{
+		case NebGx:
+			/* draw red ellipse */
+			//qDebug("x=%f y=%f sizeX=%f sizeY=%f", XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60.);
+			sPainter.setColor(circleColorGx[0]*lum*hintsBrightness, circleColorGx[1]*lum*hintsBrightness, circleColorGx[2]*lum*hintsBrightness, 1);
+			sPainter.setShadeModel(StelPainter::ShadeModelFlat);
+			if(sizeY < 1e-3)
+				sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree, sizeX*pixelPerDegree, 0);
+			else
+				sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60., 0);
+			break;
+#if 0
+		default:
+			/* texture */
+			sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
+			Nebula::texCircle->bind();
+			sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+#endif
+//float pixelPerDegree = M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
 	//sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree, sizeY*pixelPerDegree);
 	//sPainter.drawCircle(XY[0], XY[1], sizeX*pixelPerDegree);
 	//qDebug("x=%f y=%f color[0]=%f", XY[0], XY[1], circleColor[0]*lum*hintsBrightness);
+	}
 }
 
 void Nebula::drawLabel(StelPainter& sPainter, float maxMagLabel)

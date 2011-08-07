@@ -1402,6 +1402,66 @@ void StelPainter::drawCircle(float x, float y, float r)
 }
 
 
+/*************************************************************************
+ draw a simple ellipse, 2d viewport coordinates in pixel
+*************************************************************************/
+void StelPainter::drawEllipse(float x, float y, float r1, float r2, float PA)
+{
+	if (r1 <= 1.0 || r2 <= 1.0)
+		return;
+	const Vec2f center(x,y);
+	const Vec2f v_center(0.5f*prj->viewportXywh[2],0.5f*prj->viewportXywh[3]);
+	const float R = v_center.length();
+	const float d = (v_center-center).length();
+	if (d > r1+R || d < r1-R)
+		return;
+	
+	/* TODO: rotation (principal angle PA */
+	
+	const int segments = 180;
+	const float phi = 2.0*M_PI/segments; // eccentric anomaly
+	const float cp = std::cos(phi);
+	const float sp = std::sin(phi);
+	float xp = r1;
+	float yp = 0;
+	float dx, dy, dx2, dy2;
+	static QVarLengthArray<Vec3f, 180> ellipseVertexArray(180);
+#if 1
+	//static float vertexData[360];
+	for (int i=0;i<segments;i++)
+	{
+		ellipseVertexArray[i].set(x+xp,y+yp,1.0);
+		//vertexData[2*i] = x+xp;
+		//vertexData[2*i+1] = y+yp;
+		dx = -yp*r1/r2*phi; // small angle approximation
+		dy = xp*r2/r1*phi;
+		xp += dx;
+		yp += dy;
+		dx2 = -yp*r1/r2*phi;
+		dy2 = xp*r2/r1*phi;
+		xp += (dx2-dx) / 2.0;
+		yp += (dy2-dy) / 2.0;
+	}
+	enableClientStates(true);
+	setVertexPointer(3, GL_FLOAT, ellipseVertexArray.data() );
+	//drawFromArray(Lines, 180, 0, false);
+	drawFromArray(LineLoop, 180, 0, false);
+#else
+	static float vertexData[] = {-10.,-10.,10.,-10., 10.,10., -10.,10.};
+	static const float texCoordData[] = {0.,0., 1.,0., 0.,1., 1.,1.};
+	vertexData[0]=x-r1; vertexData[1]=y-r2;
+	vertexData[2]=x+r1; vertexData[3]=y-r2;
+	vertexData[4]=x-r1; vertexData[5]=y+r2;
+	vertexData[6]=x+r1; vertexData[7]=y+r2;
+	enableClientStates(true, true);
+	setTexCoordPointer(2, GL_FLOAT, texCoordData);
+	setVertexPointer(2, GL_FLOAT, vertexData);
+	drawFromArray(TriangleStrip, 4, 0, false);
+#endif
+	enableClientStates(false);
+}
+
+
 void StelPainter::drawSprite2dMode(float x, float y, float radius)
 {
 	static float vertexData[] = {-10.,-10.,10.,-10., 10.,10., -10.,10.};
@@ -1922,6 +1982,12 @@ void StelPainter::drawFromArray(DrawingMode mode, int count, int offset, bool do
 		glEnableClientState(GL_COLOR_ARRAY);
 		glColorPointer(colorArray.size, colorArray.type, 0, colorArray.pointer);
 	}
+	
+	// disable 2D textures for LineLoop mode */
+	if(mode == LineLoop)
+	{
+		glDisable(GL_TEXTURE_2D);
+	}
 #else
 	QGLShaderProgram* pr=NULL;
 
@@ -1974,6 +2040,9 @@ void StelPainter::drawFromArray(DrawingMode mode, int count, int offset, bool do
 	else
 		glDrawArrays(mode, offset, count);
 #ifndef STELPAINTER_GL2
+	// re-enable 2D textures in case it was disabled */
+	glEnable(GL_TEXTURE_2D);
+
 	glDisableClientState(GL_VERTEX_ARRAY);
 	if (texCoordArray.enabled)
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);

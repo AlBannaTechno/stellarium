@@ -113,7 +113,7 @@ struct DrawNebulaFuncObject
 	{
 		Nebula* n = obj.staticCast<Nebula>().data();
 		//qDebug("%f %f", n->angularSize, n->mag);
-		if (n->angularSize>angularSizeLimit || (checkMaxMagHints && n->mag <= maxMagHints))
+		//if (n->angularSize>angularSizeLimit || (checkMaxMagHints && n->mag <= maxMagHints))
 		{
 			sPainter->getProjector()->project(n->XYZ,n->XY);
 			n->drawLabel(*sPainter, maxMagLabels);
@@ -353,7 +353,7 @@ bool NebulaMgr::loadNGCOld(const QString& catNGC)
 		}
 	}
 	in.close();
-	qDebug() << "Loaded" << readOk << "/" << totalRecords << "NGC records";
+	qDebug() << "loadNGCOld(): Loaded" << readOk << "/" << totalRecords << "NGC records";
 	return true;
 }
 #else
