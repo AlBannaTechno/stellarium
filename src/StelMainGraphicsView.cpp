@@ -101,6 +101,10 @@ Q_IMPORT_PLUGIN(SolarSystemEditor)
 Q_IMPORT_PLUGIN(TimeZoneConfiguration)
 #endif
 
+#ifdef USE_STATIC_PLUGIN_SUPERNOVAE
+Q_IMPORT_PLUGIN(Supernovae)
+#endif
+
 #ifdef USE_STATIC_PLUGIN_PRINTSKY
 Q_IMPORT_PLUGIN(PrintSky)
 #endif

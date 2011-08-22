@@ -11,8 +11,8 @@ ENDIF()
 ########### Project name ###########
 PROJECT(Stellarium)
 SET(STELLARIUM_MAJOR "0")
-SET(STELLARIUM_MINOR "10")
-SET(STELLARIUM_PATCH "6")
+SET(STELLARIUM_MINOR "11")
+SET(STELLARIUM_PATCH "0")
 SET(VERSION "${STELLARIUM_MAJOR}.${STELLARIUM_MINOR}.${STELLARIUM_PATCH}")
 SET(PACKAGE stellarium)
 
@@ -58,9 +58,18 @@ ENDIF()
 IF(APPLE)
  SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-common -Wall -Wextra")
  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-common -Wall -Wextra -Wno-unused-parameter")
-# SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.5")
-# SET(CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.5.sdk/")
- # Universal binary
+
+ # uncomment one of the following, depending on minimum OS level you want
+ #SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.5")
+ #SET(CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.5.sdk/")
+ #SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.6")
+ #SET(CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.6.sdk/")
+ 
+ # uncomment one of the following, depending on what platforms you want.
+ # NOTE: Qt build for Cocoa is Intel only.  Qt with Carbon is both, but does not seem
+ # to handle 64bit well.
+ #SET(CMAKE_OSX_ARCHITECTURES "i386;x86_64;ppc;ppc64")
+ #SET(CMAKE_OSX_ARCHITECTURES "i386;x86_64")
  #SET(CMAKE_OSX_ARCHITECTURES "x86_64")
 ENDIF()
 
@@ -137,6 +146,7 @@ SET(USE_PLUGIN_TEXTUSERINTERFACE 1 CACHE BOOL "Define whether the TextUserInterf
 SET(USE_PLUGIN_TIMEZONECONFIGURATION 1 CACHE BOOL "Define whether the TimeZoneConfiguration plugin should be created.")
 SET(USE_PLUGIN_VIRGO 0 CACHE BOOL "Define whether the VirGO plugin should be created.")
 SET(USE_PLUGIN_SOLARSYSTEMEDITOR 1 CACHE BOOL "Define whether the Solar System Editor should be built.")
+SET(USE_PLUGIN_SUPERNOVAE 1 CACHE BOOL "Define whether the Historical Supernova plugin should be created.")
 SET(USE_PLUGIN_PRINTSKY 1 CACHE BOOL "Define wheter the PrintSky plugin should be created.")
 
 ########## Static plugins need to define includes and libraries
@@ -145,6 +155,7 @@ IF (BUILD_STATIC_PLUGINS)
   IF (USE_PLUGIN_SVMT)
 	SET(QT_USE_QTXML TRUE) # For SVMT we also need QtXml module
 	SET(QT_USE_QTDECLARATIVE TRUE) # For SVMT we also need QML module, this line doesn't seem to work right now
+	SET(QT_USE_QTWEBKIT TRUE) # For SVMT we also need QML module, this line doesn't seem to work right now
   ENDIF()
 
   IF (USE_PLUGIN_VIRGO)
