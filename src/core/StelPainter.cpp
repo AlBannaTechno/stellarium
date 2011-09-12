@@ -1417,48 +1417,37 @@ void StelPainter::drawEllipse(float x, float y, float r1, float r2, float PA)
 		return;
 	
 	/* TODO: rotation (principal angle PA */
+	//qPainter->save();
+	//qPainter->rotate(-PA);
 	
+	const float cosPA = std::cos(PA / 180 * M_PI);
+	const float sinPA = std::sin(PA / 180 * M_PI);
+
 	const int segments = 180;
 	const float phi = 2.0*M_PI/segments; // eccentric anomaly
-	const float cp = std::cos(phi);
-	const float sp = std::sin(phi);
+	const float cphi = std::cos(phi);
+	const float sphi = std::sin(phi);
 	float xp = r1;
 	float yp = 0;
-	float dx, dy, dx2, dy2;
+	float dx, dy;
 	static QVarLengthArray<Vec3f, 180> ellipseVertexArray(180);
-#if 1
+
 	//static float vertexData[360];
 	for (int i=0;i<segments;i++)
 	{
-		ellipseVertexArray[i].set(x+xp,y+yp,1.0);
-		//vertexData[2*i] = x+xp;
-		//vertexData[2*i+1] = y+yp;
-		dx = -yp*r1/r2*phi; // small angle approximation
-		dy = xp*r2/r1*phi;
+		ellipseVertexArray[i].set(x + xp*cosPA - yp*sinPA, y + xp*sinPA + yp*cosPA, 1.0);
+		dx = xp*(cphi-1.) - yp*r1/r2*sphi; // small angle approximation
+		dy = yp*(cphi-1.) + xp*r2/r1*sphi;
 		xp += dx;
 		yp += dy;
-		dx2 = -yp*r1/r2*phi;
-		dy2 = xp*r2/r1*phi;
-		xp += (dx2-dx) / 2.0;
-		yp += (dy2-dy) / 2.0;
 	}
 	enableClientStates(true);
 	setVertexPointer(3, GL_FLOAT, ellipseVertexArray.data() );
 	//drawFromArray(Lines, 180, 0, false);
 	drawFromArray(LineLoop, 180, 0, false);
-#else
-	static float vertexData[] = {-10.,-10.,10.,-10., 10.,10., -10.,10.};
-	static const float texCoordData[] = {0.,0., 1.,0., 0.,1., 1.,1.};
-	vertexData[0]=x-r1; vertexData[1]=y-r2;
-	vertexData[2]=x+r1; vertexData[3]=y-r2;
-	vertexData[4]=x-r1; vertexData[5]=y+r2;
-	vertexData[6]=x+r1; vertexData[7]=y+r2;
-	enableClientStates(true, true);
-	setTexCoordPointer(2, GL_FLOAT, texCoordData);
-	setVertexPointer(2, GL_FLOAT, vertexData);
-	drawFromArray(TriangleStrip, 4, 0, false);
-#endif
 	enableClientStates(false);
+
+	//qPainter->restore();
 }
 
 

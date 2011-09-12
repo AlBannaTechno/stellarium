@@ -1,6 +1,7 @@
 /*
  * Stellarium
  * Copyright (C) 2002 Fabien Chereau
+ * Copyright (C) 2011 Alexander Wolf
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,11 +37,13 @@
 #include <QBuffer>
 
 StelTextureSP Nebula::texCircle;
+StelTextureSP Nebula::texOpenCluster;
+StelTextureSP Nebula::texGlobularCluster;
+StelTextureSP Nebula::texPlanetNebula;
 float Nebula::circleScale = 1.f;
 float Nebula::hintsBrightness = 1;
 Vec3f Nebula::labelColor = Vec3f(0.4,0.3,0.5);
 Vec3f Nebula::circleColor = Vec3f(0.8,0.8,0.1);
-
 
 /* ___________________________________________________
  *
@@ -178,8 +181,8 @@ double Nebula::getCloseViewFov(const StelNavigator*) const
 
 void Nebula::drawHints(StelPainter& sPainter, float maxMagHints)
 {
-	//if (mag>maxMagHints)
-	//	return;
+	if (mag>maxMagHints)
+		return;
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 	float lum = 1.f;//qMin(1,4.f/getOnScreenSize(core))*0.8;
@@ -195,21 +198,34 @@ void Nebula::drawHints(StelPainter& sPainter, float maxMagHints)
 			sPainter.setColor(circleColorGx[0]*lum*hintsBrightness, circleColorGx[1]*lum*hintsBrightness, circleColorGx[2]*lum*hintsBrightness, 1);
 			sPainter.setShadeModel(StelPainter::ShadeModelFlat);
 			if(sizeY < 1e-3)
-				sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree, sizeX*pixelPerDegree, 0);
+				sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60, sizeX*pixelPerDegree/60, PAdeg);
 			else
-				sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60., 0);
+				sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60., PAdeg);
 			break;
-#if 0
+			
+		case NebPNe:
+			sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
+			Nebula::texPlanetNebula->bind();
+			sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+			break;
+			
+		case NebOpenC:
+			sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
+			Nebula::texOpenCluster->bind();
+			sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+			break;
+			
+		case NebGlobC:
+			sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
+			Nebula::texGlobularCluster->bind();
+			sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+			break;
+			
 		default:
 			/* texture */
 			sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
 			Nebula::texCircle->bind();
 			sPainter.drawSprite2dMode(XY[0], XY[1], 4);
-#endif
-//float pixelPerDegree = M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
-	//sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree, sizeY*pixelPerDegree);
-	//sPainter.drawCircle(XY[0], XY[1], sizeX*pixelPerDegree);
-	//qDebug("x=%f y=%f color[0]=%f", XY[0], XY[1], circleColor[0]*lum*hintsBrightness);
 	}
 }
 
