@@ -33,12 +33,14 @@ public:
 	~DateTimeDialog();
 	double newJd();
 	bool valid(int y, int m, int d, int h, int min, int s);
-	void languageChanged();
 	//! Notify that the application style changed
 	void styleChanged();
 public slots:
+	void languageChanged();
 	//! update the editing display with new JD.
 	void setDateTime(double newJd);
+
+	void close();
 
 signals:
 	//! signals that a new, valid JD is available.

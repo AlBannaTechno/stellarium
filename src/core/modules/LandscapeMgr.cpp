@@ -1,6 +1,8 @@
 /*
  * Stellarium
  * Copyright (C) 2006 Fabien Chereau
+ * Copyright (C) 2010 Bogdan Marinov (add/remove landscapes feature)
+ * Copyright (C) 2011 Alexander Wolf
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,12 +22,17 @@
 #include <QDebug>
 #include <QSettings>
 #include <QString>
+#include <QDir>
+#include <QFile>
+#include <QTemporaryFile>
 
 #ifdef USE_OPENGL_ES2
  #include "GLES2/gl2.h"
 #else
  #include <QtOpenGL>
 #endif
+
+#include <stdexcept>
 
 #include "LandscapeMgr.hpp"
 #include "Landscape.hpp"
@@ -40,6 +47,8 @@
 #include "StelIniParser.hpp"
 #include "StelSkyDrawer.hpp"
 #include "StelPainter.hpp"
+#include "karchive.h"
+#include "kzip.h"
 
 // Class which manages the cardinal points displaying
 class Cardinals
@@ -83,7 +92,7 @@ Cardinals::~Cardinals()
 // handles special cases at poles
 void Cardinals::draw(const StelCore* core, double latitude) const
 {
-	const StelProjectorP prj = core->getProjection(StelCore::FrameAltAz);
+	const StelProjectorP prj = core->getProjection(StelCore::FrameAltAz, StelCore::RefractionOff);
 	StelPainter sPainter(prj);
 	sPainter.setFont(font);
 
@@ -133,7 +142,7 @@ void Cardinals::draw(const StelCore* core, double latitude) const
 // Translate cardinal labels with gettext to current sky language and update font for the language
 void Cardinals::updateI18n()
 {
-	StelTranslator& trans = StelApp::getInstance().getLocaleMgr().getSkyTranslator();
+	StelTranslator& trans = StelApp::getInstance().getLocaleMgr().getAppStelTranslator();
 	sNorth = trans.qtranslate("N");
 	sSouth = trans.qtranslate("S");
 	sEast = trans.qtranslate("E");
@@ -144,6 +153,10 @@ void Cardinals::updateI18n()
 LandscapeMgr::LandscapeMgr() : atmosphere(NULL), cardinalsPoints(NULL), landscape(NULL), flagLandscapeSetsLocation(false)
 {
 	setObjectName("LandscapeMgr");
+
+	//TODO: Find a way to obtain this list automatically.
+	//Note: The first entry in the list is used as the default 'default landscape' in removeLandscape().
+	packagedLandscapeIDs = (QStringList() << "guereins" << "trees" << "moon" << "hurricane" << "ocean" << "garching" << "mars" << "saturn");
 }
 
 LandscapeMgr::~LandscapeMgr()
@@ -175,24 +188,24 @@ void LandscapeMgr::update(double deltaTime)
 	// Compute the atmosphere color and intensity
 	// Compute the sun position in local coordinate
 	SolarSystem* ssystem = (SolarSystem*)StelApp::getInstance().getModuleMgr().getModule("SolarSystem");
-	StelNavigator* nav = StelApp::getInstance().getCore()->getNavigator();
 
-	Vec3d sunPos = ssystem->getSun()->getAltAzPos(nav);
+	StelCore* core = StelApp::getInstance().getCore();
+	Vec3d sunPos = ssystem->getSun()->getAltAzPosApparent(core);
 	// Compute the moon position in local coordinate
-	Vec3d moonPos = ssystem->getMoon()->getAltAzPos(nav);
-	atmosphere->computeColor(nav->getJDay(), sunPos, moonPos,
+	Vec3d moonPos = ssystem->getMoon()->getAltAzPosApparent(core);
+	atmosphere->computeColor(core->getJDay(), sunPos, moonPos,
 		ssystem->getMoon()->getPhase(ssystem->getEarth()->getHeliocentricEclipticPos()),
-		StelApp::getInstance().getCore(), nav->getCurrentLocation().latitude, nav->getCurrentLocation().altitude,
+		core, core->getCurrentLocation().latitude, core->getCurrentLocation().altitude,
 		15.f, 40.f);	// Temperature = 15c, relative humidity = 40%
 
-	StelApp::getInstance().getCore()->getSkyDrawer()->reportLuminanceInFov(3.75+atmosphere->getAverageLuminance()*3.5, true);
+	core->getSkyDrawer()->reportLuminanceInFov(3.75+atmosphere->getAverageLuminance()*3.5, true);
 
 	// Compute the ground luminance based on every planets around
 //	float groundLuminance = 0;
 //	const vector<Planet*>& allPlanets = ssystem->getAllPlanets();
 //	for (vector<Planet*>::const_iterator i=allPlanets.begin();i!=allPlanets.end();++i)
 //	{
-//		Vec3d pos = (*i)->getAltAzPos(nav);
+//		Vec3d pos = (*i)->getAltAzPos(core);
 //		pos.normalize();
 //		if (pos[2] <= 0)
 //		{
@@ -202,8 +215,8 @@ void LandscapeMgr::update(double deltaTime)
 //		else
 //		{
 //			// Compute the Illuminance E of the ground caused by the planet in lux = lumen/m^2
-//			float E = pow10(((*i)->get_mag(nav)+13.988)/-2.5);
-//			//qDebug() << "mag=" << (*i)->get_mag(nav) << " illum=" << E;
+//			float E = pow10(((*i)->get_mag(core)+13.988)/-2.5);
+//			//qDebug() << "mag=" << (*i)->get_mag(core) << " illum=" << E;
 //			// Luminance in cd/m^2
 //			groundLuminance += E/0.44*pos[2]*pos[2]; // 1m^2 from 1.5 m above the ground is 0.44 sr.
 //		}
@@ -226,7 +239,7 @@ void LandscapeMgr::update(double deltaTime)
 	else
 		landscapeBrightness = (0.01 + 1.5*(sinSunAngleRad+0.1/1.5));
 	if (moonPos[2] > -0.1/1.5)
-		landscapeBrightness += qMax(0.2/-12.*ssystem->getMoon()->getVMagnitude(nav),0.)*moonPos[2];
+		landscapeBrightness += qMax(0.2/-12.*ssystem->getMoon()->getVMagnitude(core),0.)*moonPos[2];
 
 	// TODO make this more generic for non-atmosphere planets
 	if(atmosphere->getFadeIntensity() == 1)
@@ -249,7 +262,7 @@ void LandscapeMgr::draw(StelCore* core)
 	landscape->draw(core);
 
 	// Draw the cardinal points
-	cardinalsPoints->draw(core, StelApp::getInstance().getCore()->getNavigator()->getCurrentLocation().latitude);
+	cardinalsPoints->draw(core, StelApp::getInstance().getCore()->getCurrentLocation().latitude);
 }
 
 void LandscapeMgr::init()
@@ -271,13 +284,16 @@ void LandscapeMgr::init()
 	setFlagLandscapeSetsLocation(conf->value("landscape/flag_landscape_sets_location",false).toBool());
 
 	bool ok =true;
-	setAtmosphereBortleLightPollution(conf->value("stars/init_bortle_scale",3).toInt(&ok));
+	setAtmosphereBortleLightPollution(conf->value("landscape/init_bortle_scale",3).toInt(&ok));
 	if (!ok)
 	{
-		conf->setValue("stars/init_bortle_scale",3);
+		conf->setValue("landscape/init_bortle_scale",3);
 		setAtmosphereBortleLightPollution(3);
 		ok = true;
 	}
+	StelApp *app = &StelApp::getInstance();
+	connect(app, SIGNAL(languageChanged()), this, SLOT(updateI18n()));
+	connect(app, SIGNAL(colorSchemeChanged(const QString&)), this, SLOT(setStelStyle(const QString&)));
 }
 
 void LandscapeMgr::setStelStyle(const QString& section)
@@ -320,7 +336,43 @@ bool LandscapeMgr::setCurrentLandscapeID(const QString& id)
 
 	if (getFlagLandscapeSetsLocation())
 	{
-		StelApp::getInstance().getCore()->getNavigator()->moveObserverTo(landscape->getLocation());
+		StelApp::getInstance().getCore()->moveObserverTo(landscape->getLocation());
+		// GZ Patch: allow change in fog, extinction, refraction parameters and light pollution
+		//QSettings* conf = StelApp::getInstance().getSettings();
+		//Q_ASSERT(conf);
+		StelSkyDrawer* drawer=StelApp::getInstance().getCore()->getSkyDrawer();
+
+		if (landscape->getDefaultFogSetting() >-1)
+		  {
+		    setFlagFog((bool) landscape->getDefaultFogSetting());
+		    landscape->setFlagShowFog((bool) landscape->getDefaultFogSetting());
+		  }
+		if (landscape->getDefaultBortleIndex() > 0)
+		  {
+		    setAtmosphereBortleLightPollution(landscape->getDefaultBortleIndex());
+		    // TODO: HOWTO make the GUI aware of the new value? 
+		    // conf->setValue("landscape/init_bortle_scale", landscape->getDefaultBortleIndex());
+		  }
+		if (landscape->getDefaultAtmosphericExtinction() >= 0.0)
+		  {
+		    drawer->setExtinctionCoefficient(landscape->getDefaultAtmosphericExtinction());
+		  }
+		if (landscape->getDefaultAtmosphericTemperature() > -273.15)
+		  {
+		    drawer->setAtmosphereTemperature(landscape->getDefaultAtmosphericTemperature());
+		  }
+		if (landscape->getDefaultAtmosphericPressure() >= 0.0)
+		  {
+		    drawer->setAtmospherePressure(landscape->getDefaultAtmosphericPressure());
+		  }
+		else if (landscape->getDefaultAtmosphericPressure() == -1.0)
+		  {
+		    // compute standard pressure for standard atmosphere in given altitude if landscape.ini coded as atmospheric_pressure=-1
+		    // International altitude formula found in Wikipedia.
+		    double alt=landscape->getLocation().altitude;
+		    double p=1013.25*std::pow(1-(0.0065*alt)/288.15, 5.255);
+		    drawer->setAtmospherePressure(p);
+		  }
 	}
 	return true;
 }
@@ -408,6 +460,20 @@ QStringList LandscapeMgr::getAllLandscapeIDs() const
 	return result;
 }
 
+QStringList LandscapeMgr::getUserLandscapeIDs() const
+{
+	QMap<QString,QString> nameToDirMap = getNameToDirMap();
+	QStringList result;
+	foreach (QString id, nameToDirMap.values())
+	{
+		if(!packagedLandscapeIDs.contains(id))
+		{
+			result += id;
+		}
+	}
+	return result;
+}
+
 QString LandscapeMgr::getCurrentLandscapeName() const
 {
 	return landscape->getName();
@@ -415,9 +481,8 @@ QString LandscapeMgr::getCurrentLandscapeName() const
 
 QString LandscapeMgr::getCurrentLandscapeHtmlDescription() const
 {
-	QString desc = QString("<h3>%1</h3>").arg(landscape->getName());
-	desc += landscape->getDescription();
-	desc+="<br><br>";
+	QString desc = getDescription();
+	desc+="<p>";
 	desc+="<b>"+q_("Author: ")+"</b>";
 	desc+=landscape->getAuthorName();
 	desc+="<br>";
@@ -427,9 +492,10 @@ QString LandscapeMgr::getCurrentLandscapeHtmlDescription() const
 		desc += StelUtils::radToDmsStrAdapt(landscape->getLocation().longitude * M_PI/180.);
 		desc += "/" + StelUtils::radToDmsStrAdapt(landscape->getLocation().latitude *M_PI/180.);
 		desc += QString(q_(", %1 m")).arg(landscape->getLocation().altitude);
-		if (landscape->getLocation().planetName!="")
+		QString planetName = landscape->getLocation().planetName;
+		if (!planetName.isEmpty())
 		{
-			desc += "<br><b>"+q_("Planet: ")+"</b>"+landscape->getLocation().planetName;
+			desc += "<br><b>"+q_("Planet: ")+"</b>"+ q_(planetName);
 		}
 		desc += "<br><br>";
 	}
@@ -604,3 +670,316 @@ QMap<QString,QString> LandscapeMgr::getNameToDirMap() const
 }
 
 
+QString LandscapeMgr::installLandscapeFromArchive(QString sourceFilePath, bool display, bool toMainDirectory)
+{
+	Q_UNUSED(toMainDirectory);
+	if (!QFile::exists(sourceFilePath))
+	{
+		qDebug() << "LandscapeMgr: File does not exist:" << sourceFilePath;
+		emit errorUnableToOpen(sourceFilePath);
+		return QString();
+	}
+
+	QDir parentDestinationDir;
+	//TODO: Fix the "for all users" option
+	parentDestinationDir.setPath(StelFileMgr::getUserDir());
+
+	if (!parentDestinationDir.exists("landscapes"))
+	{
+		//qDebug() << "LandscapeMgr: No 'landscapes' subdirectory exists in" << parentDestinationDir.absolutePath();
+		if (!parentDestinationDir.mkdir("landscapes"))
+		{
+			qWarning() << "LandscapeMgr: Unable to install landscape: Unable to create sub-directory 'landscapes' in" << parentDestinationDir.absolutePath();
+			emit errorUnableToOpen(QDir::cleanPath(parentDestinationDir.filePath("landscapes")));//parentDestinationDir.absolutePath()
+			return QString();
+		}
+	}
+	QDir destinationDir (parentDestinationDir.absoluteFilePath("landscapes"));
+
+	KZip sourceArchive(sourceFilePath);
+	if(!sourceArchive.open(QIODevice::ReadOnly))
+	{
+		qWarning() << "LandscapeMgr: Unable to open as a ZIP archive:" << sourceFilePath;
+		emit errorNotArchive();
+		return QString();
+	}
+
+	//Detect top directory
+	const KArchiveDirectory * archiveTopDirectory = NULL;
+	QStringList topLevelContents = sourceArchive.directory()->entries();
+	if(topLevelContents.contains("landscape.ini"))
+	{
+		//If the landscape archive has no top level directory...
+		//(test case is "tulipfield" from the Stellarium Wiki)
+		archiveTopDirectory = sourceArchive.directory();
+	}
+	else
+	{
+		foreach (QString entryPath, topLevelContents)
+		{
+			if (sourceArchive.directory()->entry(entryPath)->isDirectory())
+			{
+				if((dynamic_cast<const KArchiveDirectory*>(sourceArchive.directory()->entry(entryPath)))->entries().contains("landscape.ini"))
+				{
+					archiveTopDirectory = dynamic_cast<const KArchiveDirectory*>(sourceArchive.directory()->entry(entryPath));
+					break;
+				}
+			}
+		}
+	}
+	if (archiveTopDirectory == NULL)
+	{
+		qWarning() << "LandscapeMgr: Unable to install landscape. There is no directory that contains a 'landscape.ini' file in the source archive.";
+		emit errorNotArchive();
+		return QString();
+	}
+
+	/*
+	qDebug() << "LandscapeMgr: Contents of the source archive:" << endl
+			 << "- top level direcotory:" << archiveTopDirectory->name() << endl
+			 << "- contents:" << archiveTopDirectory->entries();
+	*/
+
+	//Check if the top directory name is unique
+	//TODO: Prompt rename? Rename silently?
+	/*
+	if (destinationDir.exists(archiveTopDirectory->name()))
+	{
+		qWarning() << "LandscapeMgr: Unable to install landscape. A directory named" << archiveTopDirectory->name() << "already exists in" << destinationDir.absolutePath();
+		return QString();
+	}
+	*/
+	//Determine the landscape's identifier
+	QString landscapeID = archiveTopDirectory->name();
+	if (landscapeID.length() < 2)
+	{
+		//If the archive has no top level directory (landscapeID is "/"),
+		//use the first 65 characters of its file name for an identifier
+		QFileInfo sourceFileInfo(sourceFilePath);
+		landscapeID = sourceFileInfo.baseName().left(65);
+	}
+
+	//Check for duplicate IDs
+	if (getAllLandscapeIDs().contains(landscapeID))
+	{
+		qWarning() << "LandscapeMgr: Unable to install landscape. A landscape with the ID" << landscapeID << "already exists.";
+		emit errorNotUnique(landscapeID);
+		return QString();
+	}
+
+	//Read the .ini file and check if the landscape name is unique
+	QTemporaryFile tempLandscapeIni("landscapeXXXXXX.ini");
+	if (tempLandscapeIni.open())
+	{
+		const KZipFileEntry * archLandscapeIni = static_cast<const KZipFileEntry*>(archiveTopDirectory->entry("landscape.ini"));
+		tempLandscapeIni.write(archLandscapeIni->createDevice()->readAll());
+		tempLandscapeIni.close();
+
+		QSettings confLandscapeIni(tempLandscapeIni.fileName(), StelIniFormat);
+		QString landscapeName = confLandscapeIni.value("landscape/name").toString();
+		if (getAllLandscapeNames().contains(landscapeName))
+		{
+			qWarning() << "LandscapeMgr: Unable to install landscape. There is already a landscape named" << landscapeName;
+			emit errorNotUnique(landscapeName);
+			return QString();
+		}
+	}
+
+	//Copy the landscape directory to the target
+	//sourceArchive.directory()->copyTo(destinationDir.absolutePath());
+
+	//This case already has been handled - and commented out - above. :)
+	if(destinationDir.exists(landscapeID))
+	{
+		qWarning() << "LandscapeMgr: A subdirectory" << landscapeID << "already exists in" << destinationDir.absolutePath() << "Its contents may be overwritten.";
+	}
+	else if(!destinationDir.mkdir(landscapeID))
+	{
+		qWarning() << "LandscapeMgr: Unable to install landscape. Unable to create" << landscapeID << "directory in" << destinationDir.absolutePath();
+		emit errorUnableToOpen(QDir::cleanPath(destinationDir.filePath(landscapeID)));
+		return QString();
+	}
+	destinationDir.cd(landscapeID);
+	QString destinationDirPath = destinationDir.absolutePath();
+	QStringList landscapeFileEntries = archiveTopDirectory->entries();
+	foreach (QString entry, landscapeFileEntries)
+	{
+		const KArchiveEntry * archEntry = archiveTopDirectory->entry(entry);
+		if(archEntry->isFile())
+		{
+			static_cast<const KZipFileEntry*>(archEntry)->copyTo(destinationDirPath);
+		}
+	}
+
+	sourceArchive.close();
+
+	//If necessary, make the new landscape the current landscape
+	if (display)
+	{
+		setCurrentLandscapeID(landscapeID);
+	}
+
+	//Make sure that everyone knows that the list of available landscapes has changed
+	emit landscapesChanged();
+
+	qDebug() << "LandscapeMgr: Successfully installed landscape directory" << landscapeID << "to" << destinationDir.absolutePath();
+	return landscapeID;
+}
+
+bool LandscapeMgr::removeLandscape(QString landscapeID)
+{
+	if (landscapeID.isEmpty())
+	{
+		qWarning() << "LandscapeMgr: Error! No landscape ID passed to removeLandscape().";
+		return false;
+	}
+
+	if (packagedLandscapeIDs.contains(landscapeID))
+	{
+		qWarning() << "LandscapeMgr: Landscapes that are part of the default installation cannot be removed.";
+		return false;
+	}
+
+	qDebug() << "LandscapeMgr: Trying to remove landscape" << landscapeID;
+
+	QString landscapePath = getLandscapePath(landscapeID);
+	if (landscapePath.isEmpty())
+		return false;
+
+	QDir landscapeDir(landscapePath);
+	foreach (QString fileName, landscapeDir.entryList(QDir::Files | QDir::NoDotAndDotDot))
+	{
+		if(!landscapeDir.remove(fileName))
+		{
+			qWarning() << "LandscapeMgr: Unable to remove" << fileName;
+			emit errorRemoveManually(landscapeDir.absolutePath());
+			return false;
+		}
+	}
+	landscapeDir.cdUp();
+	if(!landscapeDir.rmdir(landscapeID))
+	{
+		qWarning() << "LandscapeMgr: Error! Landscape" << landscapeID
+				   << "could not be removed. "
+				   << "Some files were deleted, but not all."
+				   << endl
+				   << "LandscapeMgr: You can delete manually" << QDir::cleanPath(landscapeDir.filePath(landscapeID));
+		emit errorRemoveManually(QDir::cleanPath(landscapeDir.filePath(landscapeID)));
+		return false;
+	}
+
+	qDebug() << "LandscapeMgr: Successfully removed" << landscapePath;
+
+	//If the landscape has been selected, revert to the default one
+	//TODO: Make this optional?
+	if (getCurrentLandscapeID() == landscapeID)
+	{
+		if(getDefaultLandscapeID() == landscapeID)
+		{
+			setDefaultLandscapeID(packagedLandscapeIDs.first());
+			//TODO: Find what happens if a missing landscape is specified in the configuration file
+		}
+
+		setCurrentLandscapeID(getDefaultLandscapeID());
+	}
+
+	//Make sure that everyone knows that the list of available landscapes has changed
+	emit landscapesChanged();
+
+	return true;
+}
+
+QString LandscapeMgr::getLandscapePath(QString landscapeID)
+{
+	QString result;
+	//Is this necessary? This function is private.
+	if (landscapeID.isEmpty())
+		return result;
+
+	try
+	{
+		result = StelFileMgr::findFile("landscapes/" + landscapeID, StelFileMgr::Directory);
+	}
+	catch (std::runtime_error &e)
+	{
+		qWarning() << "LandscapeMgr: Error! Unable to find" << landscapeID << ":" << e.what();
+		return result;
+	}
+
+	return result;
+}
+
+QString LandscapeMgr::loadLandscapeName(QString landscapeID)
+{
+	QString landscapeName;
+	if (landscapeID.isEmpty())
+	{
+		qWarning() << "LandscapeMgr: Error! No landscape ID passed to loadLandscapeName().";
+		return landscapeName;
+	}
+
+	QString landscapePath = getLandscapePath(landscapeID);
+	if (landscapePath.isEmpty())
+		return landscapeName;
+
+	QDir landscapeDir(landscapePath);
+	if (landscapeDir.exists("landscape.ini"))
+	{
+		QString landscapeSettingsPath = landscapeDir.filePath("landscape.ini");
+		QSettings landscapeSettings(landscapeSettingsPath, StelIniFormat);
+		landscapeName = landscapeSettings.value("landscape/name").toString();
+	}
+	else
+	{
+		qWarning() << "LandscapeMgr: Error! Landscape directory" << landscapePath << "does not contain a 'landscape.ini' file";
+	}
+
+	return landscapeName;
+}
+
+quint64 LandscapeMgr::loadLandscapeSize(QString landscapeID)
+{
+	quint64 landscapeSize = 0;
+	if (landscapeID.isEmpty())
+	{
+		qWarning() << "LandscapeMgr: Error! No landscape ID passed to loadLandscapeSize().";
+		return landscapeSize;
+	}
+
+	QString landscapePath = getLandscapePath(landscapeID);
+	if (landscapePath.isEmpty())
+		return landscapeSize;
+
+	QDir landscapeDir(landscapePath);
+	foreach (QFileInfo file, landscapeDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot))
+	{
+		//qDebug() << "name:" << file.baseName() << "size:" << file.size();
+		landscapeSize += file.size();
+	}
+
+	return landscapeSize;
+}
+
+QString LandscapeMgr::getDescription() const
+{
+	QString lang = StelApp::getInstance().getLocaleMgr().getAppLanguage();
+	QString descriptionFile = StelFileMgr::findFile("landscapes/" + getCurrentLandscapeID(), StelFileMgr::Directory) + "/description." + lang + ".utf8";
+	QString desc;
+
+	if(QFileInfo(descriptionFile).exists())
+	{
+		QFile file(descriptionFile);
+		file.open(QIODevice::ReadOnly | QIODevice::Text);
+		QTextStream in(&file);
+		in.setCodec("UTF-8");
+		desc = in.readAll();
+		file.close();
+	}
+	else
+	{
+		desc = QString("<h2>%1</h2>").arg(q_(landscape->getName()));
+		desc += landscape->getDescription();
+	}
+
+	return desc;
+}

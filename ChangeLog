@@ -1,3 +1,55 @@
+[development version]
+Location window: map pointer position is updated on longitude/latitude change.
+Solar System Editor plug-in:
+- fixed a bug in the parsing of MPC lists: the epoch's Julian Day value was wrong by 0.5 JD (LP: #836839)
+
+0.11.0
+New feature: atmosphere refraction support.
+New plugin: Historical supernova.
+New translatable strings: landscapes.
+New moons of solar system planets (LP: #730686).
+New feature: using different symbols for nebula icons.
+TimeZone plug-in: fixed a bug preventing the saving of custom time zones. (LP: #720107)
+Ocular plug-in: Corrected the calculation of CCD FOV.
+Ocular plug-in: Implemented rotating the CCD bounding box.
+Ocular plug-in: Made Telrad & CCD mutually exclusive.
+Ocular plug-in: Implemented better binoculars support (LP: #695568).
+Ocular plug-in: Redesign dialog.
+SVMT plug-in: Adding QtWebKit dependency.
+Satellite plug-in: improve of code.
+Solar System Editor plug-in: fixed MPES online search and updated hard-coded URLs (LP: #725870).
+Skycultures: two new skyculture descriptions in Norwegian (Bokmål).
+Redesign search tool (LP: #730687).
+Improved texture manager.
+Various problems resolved (LP: #730069, #772206, #683255, #657455, #785574, #515311, #730075, #711887, #688978, #616748, #589634)
+
+0.10.6 [2010-12-05]
+New feature for installing landscapes from ZIP archives.
+New plugin: Solar System editor.
+New plugin: Time Zone manual override.
+New translatable strings: stars and nebulae.
+Selected plugins loaded by default.
+Fixed on change of sky culture. (LP: #595914).
+Fixed clearing of single constellation selection. (LP: #600889).
+Fixed constellation art engine, removing distortion of images. (LP: #629405).
+Changed GUI styles (all dialogs now use "Title Bar", the two different tabbed widget implementations are styled consistently).
+Changed Solar System engine, allowing "Comets" and "Minor planets" to be handled as classes of objects separate from "Planets".
+Translatable plugin names, descriptions and some other strings.
+Oculars plugin: now uses a configuration file instead of SQL (LP: #596453).
+Oculars plugin: added manual override of keyboard shortcuts (LP: #514530).
+Oculars plugin: CCD sensors formula fixed (LP: #604975).
+Satellites plugin: added new orbit prediction engine.
+Satellites plugin: added trajectory visualization.
+Satellites plugin: fixed problems leaving satellite TLEs out of date (LP: #616627).
+Satellites plugin: can now update TLEs from a local file.
+Satellites plugin: satellite visibility can now be saved from satellites dialog.
+Telescope control plugin: fixed bad serial port names on Windows (LP: #596167).
+Telescope control plugin: fixed telescopes disappearance on startup (LP: #608533).
+Telescope control plugin: added manual equinox/epoch override (LP: #608544).
+Various rendering problems resolved (LP: #569701, #596678, #641855, #642990, #666837, #629405, #591971, #615006, #671633).
+SQLite dependency dropped. The Qt SQLite driver no longer needs to be packaged with Stellarium.
+
+
 0.10.5 [2010-06-02]
 Bug fix release.
 Fixed:

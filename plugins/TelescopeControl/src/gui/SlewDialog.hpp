@@ -38,8 +38,9 @@ class SlewDialog : public StelDialogTelescopeControl
 public:
 	SlewDialog();
 	virtual ~SlewDialog();
+
+public slots:
 	void languageChanged();
-	void updateStyle();
 	
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots

@@ -33,10 +33,12 @@ class LocationDialog : public StelDialog
 public:
 	LocationDialog();
 	virtual ~LocationDialog();
-	void languageChanged();
 	//! Notify that the application style changed
 	void styleChanged();
-	
+
+public slots:
+	void languageChanged();
+
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();
@@ -61,6 +63,12 @@ private:
 	
 	//! Update the map for the given location.
 	void setMapForLocation(const StelLocation& loc);
+
+	//! Populates the drop-down list of planets.
+	//! The displayed names are localized in the current interface language.
+	//! The original names are kept in the user data field of each QComboBox
+	//! item.
+	void populatePlanetList();
 	
 private slots:
 	//! Update the widget to make sure it is synchrone if the location is changed programmatically
@@ -90,7 +98,7 @@ private slots:
 	void useAsDefaultClicked();
 	
 private:
-	QString lastPlanet;
+	QString lastPlanet;	
 	bool lastVisionMode;
 };
 

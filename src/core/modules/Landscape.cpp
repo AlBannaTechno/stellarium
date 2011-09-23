@@ -1,6 +1,7 @@
 /*
  * Stellarium
  * Copyright (C) 2003 Fabien Chereau
+ * Copyright (C) 2011 Bogdan Marinov
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,6 +47,8 @@ void Landscape::loadCommon(const QSettings& landscapeIni, const QString& landsca
 	name = landscapeIni.value("landscape/name").toString();
 	author = landscapeIni.value("landscape/author").toString();
 	description = landscapeIni.value("landscape/description").toString();
+	description = description.replace(QRegExp("\\\\n\\s*\\\\n"), "<br />");
+	description = description.replace("\\n", " ");
 	if (name.isEmpty())
 	{
 		qWarning() << "No valid landscape definition found for landscape ID "
@@ -87,6 +90,24 @@ void Landscape::loadCommon(const QSettings& landscapeIni, const QString& landsca
 	else
 		location.name = name;
 	location.landscapeKey = name;
+	// New entries by GZ.
+	if (landscapeIni.contains("location/light_pollution"))
+		defaultBortleIndex = landscapeIni.value("location/light_pollution").toInt();
+	else defaultBortleIndex=-1; // mark "invalid/no change".
+	if (defaultBortleIndex<=0) defaultBortleIndex=-1; // also allow neg. values in ini file, signalling "no change".
+	if (defaultBortleIndex>9) defaultBortleIndex=9; // correct bad values.
+	if (landscapeIni.contains("location/display_fog"))
+		defaultFogSetting = landscapeIni.value("location/display_fog").toInt();
+	else defaultFogSetting=-1;
+	if (landscapeIni.contains("location/atmospheric_extinction_coefficient"))
+		defaultExtinctionCoefficient = landscapeIni.value("location/atmospheric_extinction_coefficient").toDouble();
+	else defaultExtinctionCoefficient=-1.0;
+	if (landscapeIni.contains("location/atmospheric_temperature"))
+		defaultTemperature = landscapeIni.value("location/atmospheric_temperature").toDouble();
+	else defaultTemperature=-1000.0;
+	if (landscapeIni.contains("location/atmospheric_pressure"))
+		defaultPressure = landscapeIni.value("location/atmospheric_pressure").toDouble();
+	else defaultPressure=-2.0; // "no change"
 }
 
 #include <iostream>
@@ -139,7 +160,7 @@ void LandscapeOldStyle::load(const QSettings& landscapeIni, const QString& lands
 {
 	// TODO: put values into hash and call create method to consolidate code
 	loadCommon(landscapeIni, landscapeId);
-	// Patch GZ:
+
 	if (landscapeIni.contains("landscape/tesselate_rows"))
 		rows = landscapeIni.value("landscape/tesselate_rows").toInt();
 	else rows=8;
@@ -159,50 +180,68 @@ void LandscapeOldStyle::load(const QSettings& landscapeIni, const QString& lands
 	// Load sides textures
 	nbSideTexs = landscapeIni.value("landscape/nbsidetex", 0).toInt();
 	sideTexs = new StelTextureSP[nbSideTexs];
-	for (int i=0;i<nbSideTexs;++i)
+	for (int i=0; i<nbSideTexs; ++i)
 	{
-		QString tmp = QString("tex%1").arg(i);
-		sideTexs[i] = StelApp::getInstance().getTextureManager().createTexture(getTexturePath(landscapeIni.value(QString("landscape/")+tmp).toString(), landscapeId));
+		QString textureKey = QString("landscape/tex%1").arg(i);
+		QString textureName = landscapeIni.value(textureKey).toString();
+		const QString texturePath = getTexturePath(textureName, landscapeId);
+		sideTexs[i] = StelApp::getInstance().getTextureManager().createTexture(texturePath);
 	}
 
+	QMap<int, int> texToSide;
 	// Init sides parameters
 	nbSide = landscapeIni.value("landscape/nbside", 0).toInt();
 	sides = new landscapeTexCoord[nbSide];
-	QString s;
 	int texnum;
-	float a,b,c,d;
 	for (int i=0;i<nbSide;++i)
 	{
-		QString tmp = QString("side%1").arg(i);
-		s = landscapeIni.value(QString("landscape/")+tmp).toString();
-		sscanf(s.toLocal8Bit(),"tex%d:%f:%f:%f:%f",&texnum,&a,&b,&c,&d);
+		QString key = QString("landscape/side%1").arg(i);
+		QString description = landscapeIni.value(key).toString();
+		//sscanf(s.toLocal8Bit(),"tex%d:%f:%f:%f:%f",&texnum,&a,&b,&c,&d);
+		QStringList parameters = description.split(':');
+		//TODO: How should be handled an invalid texture description?
+		QString textureName = parameters.value(0);
+		texnum = textureName.right(textureName.length() - 3).toInt();
 		sides[i].tex = sideTexs[texnum];
-		sides[i].texCoords[0] = a;
-		sides[i].texCoords[1] = b;
-		sides[i].texCoords[2] = c;
-		sides[i].texCoords[3] = d;
-		// qDebug("%f %f %f %f\n",a,b,c,d);
+		sides[i].texCoords[0] = parameters.at(1).toFloat();
+		sides[i].texCoords[1] = parameters.at(2).toFloat();
+		sides[i].texCoords[2] = parameters.at(3).toFloat();
+		sides[i].texCoords[3] = parameters.at(4).toFloat();
+		//qDebug() << i << texnum << sides[i].texCoords[0] << sides[i].texCoords[1] << sides[i].texCoords[2] << sides[i].texCoords[3];
+
+		// Prior to precomputing the sides, we used to match E to side0
+		// in r4598 the precomputing was put in place and caused a problem for
+		// old_style landscapes which had a z rotation on the side textures
+		// and where side0 did not map to tex0
+		// texToSide is a nasty hack to replace the old behaviour
+		texToSide[i] = texnum;
 	}
 
 	nbDecorRepeat = landscapeIni.value("landscape/nb_decor_repeat", 1).toInt();
 
-	groundTex = StelApp::getInstance().getTextureManager().createTexture(getTexturePath(landscapeIni.value("landscape/groundtex").toString(), landscapeId), StelTexture::StelTextureParams(true));
-	s = landscapeIni.value("landscape/ground").toString();
-	sscanf(s.toLocal8Bit(),"groundtex:%f:%f:%f:%f",&a,&b,&c,&d);
+	QString groundTexName = landscapeIni.value("landscape/groundtex").toString();
+	QString groundTexPath = getTexturePath(groundTexName, landscapeId);
+	groundTex = StelApp::getInstance().getTextureManager().createTexture(groundTexPath, StelTexture::StelTextureParams(true));
+	QString description = landscapeIni.value("landscape/ground").toString();
+	//sscanf(description.toLocal8Bit(),"groundtex:%f:%f:%f:%f",&a,&b,&c,&d);
+	QStringList parameters = description.split(':');
 	groundTexCoord.tex = groundTex;
-	groundTexCoord.texCoords[0] = a;
-	groundTexCoord.texCoords[1] = b;
-	groundTexCoord.texCoords[2] = c;
-	groundTexCoord.texCoords[3] = d;
+	groundTexCoord.texCoords[0] = parameters.at(1).toFloat();
+	groundTexCoord.texCoords[1] = parameters.at(2).toFloat();
+	groundTexCoord.texCoords[2] = parameters.at(3).toFloat();
+	groundTexCoord.texCoords[3] = parameters.at(4).toFloat();
 
-	fogTex = StelApp::getInstance().getTextureManager().createTexture(getTexturePath(landscapeIni.value("landscape/fogtex").toString(), landscapeId), StelTexture::StelTextureParams(true, GL_LINEAR, GL_REPEAT));
-	s = landscapeIni.value("landscape/fog").toString();
-	sscanf(s.toLocal8Bit(),"fogtex:%f:%f:%f:%f",&a,&b,&c,&d);
+	QString fogTexName = landscapeIni.value("landscape/fogtex").toString();
+	QString fogTexPath = getTexturePath(fogTexName, landscapeId);
+	fogTex = StelApp::getInstance().getTextureManager().createTexture(fogTexPath, StelTexture::StelTextureParams(true, GL_LINEAR, GL_REPEAT));
+	description = landscapeIni.value("landscape/fog").toString();
+	//sscanf(description.toLocal8Bit(),"fogtex:%f:%f:%f:%f",&a,&b,&c,&d);
+	parameters = description.split(':');
 	fogTexCoord.tex = fogTex;
-	fogTexCoord.texCoords[0] = a;
-	fogTexCoord.texCoords[1] = b;
-	fogTexCoord.texCoords[2] = c;
-	fogTexCoord.texCoords[3] = d;
+	fogTexCoord.texCoords[0] = parameters.at(1).toFloat();
+	fogTexCoord.texCoords[1] = parameters.at(2).toFloat();
+	fogTexCoord.texCoords[2] = parameters.at(3).toFloat();
+	fogTexCoord.texCoords[3] = parameters.at(4).toFloat();
 
 	fogAltAngle        = landscapeIni.value("landscape/fog_alt_angle", 0.).toFloat();
 	fogAngleShift      = landscapeIni.value("landscape/fog_angle_shift", 0.).toFloat();
@@ -220,6 +259,7 @@ void LandscapeOldStyle::load(const QSettings& landscapeIni, const QString& lands
 	int slices_per_side = 3*64/(nbDecorRepeat*nbSide);
 	if (slices_per_side<=0)
 		slices_per_side = 1;
+
 	// draw a fan disk instead of a ordinary disk to that the inner slices
 	// are not so slender. When they are too slender, culling errors occur
 	// in cylinder projection mode.
@@ -235,8 +275,6 @@ void LandscapeOldStyle::load(const QSettings& landscapeIni, const QString& lands
 
 	// Precompute the vertex arrays for side display
 	static const int stacks = (calibrated ? 16 : 8); // GZ: 8->16, I need better precision.
-	// make slices_per_side=(3<<K) so that the innermost polygon of the
-	// fandisk becomes a triangle:
 	const double z0 = calibrated ?
 	// GZ: For calibrated, we use z=decorAngleShift...(decorAltAngle-decorAngleShift), but we must compute the tan in the loop.
 	decorAngleShift : (tanMode ? radius * std::tan(decorAngleShift*M_PI/180.f) : radius * std::sin(decorAngleShift*M_PI/180.f));
@@ -248,8 +286,8 @@ void LandscapeOldStyle::load(const QSettings& landscapeIni, const QString& lands
 	const float alpha = 2.f*M_PI/(nbDecorRepeat*nbSide*slices_per_side);
 	const float ca = std::cos(alpha);
 	const float sa = std::sin(alpha);
-	float y0 = radius*std::cos((angleRotateZ+angleRotateZOffset)*M_PI/180.f);
-	float x0 = radius*std::sin((angleRotateZ+angleRotateZOffset)*M_PI/180.f);
+	float y0 = radius*std::cos(angleRotateZ*M_PI/180.f);
+	float x0 = radius*std::sin(angleRotateZ*M_PI/180.f);
 
 	LOSSide precompSide;
 	precompSide.arr.primitiveType=StelVertexArray::Triangles;
@@ -257,21 +295,29 @@ void LandscapeOldStyle::load(const QSettings& landscapeIni, const QString& lands
 	{
 		for (int i=0;i<nbSide;i++)
 		{
+			int ti;
+			if (texToSide.contains(i))
+				ti = texToSide[i];
+			else
+			{
+				qDebug() << QString("LandscapeOldStyle::load ERROR: found no corresponding tex value for side%1").arg(i);
+				break;
+			}
 			precompSide.arr.vertex.resize(0);
 			precompSide.arr.texCoords.resize(0);
 			precompSide.arr.indices.resize(0);
-			precompSide.tex=sideTexs[i];
+			precompSide.tex=sideTexs[ti];
 
-			float tx0 = sides[i].texCoords[0];
-			const float d_tx0 = (sides[i].texCoords[2]-sides[i].texCoords[0]) / slices_per_side;
-			const float d_ty = (sides[i].texCoords[3]-sides[i].texCoords[1]) / stacks;
+			float tx0 = sides[ti].texCoords[0];
+			const float d_tx0 = (sides[ti].texCoords[2]-sides[ti].texCoords[0]) / slices_per_side;
+			const float d_ty = (sides[ti].texCoords[3]-sides[ti].texCoords[1]) / stacks;
 			for (int j=0;j<slices_per_side;j++)
 			{
 				const float y1 = y0*ca - x0*sa;
 				const float x1 = y0*sa + x0*ca;
 				const float tx1 = tx0 + d_tx0;
 				float z = z0;
-				float ty0 = sides[i].texCoords[1];
+				float ty0 = sides[ti].texCoords[1];
 				for (int k=0;k<=stacks*2;k+=2)
 				{
 					precompSide.arr.texCoords << Vec2f(tx0, ty0) << Vec2f(tx1, ty0);
@@ -303,7 +349,7 @@ void LandscapeOldStyle::load(const QSettings& landscapeIni, const QString& lands
 
 void LandscapeOldStyle::draw(StelCore* core)
 {
-	StelPainter painter(core->getProjection(StelCore::FrameAltAz));
+	StelPainter painter(core->getProjection(StelCore::FrameAltAz, StelCore::RefractionOff));
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	painter.enableTexture2d(true);
@@ -327,7 +373,9 @@ void LandscapeOldStyle::drawFog(StelCore* core, StelPainter& sPainter) const
 		return;
 
 	const float vpos = (tanMode||calibrated) ? radius*std::tan(fogAngleShift*M_PI/180.) : radius*std::sin(fogAngleShift*M_PI/180.);
-	sPainter.setProjector(core->getProjection(core->getNavigator()->getAltAzModelViewMat() * Mat4d::translation(Vec3d(0.,0.,vpos))));
+	StelProjector::ModelViewTranformP transfo = core->getAltAzModelViewTransform(StelCore::RefractionOff);
+	transfo->combine(Mat4d::translation(Vec3d(0.,0.,vpos)));
+	sPainter.setProjector(core->getProjection(transfo));
 	glBlendFunc(GL_ONE, GL_ONE);
 	const float nightModeFilter = StelApp::getInstance().getVisionModeNight() ? 0.f : 1.f;
 	sPainter.setColor(fogFader.getInterstate()*(0.1f+0.1f*skyBrightness),
@@ -350,7 +398,10 @@ void LandscapeOldStyle::drawDecor(StelCore* core, StelPainter& sPainter) const
 	// and the texture in between is correctly stretched.
 	// TODO: (1) Replace fog cylinder by similar texture, which could be painted as image layer in Photoshop/Gimp.
 	//       (2) Implement calibrated && tan_mode
-	sPainter.setProjector(core->getProjection(StelCore::FrameAltAz));
+	StelProjector::ModelViewTranformP transfo = core->getAltAzModelViewTransform(StelCore::RefractionOff);
+	transfo->combine(Mat4d::zrotation(-angleRotateZOffset*M_PI/180.f));
+
+	sPainter.setProjector(core->getProjection(transfo));
 
 	if (!landFader.getInterstate())
 		return;
@@ -370,12 +421,13 @@ void LandscapeOldStyle::drawGround(StelCore* core, StelPainter& sPainter) const
 {
 	if (!landFader.getInterstate())
 		return;
-	const StelNavigator* nav = core->getNavigator();
 	const float vshift = (tanMode || calibrated) ?
 	  radius*std::tan(groundAngleShift*M_PI/180.) :
 	  radius*std::sin(groundAngleShift*M_PI/180.);
-	Mat4d mat = nav->getAltAzModelViewMat() * Mat4d::zrotation((groundAngleRotateZ-angleRotateZOffset)*M_PI/180.f) * Mat4d::translation(Vec3d(0,0,vshift));
-	sPainter.setProjector(core->getProjection(mat));
+	StelProjector::ModelViewTranformP transfo = core->getAltAzModelViewTransform(StelCore::RefractionOff);
+	transfo->combine(Mat4d::zrotation((groundAngleRotateZ-angleRotateZOffset)*M_PI/180.f) * Mat4d::translation(Vec3d(0,0,vshift)));
+
+	sPainter.setProjector(core->getProjection(transfo));
 	float nightModeFilter = StelApp::getInstance().getVisionModeNight() ? 0.f : 1.f;
 	sPainter.setColor(skyBrightness, skyBrightness*nightModeFilter, skyBrightness*nightModeFilter, landFader.getInterstate());
 	groundTex->bind();
@@ -424,8 +476,9 @@ void LandscapeFisheye::draw(StelCore* core)
 	if(!validLandscape) return;
 	if(!landFader.getInterstate()) return;
 
-	StelNavigator* nav = core->getNavigator();
-	const StelProjectorP prj = core->getProjection(nav->getAltAzModelViewMat() * Mat4d::zrotation(-(angleRotateZ+(angleRotateZOffset*2*M_PI/360.))));
+	StelProjector::ModelViewTranformP transfo = core->getAltAzModelViewTransform(StelCore::RefractionOff);
+	transfo->combine(Mat4d::zrotation(-(angleRotateZ+(angleRotateZOffset*M_PI/180.))));
+	const StelProjectorP prj = core->getProjection(transfo);
 	StelPainter sPainter(prj);
 
 	// Normal transparency mode
@@ -488,8 +541,9 @@ void LandscapeSpherical::draw(StelCore* core)
 	if(!validLandscape) return;
 	if(!landFader.getInterstate()) return;
 
-	StelNavigator* nav = core->getNavigator();
-	const StelProjectorP prj = core->getProjection(nav->getAltAzModelViewMat() * Mat4d::zrotation(-(angleRotateZ+(angleRotateZOffset*2*M_PI/360.))));
+	StelProjector::ModelViewTranformP transfo = core->getAltAzModelViewTransform(StelCore::RefractionOff);
+	transfo->combine(Mat4d::zrotation(-(angleRotateZ+(angleRotateZOffset*M_PI/180.))));
+	const StelProjectorP prj = core->getProjection(transfo);
 	StelPainter sPainter(prj);
 
 	// Normal transparency mode

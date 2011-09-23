@@ -58,11 +58,6 @@ public:
 	//! Used to control fading when turning on and off the grid lines and great circles.
 	virtual void update(double deltaTime);
 
-	//! Sets the colors of the grids and great circles.
-	//! Sets the colors of the Equatorial Grid, Azimuthal Grid,
-	//! Meridian Line, Equator Line and Ecliptic Line.
-	virtual void setStelStyle(const QString& section);
-
 	//! Used to determine the order in which the various modules are drawn.
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 
@@ -132,6 +127,20 @@ public slots:
 	//! Set the color of the Meridian Line.
 	void setColorMeridianLine(const Vec3f& v);
 
+	//! Set flag for displaying Horizon Line.
+	void setFlagHorizonLine(bool b);
+	//! Get flag for displaying Horizon Line.
+	bool getFlagHorizonLine(void) const;
+	//! Get the current color of the Horizon Line.
+	Vec3f getColorHorizonLine(void) const;
+	//! Set the color of the Horizon Line.
+	void setColorHorizonLine(const Vec3f& v);
+
+private slots:
+	//! Sets the colors of: grids and great circles, Equatorial Grid, Azimuthal Grid, 
+	//! Meridian Line, Equator Line and Ecliptic Line.
+	void setStelStyle(const QString& section);
+
 private:
 	SkyGrid * equGrid;      // Equatorial grid
 	SkyGrid * equJ2000Grid; // Equatorial J2000 grid
@@ -140,6 +149,7 @@ private:
 	SkyLine * equatorLine;  // Celestial Equator line
 	SkyLine * eclipticLine; // Ecliptic line
 	SkyLine * meridianLine; // Meridian line
+	SkyLine * horizonLine;	// Horizon line
 };
 
 #endif // _GRIDLINESMGR_HPP_

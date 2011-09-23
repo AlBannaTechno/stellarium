@@ -1,6 +1,8 @@
 /*
  * Stellarium
  * Copyright (C) 2002 Fabien Chereau
+ * Copyright (C) 2010 Bogdan Marinov
+ * Copyright (C) 2011 Alexander Wolf
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,7 +23,7 @@
 #include "StelTexture.hpp"
 #include "stellplanet.h"
 #include "Orbit.hpp"
-#include "StelNavigator.hpp"
+
 #include "StelProjector.hpp"
 #include "StelApp.hpp"
 #include "StelCore.hpp"
@@ -33,11 +35,14 @@
 #include "StelModuleMgr.hpp"
 #include "StelIniParser.hpp"
 #include "Planet.hpp"
-#include "StelNavigator.hpp"
+#include "MinorPlanet.hpp"
+#include "Comet.hpp"
+
 #include "StelSkyDrawer.hpp"
 #include "StelUtils.hpp"
 #include "StelPainter.hpp"
 #include "TrailGroup.hpp"
+#include "RefractionExtinction.hpp"
 
 #include <functional>
 #include <algorithm>
@@ -124,9 +129,17 @@ void SolarSystem::init()
 
 	setFlagTrails(conf->value("astro/flag_object_trails", false).toBool());
 
-	GETSTELMODULE(StelObjectMgr)->registerStelObjectMgr(this);
+	StelObjectMgr *objectManager = GETSTELMODULE(StelObjectMgr);
+	objectManager->registerStelObjectMgr(this);
+	connect(objectManager, SIGNAL(selectedObjectChanged(StelModule::StelModuleSelectAction)), 
+			this, SLOT(selectedObjectChange(StelModule::StelModuleSelectAction)));
+
 	texPointer = StelApp::getInstance().getTextureManager().createTexture("textures/pointeur4.png");
 	Planet::hintCircleTex = StelApp::getInstance().getTextureManager().createTexture("textures/planet-indicator.png");
+
+	StelApp *app = &StelApp::getInstance();
+	connect(app, SIGNAL(languageChanged()), this, SLOT(updateI18n()));
+	connect(app, SIGNAL(colorSchemeChanged(const QString&)), this, SLOT(setStelStyle(const QString&)));
 }
 
 void SolarSystem::recreateTrails()
@@ -143,14 +156,14 @@ void SolarSystem::recreateTrails()
 
 void SolarSystem::drawPointer(const StelCore* core)
 {
-	const StelNavigator* nav = core->getNavigator();
 	const StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
 
 	const QList<StelObjectP> newSelected = GETSTELMODULE(StelObjectMgr)->getSelectedObject("Planet");
 	if (!newSelected.empty())
 	{
 		const StelObjectP obj = newSelected[0];
-		Vec3d pos=obj->getJ2000EquatorialPos(nav);
+		Vec3d pos=obj->getJ2000EquatorialPos(core);
+
 		Vec3d screenpos;
 		// Compute 2D pos and return if outside screen
 		if (!prj->project(pos, screenpos))
@@ -195,21 +208,58 @@ void cometOrbitPosFunc(double jd,double xyz[3], void* userDataPtr)
 void SolarSystem::loadPlanets()
 {
 	qDebug() << "Loading Solar System data ...";
-	QString iniFile;
+	QStringList solarSystemFiles;
 	try
 	{
-		iniFile = StelFileMgr::findFile("data/ssystem.ini");
+		solarSystemFiles = StelFileMgr::findFileInAllPaths("data/ssystem.ini");
 	}
 	catch(std::runtime_error& e)
 	{
 		qWarning() << "ERROR while loading ssysyem.ini (unable to find data/ssystem.ini): " << e.what() << endl;
 		return;
 	}
-	QSettings pd(iniFile, StelIniFormat);
+
+	foreach (const QString& solarSystemFile, solarSystemFiles)
+	{
+		if (loadPlanets(solarSystemFile))
+			break;
+		else
+		{
+			sun.clear();
+			moon.clear();
+			earth.clear();
+
+			foreach (PlanetP p, systemPlanets)
+			{
+				p->satellites.clear();
+				p.clear();
+			}
+			systemPlanets.clear();
+			//Memory leak? What's the proper way of cleaning shared pointers?
+
+			//If the file is in the user data directory, rename it:
+			if (solarSystemFile.contains(StelFileMgr::getUserDir()))
+			{
+				QString newName = QString("%1/data/ssystem-%2.ini").arg(StelFileMgr::getUserDir()).arg(QDateTime::currentDateTime().toString("yyyyMMddThhmmss"));
+				if (QFile::rename(solarSystemFile, newName))
+					qWarning() << "Invalid Solar System file" << solarSystemFile << "has been renamed to" << newName;
+				else
+				{
+					qWarning() << "Invalid Solar System file" << solarSystemFile << "cannot be removed!";
+					qWarning() << "Please either delete it, rename it or move it elsewhere.";
+				}
+			}
+		}
+	}
+}
+
+bool SolarSystem::loadPlanets(const QString& filePath)
+{
+	QSettings pd(filePath, StelIniFormat);
 	if (pd.status() != QSettings::NoError)
 	{
-		qWarning() << "ERROR while parsing ssysyem.ini file";
-		return;
+		qWarning() << "ERROR while parsing" << filePath;
+		return false;
 	}
 
 	// QSettings does not allow us to say that the sections of the file
@@ -310,7 +360,7 @@ void SolarSystem::loadPlanets()
 			if (parent.isNull())
 			{
 				qWarning() << "ERROR : can't find parent solar system body for " << englishName;
-				abort();
+				//abort();
 				continue;
 			}
 		}
@@ -318,7 +368,7 @@ void SolarSystem::loadPlanets()
 		const QString funcName = pd.value(secname+"/coord_func").toString();
 		posFuncType posfunc=NULL;
 		void* userDataPtr=NULL;
-		OsulatingFunctType *osculatingFunc = 0;
+		OsculatingFunctType *osculatingFunc = 0;
 		bool closeOrbit = pd.value(secname+"/closeOrbit", true).toBool();
 
 		if (funcName=="ell_orbit")
@@ -334,7 +384,8 @@ void SolarSystem::loadPlanets()
 				if (semi_major_axis <= -1e100) {
 					qDebug() << "ERROR: " << englishName
 						<< ": you must provide orbit_PericenterDistance or orbit_SemiMajorAxis";
-					abort();
+					//abort();
+					continue;
 				} else {
 					semi_major_axis /= AU;
 					Q_ASSERT(eccentricity != 1.0); // parabolic orbits have no semi_major_axis
@@ -385,7 +436,7 @@ void SolarSystem::loadPlanets()
 				mean_longitude = mean_anomaly + long_of_pericenter;
 			}
 
-			// when the parent is the sun use ecliptic rathe than sun equator:
+			// when the parent is the sun use ecliptic rather than sun equator:
 			const double parentRotObliquity = parent->getParent()
 											  ? parent->getRotObliquity()
 											  : 0.0;
@@ -401,7 +452,7 @@ void SolarSystem::loadPlanets()
 				const Vec3d OrbitAxis0( c_nod,       s_nod,        0.0);
 				const Vec3d OrbitAxis1(-s_nod*c_obl, c_nod*c_obl,s_obl);
 				const Vec3d OrbitPole(  s_nod*s_obl,-c_nod*s_obl,c_obl);
-				const Vec3d J2000Pole(StelNavigator::matJ2000ToVsop87.multiplyWithoutTranslation(Vec3d(0,0,1)));
+				const Vec3d J2000Pole(StelCore::matJ2000ToVsop87.multiplyWithoutTranslation(Vec3d(0,0,1)));
 				Vec3d J2000NodeOrigin(J2000Pole^OrbitPole);
 				J2000NodeOrigin.normalize();
 				parent_rot_j2000_longitude = atan2(J2000NodeOrigin*OrbitAxis1,J2000NodeOrigin*OrbitAxis0);
@@ -441,7 +492,8 @@ void SolarSystem::loadPlanets()
 				if (semi_major_axis <= -1e100) {
 					qWarning() << "ERROR: " << englishName
 						<< ": you must provide orbit_PericenterDistance or orbit_SemiMajorAxis";
-					abort();
+					//abort();
+					continue;
 				} else {
 					Q_ASSERT(eccentricity != 1.0); // parabolic orbits have no semi_major_axis
 					pericenterDistance = semi_major_axis * (1.0-eccentricity);
@@ -483,7 +535,8 @@ void SolarSystem::loadPlanets()
 					qWarning() << "ERROR: " << englishName
 						<< ": when you do not provide orbit_TimeAtPericenter, you must provide both "
 						<< "orbit_Epoch and orbit_MeanAnomaly";
-					abort();
+					//abort();
+					continue;
 				} else {
 					mean_anomaly *= (M_PI/180.0);
 					time_at_pericenter = epoch - mean_anomaly / meanMotion;
@@ -507,7 +560,7 @@ void SolarSystem::loadPlanets()
 						   const Vec3d OrbitAxis0( c_nod,       s_nod,        0.0);
 						   const Vec3d OrbitAxis1(-s_nod*c_obl, c_nod*c_obl,s_obl);
 						   const Vec3d OrbitPole(  s_nod*s_obl,-c_nod*s_obl,c_obl);
-						   const Vec3d J2000Pole(StelNavigator::matJ2000ToVsop87.multiplyWithoutTranslation(Vec3d(0,0,1)));
+						   const Vec3d J2000Pole(StelCore::matJ2000ToVsop87.multiplyWithoutTranslation(Vec3d(0,0,1)));
 						   Vec3d J2000NodeOrigin(J2000Pole^OrbitPole);
 						   J2000NodeOrigin.normalize();
 						   parent_rot_j2000_longitude = atan2(J2000NodeOrigin*OrbitAxis1,J2000NodeOrigin*OrbitAxis0);
@@ -640,20 +693,108 @@ void SolarSystem::loadPlanets()
 			exit(-1);
 		}
 
-		// Create the Planet and add it to the list
-		PlanetP p(new Planet(englishName,
-					pd.value(secname+"/lighting").toBool(),
-					pd.value(secname+"/radius").toDouble()/AU,
-					pd.value(secname+"/oblateness", 0.0).toDouble(),
-					StelUtils::strToVec3f(pd.value(secname+"/color").toString()),
-					pd.value(secname+"/albedo").toFloat(),
-					pd.value(secname+"/tex_map").toString(),
-					posfunc,
-					userDataPtr,
-					osculatingFunc,
-					closeOrbit,
-					pd.value(secname+"/hidden", 0).toBool(),
-					pd.value(secname+"/atmosphere", false).toBool()));
+		// Create the Solar System body and add it to the list
+		QString type = pd.value(secname+"/type").toString();
+		PlanetP p;
+		if (type == "asteroid")
+		{
+			p = PlanetP(new MinorPlanet(englishName,
+			               pd.value(secname+"/lighting").toBool(),
+			               pd.value(secname+"/radius").toDouble()/AU,
+			               pd.value(secname+"/oblateness", 0.0).toDouble(),
+			               StelUtils::strToVec3f(pd.value(secname+"/color").toString()),
+			               pd.value(secname+"/albedo").toFloat(),
+			               pd.value(secname+"/tex_map").toString(),
+			               posfunc,
+			               userDataPtr,
+			               osculatingFunc,
+			               closeOrbit,
+			               pd.value(secname+"/hidden", 0).toBool()));
+
+			QSharedPointer<MinorPlanet> mp =  p.dynamicCast<MinorPlanet>();
+
+			//Number
+			int minorPlanetNumber = pd.value(secname+"/minor_planet_number", 0).toInt();
+			if (minorPlanetNumber)
+			{
+
+				mp->setMinorPlanetNumber(minorPlanetNumber);
+			}
+
+			//Provisional designation
+			QString provisionalDesignation = pd.value(secname+"/provisional_designation").toString();
+			if (!provisionalDesignation.isEmpty())
+			{
+				mp->setProvisionalDesignation(provisionalDesignation);
+			}
+
+			//H-G magnitude system
+			double magnitude = pd.value(secname+"/absolute_magnitude", -99).toDouble();
+			double slope = pd.value(secname+"/slope_parameter", 0.15).toDouble();
+			if (magnitude > -99)
+			{
+				if (slope >= 0 && slope <= 1)
+				{
+					mp->setAbsoluteMagnitudeAndSlope(magnitude, slope);
+				}
+				else
+				{
+					mp->setAbsoluteMagnitudeAndSlope(magnitude, 0.15);
+				}
+			}
+
+		}
+		else if (type == "comet")
+		{
+			p = PlanetP(new Comet(englishName,
+			               pd.value(secname+"/lighting").toBool(),
+			               pd.value(secname+"/radius").toDouble()/AU,
+			               pd.value(secname+"/oblateness", 0.0).toDouble(),
+			               StelUtils::strToVec3f(pd.value(secname+"/color").toString()),
+			               pd.value(secname+"/albedo").toFloat(),
+			               pd.value(secname+"/tex_map").toString(),
+			               posfunc,
+			               userDataPtr,
+			               osculatingFunc,
+			               closeOrbit,
+			               pd.value(secname+"/hidden", 0).toBool()));
+
+			QSharedPointer<Comet> mp =  p.dynamicCast<Comet>();
+
+			//g,k magnitude system
+			double magnitude = pd.value(secname+"/absolute_magnitude", -99).toDouble();
+			double slope = pd.value(secname+"/slope_parameter", 4.0).toDouble();
+			if (magnitude > -99)
+			{
+				if (slope >= 0 && slope <= 20)
+				{
+					mp->setAbsoluteMagnitudeAndSlope(magnitude, slope);
+				}
+				else
+				{
+					mp->setAbsoluteMagnitudeAndSlope(magnitude, 4.0);
+				}
+			}
+
+		}
+		else
+		{
+			p = PlanetP(new Planet(englishName,
+			               pd.value(secname+"/lighting").toBool(),
+			               pd.value(secname+"/radius").toDouble()/AU,
+			               pd.value(secname+"/oblateness", 0.0).toDouble(),
+			               StelUtils::strToVec3f(pd.value(secname+"/color").toString()),
+			               pd.value(secname+"/albedo").toFloat(),
+			               pd.value(secname+"/tex_map").toString(),
+			               posfunc,
+			               userDataPtr,
+			               osculatingFunc,
+			               closeOrbit,
+			               pd.value(secname+"/hidden", 0).toBool(),
+			               pd.value(secname+"/atmosphere", false).toBool()));
+		}
+
+
 		if (!parent.isNull())
 		{
 			parent->satellites.append(p);
@@ -677,7 +818,7 @@ void SolarSystem::loadPlanets()
 			Vec3d J2000NPole;
 			StelUtils::spheToRect(J2000NPoleRA,J2000NPoleDE,J2000NPole);
 
-			Vec3d vsop87Pole(StelNavigator::matJ2000ToVsop87.multiplyWithoutTranslation(J2000NPole));
+			Vec3d vsop87Pole(StelCore::matJ2000ToVsop87.multiplyWithoutTranslation(J2000NPole));
 
 			double ra, de;
 			StelUtils::rectToSphe(&ra, &de, vsop87Pole);
@@ -710,10 +851,17 @@ void SolarSystem::loadPlanets()
 		readOk++;
 	}
 
+	if (systemPlanets.isEmpty())
+	{
+		qWarning() << "No Solar System objects loaded from" << filePath;
+		return false;
+	}
+
 	// special case: load earth shadow texture
 	Planet::texEarthShadow = StelApp::getInstance().getTextureManager().createTexture("textures/earth-shadow.png");
 
-	qDebug() << "Loaded" << readOk << "/" << totalPlanets << "planet orbits";
+	qDebug() << "Loaded" << readOk << "/" << totalPlanets << "planet orbits from" << filePath;
+	return true;
 }
 
 // Compute the position for every elements of the solar system.
@@ -779,10 +927,8 @@ void SolarSystem::draw(StelCore* core)
 	if (!flagShow)
 		return;
 
-	StelNavigator* nav = core->getNavigator();
-
 	// Compute each Planet distance to the observer
-	Vec3d obsHelioPos = nav->getObserverHeliocentricEclipticPos();
+	Vec3d obsHelioPos = core->getObserverHeliocentricEclipticPos();
 
 	foreach (PlanetP p, systemPlanets)
 	{
@@ -800,8 +946,11 @@ void SolarSystem::draw(StelCore* core)
 		delete sPainter;
 	}
 
+	// Make some voodoo to determine when labels should be displayed
+	float maxMagLabel = (core->getSkyDrawer()->getLimitMagnitude()<5.f ? core->getSkyDrawer()->getLimitMagnitude() :
+			5.f+(core->getSkyDrawer()->getLimitMagnitude()-5.f)*1.2f) +(labelsAmount-3.f)*1.2f;
+
 	// Draw the elements
-	float maxMagLabel=core->getSkyDrawer()->getLimitMagnitude()*0.80f+(labelsAmount*1.2f)-2.f;
 	foreach (const PlanetP& p, systemPlanets)
 	{
 		p->draw(core, maxMagLabel, planetNameFont);
@@ -865,7 +1014,7 @@ StelObjectP SolarSystem::search(Vec3d pos, const StelCore* core) const
 
 	foreach (const PlanetP& p, systemPlanets)
 	{
-		equPos = p->getEquinoxEquatorialPos(core->getNavigator());
+		equPos = p->getEquinoxEquatorialPos(core);
 		equPos.normalize();
 		double cos_ang_dist = equPos*pos;
 		if (cos_ang_dist>cos_angle_closest)
@@ -889,14 +1038,14 @@ QList<StelObjectP> SolarSystem::searchAround(const Vec3d& vv, double limitFov, c
 	if (!getFlagPlanets())
 		return result;
 
-	Vec3d v = core->getNavigator()->j2000ToEquinoxEqu(vv);
+	Vec3d v = core->j2000ToEquinoxEqu(vv);
 	v.normalize();
 	double cosLimFov = std::cos(limitFov * M_PI/180.);
 	Vec3d equPos;
 
 	foreach (const PlanetP& p, systemPlanets)
 	{
-		equPos = p->getEquinoxEquatorialPos(core->getNavigator());
+		equPos = p->getEquinoxEquatorialPos(core);
 		equPos.normalize();
 		if (equPos*v>=cosLimFov)
 		{
@@ -906,10 +1055,10 @@ QList<StelObjectP> SolarSystem::searchAround(const Vec3d& vv, double limitFov, c
 	return result;
 }
 
-// Update i18 names from english names according to passed translator
+// Update i18 names from english names according to current translator
 void SolarSystem::updateI18n()
 {
-	StelTranslator& trans = StelApp::getInstance().getLocaleMgr().getSkyTranslator();
+	StelTranslator& trans = StelApp::getInstance().getLocaleMgr().getAppStelTranslator();
 	foreach (PlanetP p, systemPlanets)
 		p->translateName(trans);
 }
@@ -1071,7 +1220,7 @@ QStringList SolarSystem::listMatchingObjectsI18n(const QString& objPrefix, int m
 	return result;
 }
 
-void SolarSystem::selectedObjectChangeCallBack(StelModuleSelectAction)
+void SolarSystem::selectedObjectChange(StelModule::StelModuleSelectAction)
 {
 	const QList<StelObjectP> newSelected = GETSTELMODULE(StelObjectMgr)->getSelectedObject("Planet");
 	if (!newSelected.empty())
@@ -1116,7 +1265,6 @@ void SolarSystem::setSelected(const QString& englishName)
 	setSelected(searchByEnglishName(englishName));
 }
 
-
 // Get the list of all the planet english names
 QStringList SolarSystem::getAllPlanetEnglishNames() const
 {
@@ -1124,4 +1272,65 @@ QStringList SolarSystem::getAllPlanetEnglishNames() const
 	foreach (const PlanetP& p, systemPlanets)
 		res.append(p->englishName);
 	return res;
+}
+
+QStringList SolarSystem::getAllPlanetLocalizedNames() const
+{
+	QStringList res;
+	foreach (const PlanetP& p, systemPlanets)
+		res.append(p->nameI18);
+	return res;
+}
+
+void SolarSystem::reloadPlanets()
+{
+	//Save flag states
+	bool flagScaleMoon = getFlagMoonScale();
+	float moonScale = getMoonScale();
+	bool flagPlanets = getFlagPlanets();
+	bool flagHints = getFlagHints();
+	bool flagLabels = getFlagLabels();
+	bool flagOrbits = getFlagOrbits();
+
+	//Unload all Solar System objects
+	selected.clear();//Release the selected one
+	foreach (Orbit* orb, orbits)
+	{
+		delete orb;
+		orb = NULL;
+	}
+	orbits.clear();
+
+	sun.clear();
+	moon.clear();
+	earth.clear();
+	Planet::texEarthShadow.clear(); //Loaded in loadPlanets()
+
+	delete allTrails;
+	allTrails = NULL;
+
+	foreach (PlanetP p, systemPlanets)
+	{
+		p->satellites.clear();
+		p.clear();
+	}
+	systemPlanets.clear();
+	//Memory leak? What's the proper way of cleaning shared pointers?
+
+	//Re-load the ssystem.ini file
+	loadPlanets();
+	computePositions(StelUtils::getJDFromSystem());
+	setSelected("");
+	recreateTrails();
+
+	//Restore flag states
+	setFlagMoonScale(flagScaleMoon);
+	setMoonScale(moonScale);
+	setFlagPlanets(flagPlanets);
+	setFlagHints(flagHints);
+	setFlagLabels(flagLabels);
+	setFlagOrbits(flagOrbits);
+
+	//Restore translations
+	updateI18n();
 }

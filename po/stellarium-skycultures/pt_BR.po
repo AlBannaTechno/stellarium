@@ -7,35 +7,382 @@ msgid ""
 msgstr ""
 "Project-Id-Version: stellarium\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-05-19 15:26+0200\n"
-"PO-Revision-Date: 2010-02-18 17:03+0000\n"
-"Last-Translator: alms21 <alms21@gmail.com>\n"
+"POT-Creation-Date: 2011-05-10 14:10+0700\n"
+"PO-Revision-Date: 2011-06-27 22:17+0000\n"
+"Last-Translator: Adriano Steffler <Unknown>\n"
 "Language-Team: Portuguese (Brazil) <pt_BR@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2010-05-26 09:36+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2011-06-28 04:37+0000\n"
+"X-Generator: Launchpad (build 13168)\n"
+
+#: nebulae/default/ngc2000names.dat:111
+msgid "47 Tuc"
+msgstr "47 Tucanae"
+
+#: nebulae/default/ngc2000names.dat:112 nebulae/default/ngc2000names.dat:113
+msgid "Antennae"
+msgstr "Galáxias Antena"
+
+#: nebulae/default/ngc2000names.dat:114
+msgid "Barnard's galaxy"
+msgstr "Galáxia de Barnard"
+
+#: nebulae/default/ngc2000names.dat:115
+msgid "Bear Paw galaxy"
+msgstr "Galáxia Pata de Urso"
+
+#: nebulae/default/ngc2000names.dat:116
+msgid "Beehive cluster"
+msgstr "Aglomerado do Presépio"
+
+#: nebulae/default/ngc2000names.dat:117
+msgid "Black-eye galaxy"
+msgstr "Galáxia do Olho Negro"
+
+#: nebulae/default/ngc2000names.dat:118
+msgid "Blinking planetary"
+msgstr "Nebulosa Olho que Pisca"
+
+#: nebulae/default/ngc2000names.dat:119
+msgid "Blue Snowball"
+msgstr "Nebulosa Bola de Neve Azul"
+
+#: nebulae/default/ngc2000names.dat:120
+msgid "Blue planetary"
+msgstr "Nebulosa Planetária Azul"
+
+#: nebulae/default/ngc2000names.dat:121 nebulae/default/ngc2000names.dat:122
+msgid "Bode's nebulae"
+msgstr "Nebulosa de Bode"
+
+#: nebulae/default/ngc2000names.dat:123 nebulae/default/ngc2000names.dat:124
+#: nebulae/default/ngc2000names.dat:125 nebulae/default/ngc2000names.dat:126
+msgid "Box"
+msgstr "Caixa"
+
+#: nebulae/default/ngc2000names.dat:127
+msgid "Box nebula"
+msgstr "Nebulosa da Caixa"
+
+#: nebulae/default/ngc2000names.dat:128
+msgid "Bubble nebula"
+msgstr "Nebulosa da Bolha"
+
+#: nebulae/default/ngc2000names.dat:129
+msgid "Bug nebula"
+msgstr "Nebulosa do Inseto"
+
+#: nebulae/default/ngc2000names.dat:130
+msgid "Butterfly cluster"
+msgstr "Aglomerado da Borboleta"
+
+#: nebulae/default/ngc2000names.dat:131
+msgid "Butterfly nebula"
+msgstr "Nebulosa da Borboleta"
+
+#: nebulae/default/ngc2000names.dat:132
+msgid "California nebula"
+msgstr "Nebulosa da Califórnia"
+
+#: nebulae/default/ngc2000names.dat:133
+msgid "Christmas Tree cluster"
+msgstr "Aglomerado da Árvore de Natal"
+
+#: nebulae/default/ngc2000names.dat:134
+msgid "Cocoon nebula"
+msgstr "Nebulosa do Casulo"
+
+#: nebulae/default/ngc2000names.dat:135
+msgid "Cone nebula"
+msgstr "Nebulosa do Cone"
+
+#: nebulae/default/ngc2000names.dat:136 nebulae/default/ngc2000names.dat:137
+#: nebulae/default/ngc2000names.dat:138 nebulae/default/ngc2000names.dat:139
+#: nebulae/default/ngc2000names.dat:140 nebulae/default/ngc2000names.dat:141
+#: nebulae/default/ngc2000names.dat:142
+msgid "Copeland's Septet"
+msgstr "Septeto de Copeland"
+
+#: nebulae/default/ngc2000names.dat:143
+msgid "Crab nebula"
+msgstr "Nebulosa do Caranguejo"
+
+#: nebulae/default/ngc2000names.dat:144
+msgid "Crescent nebula"
+msgstr "Nebulosa Crescente"
+
+#: nebulae/default/ngc2000names.dat:145 nebulae/default/ngc2000names.dat:146
+msgid "Double cluster"
+msgstr "Aglomerado Duplo"
+
+#: nebulae/default/ngc2000names.dat:147
+msgid "Dumbbell nebula"
+msgstr "Nebulosa do Haltere"
+
+#: nebulae/default/ngc2000names.dat:148
+msgid "Eagle nebula"
+msgstr "Nebulosa da Águia"
+
+#: nebulae/default/ngc2000names.dat:149
+msgid "Eight-burst planetary"
+msgstr "Nebulosa do Anel do Sul"
+
+#: nebulae/default/ngc2000names.dat:150
+msgid "Eskimo nebula"
+msgstr "Nebulosa do Esquimó"
+
+#: nebulae/default/ngc2000names.dat:151 nebulae/default/ngc2000names.dat:152
+msgid "The Eyes"
+msgstr "Os Olhos"
+
+#: nebulae/default/ngc2000names.dat:153
+msgid "Filamentary nebula"
+msgstr "Nebulosa Vassoura da Bruxa"
+
+#: nebulae/default/ngc2000names.dat:154
+msgid "Flaming Star nebula"
+msgstr "Nebulosa da Estrela Flamejante"
+
+#: nebulae/default/ngc2000names.dat:155
+msgid "Ghost of Jupiter"
+msgstr "Fantasma de Júpiter"
+
+#: nebulae/default/ngc2000names.dat:156
+msgid "Great Cluster in Hercules"
+msgstr "Grande Aglomerado de Hércules"
+
+#: nebulae/default/ngc2000names.dat:157
+msgid "Great Nebula in Andromeda"
+msgstr "Grande Nebulosa de Andrômeda"
+
+#: nebulae/default/ngc2000names.dat:158
+msgid "Great Nebula in Orion"
+msgstr "Grande Nebulosa de Órion"
+
+#: nebulae/default/ngc2000names.dat:159
+msgid "Helix galaxy"
+msgstr "Galáxia da Hélice"
+
+#: nebulae/default/ngc2000names.dat:160
+msgid "Helix nebula"
+msgstr "Nebulosa da Hélice"
+
+#: nebulae/default/ngc2000names.dat:161
+msgid "Hind's variable nebula"
+msgstr "Nebulosa Variável de Hind"
+
+#: nebulae/default/ngc2000names.dat:162
+msgid "Horsehead nebula"
+msgstr "Nebulosa Cabeça de Cavalo"
+
+#: nebulae/default/ngc2000names.dat:163
+msgid "Hourglass nebula"
+msgstr "Nebulosa da Ampulheta"
+
+#: nebulae/default/ngc2000names.dat:164
+msgid "Hubble's variable neb"
+msgstr "Nebulosa Variável de Hubble"
+
+#: nebulae/default/ngc2000names.dat:165
+msgid "Jewel Box"
+msgstr "Caixa de Joias"
+
+#: nebulae/default/ngc2000names.dat:166
+msgid "Lace-work nebula"
+msgstr "Nebulosa da Renda"
+
+#: nebulae/default/ngc2000names.dat:167
+msgid "Lagoon nebula"
+msgstr "Nebulosa da Lagoa"
+
+#: nebulae/default/ngc2000names.dat:168 nebulae/default/ngc2000names.dat:169
+msgid "Little Dumbbell"
+msgstr "Pequeno Haltere"
+
+#: nebulae/default/ngc2000names.dat:170
+msgid "Little Gem"
+msgstr "Pequena Gema"
+
+#: nebulae/default/ngc2000names.dat:171
+msgid "Maia nebula"
+msgstr "Nebulosa Maia"
+
+#: nebulae/default/ngc2000names.dat:172
+msgid "Pleiades"
+msgstr "Plêiades"
+
+#: nebulae/default/ngc2000names.dat:173
+msgid "Merope nebula"
+msgstr "Nebulosa Mérope"
+
+#: nebulae/default/ngc2000names.dat:174
+msgid "The Mice"
+msgstr "Os Ratos"
+
+#: nebulae/default/ngc2000names.dat:175 nebulae/default/ngc2000names.dat:176
+msgid "Network nebula"
+msgstr "Nebulosa da Rede"
+
+#: nebulae/default/ngc2000names.dat:177
+msgid "North America nebula"
+msgstr "Nebulosa da América do Norte"
+
+#: nebulae/default/ngc2000names.dat:178
+msgid "Omega nebula"
+msgstr "Nebulosa Ômega"
+
+#: nebulae/default/ngc2000names.dat:179
+msgid "Owl nebula"
+msgstr "Nebulosa da Coruja"
+
+#: nebulae/default/ngc2000names.dat:180
+msgid "Papillon"
+msgstr "Borboleta"
+
+#: nebulae/default/ngc2000names.dat:181
+msgid "Pelican nebula"
+msgstr "Nebulosa do Pelicano"
+
+#: nebulae/default/ngc2000names.dat:182
+msgid "Pin-wheel nebula"
+msgstr "Nebulosa do Catavento"
+
+#: nebulae/default/ngc2000names.dat:183
+msgid "Polarissima Australis"
+msgstr "Estrela Polar do Sul"
+
+#: nebulae/default/ngc2000names.dat:184
+msgid "Polarissima Borealis"
+msgstr "Estrela Polar do Norte"
+
+#: nebulae/default/ngc2000names.dat:185
+msgid "Praesepe"
+msgstr "Presépio"
+
+#: nebulae/default/ngc2000names.dat:186
+msgid "Ring nebula in Lyra"
+msgstr "Nebulosa do Anel em Lira"
+
+#: nebulae/default/ngc2000names.dat:187 nebulae/default/ngc2000names.dat:188
+#: nebulae/default/ngc2000names.dat:189 nebulae/default/ngc2000names.dat:190
+msgid "Rosette nebula"
+msgstr "Nebulosa Roseta"
+
+#: nebulae/default/ngc2000names.dat:191
+msgid "Saturn nebula"
+msgstr "Nebulosa Saturno"
+
+#: nebulae/default/ngc2000names.dat:192
+msgid "Sculptor galaxy"
+msgstr "Galáxia do Escultor"
+
+#: nebulae/default/ngc2000names.dat:193 nebulae/default/ngc2000names.dat:194
+msgid "Siamese Twins"
+msgstr "Os Gêmeos Siameses"
+
+#: nebulae/default/ngc2000names.dat:195
+msgid "Sombrero galaxy"
+msgstr "Galáxia Sombrero"
+
+#: nebulae/default/ngc2000names.dat:196
+msgid "Southern Pleiades"
+msgstr "Plêiades do Sul"
+
+#: nebulae/default/ngc2000names.dat:197
+msgid "Spindle galaxy"
+msgstr "Galáxia do Fuso"
+
+#: nebulae/default/ngc2000names.dat:198
+msgid "Star Queen nebula"
+msgstr "Nebulosa da Rainha das Estrelas"
+
+#: nebulae/default/ngc2000names.dat:199 nebulae/default/ngc2000names.dat:200
+#: nebulae/default/ngc2000names.dat:201 nebulae/default/ngc2000names.dat:202
+msgid "Stephan's Quintet"
+msgstr "Quinteto de Stephan"
+
+#: nebulae/default/ngc2000names.dat:203
+msgid "Struve's Lost nebula"
+msgstr "Nebulosa Perdida de Struve"
+
+#: nebulae/default/ngc2000names.dat:204
+msgid "Sunflower galaxy"
+msgstr "Galáxia do Girassol"
+
+#: nebulae/default/ngc2000names.dat:205
+msgid "Tarantula nebula"
+msgstr "Nebulosa da Tarântula"
+
+#: nebulae/default/ngc2000names.dat:206
+msgid "Toby Jug nebula"
+msgstr "Nebulosa de Toby Jug"
+
+#: nebulae/default/ngc2000names.dat:207
+msgid "Triangulum galaxy"
+msgstr "Galáxia do Triângulo"
+
+#: nebulae/default/ngc2000names.dat:208
+msgid "Trifid nebula"
+msgstr "Nebulosa Trífida"
+
+#: nebulae/default/ngc2000names.dat:209 nebulae/default/ngc2000names.dat:210
+#: nebulae/default/ngc2000names.dat:211
+msgid "Veil nebula"
+msgstr "Nebulosa do Véu"
+
+#: nebulae/default/ngc2000names.dat:212
+msgid "Whirlpool galaxy"
+msgstr "Galáxia do Redemoinho"
+
+#: nebulae/default/ngc2000names.dat:213
+msgid "Wild Duck cluster"
+msgstr "Aglomerado do Pato Selvagem"
+
+#: nebulae/default/ngc2000names.dat:214
+msgid "Witch Head nebula"
+msgstr "Nebulosa Cabeça de Bruxa"
+
+#: nebulae/default/ngc2000names.dat:215
+msgid "η Car nebula"
+msgstr "Nebulosa Eta Carinae"
+
+#: nebulae/default/ngc2000names.dat:216 nebulae/default/ngc2000names.dat:217
+msgid "γ Cas nebula"
+msgstr "Nebulosa Gamma Cassiopeiae"
+
+#: nebulae/default/ngc2000names.dat:218
+msgid "κ Cru cluster"
+msgstr "Aglomerado Kappa Crucis"
+
+#: nebulae/default/ngc2000names.dat:219 nebulae/default/ngc2000names.dat:220
+msgid "λ Cen nebula"
+msgstr "Nebulosa Lambda Centauri"
+
+#: nebulae/default/ngc2000names.dat:222
+msgid "ρ Oph nebula"
+msgstr "Nebulosa Rho Ophiuchi"
 
 #: skycultures/aztec/constellation_names.eng.fab:1
 msgid "Mamalhuaztli (The New fire)"
-msgstr ""
+msgstr "Mamalhuaztli (O Novo fogo)"
 
 #: skycultures/aztec/constellation_names.eng.fab:2
 msgid "Tianquiztli  (The Market)"
-msgstr ""
+msgstr "Tianquiztli  (O Mercado)"
 
 #: skycultures/aztec/constellation_names.eng.fab:3
 msgid "Citlaltlachtli (The ball game of the stars)"
-msgstr ""
+msgstr "Citlaltlachtli (O jogo de bola das estrelas)"
 
 #: skycultures/aztec/constellation_names.eng.fab:4
 msgid "Xonecuilli (Twisted foot)"
-msgstr ""
+msgstr "Xonecuilli (Pé torcido)"
 
 #: skycultures/aztec/constellation_names.eng.fab:5
 msgid "Colotl Ixayac (Scorpion face)"
-msgstr "Colotl Ixayac, a dace do escorpião"
+msgstr "Colotl Ixayac (A face do escorpião)"
 
 #: skycultures/chinese/constellation_names.eng.fab:1
 #: skycultures/korean/constellation_names.eng.fab:219
@@ -48,7 +395,7 @@ msgstr "Formação curvada"
 
 #: skycultures/chinese/constellation_names.eng.fab:3
 msgid "Coiled Thong"
-msgstr ""
+msgstr "Correia Enrolada"
 
 #: skycultures/chinese/constellation_names.eng.fab:4
 msgid "Wings"
@@ -64,7 +411,7 @@ msgstr "Cauda"
 
 #: skycultures/chinese/constellation_names.eng.fab:7
 msgid "Winnowing Basket"
-msgstr ""
+msgstr "Cesto de despalhar"
 
 #: skycultures/chinese/constellation_names.eng.fab:8
 #: skycultures/lakota/constellation_names.eng.fab:4
@@ -94,7 +441,7 @@ msgstr "Salgueiro"
 
 #: skycultures/chinese/constellation_names.eng.fab:14
 msgid "Imperial Passageway"
-msgstr "Caminho Imperial"
+msgstr "Passagem Imperial"
 
 #: skycultures/chinese/constellation_names.eng.fab:15
 msgid "Kitchen"
@@ -102,7 +449,7 @@ msgstr "Cozinha"
 
 #: skycultures/chinese/constellation_names.eng.fab:16
 msgid "River Turtle"
-msgstr "Tartaruga do rio"
+msgstr "Tartaruga Fluvial"
 
 #: skycultures/chinese/constellation_names.eng.fab:17
 msgid "Stomach"
@@ -126,7 +473,7 @@ msgstr "Raiz"
 
 #: skycultures/chinese/constellation_names.eng.fab:22
 msgid "Ramparts"
-msgstr "Rampas"
+msgstr "Baluartes"
 
 #: skycultures/chinese/constellation_names.eng.fab:23
 msgid "Flying Corridor"
@@ -134,7 +481,7 @@ msgstr "Corredor Voador"
 
 #: skycultures/chinese/constellation_names.eng.fab:24
 msgid "Outer Fence"
-msgstr "Cerca exterior"
+msgstr "Cerca Exterior"
 
 #: skycultures/chinese/constellation_names.eng.fab:25
 msgid "Ford"
@@ -142,7 +489,7 @@ msgstr "Vau"
 
 #: skycultures/chinese/constellation_names.eng.fab:26
 msgid "Seven Excellencies"
-msgstr "As Sete Excelências"
+msgstr "Sete Excelências"
 
 #: skycultures/chinese/constellation_names.eng.fab:27
 msgid "Market"
@@ -155,7 +502,7 @@ msgstr "Cinco Carruagens"
 #: skycultures/chinese/constellation_names.eng.fab:29
 #: skycultures/korean/constellation_names.eng.fab:122
 msgid "Rolled Tongue"
-msgstr "Língua enrolada"
+msgstr "Língua Enrolada"
 
 #: skycultures/chinese/constellation_names.eng.fab:30
 #: skycultures/egyptian/constellation_names.eng.fab:21
@@ -165,7 +512,7 @@ msgstr "Rede"
 #: skycultures/chinese/constellation_names.eng.fab:31
 #: skycultures/korean/constellation_names.eng.fab:154
 msgid "Toilet"
-msgstr ""
+msgstr "Toalete"
 
 #: skycultures/chinese/constellation_names.eng.fab:32
 msgid "Screen"
@@ -177,11 +524,11 @@ msgstr "Mercado dos Soldados"
 
 #: skycultures/chinese/constellation_names.eng.fab:34
 msgid "Square Granary"
-msgstr "Celeiro quadrado"
+msgstr "Celeiro Quadrado"
 
 #: skycultures/chinese/constellation_names.eng.fab:35
 msgid "Three Stars"
-msgstr "Três Astros"
+msgstr "Três Estrelas"
 
 #: skycultures/chinese/constellation_names.eng.fab:36
 msgid "Four Channels"
@@ -193,11 +540,11 @@ msgstr "Poço"
 
 #: skycultures/chinese/constellation_names.eng.fab:38
 msgid "South River"
-msgstr "Rio Sul"
+msgstr "Rio do Sul"
 
 #: skycultures/chinese/constellation_names.eng.fab:39
 msgid "North River"
-msgstr "Rio Norte"
+msgstr "Rio do Norte"
 
 #: skycultures/chinese/constellation_names.eng.fab:40
 msgid "Five Feudal Kings "
@@ -256,7 +603,7 @@ msgstr "Mausoléu"
 #: skycultures/chinese/constellation_names.eng.fab:53
 #: skycultures/korean/constellation_names.eng.fab:47
 msgid "Dog"
-msgstr "Cão"
+msgstr "Cachorro"
 
 #: skycultures/chinese/constellation_names.eng.fab:54
 msgid "Earth God's Temple "
@@ -268,12 +615,12 @@ msgstr "Arco e Flecha "
 
 #: skycultures/chinese/constellation_names.eng.fab:56
 msgid "Pestle"
-msgstr "Pilão"
+msgstr "Mão de almofariz"
 
 #: skycultures/chinese/constellation_names.eng.fab:57
 #: skycultures/korean/constellation_names.eng.fab:80
 msgid "Mortar"
-msgstr "Morteiro"
+msgstr "Almofariz"
 
 #: skycultures/chinese/constellation_names.eng.fab:58
 msgid "Rooftop"
@@ -289,11 +636,11 @@ msgstr "Pátio da Carruagem"
 
 #: skycultures/chinese/constellation_names.eng.fab:61
 msgid "Good Gourd"
-msgstr "Abóbora boa"
+msgstr "Cabaça Boa"
 
 #: skycultures/chinese/constellation_names.eng.fab:62
 msgid "Rotten gourd"
-msgstr "Abóbora podre"
+msgstr "Cabaça Podre"
 
 #: skycultures/chinese/constellation_names.eng.fab:63
 msgid "Encampment"
@@ -301,7 +648,7 @@ msgstr "Acampamento"
 
 #: skycultures/chinese/constellation_names.eng.fab:64
 msgid "Thunder and Lightning "
-msgstr ""
+msgstr "Trovão e Relâmpago "
 
 #: skycultures/chinese/constellation_names.eng.fab:65
 msgid "Palace Gate"
@@ -313,7 +660,7 @@ msgstr "Vazio"
 
 #: skycultures/chinese/constellation_names.eng.fab:67
 msgid "Weaving Girl"
-msgstr "Moça rendeira"
+msgstr "Moça Tecendo"
 
 #: skycultures/chinese/constellation_names.eng.fab:68
 msgid "Girl"
@@ -329,7 +676,7 @@ msgstr "Coração"
 
 #: skycultures/chinese/constellation_names.eng.fab:71
 msgid "Room"
-msgstr "Aposento"
+msgstr "Sala"
 
 #: skycultures/chinese/constellation_names.eng.fab:72
 msgid "Spring"
@@ -341,16 +688,16 @@ msgstr "Estabelecimento"
 
 #: skycultures/chinese/constellation_names.eng.fab:74
 msgid "Flail"
-msgstr "Malho"
+msgstr "Mangual"
 
 #: skycultures/chinese/constellation_names.eng.fab:75
 msgid "Spear"
-msgstr "Lança"
+msgstr "Azagaia"
 
 #: skycultures/chinese/constellation_names.eng.fab:76
 #: skycultures/korean/constellation_names.eng.fab:57
 msgid "Right Flag"
-msgstr "Bandeira direita"
+msgstr "Bandeira Direita"
 
 #: skycultures/chinese/constellation_names.eng.fab:77
 #: skycultures/korean/constellation_names.eng.fab:54
@@ -363,11 +710,11 @@ msgstr "Baqueta"
 
 #: skycultures/chinese/constellation_names.eng.fab:79
 msgid "Bond"
-msgstr "Vínculo"
+msgstr "Escora"
 
 #: skycultures/chinese/constellation_names.eng.fab:80
 msgid "Woman's Bed"
-msgstr "Cama da mulher"
+msgstr "Cama de Mulher"
 
 #: skycultures/chinese/constellation_names.eng.fab:81
 msgid "Western Door"
@@ -379,7 +726,7 @@ msgstr "Porta Leste"
 
 #: skycultures/chinese/constellation_names.eng.fab:83
 msgid "Farmland"
-msgstr "Lavoura"
+msgstr "Terra Agrícola"
 
 #: skycultures/chinese/constellation_names.eng.fab:84
 msgid "Star"
@@ -391,7 +738,7 @@ msgstr "Fantasmas"
 
 #: skycultures/chinese/constellation_names.eng.fab:86
 msgid "Xuanyuan"
-msgstr ""
+msgstr "Xuanyuan"
 
 #: skycultures/chinese/constellation_names.eng.fab:87
 msgid "Tripod"
@@ -403,11 +750,11 @@ msgstr "Pescoço"
 
 #: skycultures/chinese/constellation_names.eng.fab:89
 msgid "Zaofu"
-msgstr ""
+msgstr "Zaofu"
 
 #: skycultures/chinese/constellation_names.eng.fab:90
 msgid "Market Officer"
-msgstr "Oficial do Mercado"
+msgstr "Administrador do Mercado"
 
 #: skycultures/chinese/constellation_names.eng.fab:91
 msgid "Banner of Three Stars"
@@ -415,7 +762,7 @@ msgstr "Faixa de Três Estrelas"
 
 #: skycultures/egyptian/constellation_names.eng.fab:1
 msgid "Bull's Foreleg"
-msgstr "Perna dianteira do Touro"
+msgstr "Perna Dianteira do Touro"
 
 #: skycultures/egyptian/constellation_names.eng.fab:2
 msgid "Two Poles"
@@ -431,7 +778,7 @@ msgstr "Duas Mandíbulas"
 
 #: skycultures/egyptian/constellation_names.eng.fab:5
 msgid "Sah"
-msgstr ""
+msgstr "Sah"
 
 #: skycultures/egyptian/constellation_names.eng.fab:6
 msgid "Bird"
@@ -439,7 +786,7 @@ msgstr "Pássaro"
 
 #: skycultures/egyptian/constellation_names.eng.fab:7
 msgid "Sek"
-msgstr ""
+msgstr "Sek"
 
 #: skycultures/egyptian/constellation_names.eng.fab:8
 msgid "Triangle"
@@ -455,7 +802,7 @@ msgstr "Crocodilo"
 
 #: skycultures/egyptian/constellation_names.eng.fab:12
 msgid "Selkis"
-msgstr ""
+msgstr "Selkis"
 
 #: skycultures/egyptian/constellation_names.eng.fab:13
 msgid "Prow"
@@ -499,15 +846,15 @@ msgstr "Poste de amarrar"
 
 #: skycultures/egyptian/constellation_names.eng.fab:24
 msgid "Kenemet"
-msgstr ""
+msgstr "Kenemet"
 
 #: skycultures/egyptian/constellation_names.eng.fab:25
 msgid "Chematy"
-msgstr ""
+msgstr "Chematy"
 
 #: skycultures/egyptian/constellation_names.eng.fab:26
 msgid "Waty Bekety"
-msgstr ""
+msgstr "Waty Bekety"
 
 #: skycultures/egyptian/constellation_names.eng.fab:27
 msgid "Sheep"
@@ -523,7 +870,7 @@ msgstr "Dois Raios Solares"
 
 #: skycultures/inuit/constellation_names.eng.fab:2
 msgid "Two Placed Far Apart"
-msgstr ""
+msgstr "Dois Muito Afastados"
 
 #: skycultures/inuit/constellation_names.eng.fab:3
 msgid "Dogs"
@@ -539,7 +886,7 @@ msgstr "Candelabro"
 
 #: skycultures/inuit/constellation_names.eng.fab:6
 msgid "Caribou"
-msgstr "Caribou"
+msgstr "Caribu"
 
 #: skycultures/inuit/constellation_names.eng.fab:7
 msgid "Two in Front"
@@ -559,7 +906,39 @@ msgstr "Recipiente de Gordura"
 
 #: skycultures/inuit/constellation_names.eng.fab:11
 msgid "The One Behind"
-msgstr ""
+msgstr "O que está atrás"
+
+#: skycultures/inuit/star_names.fab:1
+msgid "The Old Woman"
+msgstr "A Velha"
+
+#: skycultures/inuit/star_names.fab:2
+msgid "Spirit of a Polar Bear"
+msgstr "Espírito dum Urso Polar"
+
+#: skycultures/inuit/star_names.fab:3
+msgid "Never Moves"
+msgstr "Nunca Move-se"
+
+#: skycultures/inuit/star_names.fab:4
+msgid "Name of a Murdered Man"
+msgstr "Nome dum Homem Assassinado"
+
+#: skycultures/inuit/star_names.fab:5
+msgid "Flickering"
+msgstr "Tremulação"
+
+#: skycultures/inuit/star_names.fab:6
+msgid "Nephews"
+msgstr "Sobrinhos"
+
+#: skycultures/inuit/star_names.fab:7
+msgid "The Old Man"
+msgstr "O Velho"
+
+#: skycultures/inuit/star_names.fab:8
+msgid "The Little Orphan Boy"
+msgstr "O Pequeno Menino Órfão"
 
 #: skycultures/korean/constellation_names.eng.fab:1
 msgid "Holy Kettle"
@@ -567,7 +946,7 @@ msgstr "Chaleira Sagrada"
 
 #: skycultures/korean/constellation_names.eng.fab:2
 msgid "Farm of Capital City"
-msgstr ""
+msgstr "Fazenda da Capital"
 
 #: skycultures/korean/constellation_names.eng.fab:3
 msgid "Dignity of King"
@@ -575,7 +954,7 @@ msgstr "Dignidade do Rei"
 
 #: skycultures/korean/constellation_names.eng.fab:4
 msgid "Nomination"
-msgstr ""
+msgstr "Nomeação"
 
 #: skycultures/korean/constellation_names.eng.fab:5
 msgid "Gate of Sky"
@@ -601,7 +980,7 @@ msgstr "Pescoço do Dragão"
 
 #: skycultures/korean/constellation_names.eng.fab:11
 msgid "Beheading"
-msgstr ""
+msgstr "Decapitação"
 
 #: skycultures/korean/constellation_names.eng.fab:12
 msgid "Judge"
@@ -609,7 +988,7 @@ msgstr "Juiz"
 
 #: skycultures/korean/constellation_names.eng.fab:13
 msgid "Flutting Flag"
-msgstr ""
+msgstr "Bandeira Esvoaçante"
 
 #: skycultures/korean/constellation_names.eng.fab:14
 msgid "Javelin of Sky"
@@ -617,7 +996,7 @@ msgstr "Dardo do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:15
 msgid "Seat for Longevity"
-msgstr ""
+msgstr "Banco da Longevidade"
 
 #: skycultures/korean/constellation_names.eng.fab:16
 msgid "Oar for visitor"
@@ -657,15 +1036,15 @@ msgstr "Estrada do Leste"
 
 #: skycultures/korean/constellation_names.eng.fab:25
 msgid "Gate Bolt"
-msgstr ""
+msgstr "Portão Parafuso"
 
 #: skycultures/korean/constellation_names.eng.fab:26
 msgid "Door Lock and Key"
-msgstr ""
+msgstr "Porta Fechada e Chave"
 
 #: skycultures/korean/constellation_names.eng.fab:27
 msgid "Penalty"
-msgstr ""
+msgstr "Pênalti"
 
 #: skycultures/korean/constellation_names.eng.fab:28
 msgid "Royal Hall"
@@ -686,7 +1065,7 @@ msgstr "Estrada do Oeste"
 
 #: skycultures/korean/constellation_names.eng.fab:32
 msgid "Seat of Emperor"
-msgstr ""
+msgstr "Trono do Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:33
 msgid "Five Troops"
@@ -698,7 +1077,7 @@ msgstr "Rio do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:35
 msgid "Prayer for Progeny"
-msgstr ""
+msgstr "Oração da Paternidade"
 
 #: skycultures/korean/constellation_names.eng.fab:36
 msgid "Fish"
@@ -706,7 +1085,7 @@ msgstr "Peixe"
 
 #: skycultures/korean/constellation_names.eng.fab:37
 msgid "Forcast"
-msgstr ""
+msgstr "Forcast"
 
 #: skycultures/korean/constellation_names.eng.fab:38
 msgid "Yard for Empresses"
@@ -718,15 +1097,15 @@ msgstr "Palácio Sagrado"
 
 #: skycultures/korean/constellation_names.eng.fab:40
 msgid "Winnow"
-msgstr ""
+msgstr "Janela"
 
 #: skycultures/korean/constellation_names.eng.fab:41
 msgid "Outer Pestle"
-msgstr ""
+msgstr "Exterior do Pestle"
 
 #: skycultures/korean/constellation_names.eng.fab:42
 msgid "Chaff"
-msgstr ""
+msgstr "Palha"
 
 #: skycultures/korean/constellation_names.eng.fab:43
 msgid "Head of Town"
@@ -734,7 +1113,7 @@ msgstr "Líder da Vila"
 
 #: skycultures/korean/constellation_names.eng.fab:44
 msgid "Build"
-msgstr ""
+msgstr "Construir"
 
 #: skycultures/korean/constellation_names.eng.fab:45
 msgid "Fowl of Sky"
@@ -742,7 +1121,7 @@ msgstr "Ave do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:46
 msgid "Schrine of Sky"
-msgstr ""
+msgstr "Templo Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:48
 msgid "Northeastern Nations"
@@ -754,7 +1133,7 @@ msgstr "Velho Fazendeiro"
 
 #: skycultures/korean/constellation_names.eng.fab:50
 msgid "Snapping Turtle"
-msgstr ""
+msgstr "Tartaruga encaixada"
 
 #: skycultures/korean/constellation_names.eng.fab:51
 msgid "Road for Emperor"
@@ -762,27 +1141,27 @@ msgstr "Estrada para o Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:52
 msgid "The Weaver"
-msgstr ""
+msgstr "O Tecelão"
 
 #: skycultures/korean/constellation_names.eng.fab:53
 msgid "River adjoining Tower"
-msgstr ""
+msgstr "Rio adjacente a Torre"
 
 #: skycultures/korean/constellation_names.eng.fab:55
 msgid "Drum of River"
-msgstr ""
+msgstr "Tambor do Rio"
 
 #: skycultures/korean/constellation_names.eng.fab:56
 msgid "Drumstick of Sky"
-msgstr ""
+msgstr "Pilão do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:58
 msgid "Cow leading Man"
-msgstr ""
+msgstr "Vaca lidera o Homem"
 
 #: skycultures/korean/constellation_names.eng.fab:59
 msgid "Bank Spread"
-msgstr ""
+msgstr "Banco da Propagação"
 
 #: skycultures/korean/constellation_names.eng.fab:60
 msgid "Basket for Silkworm"
@@ -790,11 +1169,11 @@ msgstr "Cesto para Bicho-da-seda"
 
 #: skycultures/korean/constellation_names.eng.fab:61
 msgid "Officer for Cart"
-msgstr ""
+msgstr "Diretor de Compras"
 
 #: skycultures/korean/constellation_names.eng.fab:62
 msgid "Ferry of Sky"
-msgstr ""
+msgstr "Barca Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:63
 msgid "Fruit"
@@ -806,7 +1185,7 @@ msgstr "Semente"
 
 #: skycultures/korean/constellation_names.eng.fab:65
 msgid "Storage for Lady"
-msgstr ""
+msgstr "Armazém para Moças"
 
 #: skycultures/korean/constellation_names.eng.fab:66
 msgid "Court Lady"
@@ -814,19 +1193,19 @@ msgstr "Dama da Corte"
 
 #: skycultures/korean/constellation_names.eng.fab:67
 msgid "Judge Fault"
-msgstr ""
+msgstr "Juiz de Faltas"
 
 #: skycultures/korean/constellation_names.eng.fab:68
 msgid "Amend Fault"
-msgstr ""
+msgstr "Falha alterada"
 
 #: skycultures/korean/constellation_names.eng.fab:69
 msgid "Grant Life"
-msgstr ""
+msgstr "Grant Vida"
 
 #: skycultures/korean/constellation_names.eng.fab:70
 msgid "Punish"
-msgstr ""
+msgstr "Punir"
 
 #: skycultures/korean/constellation_names.eng.fab:71
 msgid "Empty House"
@@ -834,27 +1213,27 @@ msgstr "Casa Vazia"
 
 #: skycultures/korean/constellation_names.eng.fab:72
 msgid "Weep"
-msgstr ""
+msgstr "Choro"
 
 #: skycultures/korean/constellation_names.eng.fab:73
 msgid "Sob"
-msgstr ""
+msgstr "Soluço"
 
 #: skycultures/korean/constellation_names.eng.fab:74
 msgid "Castle with Rampart"
-msgstr ""
+msgstr "Castelo com Baluarte"
 
 #: skycultures/korean/constellation_names.eng.fab:75
 msgid "Hook for Dress"
-msgstr ""
+msgstr "Gancko para Vestido"
 
 #: skycultures/korean/constellation_names.eng.fab:76
 msgid "Groom"
-msgstr ""
+msgstr "Noivo"
 
 #: skycultures/korean/constellation_names.eng.fab:77
 msgid "Office for Chariot"
-msgstr ""
+msgstr "Garagem para Coche"
 
 #: skycultures/korean/constellation_names.eng.fab:78
 msgid "Human"
@@ -862,11 +1241,11 @@ msgstr "Humano"
 
 #: skycultures/korean/constellation_names.eng.fab:79
 msgid "Inner Pestle"
-msgstr ""
+msgstr "Interior Pestle"
 
 #: skycultures/korean/constellation_names.eng.fab:81
 msgid "Warehouse of Sky"
-msgstr ""
+msgstr "Armazém Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:82
 msgid "Tomb"
@@ -874,15 +1253,15 @@ msgstr "Tumba"
 
 #: skycultures/korean/constellation_names.eng.fab:83
 msgid "Cover of House"
-msgstr ""
+msgstr "Cobertura da Câmara"
 
 #: skycultures/korean/constellation_names.eng.fab:84
 msgid "Broken Mortar"
-msgstr ""
+msgstr "Morteiro Quebrado"
 
 #: skycultures/korean/constellation_names.eng.fab:85
 msgid "Climbing Serpent"
-msgstr ""
+msgstr "Serpente que escala"
 
 #: skycultures/korean/constellation_names.eng.fab:86
 msgid "Palace of Emperor"
@@ -890,19 +1269,19 @@ msgstr "Palácio do Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:87
 msgid "Detached Palace"
-msgstr ""
+msgstr "Palácio Isolado"
 
 #: skycultures/korean/constellation_names.eng.fab:88
 msgid "Ofice for Construction"
-msgstr ""
+msgstr "Estabelecimento de Construção"
 
 #: skycultures/korean/constellation_names.eng.fab:89
 msgid "Lightening"
-msgstr ""
+msgstr "Relâmpago"
 
 #: skycultures/korean/constellation_names.eng.fab:90
 msgid "Rampart"
-msgstr ""
+msgstr "Baluarte"
 
 #: skycultures/korean/constellation_names.eng.fab:91
 msgid "Troops of Sky"
@@ -910,15 +1289,15 @@ msgstr "Tropas do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:92
 msgid "Village for Patrol"
-msgstr ""
+msgstr "Aldeia para Patrulha"
 
 #: skycultures/korean/constellation_names.eng.fab:93
 msgid "Net of Sky"
-msgstr ""
+msgstr "Rede Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:94
 msgid "Stable of Sky"
-msgstr ""
+msgstr "Estábulo Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:95
 msgid "Eastern Wall"
@@ -947,11 +1326,11 @@ msgstr "Chicote"
 
 #: skycultures/korean/constellation_names.eng.fab:101
 msgid "Officer for Chariot of"
-msgstr ""
+msgstr "Condutor da Coche de"
 
 #: skycultures/korean/constellation_names.eng.fab:102
 msgid "Side Road"
-msgstr ""
+msgstr "Estrada Lateral"
 
 #: skycultures/korean/constellation_names.eng.fab:103
 msgid "Armory"
@@ -959,15 +1338,15 @@ msgstr "Armaria"
 
 #: skycultures/korean/constellation_names.eng.fab:104
 msgid "Southern Gate of Emperator"
-msgstr ""
+msgstr "Portão Sul do Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:105
 msgid "Outer Folding Screen"
-msgstr ""
+msgstr "Tela de Dobramento Externa"
 
 #: skycultures/korean/constellation_names.eng.fab:106
 msgid "Toilet of Sky"
-msgstr ""
+msgstr "Latrina Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:107
 msgid "Architect"
@@ -991,11 +1370,11 @@ msgstr "Olmo Direito"
 
 #: skycultures/korean/constellation_names.eng.fab:112
 msgid "Storehouse of Sky"
-msgstr "Armazém do Céu"
+msgstr "Depósito do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:113
 msgid "Stack of Cereals"
-msgstr ""
+msgstr "Pilha de Cereais"
 
 #: skycultures/korean/constellation_names.eng.fab:114
 msgid "Ship of Sky"
@@ -1004,11 +1383,11 @@ msgstr "Navio do Céu"
 #: skycultures/korean/constellation_names.eng.fab:115
 #: skycultures/korean/constellation_names.eng.fab:157
 msgid "Store of Water"
-msgstr ""
+msgstr "Reserva de Água"
 
 #: skycultures/korean/constellation_names.eng.fab:117
 msgid "Heap of Corpse"
-msgstr ""
+msgstr "Monte de Corpos"
 
 #: skycultures/korean/constellation_names.eng.fab:118
 msgid "Stomach of Tiger"
@@ -1016,7 +1395,7 @@ msgstr "Estômago do Tigre"
 
 #: skycultures/korean/constellation_names.eng.fab:119
 msgid "Store of Millet for"
-msgstr ""
+msgstr "Loja de Millet para"
 
 #: skycultures/korean/constellation_names.eng.fab:120
 msgid "Storehouse for Cereals"
@@ -1024,15 +1403,15 @@ msgstr "Armazém de Cereais"
 
 #: skycultures/korean/constellation_names.eng.fab:121
 msgid "Whetstone"
-msgstr ""
+msgstr "Pedra de Amolar"
 
 #: skycultures/korean/constellation_names.eng.fab:123
 msgid "Shaman of Sky"
-msgstr ""
+msgstr "Xamã Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:124
 msgid "Ear and Eye of"
-msgstr ""
+msgstr "Orelha e Olho de"
 
 #: skycultures/korean/constellation_names.eng.fab:125
 msgid "Moon"
@@ -1045,7 +1424,7 @@ msgstr "Colinas do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:127
 msgid "Conspiracy of Sky"
-msgstr ""
+msgstr "Conspiração Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:128
 msgid "Fodder"
@@ -1053,11 +1432,11 @@ msgstr "Forragens"
 
 #: skycultures/korean/constellation_names.eng.fab:130
 msgid "Garage for Chariot"
-msgstr ""
+msgstr "Garagem para Carruagem"
 
 #: skycultures/korean/constellation_names.eng.fab:131
 msgid "Pond for Fish"
-msgstr ""
+msgstr "Lagoa para Peixes"
 
 #: skycultures/korean/constellation_names.eng.fab:132
 #: skycultures/korean/constellation_names.eng.fab:133
@@ -1075,11 +1454,11 @@ msgstr "Reis"
 
 #: skycultures/korean/constellation_names.eng.fab:137
 msgid "Gateway of Sky"
-msgstr ""
+msgstr "Portal Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:138
 msgid "Flage of Saam"
-msgstr ""
+msgstr "Flagelo de Saam"
 
 #: skycultures/korean/constellation_names.eng.fab:139
 msgid "Village of Sky"
@@ -1087,7 +1466,7 @@ msgstr "Vilarejo do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:140
 msgid "Belvedere of Sky"
-msgstr ""
+msgstr "Belvedere do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:141
 msgid "General of Border"
@@ -1095,7 +1474,7 @@ msgstr "General da Borda"
 
 #: skycultures/korean/constellation_names.eng.fab:142
 msgid "Cerficate of Sky"
-msgstr ""
+msgstr "Certidão do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:143
 msgid "Flag of Emperor"
@@ -1115,7 +1494,7 @@ msgstr "Bandeira Fincada"
 
 #: skycultures/korean/constellation_names.eng.fab:147
 msgid "Forcast Calamity"
-msgstr ""
+msgstr "Calamidade Forcast"
 
 #: skycultures/korean/constellation_names.eng.fab:148
 msgid "Scout of Three Troups"
@@ -1123,7 +1502,7 @@ msgstr "Batedor de Três Tropas"
 
 #: skycultures/korean/constellation_names.eng.fab:149
 msgid "Saam"
-msgstr ""
+msgstr "Saam"
 
 #: skycultures/korean/constellation_names.eng.fab:150
 msgid "Expeditionary Force"
@@ -1131,7 +1510,7 @@ msgstr "Força Expedicionária"
 
 #: skycultures/korean/constellation_names.eng.fab:151
 msgid "Well for Millitary"
-msgstr ""
+msgstr "Poço para Soldados"
 
 #: skycultures/korean/constellation_names.eng.fab:152
 msgid "Well of Jade"
@@ -1140,7 +1519,7 @@ msgstr "Fonte de Jade"
 #: skycultures/korean/constellation_names.eng.fab:153
 #: skycultures/korean/constellation_names.eng.fab:208
 msgid "Folding Screen"
-msgstr ""
+msgstr "Tela de dobramento"
 
 #: skycultures/korean/constellation_names.eng.fab:155
 msgid "Arrow"
@@ -1148,7 +1527,7 @@ msgstr "Seta"
 
 #: skycultures/korean/constellation_names.eng.fab:156
 msgid "Piled Brushwood"
-msgstr ""
+msgstr "Matagal Empilhado"
 
 #: skycultures/korean/constellation_names.eng.fab:158
 msgid "Northern River"
@@ -1160,7 +1539,7 @@ msgstr "Cinco Senhores"
 
 #: skycultures/korean/constellation_names.eng.fab:160
 msgid "Wine Glass of Sky"
-msgstr ""
+msgstr "Copo de Vinho do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:161
 msgid "Eastern Well"
@@ -1168,7 +1547,7 @@ msgstr "Fonte Oriental"
 
 #: skycultures/korean/constellation_names.eng.fab:162
 msgid "Flood control"
-msgstr ""
+msgstr "Controle de Enchentes"
 
 #: skycultures/korean/constellation_names.eng.fab:163
 msgid "Balance of Water"
@@ -1196,11 +1575,11 @@ msgstr "Estrela do Lobo"
 
 #: skycultures/korean/constellation_names.eng.fab:169
 msgid "Wild Fowls"
-msgstr ""
+msgstr "Aves Selvagens"
 
 #: skycultures/korean/constellation_names.eng.fab:170
 msgid "Market for Army"
-msgstr ""
+msgstr "Mercado para a Armada"
 
 #: skycultures/korean/constellation_names.eng.fab:171
 msgid "Grandchildren"
@@ -1212,7 +1591,7 @@ msgstr "Filho"
 
 #: skycultures/korean/constellation_names.eng.fab:173
 msgid "Grown-up"
-msgstr ""
+msgstr "Adulto"
 
 #: skycultures/korean/constellation_names.eng.fab:174
 msgid "Oldman"
@@ -1220,7 +1599,7 @@ msgstr "Homem Velho"
 
 #: skycultures/korean/constellation_names.eng.fab:175
 msgid "Beacon"
-msgstr ""
+msgstr "Farol"
 
 #: skycultures/korean/constellation_names.eng.fab:176
 msgid "Eye of Sky"
@@ -1232,11 +1611,11 @@ msgstr "Pilha de Mortos"
 
 #: skycultures/korean/constellation_names.eng.fab:178
 msgid "Green Ridge"
-msgstr ""
+msgstr "Cume Verde"
 
 #: skycultures/korean/constellation_names.eng.fab:179
 msgid "Outer Kitchen"
-msgstr ""
+msgstr "Cozinha Externa"
 
 #: skycultures/korean/constellation_names.eng.fab:180
 msgid "Dog of Sky"
@@ -1244,23 +1623,23 @@ msgstr "Cão do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:181
 msgid "Spirit of GuRyoung"
-msgstr ""
+msgstr "Espírito de GuRyoung"
 
 #: skycultures/korean/constellation_names.eng.fab:182
 msgid "Flag of Wine Officer"
-msgstr ""
+msgstr "Bandeira do Administrador do Vinho"
 
 #: skycultures/korean/constellation_names.eng.fab:183
 msgid "Officer of Kitchen"
-msgstr ""
+msgstr "Administrador da Cozinha"
 
 #: skycultures/korean/constellation_names.eng.fab:184
 msgid "Equality and Fair"
-msgstr ""
+msgstr "Igualdade e Justiça"
 
 #: skycultures/korean/constellation_names.eng.fab:185
 msgid "Emperor HeonWon"
-msgstr ""
+msgstr "Imperador HeonWon"
 
 #: skycultures/korean/constellation_names.eng.fab:186
 msgid "Capital of Sky"
@@ -1268,7 +1647,7 @@ msgstr "Capital do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:187
 msgid "Chief of Farming"
-msgstr ""
+msgstr "Chefe da Agricultura"
 
 #: skycultures/korean/constellation_names.eng.fab:188
 msgid "Officer of Tomb"
@@ -1284,7 +1663,7 @@ msgstr "Asa do Pássaro Vermelho"
 
 #: skycultures/korean/constellation_names.eng.fab:191
 msgid "Eastern Pottery"
-msgstr ""
+msgstr "Cerâmica oriental"
 
 #: skycultures/korean/constellation_names.eng.fab:192
 msgid "Chariot of Emperor"
@@ -1292,11 +1671,11 @@ msgstr "Carruagem do Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:193
 msgid "Sand for Life"
-msgstr ""
+msgstr "Areia para a Vida"
 
 #: skycultures/korean/constellation_names.eng.fab:194
 msgid "Gateway for Troops"
-msgstr ""
+msgstr "Portal de Entrada para as Tropas"
 
 #: skycultures/korean/constellation_names.eng.fab:196
 msgid "Guardian Knight"
@@ -1308,16 +1687,16 @@ msgstr "Cinco Senhores Feudais"
 
 #: skycultures/korean/constellation_names.eng.fab:199
 msgid "SangJiin"
-msgstr ""
+msgstr "SangJiin"
 
 #: skycultures/korean/constellation_names.eng.fab:200
 msgid "Low Fence"
-msgstr ""
+msgstr "Cerca Baixa"
 
 #: skycultures/korean/constellation_names.eng.fab:201
 #: skycultures/korean/constellation_names.eng.fab:202
 msgid "Tall Fence"
-msgstr ""
+msgstr "Cerca Alta"
 
 #: skycultures/korean/constellation_names.eng.fab:203
 msgid "Nine Lords"
@@ -1325,7 +1704,7 @@ msgstr "Nove Senhores"
 
 #: skycultures/korean/constellation_names.eng.fab:204
 msgid "Dung of Tiger"
-msgstr ""
+msgstr "Esterco de Tigre"
 
 #: skycultures/korean/constellation_names.eng.fab:205
 msgid "Crown Prince"
@@ -1341,11 +1720,11 @@ msgstr "Três Ministros"
 
 #: skycultures/korean/constellation_names.eng.fab:210
 msgid "Officer for Audience"
-msgstr ""
+msgstr "Condutor de Audiência"
 
 #: skycultures/korean/constellation_names.eng.fab:211
 msgid "Grave Front"
-msgstr ""
+msgstr "Fachada de Sepultura"
 
 #: skycultures/korean/constellation_names.eng.fab:212
 msgid "Observatory"
@@ -1357,7 +1736,7 @@ msgstr "Oficial Feminina"
 
 #: skycultures/korean/constellation_names.eng.fab:214
 msgid "Wide Lodging Area"
-msgstr ""
+msgstr "Área de alojamento larga"
 
 #: skycultures/korean/constellation_names.eng.fab:215
 msgid "Eight Cereals"
@@ -1365,7 +1744,7 @@ msgstr "Oito Cereais"
 
 #: skycultures/korean/constellation_names.eng.fab:216
 msgid "Advance Guard"
-msgstr ""
+msgstr "Protetor avançado"
 
 #: skycultures/korean/constellation_names.eng.fab:217
 #: skycultures/korean/constellation_names.eng.fab:218
@@ -1382,15 +1761,15 @@ msgstr "Deus da Guerra do Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:223
 msgid "Emperor's God of Weather"
-msgstr ""
+msgstr "Deus do Tempo do Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:224
 msgid "Inner Kitchen"
-msgstr ""
+msgstr "Cozinha Interior"
 
 #: skycultures/korean/constellation_names.eng.fab:225
 msgid "Flap of Flag"
-msgstr ""
+msgstr "Retalho de Bandeira"
 
 #: skycultures/korean/constellation_names.eng.fab:226
 msgid "Minister"
@@ -1402,27 +1781,27 @@ msgstr "General e Ministro"
 
 #: skycultures/korean/constellation_names.eng.fab:228
 msgid "Jail of Sky"
-msgstr ""
+msgstr "Prisão Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:229
 msgid "Six Department"
-msgstr ""
+msgstr "Departamento Seis"
 
 #: skycultures/korean/constellation_names.eng.fab:230
 msgid "Inner Stairway"
-msgstr ""
+msgstr "Escadaria Interior"
 
 #: skycultures/korean/constellation_names.eng.fab:231
 msgid "Spear of Sky"
-msgstr ""
+msgstr "Lança Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:232
 msgid "Cover for Emperor"
-msgstr ""
+msgstr "Cobertura para o Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:233
 msgid "Place for Five Emperor"
-msgstr ""
+msgstr "Lugar para os Cinco Imperadores"
 
 #: skycultures/korean/constellation_names.eng.fab:234
 msgid "60 Years"
@@ -1430,7 +1809,7 @@ msgstr "60 Anos"
 
 #: skycultures/korean/constellation_names.eng.fab:235
 msgid "Kitchen of Sky"
-msgstr ""
+msgstr "Cozinha Celestial"
 
 #: skycultures/korean/constellation_names.eng.fab:236
 msgid "North Pole"
@@ -1438,11 +1817,11 @@ msgstr "Polo Norte"
 
 #: skycultures/korean/constellation_names.eng.fab:237
 msgid "Wound Lodge"
-msgstr ""
+msgstr "Cabana da Ofensa"
 
 #: skycultures/korean/constellation_names.eng.fab:238
 msgid "Single-log Bridge"
-msgstr ""
+msgstr "Ponte de um Único Toro"
 
 #: skycultures/korean/constellation_names.eng.fab:239
 msgid "Great Emperor"
@@ -1450,32 +1829,32 @@ msgstr "Grande Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:240
 msgid "Officer for Opinion"
-msgstr ""
+msgstr "Administrador para Opinião"
 
 #: skycultures/korean/constellation_names.eng.fab:241
 msgid "Pillar of Sky"
-msgstr ""
+msgstr "Pilar do Céu"
 
 #: skycultures/korean/constellation_names.eng.fab:242
 msgid "Secretary"
-msgstr ""
+msgstr "Secretario(a)"
 
 #: skycultures/korean/constellation_names.eng.fab:243
 msgid "Maid"
-msgstr ""
+msgstr "Empregada"
 
 #: skycultures/korean/constellation_names.eng.fab:244
 msgid "Desk of Woman"
-msgstr ""
+msgstr "Mesa da Mulher"
 
 #: skycultures/korean/constellation_names.eng.fab:245
 msgid "Judge Prison"
-msgstr ""
+msgstr "Prisão do Julgamento"
 
 #: skycultures/korean/constellation_names.eng.fab:246
 #: skycultures/korean/constellation_names.eng.fab:247
 msgid "Purple Fence"
-msgstr ""
+msgstr "Cerca Púrpura"
 
 #: skycultures/korean/constellation_names.eng.fab:248
 msgid "Order of Sky"
@@ -1487,12 +1866,12 @@ msgstr "Sete ministros"
 
 #: skycultures/korean/constellation_names.eng.fab:250
 msgid "Thread Straw"
-msgstr ""
+msgstr "Palha de Fibras"
 
 #: skycultures/korean/constellation_names.eng.fab:251
 #: skycultures/korean/constellation_names.eng.fab:252
 msgid "Market Fence"
-msgstr ""
+msgstr "Cerca do Mercado"
 
 #: skycultures/korean/constellation_names.eng.fab:253
 msgid "Feudal Lord"
@@ -1500,7 +1879,7 @@ msgstr "Senhor Feudal"
 
 #: skycultures/korean/constellation_names.eng.fab:254
 msgid "Seat for Emperor"
-msgstr ""
+msgstr "Assento para o Imperador"
 
 #: skycultures/korean/constellation_names.eng.fab:255
 msgid "Royal Family"
@@ -1508,27 +1887,27 @@ msgstr "Família Real"
 
 #: skycultures/korean/constellation_names.eng.fab:256
 msgid "Head of Family"
-msgstr ""
+msgstr "Chefe da Familia"
 
 #: skycultures/korean/constellation_names.eng.fab:257
 msgid "Record of Family"
-msgstr ""
+msgstr "Registro da Familia"
 
 #: skycultures/korean/constellation_names.eng.fab:258
 msgid "Officer for Family"
-msgstr ""
+msgstr "Diretor da Familia"
 
 #: skycultures/korean/constellation_names.eng.fab:259
 msgid "Tower in Market"
-msgstr ""
+msgstr "Torre de Mercado"
 
 #: skycultures/korean/constellation_names.eng.fab:260
 msgid "Measure Cereal"
-msgstr ""
+msgstr "Medida de Cereal"
 
 #: skycultures/korean/constellation_names.eng.fab:261
 msgid "Cereal Measure Regulation"
-msgstr ""
+msgstr "Regra da Medida de Cereal"
 
 #: skycultures/korean/constellation_names.eng.fab:262
 msgid "Eunuch"
@@ -1536,19 +1915,19 @@ msgstr "Eunuco"
 
 #: skycultures/korean/constellation_names.eng.fab:263
 msgid "Officer for Chariots"
-msgstr ""
+msgstr "Condutor de Coches"
 
 #: skycultures/korean/constellation_names.eng.fab:264
 msgid "Measure Amount"
-msgstr ""
+msgstr "Mensurar a quantia"
 
 #: skycultures/korean/constellation_names.eng.fab:265
 msgid "Butchery"
-msgstr ""
+msgstr "Açougue"
 
 #: skycultures/korean/constellation_names.eng.fab:266
 msgid "Officer for Jewel"
-msgstr ""
+msgstr "Administrador para Joias"
 
 #: skycultures/korean/constellation_names.eng.fab:267
 msgid "Royal"
@@ -1560,19 +1939,241 @@ msgstr "Senhor"
 
 #: skycultures/korean/constellation_names.eng.fab:269
 msgid "Left Executor"
-msgstr ""
+msgstr "Executor Esquerdo"
 
 #: skycultures/korean/constellation_names.eng.fab:270
 msgid "Right Executor"
-msgstr ""
+msgstr "Executor Direito"
 
 #: skycultures/korean/constellation_names.eng.fab:271
 msgid "Crossbeam for Heo"
-msgstr ""
+msgstr "Travessa para Heo"
 
 #: skycultures/korean/constellation_names.eng.fab:272
 msgid "Threading Coins"
-msgstr ""
+msgstr "Moedas Costuradas"
+
+#: skycultures/korean/star_names.fab:1
+msgid "SaangSaang"
+msgstr "SaangSaang"
+
+#: skycultures/korean/star_names.fab:2 skycultures/korean/star_names.fab:4
+msgid "ChaSaang"
+msgstr "ChaSaang"
+
+#: skycultures/korean/star_names.fab:3 skycultures/korean/star_names.fab:50
+msgid "ChaJaang"
+msgstr "ChaJaang"
+
+#: skycultures/korean/star_names.fab:5
+msgid "UJangGuun"
+msgstr "UJangGuun"
+
+#: skycultures/korean/star_names.fab:6
+msgid "DaeJangGuun"
+msgstr "DaeJangGuun"
+
+#: skycultures/korean/star_names.fab:7
+msgid "JwaJangGuun"
+msgstr "JwaJangGuun"
+
+#: skycultures/korean/star_names.fab:8
+msgid "WaangRaang"
+msgstr "WaangRaang"
+
+#: skycultures/korean/star_names.fab:9 skycultures/korean/star_names.fab:10
+#: skycultures/korean/star_names.fab:11 skycultures/korean/star_names.fab:12
+msgid "CheonSaa"
+msgstr "CheonSaa"
+
+#: skycultures/korean/star_names.fab:13 skycultures/korean/star_names.fab:17
+msgid "CheonGou"
+msgstr "CheonGou"
+
+#: skycultures/korean/star_names.fab:14
+msgid "SaaGong"
+msgstr "SaaGong"
+
+#: skycultures/korean/star_names.fab:15
+msgid "CheonOok"
+msgstr "CheonOok"
+
+#: skycultures/korean/star_names.fab:16
+msgid "CheonChaang"
+msgstr "CheonChaang"
+
+#: skycultures/korean/star_names.fab:18
+msgid "Gyeong"
+msgstr "Gyeong"
+
+#: skycultures/korean/star_names.fab:19
+msgid "JwaJaangGuun"
+msgstr "JwaJaangGuun"
+
+#: skycultures/korean/star_names.fab:20
+msgid "HuuJaangGuun"
+msgstr "HuuJaangGuun"
+
+#: skycultures/korean/star_names.fab:21
+msgid "UuJaangGuun"
+msgstr "UuJaangGuun"
+
+#: skycultures/korean/star_names.fab:22
+msgid "PyeonJaangGuun"
+msgstr "PyeonJaangGuun"
+
+#: skycultures/korean/star_names.fab:23
+msgid "SaamJaangGuun"
+msgstr "SaamJaangGuun"
+
+#: skycultures/korean/star_names.fab:24
+msgid "TaeSaa"
+msgstr "TaeSaa"
+
+#: skycultures/korean/star_names.fab:25 skycultures/korean/star_names.fab:39
+msgid "BaakSaa"
+msgstr "BaakSaa"
+
+#: skycultures/korean/star_names.fab:26
+msgid "SaamGong"
+msgstr "SaamGong"
+
+#: skycultures/korean/star_names.fab:27
+msgid "JaeUu"
+msgstr "JaeUu"
+
+#: skycultures/korean/star_names.fab:28
+msgid "JaeSaa"
+msgstr "JaeSaa"
+
+#: skycultures/korean/star_names.fab:29
+msgid "YeoJuu"
+msgstr "YeoJuu"
+
+#: skycultures/korean/star_names.fab:30
+msgid "YeoEo"
+msgstr "YeoEo"
+
+#: skycultures/korean/star_names.fab:31
+msgid "TaeMin"
+msgstr "TaeMin"
+
+#: skycultures/korean/star_names.fab:32
+msgid "SouMin"
+msgstr "SouMin"
+
+#: skycultures/korean/star_names.fab:33 skycultures/korean/star_names.fab:64
+#: skycultures/korean/star_names.fab:65 skycultures/korean/star_names.fab:66
+msgid "Buuiin"
+msgstr "Buuiin"
+
+#: skycultures/korean/star_names.fab:34
+msgid "WaangBii"
+msgstr "WaangBii"
+
+#: skycultures/korean/star_names.fab:35 skycultures/korean/star_names.fab:47
+msgid "HuuGuung"
+msgstr "HuuGuung"
+
+#: skycultures/korean/star_names.fab:36
+msgid "HwangJae"
+msgstr "HwangJae"
+
+#: skycultures/korean/star_names.fab:37
+msgid "CheoSaa"
+msgstr "CheoSaa"
+
+#: skycultures/korean/star_names.fab:38
+msgid "EuiSaa"
+msgstr "EuiSaa"
+
+#: skycultures/korean/star_names.fab:40
+msgid "DaeBuu"
+msgstr "DaeBuu"
+
+#: skycultures/korean/star_names.fab:41
+msgid "SaangTae"
+msgstr "SaangTae"
+
+#: skycultures/korean/star_names.fab:42
+msgid "JuungTae"
+msgstr "JuungTae"
+
+#: skycultures/korean/star_names.fab:43
+msgid "HaaTae"
+msgstr "HaaTae"
+
+#: skycultures/korean/star_names.fab:44 skycultures/korean/star_names.fab:62
+msgid "TaeJaa"
+msgstr "TaeJaa"
+
+#: skycultures/korean/star_names.fab:45
+msgid "JaeWaang"
+msgstr "JaeWaang"
+
+#: skycultures/korean/star_names.fab:46 skycultures/korean/star_names.fab:61
+msgid "SeoJaa"
+msgstr "SeoJaa"
+
+#: skycultures/korean/star_names.fab:48
+msgid "CheonChuu"
+msgstr "CheonChuu"
+
+#: skycultures/korean/star_names.fab:49
+msgid "SaangJaang"
+msgstr "SaangJaang"
+
+#: skycultures/korean/star_names.fab:51
+msgid "TaeSaang"
+msgstr "TaeSaang"
+
+#: skycultures/korean/star_names.fab:52
+msgid "SaaJuu.DaeRii"
+msgstr "SaaJuu.DaeRii"
+
+#: skycultures/korean/star_names.fab:53
+msgid "Jeong"
+msgstr "Jeong"
+
+#: skycultures/korean/star_names.fab:54
+msgid "Beop"
+msgstr "Beop"
+
+#: skycultures/korean/star_names.fab:55
+msgid "Ryeong"
+msgstr "Ryeong"
+
+#: skycultures/korean/star_names.fab:56
+msgid "Beol"
+msgstr "Beol"
+
+#: skycultures/korean/star_names.fab:57
+msgid "Saal"
+msgstr "Saal"
+
+#: skycultures/korean/star_names.fab:58
+msgid "Wii"
+msgstr "Wii"
+
+#: skycultures/korean/star_names.fab:59
+msgid "Eung"
+msgstr "Eung"
+
+#: skycultures/korean/star_names.fab:60
+msgid "MyeongDaang"
+msgstr "MyeongDaang"
+
+#: skycultures/korean/star_names.fab:63
+msgid "Huu"
+msgstr "Huu"
+
+#: skycultures/korean/star_names.fab:67
+msgid "Biin"
+msgstr "Biin"
+
+#: skycultures/korean/star_names.fab:68 skycultures/korean/star_names.fab:69
+msgid "DaeJaang"
+msgstr "DaeJaang"
 
 #: skycultures/lakota/constellation_names.eng.fab:1
 msgid "Hand"
@@ -1588,7 +2189,7 @@ msgstr "Lareira"
 
 #: skycultures/lakota/constellation_names.eng.fab:5
 msgid "Race Track"
-msgstr ""
+msgstr "Pista de corrida"
 
 #: skycultures/lakota/constellation_names.eng.fab:6
 msgid "Animal"
@@ -1604,7 +2205,7 @@ msgstr "Sete Pequenas Garotas"
 
 #: skycultures/lakota/constellation_names.eng.fab:9
 msgid "Dried Willow"
-msgstr ""
+msgstr "Sauce Secas"
 
 #: skycultures/lakota/constellation_names.eng.fab:10
 msgid "Salamander"
@@ -1616,47 +2217,135 @@ msgstr "Tartaruga"
 
 #: skycultures/lakota/constellation_names.eng.fab:12
 msgid "Thunderbird"
-msgstr ""
+msgstr "Thunderbird"
 
 #: skycultures/lakota/constellation_names.eng.fab:13
 msgid "Bear's Lodge"
-msgstr ""
+msgstr "Pousada do Urso"
 
 #: skycultures/maori/constellation_names.eng.fab:1
 msgid "Taki-o-Autahi"
-msgstr ""
+msgstr "Taki-o-Autahi"
 
 #: skycultures/maori/constellation_names.eng.fab:2
 msgid "Te Taura-o-te-waka-o-tamarereti"
-msgstr ""
+msgstr "Te Taura-o-te-waka-o-tamarereti"
 
 #: skycultures/maori/constellation_names.eng.fab:3
 msgid "Tau-toro"
-msgstr ""
+msgstr "Tau-toro"
 
 #: skycultures/maori/constellation_names.eng.fab:4
 msgid "The Great Boat of Tama Rereti"
-msgstr ""
+msgstr "A Grande Barca de Tama Rereti"
 
 #: skycultures/maori/constellation_names.eng.fab:5
 msgid "Matakarehu"
-msgstr ""
+msgstr "Matakarehu"
 
 #: skycultures/maori/constellation_names.eng.fab:6
 msgid "The Sail of Tainui"
-msgstr ""
+msgstr "O Veleiro de Tainui"
+
+#: skycultures/maori/star_names.fab:1
+msgid "Matariki"
+msgstr "Matariki"
+
+#: skycultures/maori/star_names.fab:2
+msgid "Taumata-kuku"
+msgstr "Taumata-kuku"
+
+#: skycultures/maori/star_names.fab:3
+msgid "Puanga"
+msgstr "Puanga"
+
+#: skycultures/maori/star_names.fab:4
+msgid "Atutahi"
+msgstr "Atutahi"
+
+#: skycultures/maori/star_names.fab:5
+msgid "Takarua"
+msgstr "Takarua"
+
+#: skycultures/maori/star_names.fab:6
+msgid "Whakaahu"
+msgstr "Whakaahu"
+
+#: skycultures/maori/star_names.fab:7
+msgid "Puanga Hori"
+msgstr "Puanga Hori"
+
+#: skycultures/maori/star_names.fab:8
+msgid "Mariao"
+msgstr "Mariao"
+
+#: skycultures/maori/star_names.fab:9
+msgid "Ruawahia"
+msgstr "Ruawahia"
+
+#: skycultures/maori/star_names.fab:10
+msgid "Rehua"
+msgstr "Rehua"
+
+#: skycultures/maori/star_names.fab:11
+msgid "Pekehawani"
+msgstr "Pekehawani"
+
+#: skycultures/maori/star_names.fab:12
+msgid "Whakaonge-kai"
+msgstr "Whakaonge-kai"
+
+#: skycultures/maori/star_names.fab:13
+msgid "Whanui"
+msgstr "Whanui"
+
+#: skycultures/maori/star_names.fab:14
+msgid "Poutu-te-Rangi"
+msgstr "Poutu-te-Rangi"
+
+#: skycultures/maori/star_names.fab:15
+msgid "Pipiri"
+msgstr "Pipiri"
+
+#: skycultures/maori/star_names.fab:16
+msgid "Turu"
+msgstr "Turu"
+
+#: skycultures/maori/star_names.fab:17
+msgid "Tupua-nuku"
+msgstr "Tupua-nuku"
+
+#: skycultures/maori/star_names.fab:18
+msgid "Tupua-rangi"
+msgstr "Tupua-rangi"
+
+#: skycultures/maori/star_names.fab:19
+msgid "Ururangi"
+msgstr "Ururangi"
+
+#: skycultures/maori/star_names.fab:20
+msgid "Wai-puna-a-rangi"
+msgstr "Wai-puna-a-rangi"
+
+#: skycultures/maori/star_names.fab:21
+msgid "Waiti"
+msgstr "Waiti"
+
+#: skycultures/maori/star_names.fab:22
+msgid "Waita"
+msgstr "Waita"
 
 #: skycultures/navajo/constellation_names.eng.fab:1
 msgid "Revolving Male"
-msgstr ""
+msgstr "Rotativo Masculino"
 
 #: skycultures/navajo/constellation_names.eng.fab:2
 msgid "Revolving Female"
-msgstr ""
+msgstr "Rotativo Feminino"
 
 #: skycultures/navajo/constellation_names.eng.fab:3
 msgid "Man with Feet Apart"
-msgstr ""
+msgstr "Homem com os pés afastados"
 
 #: skycultures/navajo/constellation_names.eng.fab:4
 msgid "Lizard"
@@ -1664,11 +2353,11 @@ msgstr "Lagarto"
 
 #: skycultures/navajo/constellation_names.eng.fab:5
 msgid "Dilyehe"
-msgstr ""
+msgstr "Dilyehe"
 
 #: skycultures/navajo/constellation_names.eng.fab:6
 msgid "First Big One"
-msgstr ""
+msgstr "Primeiro Big One"
 
 #: skycultures/navajo/constellation_names.eng.fab:7
 msgid "Rabbit Tracks"
@@ -1676,11 +2365,11 @@ msgstr "Rastros de Coelho"
 
 #: skycultures/navajo/constellation_names.eng.fab:8
 msgid "First Slim One"
-msgstr ""
+msgstr "Primeiro elegante"
 
 #: skycultures/norse/constellation_names.eng.fab:1
 msgid "Aurvandil's Toe"
-msgstr ""
+msgstr "Dedo do pé do Aurvandil"
 
 #: skycultures/norse/constellation_names.eng.fab:2
 msgid "Wolf's Mouth"
@@ -1700,7 +2389,19 @@ msgstr "Carro de Homem"
 
 #: skycultures/norse/constellation_names.eng.fab:6
 msgid "The Asar Battlefield"
-msgstr ""
+msgstr "O Asar campo de batalha"
+
+#: skycultures/norse/star_names.fab:1
+msgid "Guide Star"
+msgstr "Estrela guia"
+
+#: skycultures/norse/star_names.fab:2
+msgid "Day Star"
+msgstr "Estrela do Dia"
+
+#: skycultures/norse/star_names.fab:3
+msgid "South Star"
+msgstr "Estrela do Sul"
 
 #: skycultures/polynesian/constellation_names.eng.fab:1
 msgid "Bailer"
@@ -1720,7 +2421,7 @@ msgstr "O Sétimo"
 
 #: skycultures/polynesian/constellation_names.eng.fab:5
 msgid "Maui's Fishhook"
-msgstr ""
+msgstr "Anzol de Maui"
 
 #: skycultures/polynesian/constellation_names.eng.fab:6
 msgid "Navigator's Triangle"
@@ -1742,77 +2443,202 @@ msgstr "Curado pela Lua"
 msgid "Dolphin"
 msgstr "Golfinho"
 
+#: skycultures/polynesian/star_names.fab:1
+msgid "Hokulei"
+msgstr "Hokulei"
+
+#: skycultures/polynesian/star_names.fab:2
+msgid "Nana-mua"
+msgstr "Nana-mua"
+
+#: skycultures/polynesian/star_names.fab:3
+msgid "Nana-hope"
+msgstr "Nana-hope"
+
+#: skycultures/polynesian/star_names.fab:4
+msgid "Puana"
+msgstr "Puana"
+
+#: skycultures/polynesian/star_names.fab:5
+msgid "A'a"
+msgstr "A'a"
+
+#: skycultures/polynesian/star_names.fab:6
+msgid "Puana-kau"
+msgstr "Puana-kau"
+
+#: skycultures/polynesian/star_names.fab:7
+#: skycultures/polynesian/star_names.fab:19
+msgid "Pu'uhonua"
+msgstr "Pu'uhonua"
+
+#: skycultures/polynesian/star_names.fab:8
+msgid "Kaulua-koko"
+msgstr "Kaulua-koko"
+
+#: skycultures/polynesian/star_names.fab:9
+msgid "Hokupa'a"
+msgstr "Hokupa'a"
+
+#: skycultures/polynesian/star_names.fab:10
+msgid "Hokule'a"
+msgstr "Hokule'a"
+
+#: skycultures/polynesian/star_names.fab:11
+msgid "Hiki-analia"
+msgstr "Hiki-analia"
+
+#: skycultures/polynesian/star_names.fab:12
+msgid "Holopuni"
+msgstr "Holopuni"
+
+#: skycultures/polynesian/star_names.fab:13
+msgid "Hawaiki"
+msgstr "Hawaiki"
+
+#: skycultures/polynesian/star_names.fab:14
+msgid "Humu"
+msgstr "Humu"
+
+#: skycultures/polynesian/star_names.fab:15
+msgid "Keoe"
+msgstr "Keoe"
+
+#: skycultures/polynesian/star_names.fab:16
+msgid "Hoku'ula"
+msgstr "Hoku'ula"
+
+#: skycultures/polynesian/star_names.fab:17
+msgid "Lehua-Kona"
+msgstr "Lehua-Kona"
+
+#: skycultures/polynesian/star_names.fab:18
+msgid "Ke ali'i o kona i ka lewa"
+msgstr "Ke ali'i o kona i ka lewa"
+
+#: skycultures/polynesian/star_names.fab:20
+msgid "Hiku-kahi"
+msgstr "Hiku-kahi"
+
+#: skycultures/polynesian/star_names.fab:21
+msgid "Hiku-lua"
+msgstr "Hiku-lua"
+
+#: skycultures/polynesian/star_names.fab:22
+msgid "Hiku-kolu"
+msgstr "Hiku-kolu"
+
+#: skycultures/polynesian/star_names.fab:23
+msgid "Hiku-ha"
+msgstr "Hiku-ha"
+
+#: skycultures/polynesian/star_names.fab:24
+msgid "Hiku-lima"
+msgstr "Hiku-lima"
+
+#: skycultures/polynesian/star_names.fab:25
+msgid "Hiku-ono"
+msgstr "Hiku-ono"
+
+#: skycultures/polynesian/star_names.fab:26
+msgid "Hiku-pau"
+msgstr "Hiku-pau"
+
+#: skycultures/polynesian/star_names.fab:27
+msgid "Kaulia"
+msgstr "Kaulia"
+
+#: skycultures/polynesian/star_names.fab:28
+msgid "Mole Honua"
+msgstr "Mole Honua"
+
+#: skycultures/polynesian/star_names.fab:29
+msgid "Ka-maile-mua"
+msgstr "Ka-maile-mua"
+
+#: skycultures/polynesian/star_names.fab:30
+msgid "Ka-maile-hope"
+msgstr "Ka-maile-hope"
+
+#: skycultures/polynesian/star_names.fab:31
+msgid "Ka Maka"
+msgstr "Ka Maka"
+
 #: skycultures/sami/constellation_names.eng.fab:1
 msgid "Sarva the Elk"
-msgstr ""
+msgstr "Sarva, O Alce"
 
 #: skycultures/sami/constellation_names.eng.fab:2
 msgid "Favdna's Bow and Arrow"
-msgstr ""
+msgstr "Arco e Flecha de Favdna"
 
 #: skycultures/sami/constellation_names.eng.fab:3
 msgid "Galla's Sons"
-msgstr ""
+msgstr "Filhos de Galla"
 
 #: skycultures/sami/constellation_names.eng.fab:4
 msgid "Sky Support"
-msgstr ""
+msgstr "Suporte do céu"
 
 #: skycultures/sami/constellation_names.eng.fab:5
 msgid "Favdna"
-msgstr ""
+msgstr "Favdna"
 
 #: skycultures/sami/constellation_names.eng.fab:6
 msgid "The Runner"
-msgstr ""
+msgstr "O corredor"
 
 #: skycultures/sami/constellation_names.eng.fab:7
 msgid "Morning Star"
-msgstr ""
+msgstr "Estrela da Manhã"
 
 #: skycultures/sami/constellation_names.eng.fab:8
 msgid "Pack of Dogs"
-msgstr ""
+msgstr "Matilha de Cães"
 
 #: skycultures/sami/constellation_names.eng.fab:9
 msgid "Galla"
-msgstr ""
+msgstr "Galla"
 
 #: skycultures/sami/constellation_names.eng.fab:10
 msgid "The Ski Runners"
-msgstr ""
+msgstr "Os Esquiadores"
 
 #: skycultures/tupi/constellation_names.eng.fab:1
 msgid "White Ostrich"
-msgstr ""
+msgstr "Avestruz Branca"
 
 #: skycultures/tupi/constellation_names.eng.fab:2
 msgid "Old Man"
-msgstr ""
+msgstr "O Velho"
 
 #: skycultures/tupi/constellation_names.eng.fab:3
 msgid "Anta do Norte (Tapi'i)"
-msgstr ""
+msgstr "Anta do Norte (Tapi'i)"
 
 #: skycultures/tupi/constellation_names.eng.fab:4
 msgid "Veado"
-msgstr ""
+msgstr "Veado"
 
 #: skycultures/tupi/constellation_names.eng.fab:5
 msgid "Joykexo"
-msgstr ""
+msgstr "Joykexo"
 
 #: skycultures/tupi/constellation_names.eng.fab:6
 msgid "Vespeiro (Eixu)"
-msgstr ""
+msgstr "Vespeiro (Eixu)"
 
 #: skycultures/tupi/constellation_names.eng.fab:7
 msgid "Queixada da Anta (Tapi'i rainhyka)"
-msgstr ""
+msgstr "Queixada da Anta (Tapi'i rainhyka)"
+
+#: skycultures/tupi/star_names.fab:1 skycultures/tupi/star_names.fab:2
+msgid "Quira-Rupia"
+msgstr "Quira-Rupia"
 
 #: skycultures/western/constellation_names.eng.fab:1
 msgid "Aquila"
-msgstr ""
+msgstr "Águia"
 
 #: skycultures/western/constellation_names.eng.fab:2
 msgid "Andromeda"
@@ -1824,7 +2650,7 @@ msgstr "Escultor"
 
 #: skycultures/western/constellation_names.eng.fab:4
 msgid "Ara"
-msgstr ""
+msgstr "Altar"
 
 #: skycultures/western/constellation_names.eng.fab:5
 msgid "Libra"
@@ -1849,11 +2675,11 @@ msgstr "Bússola"
 
 #: skycultures/western/constellation_names.eng.fab:10
 msgid "Bootes"
-msgstr ""
+msgstr "Boieiro"
 
 #: skycultures/western/constellation_names.eng.fab:11
 msgid "Caelum"
-msgstr ""
+msgstr "Cinzel"
 
 #: skycultures/western/constellation_names.eng.fab:12
 msgid "Chamaeleon"
@@ -1869,11 +2695,11 @@ msgstr "Capricórnio"
 
 #: skycultures/western/constellation_names.eng.fab:15
 msgid "Carina"
-msgstr ""
+msgstr "Quilha"
 
 #: skycultures/western/constellation_names.eng.fab:16
 msgid "Cassiopeia"
-msgstr "Cassiopéia"
+msgstr "Cassiopeia"
 
 #: skycultures/western/constellation_names.eng.fab:17
 msgid "Centaurus"
@@ -1881,7 +2707,7 @@ msgstr "Centauro"
 
 #: skycultures/western/constellation_names.eng.fab:18
 msgid "Cepheus"
-msgstr ""
+msgstr "Cefeu"
 
 #: skycultures/western/constellation_names.eng.fab:19
 msgid "Coma Berenices"
@@ -1889,11 +2715,11 @@ msgstr "Cabeleira de Berenice"
 
 #: skycultures/western/constellation_names.eng.fab:20
 msgid "Canes Venatici"
-msgstr ""
+msgstr "Cães de Caça"
 
 #: skycultures/western/constellation_names.eng.fab:21
 msgid "Auriga"
-msgstr ""
+msgstr "Cocheiro"
 
 #: skycultures/western/constellation_names.eng.fab:22
 msgid "Columba"
@@ -1901,11 +2727,11 @@ msgstr "Pomba"
 
 #: skycultures/western/constellation_names.eng.fab:23
 msgid "Circinus"
-msgstr ""
+msgstr "Compasso"
 
 #: skycultures/western/constellation_names.eng.fab:24
 msgid "Crater"
-msgstr ""
+msgstr "Taça"
 
 #: skycultures/western/constellation_names.eng.fab:25
 msgid "Corona Australis"
@@ -1941,19 +2767,19 @@ msgstr "Dragão"
 
 #: skycultures/western/constellation_names.eng.fab:33
 msgid "Norma"
-msgstr ""
+msgstr "Régua"
 
 #: skycultures/western/constellation_names.eng.fab:34
 msgid "Eridanus"
-msgstr "Eridano"
+msgstr "Erídano"
 
 #: skycultures/western/constellation_names.eng.fab:35
 msgid "Sagitta"
-msgstr "Sagitário"
+msgstr "Seta"
 
 #: skycultures/western/constellation_names.eng.fab:36
 msgid "Fornax"
-msgstr ""
+msgstr "Fornalha"
 
 #: skycultures/western/constellation_names.eng.fab:37
 msgid "Gemini"
@@ -1961,7 +2787,7 @@ msgstr "Gêmeos"
 
 #: skycultures/western/constellation_names.eng.fab:38
 msgid "Camelopardalis"
-msgstr ""
+msgstr "Girafa"
 
 #: skycultures/western/constellation_names.eng.fab:39
 msgid "Canis Major"
@@ -1985,19 +2811,19 @@ msgstr "Relógio"
 
 #: skycultures/western/constellation_names.eng.fab:44
 msgid "Hydra"
-msgstr "Hidra"
+msgstr "Hidra Fêmea"
 
 #: skycultures/western/constellation_names.eng.fab:45
 msgid "Hydrus"
-msgstr "Hidra"
+msgstr "Hidra Macho"
 
 #: skycultures/western/constellation_names.eng.fab:46
 msgid "Indus"
-msgstr ""
+msgstr "Índio"
 
 #: skycultures/western/constellation_names.eng.fab:47
 msgid "Lacerta"
-msgstr "Lagartixa"
+msgstr "Lagarto"
 
 #: skycultures/western/constellation_names.eng.fab:48
 msgid "Monoceros"
@@ -2025,7 +2851,7 @@ msgstr "Lira"
 
 #: skycultures/western/constellation_names.eng.fab:54
 msgid "Antlia"
-msgstr ""
+msgstr "Máquina Pneumática"
 
 #: skycultures/western/constellation_names.eng.fab:55
 msgid "Microscopium"
@@ -2037,15 +2863,15 @@ msgstr "Mosca"
 
 #: skycultures/western/constellation_names.eng.fab:57
 msgid "Octans"
-msgstr ""
+msgstr "Octante"
 
 #: skycultures/western/constellation_names.eng.fab:58
 msgid "Apus"
-msgstr ""
+msgstr "Ave do Paraíso"
 
 #: skycultures/western/constellation_names.eng.fab:59
 msgid "Ophiuchus"
-msgstr "Ofiúco"
+msgstr "Ofiuco"
 
 #: skycultures/western/constellation_names.eng.fab:60
 msgid "Orion"
@@ -2069,7 +2895,7 @@ msgstr "Perseu"
 
 #: skycultures/western/constellation_names.eng.fab:65
 msgid "Equuleus"
-msgstr ""
+msgstr "Potro"
 
 #: skycultures/western/constellation_names.eng.fab:66
 msgid "Canis Minor"
@@ -2109,7 +2935,7 @@ msgstr "Popa"
 
 #: skycultures/western/constellation_names.eng.fab:75
 msgid "Reticulum"
-msgstr ""
+msgstr "Retículo"
 
 #: skycultures/western/constellation_names.eng.fab:76
 msgid "Sagittarius"
@@ -2149,7 +2975,7 @@ msgstr "Triângulo"
 
 #: skycultures/western/constellation_names.eng.fab:86
 msgid "Triangulum Australe"
-msgstr "Triangulo Austral"
+msgstr "Triângulo Austral"
 
 #: skycultures/western/constellation_names.eng.fab:87
 msgid "Aquarius"
@@ -2162,3 +2988,941 @@ msgstr "Virgem"
 #: skycultures/western/constellation_names.eng.fab:89
 msgid "Vela"
 msgstr "Vela"
+
+#: skycultures/western/star_names.fab:1
+msgid "Alpheratz"
+msgstr "Alpheratz"
+
+#: skycultures/western/star_names.fab:2
+msgid "Caph"
+msgstr "Caph"
+
+#: skycultures/western/star_names.fab:3
+msgid "Algenib"
+msgstr "Algenib"
+
+#: skycultures/western/star_names.fab:4
+msgid "Ankaa"
+msgstr "Ankaa"
+
+#: skycultures/western/star_names.fab:5
+msgid "Shedir"
+msgstr "Shedir"
+
+#: skycultures/western/star_names.fab:6
+msgid "Diphda"
+msgstr "Diphda"
+
+#: skycultures/western/star_names.fab:7
+msgid "Van Maanen 2"
+msgstr "Van Maanen 2"
+
+#: skycultures/western/star_names.fab:8
+msgid "Mirach"
+msgstr "Mirach"
+
+#: skycultures/western/star_names.fab:9
+msgid "Adhil"
+msgstr "Adhil"
+
+#: skycultures/western/star_names.fab:10
+msgid "Ruchbah"
+msgstr "Ruchbah"
+
+#: skycultures/western/star_names.fab:11
+msgid "Achernar"
+msgstr "Achernar"
+
+#: skycultures/western/star_names.fab:12
+msgid "Baten Kaitos"
+msgstr "Baten Kaitos"
+
+#: skycultures/western/star_names.fab:13
+msgid "Mothallah"
+msgstr "Mothallah"
+
+#: skycultures/western/star_names.fab:14
+msgid "Mesarthim"
+msgstr "Mesarthim"
+
+#: skycultures/western/star_names.fab:15
+msgid "Sheratan"
+msgstr "Sheratan"
+
+#: skycultures/western/star_names.fab:16
+msgid "Alrescha"
+msgstr "Alrescha"
+
+#: skycultures/western/star_names.fab:17
+msgid "Almaak"
+msgstr "Almaak"
+
+#: skycultures/western/star_names.fab:18
+msgid "Hamal"
+msgstr "Hamal"
+
+#: skycultures/western/star_names.fab:19
+msgid "Mira"
+msgstr "Mira"
+
+#: skycultures/western/star_names.fab:20
+msgid "Polaris"
+msgstr "Polaris"
+
+#: skycultures/western/star_names.fab:21
+msgid "Azha"
+msgstr "Azha"
+
+#: skycultures/western/star_names.fab:22
+msgid "Acamar"
+msgstr "Acamar"
+
+#: skycultures/western/star_names.fab:23
+msgid "Menkar"
+msgstr "Menkar"
+
+#: skycultures/western/star_names.fab:24
+msgid "Algol"
+msgstr "Algol"
+
+#: skycultures/western/star_names.fab:25
+msgid "Botein"
+msgstr "Botein"
+
+#: skycultures/western/star_names.fab:26
+msgid "Zibal"
+msgstr "Zibal"
+
+#: skycultures/western/star_names.fab:27
+msgid "Mirphak"
+msgstr "Mirphak"
+
+#: skycultures/western/star_names.fab:28
+msgid "Atik"
+msgstr "Atik"
+
+#: skycultures/western/star_names.fab:29
+msgid "Celaeno"
+msgstr "Celeno"
+
+#: skycultures/western/star_names.fab:30
+msgid "Electra"
+msgstr "Electra"
+
+#: skycultures/western/star_names.fab:31
+msgid "Taygeta"
+msgstr "Taygeta"
+
+#: skycultures/western/star_names.fab:32
+msgid "Maia"
+msgstr "Maia"
+
+#: skycultures/western/star_names.fab:33
+msgid "Asterope"
+msgstr "Asterope"
+
+#: skycultures/western/star_names.fab:34
+msgid "Merope"
+msgstr "Merope"
+
+#: skycultures/western/star_names.fab:35
+msgid "Alcyone"
+msgstr "Alcione"
+
+#: skycultures/western/star_names.fab:36
+msgid "Atlas"
+msgstr "Atlas"
+
+#: skycultures/western/star_names.fab:37
+msgid "Pleione"
+msgstr "Pleione"
+
+#: skycultures/western/star_names.fab:38
+msgid "Zaurak"
+msgstr "Zaurak"
+
+#: skycultures/western/star_names.fab:39
+msgid "Menkib"
+msgstr "Menkib"
+
+#: skycultures/western/star_names.fab:40
+msgid "Beid"
+msgstr "Beid"
+
+#: skycultures/western/star_names.fab:41
+msgid "Keid"
+msgstr "Keid"
+
+#: skycultures/western/star_names.fab:42
+msgid "Ain"
+msgstr "Ain"
+
+#: skycultures/western/star_names.fab:43
+msgid "Aldebaran"
+msgstr "Aldebaran"
+
+#: skycultures/western/star_names.fab:44
+msgid "Cursa"
+msgstr "Cursa"
+
+#: skycultures/western/star_names.fab:45
+msgid "Kapteyn's Star"
+msgstr "Estrela de Kapteyn"
+
+#: skycultures/western/star_names.fab:46
+msgid "Rigel"
+msgstr "Rigel"
+
+#: skycultures/western/star_names.fab:47
+msgid "Capella"
+msgstr "Capella"
+
+#: skycultures/western/star_names.fab:48
+msgid "Bellatrix"
+msgstr "Bellatrix"
+
+#: skycultures/western/star_names.fab:49
+msgid "Alnath"
+msgstr "Alnath"
+
+#: skycultures/western/star_names.fab:50
+msgid "Nihal"
+msgstr "Nihal"
+
+#: skycultures/western/star_names.fab:51
+msgid "Mintaka"
+msgstr "Mintaka"
+
+#: skycultures/western/star_names.fab:52
+msgid "Arneb"
+msgstr "Arneb"
+
+#: skycultures/western/star_names.fab:53
+msgid "Meissa"
+msgstr "Meissa"
+
+#: skycultures/western/star_names.fab:54
+msgid "Alnilam"
+msgstr "Alnilam"
+
+#: skycultures/western/star_names.fab:55
+msgid "Phact"
+msgstr "Phact"
+
+#: skycultures/western/star_names.fab:56
+msgid "Alnitak"
+msgstr "Alnitak"
+
+#: skycultures/western/star_names.fab:57
+msgid "Saiph"
+msgstr "Saiph"
+
+#: skycultures/western/star_names.fab:58
+msgid "Wazn"
+msgstr "Wazn"
+
+#: skycultures/western/star_names.fab:59
+msgid "Betelgeuse"
+msgstr "Betelgeuse"
+
+#: skycultures/western/star_names.fab:60
+msgid "Menkalinan"
+msgstr "Menkalinan"
+
+#: skycultures/western/star_names.fab:61
+msgid "Propus"
+msgstr "Propus"
+
+#: skycultures/western/star_names.fab:62
+msgid "Red Rectangle"
+msgstr "Retângulo Vermelho"
+
+#: skycultures/western/star_names.fab:63
+msgid "Furud"
+msgstr "Furud"
+
+#: skycultures/western/star_names.fab:64
+msgid "Mirzam"
+msgstr "Mirzam"
+
+#: skycultures/western/star_names.fab:65
+msgid "Tejat"
+msgstr "Tejat"
+
+#: skycultures/western/star_names.fab:66
+msgid "Canopus"
+msgstr "Canopus"
+
+#: skycultures/western/star_names.fab:67
+msgid "Alhena"
+msgstr "Alhena"
+
+#: skycultures/western/star_names.fab:68
+msgid "Mebsuta"
+msgstr "Mebsuta"
+
+#: skycultures/western/star_names.fab:69
+msgid "Sirius"
+msgstr "Sirius"
+
+#: skycultures/western/star_names.fab:70
+msgid "Adhara"
+msgstr "Adhara"
+
+#: skycultures/western/star_names.fab:71
+msgid "Muliphein"
+msgstr "Muliphein"
+
+#: skycultures/western/star_names.fab:72
+msgid "Mekbuda"
+msgstr "Mekbuda"
+
+#: skycultures/western/star_names.fab:73
+msgid "Wezen"
+msgstr "Wezen"
+
+#: skycultures/western/star_names.fab:74
+msgid "Bernes 135"
+msgstr "Bernes 135"
+
+#: skycultures/western/star_names.fab:75
+msgid "Wasat"
+msgstr "Wasat"
+
+#: skycultures/western/star_names.fab:76
+msgid "Aludra"
+msgstr "Aludra"
+
+#: skycultures/western/star_names.fab:77
+msgid "Gomeisa"
+msgstr "Gomeisa"
+
+#: skycultures/western/star_names.fab:78
+msgid "Luyten's Star"
+msgstr "Estrela de Luyten"
+
+#: skycultures/western/star_names.fab:79
+msgid "Castor"
+msgstr "Castor"
+
+#: skycultures/western/star_names.fab:80
+msgid "Procyon"
+msgstr "Procyon"
+
+#: skycultures/western/star_names.fab:81
+msgid "Pollux"
+msgstr "Pollux"
+
+#: skycultures/western/star_names.fab:82
+msgid "Naos"
+msgstr "Naos"
+
+#: skycultures/western/star_names.fab:83
+msgid "Regor"
+msgstr "Regor"
+
+#: skycultures/western/star_names.fab:84
+msgid "Tegmine"
+msgstr "Tegmine"
+
+#: skycultures/western/star_names.fab:85
+msgid "Avior"
+msgstr "Avior"
+
+#: skycultures/western/star_names.fab:86
+msgid "Muscida"
+msgstr "Muscida"
+
+#: skycultures/western/star_names.fab:87
+msgid "Asellus Borealis"
+msgstr "Asellus Boreal"
+
+#: skycultures/western/star_names.fab:88
+msgid "Asellus Australis"
+msgstr "Asellus Australis"
+
+#: skycultures/western/star_names.fab:89
+msgid "Acubens"
+msgstr "Acubens"
+
+#: skycultures/western/star_names.fab:90
+msgid "Talitha"
+msgstr "Talitha"
+
+#: skycultures/western/star_names.fab:91
+msgid "Suhail"
+msgstr "Suhail"
+
+#: skycultures/western/star_names.fab:92
+msgid "Miaplacidus"
+msgstr "Miaplacidus"
+
+#: skycultures/western/star_names.fab:93
+msgid "Aspidiske"
+msgstr "Aspidiske"
+
+#: skycultures/western/star_names.fab:94
+msgid "Alphard"
+msgstr "Alphard"
+
+#: skycultures/western/star_names.fab:95
+msgid "Alterf"
+msgstr "Alterf"
+
+#: skycultures/western/star_names.fab:96
+msgid "Subra"
+msgstr "Subra"
+
+#: skycultures/western/star_names.fab:97
+msgid "Rasalas"
+msgstr "Rasalas"
+
+#: skycultures/western/star_names.fab:98
+msgid "Regulus"
+msgstr "Régulus"
+
+#: skycultures/western/star_names.fab:99
+msgid "Adhafera"
+msgstr "Adhafera"
+
+#: skycultures/western/star_names.fab:100
+msgid "Tania Borealis"
+msgstr "Tania Boreal"
+
+#: skycultures/western/star_names.fab:101
+msgid "Algieba"
+msgstr "Algieba"
+
+#: skycultures/western/star_names.fab:102
+msgid "Tania Australis"
+msgstr "Tania Australis"
+
+#: skycultures/western/star_names.fab:103
+msgid "Alkes"
+msgstr "Alkes"
+
+#: skycultures/western/star_names.fab:104
+msgid "Merak"
+msgstr "Merak"
+
+#: skycultures/western/star_names.fab:105
+msgid "Dubhe"
+msgstr "Dubhe"
+
+#: skycultures/western/star_names.fab:106
+msgid "Zosma"
+msgstr "Zosma"
+
+#: skycultures/western/star_names.fab:107
+msgid "Chertan"
+msgstr "Chertan"
+
+#: skycultures/western/star_names.fab:108
+msgid "Alula Australis"
+msgstr "Alula Australis"
+
+#: skycultures/western/star_names.fab:109
+msgid "Alula Borealis"
+msgstr "Alula Boreal"
+
+#: skycultures/western/star_names.fab:110
+msgid "Giausar"
+msgstr "Giausar"
+
+#: skycultures/western/star_names.fab:111
+msgid "Denebola"
+msgstr "Denebola"
+
+#: skycultures/western/star_names.fab:112
+msgid "Zavijava"
+msgstr "Zavijava"
+
+#: skycultures/western/star_names.fab:113
+msgid "Phad"
+msgstr "Phad"
+
+#: skycultures/western/star_names.fab:114
+msgid "Alchiba"
+msgstr "Alchiba"
+
+#: skycultures/western/star_names.fab:115
+msgid "Megrez"
+msgstr "Megrez"
+
+#: skycultures/western/star_names.fab:116
+#: skycultures/western/star_names.fab:203
+msgid "Gienah"
+msgstr "Giená"
+
+#: skycultures/western/star_names.fab:117
+msgid "Zaniah"
+msgstr "Zaniah"
+
+#: skycultures/western/star_names.fab:118
+msgid "Acrux"
+msgstr "Acrux"
+
+#: skycultures/western/star_names.fab:119
+msgid "Algorab"
+msgstr "Algorab"
+
+#: skycultures/western/star_names.fab:120
+msgid "Gacrux"
+msgstr "Gacrux"
+
+#: skycultures/western/star_names.fab:121
+msgid "Chara"
+msgstr "Chara"
+
+#: skycultures/western/star_names.fab:122
+msgid "Porrima"
+msgstr "Porrima"
+
+#: skycultures/western/star_names.fab:123
+msgid "Mimosa"
+msgstr "Mimosa"
+
+#: skycultures/western/star_names.fab:124
+msgid "Alioth"
+msgstr "Alioth"
+
+#: skycultures/western/star_names.fab:125
+msgid "Cor Caroli"
+msgstr "Cor Caroli"
+
+#: skycultures/western/star_names.fab:126
+msgid "Vindemiatrix"
+msgstr "Vindemiatrix"
+
+#: skycultures/western/star_names.fab:127
+msgid "Mizar"
+msgstr "Mizar"
+
+#: skycultures/western/star_names.fab:128
+msgid "Spica"
+msgstr "Spica"
+
+#: skycultures/western/star_names.fab:129
+msgid "Alcor"
+msgstr "Alcor"
+
+#: skycultures/western/star_names.fab:130
+msgid "Alkaid"
+msgstr "Alkaid"
+
+#: skycultures/western/star_names.fab:131
+msgid "Muphrid"
+msgstr "Muphrid"
+
+#: skycultures/western/star_names.fab:132
+msgid "Hadar"
+msgstr "Hadar"
+
+#: skycultures/western/star_names.fab:133
+msgid "Thuban"
+msgstr "Thuban"
+
+#: skycultures/western/star_names.fab:134
+msgid "Menkent"
+msgstr "Menkent"
+
+#: skycultures/western/star_names.fab:135
+msgid "Arcturus"
+msgstr "Arcturus"
+
+#: skycultures/western/star_names.fab:136
+msgid "Syrma"
+msgstr "Syrma"
+
+#: skycultures/western/star_names.fab:137
+msgid "Proxima"
+msgstr "Proxima"
+
+#: skycultures/western/star_names.fab:138
+msgid "Seginus"
+msgstr "Seginus"
+
+#: skycultures/western/star_names.fab:139
+msgid "Rigil Kent"
+msgstr "Rigil Kent"
+
+#: skycultures/western/star_names.fab:140
+msgid "Izar"
+msgstr "Izar"
+
+#: skycultures/western/star_names.fab:141
+msgid "Merga"
+msgstr "Merga"
+
+#: skycultures/western/star_names.fab:142
+msgid "Kocab"
+msgstr "Kocab"
+
+#: skycultures/western/star_names.fab:143
+msgid "Zubenelgenubi"
+msgstr "Zubenelgenubi"
+
+#: skycultures/western/star_names.fab:144
+msgid "Nekkar"
+msgstr "Nekkar"
+
+#: skycultures/western/star_names.fab:145
+msgid "Zubeneschamali"
+msgstr "Zubeneschamali"
+
+#: skycultures/western/star_names.fab:146
+msgid "Pherkad"
+msgstr "Pherkad"
+
+#: skycultures/western/star_names.fab:147
+msgid "Alkalurops"
+msgstr "Alkalurops"
+
+#: skycultures/western/star_names.fab:148
+msgid "Edasich"
+msgstr "Edasich"
+
+#: skycultures/western/star_names.fab:149
+msgid "Nusakan"
+msgstr "Nusakan"
+
+#: skycultures/western/star_names.fab:150
+msgid "Alphekka"
+msgstr "Alphekka"
+
+#: skycultures/western/star_names.fab:151
+msgid "Unukalhai"
+msgstr "Unukalhai"
+
+#: skycultures/western/star_names.fab:152
+msgid "Dschubba"
+msgstr "Dschubba"
+
+#: skycultures/western/star_names.fab:153
+msgid "Acrab"
+msgstr "Acrab"
+
+#: skycultures/western/star_names.fab:154
+msgid "Marsic"
+msgstr "Marsic"
+
+#: skycultures/western/star_names.fab:155
+msgid "Yed Prior"
+msgstr "Yed Anterior"
+
+#: skycultures/western/star_names.fab:156
+msgid "Yed Posterior"
+msgstr "Yed Posterior"
+
+#: skycultures/western/star_names.fab:157
+msgid "Al Niyat"
+msgstr "Al Niyat"
+
+#: skycultures/western/star_names.fab:158
+msgid "Cujam"
+msgstr "Cujam"
+
+#: skycultures/western/star_names.fab:159
+msgid "Antares"
+msgstr "Antares"
+
+#: skycultures/western/star_names.fab:160
+msgid "Kornephoros"
+msgstr "Corneforos"
+
+#: skycultures/western/star_names.fab:161
+msgid "Marfik"
+msgstr "Marfik"
+
+#: skycultures/western/star_names.fab:162
+msgid "Atria"
+msgstr "Atria"
+
+#: skycultures/western/star_names.fab:163
+msgid "Alrakis"
+msgstr "Alrakis"
+
+#: skycultures/western/star_names.fab:164
+msgid "Sabik"
+msgstr "Sabik"
+
+#: skycultures/western/star_names.fab:165
+msgid "Rasalgethi"
+msgstr "Rasalgethi"
+
+#: skycultures/western/star_names.fab:166
+msgid "Rastaban"
+msgstr "Rastaban"
+
+#: skycultures/western/star_names.fab:167
+msgid "Maasym"
+msgstr "Maasym"
+
+#: skycultures/western/star_names.fab:168
+msgid "Lesath"
+msgstr "Lesath"
+
+#: skycultures/western/star_names.fab:169
+msgid "Yildun"
+msgstr "Yildun"
+
+#: skycultures/western/star_names.fab:170
+msgid "Shaula"
+msgstr "Shaula"
+
+#: skycultures/western/star_names.fab:171
+msgid "Rasalhague"
+msgstr "Ras Alhague"
+
+#: skycultures/western/star_names.fab:172
+msgid "Girtab"
+msgstr "Girtab"
+
+#: skycultures/western/star_names.fab:173
+msgid "Cebalrai"
+msgstr "Cebalrai"
+
+#: skycultures/western/star_names.fab:174
+msgid "Grumium"
+msgstr "Grumium"
+
+#: skycultures/western/star_names.fab:175
+msgid "Etamin"
+msgstr "Etamin"
+
+#: skycultures/western/star_names.fab:176
+msgid "Barnard's Star"
+msgstr "Estrela de Barnard"
+
+#: skycultures/western/star_names.fab:177
+msgid "Alnasl"
+msgstr "Alnasl"
+
+#: skycultures/western/star_names.fab:178
+msgid "Kaus Media"
+msgstr "Kaus Média"
+
+#: skycultures/western/star_names.fab:179
+msgid "Kaus Australis"
+msgstr "Kaus Australis"
+
+#: skycultures/western/star_names.fab:180
+msgid "Kaus Borealis"
+msgstr "Kaus Boreal"
+
+#: skycultures/western/star_names.fab:181
+msgid "Vega"
+msgstr "Vega"
+
+#: skycultures/western/star_names.fab:182
+msgid "Sheliak"
+msgstr "Sheliak"
+
+#: skycultures/western/star_names.fab:183
+msgid "Nunki"
+msgstr "Nunki"
+
+#: skycultures/western/star_names.fab:184
+msgid "Alya"
+msgstr "Alya"
+
+#: skycultures/western/star_names.fab:185
+msgid "Sulafat"
+msgstr "Sulafat"
+
+#: skycultures/western/star_names.fab:186
+msgid "Ascella"
+msgstr "Ascella"
+
+#: skycultures/western/star_names.fab:187
+msgid "Altais"
+msgstr "Altais"
+
+#: skycultures/western/star_names.fab:188
+msgid "Arkab"
+msgstr "Arkab"
+
+#: skycultures/western/star_names.fab:189
+msgid "Rukbat"
+msgstr "Rukbat"
+
+#: skycultures/western/star_names.fab:190
+msgid "Albireo"
+msgstr "Albireo"
+
+#: skycultures/western/star_names.fab:191
+msgid "Campbell's Star"
+msgstr "Estrela de Campbell"
+
+#: skycultures/western/star_names.fab:192
+msgid "Sham"
+msgstr "Sham"
+
+#: skycultures/western/star_names.fab:193
+msgid "Tarazed"
+msgstr "Tarazed"
+
+#: skycultures/western/star_names.fab:194
+msgid "Altair"
+msgstr "Altair"
+
+#: skycultures/western/star_names.fab:195
+msgid "Alshain"
+msgstr "Alshain"
+
+#: skycultures/western/star_names.fab:196
+msgid "Algedi"
+msgstr "Algedi"
+
+#: skycultures/western/star_names.fab:197
+msgid "Dabih"
+msgstr "Dabih"
+
+#: skycultures/western/star_names.fab:198
+msgid "Sadr"
+msgstr "Sadr"
+
+#: skycultures/western/star_names.fab:199
+msgid "Peacock"
+msgstr "Peacock"
+
+#: skycultures/western/star_names.fab:200
+msgid "Rotanev"
+msgstr "Rotanev"
+
+#: skycultures/western/star_names.fab:201
+msgid "Sualocin"
+msgstr "Sualocin"
+
+#: skycultures/western/star_names.fab:202
+msgid "Deneb"
+msgstr "Deneb"
+
+#: skycultures/western/star_names.fab:204
+msgid "Albali"
+msgstr "Albali"
+
+#: skycultures/western/star_names.fab:205
+msgid "Kitalpha"
+msgstr "Kitalpha"
+
+#: skycultures/western/star_names.fab:206
+msgid "Alderamin"
+msgstr "Alderamin"
+
+#: skycultures/western/star_names.fab:207
+msgid "Alfirk"
+msgstr "Alfirk"
+
+#: skycultures/western/star_names.fab:208
+msgid "Sadalsuud"
+msgstr "Sadalsuud"
+
+#: skycultures/western/star_names.fab:209
+msgid "Nashira"
+msgstr "Nashira"
+
+#: skycultures/western/star_names.fab:210
+msgid "Azelfafage"
+msgstr "Azelfafage"
+
+#: skycultures/western/star_names.fab:211
+msgid "The Garnet Star"
+msgstr "A Estrela Garnet"
+
+#: skycultures/western/star_names.fab:212
+msgid "Enif"
+msgstr "Enif"
+
+#: skycultures/western/star_names.fab:213
+msgid "Deneb Algedi"
+msgstr "Deneb Algedi"
+
+#: skycultures/western/star_names.fab:214
+msgid "Kurhah"
+msgstr "Kurhah"
+
+#: skycultures/western/star_names.fab:215
+msgid "Sadalmelik"
+msgstr "Sadalmelik"
+
+#: skycultures/western/star_names.fab:216
+msgid "Alnair"
+msgstr "Alnair"
+
+#: skycultures/western/star_names.fab:217
+msgid "Biham"
+msgstr "Biham"
+
+#: skycultures/western/star_names.fab:218
+msgid "Ancha"
+msgstr "Ancha"
+
+#: skycultures/western/star_names.fab:219
+msgid "Sadachbia"
+msgstr "Sadachbia"
+
+#: skycultures/western/star_names.fab:220
+msgid "Kruger 60"
+msgstr "Kruger 60"
+
+#: skycultures/western/star_names.fab:221
+msgid "Situla"
+msgstr "Situla"
+
+#: skycultures/western/star_names.fab:222
+msgid "Homan"
+msgstr "Homan"
+
+#: skycultures/western/star_names.fab:223
+msgid "Matar"
+msgstr "Matar"
+
+#: skycultures/western/star_names.fab:224
+msgid "Babcock's Star"
+msgstr "Estrela de Babcock"
+
+#: skycultures/western/star_names.fab:225
+msgid "Sadalbari"
+msgstr "Sadalbari"
+
+#: skycultures/western/star_names.fab:226
+msgid "Skat"
+msgstr "Skat"
+
+#: skycultures/western/star_names.fab:227
+msgid "Fomalhaut"
+msgstr "Fomalhaut"
+
+#: skycultures/western/star_names.fab:228
+msgid "Sheat"
+msgstr "Sheat"
+
+#: skycultures/western/star_names.fab:229
+msgid "Markab"
+msgstr "Markab"
+
+#: skycultures/western/star_names.fab:230
+msgid "Errai"
+msgstr "Errai"
+
+#~ msgid "but sometimes I2177"
+#~ msgstr "porém, ás vezes I2177"
+
+#~ msgid "part of the Veil nebula"
+#~ msgstr "Nebulosa Parte o Véu"
+
+#~ msgid "Brightest part of NGC 6523"
+#~ msgstr "Parte mais brilhante de NGC 6523"
+
+#~ msgid "see Filamentary"
+#~ msgstr "veja Filamentosa"
+
+#~ msgid "See Jewel Box"
+#~ msgstr "Veja Caixa de Jóias"
+
+#~ msgid "Dark nebula in IC 434"
+#~ msgstr "Nebulosa escura em IC 434"
+
+#~ msgid "See Praesepe"
+#~ msgstr "Ver Presépio"

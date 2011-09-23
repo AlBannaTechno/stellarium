@@ -27,15 +27,16 @@
 #include "Telescope.hpp"
 
 #include <QFont>
+#include <QSettings>
 
 #define MIN_OCULARS_INI_VERSION 0.12
 
 QT_BEGIN_NAMESPACE
-class QSqlTableModel;
 class QKeyEvent;
 class QMouseEvent;
 class QPixmap;
-class QSqlQuery;
+class QSettings;
+class QSignalMapper;
 QT_END_NAMESPACE
 
 class StelButton;
@@ -48,6 +49,7 @@ class Oculars : public StelModule
 public:
 	Oculars();
 	virtual ~Oculars();
+	static QSettings* appSettings();
 
 	///////////////////////////////////////////////////////////////////////////
 	// Methods defined in the StelModule class
@@ -59,26 +61,32 @@ public:
 	//! Returns the module-specific style sheet.
 	//! The main StelStyle instance should be passed.
 	virtual const StelStyle getModuleStyleSheet(const StelStyle& style);
-	//	virtual void handleKeys(class QKeyEvent* event);
+	//! This method is needed because the MovementMgr classes handleKeys() method consumes the event.
+	//! Because we want the ocular view to track, we must intercept & process ourselves.  Only called
+	//! while flagShowOculars or flagShowCCD == true.
+	virtual void handleKeys(class QKeyEvent* event);
 	virtual void handleMouseClicks(class QMouseEvent* event);
-	virtual void setStelStyle(const QString& style);
 	virtual void update(double) {;}
 
 public slots:
-	//! This method is called with we detect that our hot key is pressed.  It handles
-	//! determining if we should do anything - based on a selected object - and painting
-	//! labes to the screen.
-	void enableOcular(bool b);
-
-	void toggleCrosshair();
-	void toggleTelrad();
-
+	void ccdRotationReset();
 	void decrementCCDIndex();
 	void decrementOcularIndex();
 	void decrementTelescopeIndex();
+	void displayPopupMenu();
+	//! This method is called with we detect that our hot key is pressed.  It handles
+	//! determining if we should do anything - based on a selected object.
+	void enableOcular(bool b);
 	void incrementCCDIndex();
 	void incrementOcularIndex();
 	void incrementTelescopeIndex();
+	void rotateCCD(QString amount); //<! amount must be a number.
+	void selectCCDAtIndex(QString indexString); //<! indexString must be an integer, in the range of -1:ccds.count()
+	void selectOcularAtIndex(QString indexString);  //<! indexString must be an integer, in the range of -1:oculars.count()
+	void selectTelescopeAtIndex(QString indexString);  //<! indexString must be an integer, in the range of -1:telescopes.count()
+	void toggleCCD();
+	void toggleCrosshair();
+	void toggleTelrad();
 
 signals:
 	void selectedCCDChanged();
@@ -88,39 +96,29 @@ signals:
 private slots:
 	//! Signifies a change in ocular or telescope.  Sets new zoom level.
 	void instrumentChanged();
-	void determineMaxImageCircle();
-	void loadCCDs();
-	void loadOculars();
-	void loadTelescopes();
+	void determineMaxEyepieceAngle();
+	void setRequireSelection(bool state);
 	void setScaleImageCircle(bool state);
+	void setScreenFOVForCCD();
+	void setStelStyle(const QString& style);
 
 private:
-	//! Renders crosshairs into the viewport.
-	void drawCrosshairs();
-	
-	//! Renders the three Telrad circles, but only if not in ocular mode.
-	void drawTelrad();
-
-	//! Insures that each required table exists in the database, as well as instantiate the table models.
-	//! @return true if the DB was correctly initialized, false if it was not.
-	bool initializeDB();
-	
 	//! Set up the Qt actions needed to activate the plugin.
 	void initializeActivationActions();
 	
-	//! Set up the Qt actions used while the plugin is active.
-	void initializeActions();
+	//! Returns TRUE if at least one bincular is defined.
+	bool isBinocularDefined();
 
-	//! This method is needed because the MovementMgr classes handleKeys() method consumes the event.
-	//! Because we want the ocular view to track, we must intercept & process ourselves.  Only called
-	//! while flagShowOculars == true.
-	void interceptMovementKey(class QKeyEvent* event);
-
-	void loadDatabaseObjects();
-
+	//! Reneders the CCD bounding box on-screen.  A telescope must be selected, or this call does nothing.
+	void paintCCDBounds();
+	//! Renders crosshairs into the viewport.
+	void paintCrosshairs();
 	//! Paint the mask into the viewport.
-	void paintMask();
-	
+	void paintOcularMask();
+	//! Renders the three Telrad circles, but only if not in ocular mode.
+	void paintTelrad();
+
+
 	//! Paints the text about the current object selections to the upper right hand of the screen.
 	//! Should only be called from a 'ready' state; currently from the draw() method.
 	void paintText(const StelCore* core);
@@ -133,28 +131,30 @@ private:
 	//! ends.  However, if one does exist, it opens it, and looks for the oculars_version key.  The value (or even
 	//! presence) is used to determine if the ini file is usable.  If not, it is renamed, and a new one copied over.
 	//! It does not ty to cope values over.
-	void validateIniFile();
+	//! Once there is a valid ini file, it is loaded into the settings attribute.
+	void validateAndLoadIniFile();
 
 	//! Recordd the state of the GridLinesMgr views beforehand, so that it can be reset afterwords.
-	//! @param rezoom if true, this zoom operation is starting from an already zoomed state.
+	//! @param zoomedIn if true, this zoom operation is starting from an already zoomed state.
 	//!		False for the original state.
-	void zoom(bool rezoom);
+	void zoom(bool zoomedIn);
 
 	//! This method is called by the zoom() method, when this plugin is toggled on; it resets the zoomed view.
 	void zoomOcular();
 
 	//! A list of all the oculars defined in the ini file.  Must have at least one, or module will not run.
-	QList<CCD *> CCDs;
+	QList<CCD *> ccds;
 	QList<Ocular *> oculars;
 	QList<Telescope *> telescopes;
-	int selectedCCDIndex;
-	int selectedOcularIndex;
-	int selectedTelescopeIndex;
+	int selectedCCDIndex; //<! index of the current CCD, in the range of -1:ccds.count().  -1 means no CCD is selected.
+	int selectedOcularIndex; //<! index of the current ocular, in the range of -1:oculars.count().  -1 means no ocular is selected.
+	int selectedTelescopeIndex; //<! index of the current telescope, in the range of -1:telescopes.count(). -1 means none is selected.
 
 	QFont font;					//!< The font used for drawing labels.
+	bool flagShowCCD;				//!< flag used to track f we are in CCD mode.
 	bool flagShowOculars;		//!< flag used to track if we are in ocular mode.
 	bool flagShowCrosshairs;	//!< flag used to track in crosshairs should be rendered in the ocular view.
-	bool flagShowTelrad;		//!< If true, display the Telrad overlay.
+	bool flagShowTelrad;			//!< If true, display the Telrad overlay.
 	int usageMessageLabelID;	//!< the id of the label showing the usage message. -1 means it's not displayed.
 
 	bool flagAzimuthalGrid;		//!< Flag to track if AzimuthalGrid was displayed at activation.
@@ -164,9 +164,15 @@ private:
 	bool flagEclipticLine;		//!< Flag to track if EclipticLine was displayed at activation.
 	bool flagMeridianLine;		//!< Flag to track if MeridianLine was displayed at activation.
 
-	double maxImageCircle;		//!< The maximum image circle for all eyepieces.  Used to scale the mask.
-	bool useMaxImageCircle;		//!< Read from the ini file, whether to scale the mask based on exit circle size.
+	double ccdRotationAngle;	//<! The angle to rotate the CCD bounding box. */
+	double maxEyepieceAngle;	//!< The maximum aFOV of any eyepiece.
+	bool requireSelection;		//!< Read from the ini file, whether an object is required to be selected to zoom in.
+	bool useMaxEyepieceAngle;	//!< Read from the ini file, whether to scale the mask based aFOV.
 
+	QSignalMapper* ccdRotationSignalMapper;  //<! Used to rotate the CCD. */
+	QSignalMapper* ccdsSignalMapper; //<! Used to determine which CCD was selected from the popup navigator. */
+	QSignalMapper* ocularsSignalMapper; //<! Used to determine which ocular was selected from the popup navigator. */
+	QSignalMapper* telescopesSignalMapper; //<! Used to determine which telescope was selected from the popup navigator. */
 
 	// for toolbar button
 	QPixmap* pxmapGlow;
@@ -175,13 +181,7 @@ private:
 	StelButton* toolbarButton;
 
 	OcularDialog *ocularDialog;
-	bool visible;
 	bool ready; //!< A flag that determines that this module is usable.  If false, we won't open.
-	bool newInstrument; //!< true the first time draw is called for a new ocular or telescope, false otherwise.
-
-	QSqlTableModel *CCDsTableModel;
-	QSqlTableModel *ocularsTableModel;
-	QSqlTableModel *telescopesTableModel;
 
 	//Styles
 	QByteArray normalStyleSheet;

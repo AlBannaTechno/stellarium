@@ -28,7 +28,7 @@
 #include "StelFileMgr.hpp"
 #include "StelModuleMgr.hpp"
 #include "StelMovementMgr.hpp"
-#include "StelNavigator.hpp"
+
 #include "StelSkyDrawer.hpp"
 #include "StelSkyLayerMgr.hpp"
 
@@ -334,7 +334,6 @@ bool StelScriptMgr::runScript(const QString& fileName, const QString& includePat
 	// Make sure that the gui object have been completely initialized (there used to be problems with startup scripts).
 	Q_ASSERT(StelApp::getInstance().getGui());
 
-	savedTimeRate = StelApp::getInstance().getCore()->getNavigator()->getTimeRate();
 	engine.globalObject().setProperty("scriptRateReadOnly", 1.0);
 	
 	// Notify that the script starts here although we still have to preprocess it.
@@ -386,10 +385,11 @@ void StelScriptMgr::setScriptRate(float r)
 	// pre-calculate the new time rate in an effort to prevent there being much latency
 	// between setting the script rate and the time rate.
 	float factor = r / currentScriptRate;
-	StelNavigator* nav = StelApp::getInstance().getCore()->getNavigator();
-	nav->setTimeRate(nav->getTimeRate() * factor);
 	
-	GETSTELMODULE(StelMovementMgr)->setMovementSpeedFactor(nav->getTimeRate());
+	StelCore* core = StelApp::getInstance().getCore();
+	core->setTimeRate(core->getTimeRate() * factor);
+	
+	GETSTELMODULE(StelMovementMgr)->setMovementSpeedFactor(core->getTimeRate());
 	engine.globalObject().setProperty("scriptRateReadOnly", r);
 }
 
@@ -412,9 +412,6 @@ void StelScriptMgr::scriptEnded()
 		qWarning() << msg;
 	}
 
-	// reset time rate to non-scaped script rates... TODO
-	StelNavigator* nav = StelApp::getInstance().getCore()->getNavigator();
-	nav->setTimeRate(savedTimeRate);
 	GETSTELMODULE(StelMovementMgr)->setMovementSpeedFactor(1.0);
 	emit(scriptStopped());
 }

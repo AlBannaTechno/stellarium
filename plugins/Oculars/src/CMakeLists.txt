@@ -17,8 +17,8 @@ SET(Oculars_SRCS
   Telescope.cpp
   gui/OcularDialog.hpp
   gui/OcularDialog.cpp
-  gui/StelDialogOculars.hpp
-  gui/StelDialogOculars.cpp
+  gui/PropertyBasedTableModel.hpp
+  gui/PropertyBasedTableModel.cpp
 )
 
 SET(Oculars_RES ../resources/Oculars.qrc)
@@ -38,13 +38,12 @@ SET(Oculars_MOC_HDRS
   Oculars.hpp
   Telescope.hpp
   gui/OcularDialog.hpp
-  gui/StelDialogOculars.hpp
+  gui/PropertyBasedTableModel.hpp
 )
 
 # After this call, Oculars_MOC_SRCS = moc_Oculars.cxx
 QT4_WRAP_CPP(Oculars_MOC_SRCS ${Oculars_MOC_HDRS})
 
-SET(QT_USE_QTSQL TRUE)
 INCLUDE(${QT_USE_FILE})
 
 SET(extLinkerOption ${QT_LIBRARIES} ${OPENGL_LIBRARIES} ${ICONV_LIBRARIES} ${INTL_LIBRARIES})
@@ -83,11 +82,7 @@ IF(BUILD_STATIC_PLUGINS)
 	)
 	SET_TARGET_PROPERTIES(Oculars-static PROPERTIES OUTPUT_NAME "Oculars")
 	TARGET_LINK_LIBRARIES(Oculars-static ${StelMain} ${extLinkerOption})
-	IF(WIN32)
-		SET_TARGET_PROPERTIES(Oculars-static PROPERTIES COMPILE_FLAGS "-DQT_STATICPLUGIN")
-	ELSE()
-		SET_TARGET_PROPERTIES(Oculars-static PROPERTIES COMPILE_FLAGS "-fPIC -DQT_STATICPLUGIN")
-	ENDIF()
+	SET_TARGET_PROPERTIES(Oculars-static PROPERTIES COMPILE_FLAGS "-DQT_STATICPLUGIN")
 	ADD_DEPENDENCIES(AllStaticPlugins Oculars-static)
 ENDIF()
 

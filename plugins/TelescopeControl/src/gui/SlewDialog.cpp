@@ -60,6 +60,7 @@ void SlewDialog::createDialogContent()
 	ui->setupUi(dialog);
 	
 	//Inherited connect
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 
 	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)), this, SLOT(setFormatHMS(bool)));
@@ -76,20 +77,6 @@ void SlewDialog::createDialogContent()
 	ui->radioButtonHMS->setChecked(true);
 
 	updateTelescopeList();
-	
-	//Initialize the style
-	updateStyle();
-}
-
-void SlewDialog::updateStyle()
-{
-	if(dialog)
-	{
-		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-		Q_ASSERT(gui);
-		const StelStyle pluginStyle = telescopeManager->getModuleStyleSheet(gui->getStelStyle());
-		dialog->setStyleSheet(pluginStyle.qtStyleSheet);
-	}
 }
 
 void SlewDialog::showConfiguration()

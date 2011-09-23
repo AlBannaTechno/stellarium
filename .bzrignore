@@ -1,0 +1,6 @@
+builds
+installers
+.DS_Store
+CMakeLists.txt.user
+Stellarium.bat
+stellarium.iss

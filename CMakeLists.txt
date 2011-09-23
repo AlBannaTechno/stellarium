@@ -11,12 +11,13 @@ ENDIF()
 ########### Project name ###########
 PROJECT(Stellarium)
 SET(STELLARIUM_MAJOR "0")
-SET(STELLARIUM_MINOR "10")
-SET(STELLARIUM_PATCH "5")
+SET(STELLARIUM_MINOR "11")
+SET(STELLARIUM_PATCH "0")
 SET(VERSION "${STELLARIUM_MAJOR}.${STELLARIUM_MINOR}.${STELLARIUM_PATCH}")
 SET(PACKAGE stellarium)
 
-ADD_DEFINITIONS(-DPACKAGE_VERSION="${VERSION}")
+SET(PACKAGE_VERSION "${VERSION}")
+ADD_DEFINITIONS(-DPACKAGE_VERSION="${PACKAGE_VERSION}")
 
 # Use customized cmake macros
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -55,12 +56,21 @@ ENDIF()
 
 # best way to get to APPLE?
 IF(APPLE)
- SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-common -Wall -Wextra -mmacosx-version-min=10.4")
+ SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-common -Wall -Wextra")
  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-common -Wall -Wextra -Wno-unused-parameter")
- SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.4")
- SET(CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk/")
- # Universal binary
- SET(CMAKE_OSX_ARCHITECTURES "i386;ppc")
+
+ # uncomment one of the following, depending on minimum OS level you want
+ #SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.5")
+ #SET(CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.5.sdk/")
+ #SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.6")
+ #SET(CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.6.sdk/")
+ 
+ # uncomment one of the following, depending on what platforms you want.
+ # NOTE: Qt build for Cocoa is Intel only.  Qt with Carbon is both, but does not seem
+ # to handle 64bit well.
+ #SET(CMAKE_OSX_ARCHITECTURES "i386;x86_64;ppc;ppc64")
+ #SET(CMAKE_OSX_ARCHITECTURES "i386;x86_64")
+ #SET(CMAKE_OSX_ARCHITECTURES "x86_64")
 ENDIF()
 
 ########### Check functions ###########
@@ -133,18 +143,18 @@ SET(USE_PLUGIN_LOGBOOK 0 CACHE BOOL "Define whether the LogBook plugin should be
 SET(USE_PLUGIN_OCULARS 1 CACHE BOOL "Define whether the Oculars plugin should be created.")
 SET(USE_PLUGIN_SVMT 0 CACHE BOOL "Define whether the SVMT plugin should be created.")
 SET(USE_PLUGIN_TEXTUSERINTERFACE 1 CACHE BOOL "Define whether the TextUserInterface plugin should be created.")
+SET(USE_PLUGIN_TIMEZONECONFIGURATION 1 CACHE BOOL "Define whether the TimeZoneConfiguration plugin should be created.")
 SET(USE_PLUGIN_VIRGO 0 CACHE BOOL "Define whether the VirGO plugin should be created.")
+SET(USE_PLUGIN_SOLARSYSTEMEDITOR 1 CACHE BOOL "Define whether the Solar System Editor should be built.")
+SET(USE_PLUGIN_SUPERNOVAE 1 CACHE BOOL "Define whether the Historical Supernova plugin should be created.")
 
 ########## Static plugins need to define includes and libraries
 ########## for the compilation of Stellarium itself
 IF (BUILD_STATIC_PLUGINS)
-  IF (USE_PLUGIN_OCULARS)
-	SET(QT_USE_QTSQL TRUE)
-  ENDIF()
-
   IF (USE_PLUGIN_SVMT)
 	SET(QT_USE_QTXML TRUE) # For SVMT we also need QtXml module
 	SET(QT_USE_QTDECLARATIVE TRUE) # For SVMT we also need QML module, this line doesn't seem to work right now
+	SET(QT_USE_QTWEBKIT TRUE) # For SVMT we also need QML module, this line doesn't seem to work right now
   ENDIF()
 
   IF (USE_PLUGIN_VIRGO)
@@ -161,6 +171,11 @@ IF (BUILD_STATIC_PLUGINS)
 	  DOC "cfitsio link options")
 	SET(QT_USE_QTXML TRUE) # For VirGO we also need QtXml module
   ENDIF()
+
+  IF (USE_PLUGIN_LOGBOOK)
+	SET(QT_USE_QTSQL TRUE) # For LogBook we also need SQL module
+  ENDIF()
+
 ENDIF()
 
 # Custom target used to manage dependencies of stellarium -> Static plugins
@@ -228,13 +243,19 @@ ELSE()
   ADD_DEFINITIONS(-DINSTALL_LOCALEDIR="./locale")
 ENDIF()
 
-########### Get SVN revision for non-release builds ###########
+########### Get revision number for non-release builds ###########
 IF(NOT RELEASE_BUILD)
-  FIND_PACKAGE(Subversion)
-  IF(Subversion_FOUND)
-	Subversion_WC_INFO(${PROJECT_SOURCE_DIR} StelSvn)
-	SET(SVN_REVISION ${StelSvn_WC_REVISION})
-	ADD_DEFINITIONS(-DSVN_REVISION="${SVN_REVISION}")
+  #Hack until CMake detection for Bazaar is finished
+  IF(BZR_REVISION)
+	SET(PACKAGE_VERSION "bzr${BZR_REVISION}")
+	ADD_DEFINITIONS(-DBZR_REVISION="${BZR_REVISION}")
+  ELSE()
+	FIND_PACKAGE(Subversion)
+	IF(Subversion_FOUND)
+	  Subversion_WC_INFO(${PROJECT_SOURCE_DIR} StelSvn)
+	  SET(SVN_REVISION ${StelSvn_WC_REVISION})
+	  ADD_DEFINITIONS(-DSVN_REVISION="${SVN_REVISION}")
+	ENDIF()
   ENDIF()
 ENDIF()
 
@@ -280,7 +301,7 @@ IF(GENERATE_PACKAGE_TARGET)
   SET(CPACK_GENERATOR "TGZ")
   SET(CPACK_STRIP_FILES "bin/stellarium")
   SET(CPACK_PACKAGE_EXECUTABLES "stellarium" "Stellarium")
-  SET(CPACK_SOURCE_IGNORE_FILES "/CVS/" "/.svn/" "/.git/" "builds/" "Stellarium.tag$" "Stellarium.kdevelop.pcs$" "~$" "\\\\.swp$" "\\\\.#" "/#")
+  SET(CPACK_SOURCE_IGNORE_FILES "/CVS/" "/.svn/" "/.git/" "/.bzr/" "builds/" "installers/" "Stellarium.tag$" "Stellarium.kdevelop.pcs$" "/CMakeLists.txt.user$" "\\\\.bzrignore$" "~$" "\\\\.swp$" "\\\\.#" "/#")
   INCLUDE(CPack)
 ENDIF()
 
@@ -291,7 +312,8 @@ ENDIF()
 
 
 ########### Generate doxygen doc ###############
-ADD_CUSTOM_TARGET(apidoc doxygen Doxyfile WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} COMMENT "Generate the doxygen documentation into the builds/doc directory.")
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/Doxyfile.cmake ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+ADD_CUSTOM_TARGET(apidoc doxygen ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT "Generate the doxygen documentation into the doc directory.")
 
 
 ########### Top level include directories ###########

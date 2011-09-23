@@ -33,7 +33,7 @@ using namespace TelescopeControlGlobals;
 
 class Ui_telescopeConfigurationDialog;
 class TelescopeControl;
-struct StelStyle;
+class StelStyle;
 
 class TelescopeConfigurationDialog : public StelDialogTelescopeControl
 {
@@ -41,12 +41,13 @@ class TelescopeConfigurationDialog : public StelDialogTelescopeControl
 public:
 	TelescopeConfigurationDialog();
 	virtual ~TelescopeConfigurationDialog();
-	void languageChanged();
-	void updateStyle();
 	
 	void initExistingTelescopeConfiguration(int slot);
 	void initNewTelescopeConfiguration(int slot);
-	
+
+public slots:
+	void languageChanged();
+
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();

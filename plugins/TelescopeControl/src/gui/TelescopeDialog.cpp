@@ -81,6 +81,7 @@ void TelescopeDialog::createDialogContent()
 	ui->setupUi(dialog);
 	
 	//Inherited connect
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 	
 	//Connect: sender, signal, receiver, method
@@ -145,6 +146,7 @@ void TelescopeDialog::createDialogContent()
 		//Read the telescope properties
 		QString name;
 		ConnectionType connectionType;
+		QString equinox;
 		QString host;
 		int portTCP;
 		int delay;
@@ -152,7 +154,7 @@ void TelescopeDialog::createDialogContent()
 		QList<double> circles;
 		QString serverName;
 		QString portSerial;
-		if(!telescopeManager->getTelescopeAtSlot(slotNumber, connectionType, name, host, portTCP, delay, connectAtStartup, circles, serverName, portSerial))
+		if(!telescopeManager->getTelescopeAtSlot(slotNumber, connectionType, name, equinox, host, portTCP, delay, connectAtStartup, circles, serverName, portSerial))
 			continue;
 		
 		//Determine the server type
@@ -702,13 +704,9 @@ void TelescopeDialog::updateStyle()
 	{
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 		Q_ASSERT(gui);
-		const StelStyle pluginStyle = telescopeManager->getModuleStyleSheet(gui->getStelStyle());
-		dialog->setStyleSheet(pluginStyle.qtStyleSheet);
-		ui->textBrowserAbout->document()->setDefaultStyleSheet(QString(pluginStyle.htmlStyleSheet));
+		QString style(gui->getStelStyle().htmlStyleSheet);
+		ui->textBrowserAbout->document()->setDefaultStyleSheet(style);
 	}
-	
-	//Change the styles of all children, too
-	configurationDialog.updateStyle();
 }
 
 void TelescopeDialog::checkBoxUseExecutablesToggled(bool useExecutables)

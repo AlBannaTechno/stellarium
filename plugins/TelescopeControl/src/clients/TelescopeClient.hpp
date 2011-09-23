@@ -34,10 +34,16 @@
 #include <QObject>
 
 #include "StelApp.hpp"
+#include "StelCore.hpp" //Needed for getting StelNavigator instances
 #include "StelObject.hpp"
-#include "StelNavigator.hpp"
+#include "InterpolatedPosition.hpp"
 
 qint64 getNow(void);
+
+enum Equinox {
+	EquinoxJ2000,
+	EquinoxJNow
+};
 
 //! An abstract base class that should never be used directly, only inherited.
 //! This class used to be called Telescope, but it has been renamed
@@ -129,7 +135,7 @@ public:
 	{
 		return true;
 	}
-	Vec3d getJ2000EquatorialPos(const StelNavigator*) const
+	Vec3d getJ2000EquatorialPos(const StelCore*) const
 	{
 		return XYZ;
 	}
@@ -137,16 +143,6 @@ public:
 private:
 	Vec3d XYZ; // j2000 position
 	Vec3d desired_pos;
-};
-
-//! A telescope's position at a given time.
-//! This structure used to be defined inline in TelescopeTCP.
-struct Position
-{
-	qint64 server_micros;
-	qint64 client_micros;
-	Vec3d pos;
-	int status;
 };
 
 //! This TelescopeClient class can controll a telescope by communicating
@@ -158,7 +154,7 @@ class TelescopeTCP : public TelescopeClient
 {
 	Q_OBJECT
 public:
-	TelescopeTCP(const QString &name,const QString &params);
+	TelescopeTCP(const QString &name, const QString &params, Equinox eq = EquinoxJ2000);
 	~TelescopeTCP(void)
 	{
 		hangup();
@@ -170,7 +166,7 @@ public:
 	}
 	
 private:
-	Vec3d getJ2000EquatorialPos(const StelNavigator *nav=0) const;
+	Vec3d getJ2000EquatorialPos(const StelCore* core=0) const;
 	bool prepareCommunication();
 	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
@@ -183,7 +179,6 @@ private:
 	
 private:
 	void hangup(void);
-	void resetPositions(void);
 	QHostAddress address;
 	unsigned int port;
 	QTcpSocket * tcpSocket;
@@ -195,13 +190,13 @@ private:
 	char *writeBufferEnd;
 	int time_delay;
 
-	Position positions[16];
-	Position *position_pointer;
-	Position *const end_position;
+	InterpolatedPosition interpolatedPosition;
 	virtual bool hasKnownPosition(void) const
 	{
-		return (position_pointer->client_micros != 0x7FFFFFFFFFFFFFFFLL);
+		return interpolatedPosition.isKnown();
 	}
+
+	Equinox equinox;
 	
 private slots:
 	void socketFailed(QAbstractSocket::SocketError socketError);

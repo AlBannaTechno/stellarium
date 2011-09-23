@@ -20,7 +20,7 @@
 #include "StelApp.hpp"
 #include "StelCore.hpp"
 #include "StelProjector.hpp"
-#include "StelNavigator.hpp"
+
 #include "StelGuiItems.hpp"
 #include "StelLocaleMgr.hpp"
 #include "StelLocation.hpp"
@@ -43,6 +43,7 @@
 #include <QGraphicsWidget>
 #include <QGraphicsProxyWidget>
 #include <QGraphicsLinearLayout>
+#include <QSettings>
 
 StelButton::StelButton(QGraphicsItem* parent, const QPixmap& apixOn, const QPixmap& apixOff,
 		const QPixmap& apixHover, QAction* aaction, bool noBackground) :
@@ -525,7 +526,7 @@ void BottomStelBar::updateButtonsGroups()
 void BottomStelBar::updateText(bool updatePos)
 {
 	StelCore* core = StelApp::getInstance().getCore();
-	double jd = core->getNavigator()->getJDay();
+	double jd = core->getJDay();
 
 	QString newDate = flagShowTime ? StelApp::getInstance().getLocaleMgr().getPrintableDateLocal(jd) +"   "
 			+StelApp::getInstance().getLocaleMgr().getPrintableTimeLocal(jd) : " ";
@@ -535,23 +536,31 @@ void BottomStelBar::updateText(bool updatePos)
 		datetime->setText(newDate);
 	}
 
-	QString newLocation = flagShowLocation ? q_(core->getNavigator()->getCurrentLocation().planetName) +", "
-			+core->getNavigator()->getCurrentLocation().name + ", "
+	QString newLocation = flagShowLocation ? q_(core->getCurrentLocation().planetName) +", "
+			+core->getCurrentLocation().name + ", "
 			// xgettext:no-c-format
-			+q_("%1m").arg(core->getNavigator()->getCurrentLocation().altitude) : " ";
+			+q_("%1m").arg(core->getCurrentLocation().altitude) : " ";
 	if (location->text()!=newLocation)
 	{
 		updatePos = true;
 		location->setText(newLocation);
 	}
 
+	QSettings* confSettings = StelApp::getInstance().getSettings();
 	QString str;
 	QTextStream wos(&str);
 	wos << "FOV " << qSetRealNumberPrecision(3) << core->getMovementMgr()->getCurrentFov() << QChar(0x00B0);
 	if (fov->text()!=str)
 	{
 		updatePos = true;
-		fov->setText(str);
+		if (confSettings->value("gui/flag_show_fov", true).toBool())
+		{
+			fov->setText(str);
+		}
+		else
+		{
+			fov->setText("");
+		}
 	}
 
 	str="";
@@ -560,7 +569,14 @@ void BottomStelBar::updateText(bool updatePos)
 	if (fps->text()!=str)
 	{
 		updatePos = true;
-		fps->setText(str);
+		if (confSettings->value("gui/flag_show_fps", true).toBool())
+		{
+			fps->setText(str);
+		}
+		else
+		{
+			fps->setText("");
+		}
 	}
 
 	if (updatePos)
@@ -568,8 +584,8 @@ void BottomStelBar::updateText(bool updatePos)
 		QRectF rectCh = getButtonsBoundingRect();
 		location->setPos(0, 0);
 		datetime->setPos(rectCh.right()-datetime->boundingRect().width()-5,0);
-		fov->setPos(datetime->x()-230, 0);
-		fps->setPos(datetime->x()-140, 0);
+		fov->setPos(datetime->x()-200, 0);
+		fps->setPos(datetime->x()-95, 0);
 	}
 }
 
@@ -700,8 +716,8 @@ QRectF StelProgressBarMgr::boundingRect() const
 QProgressBar* StelProgressBarMgr::addProgressBar()
 {
 	QProgressBar* pb = new QProgressBar();
-	pb->setFixedHeight(15);
-	pb->setFixedWidth(250);
+	pb->setFixedHeight(25);
+	pb->setFixedWidth(200);
 	pb->setTextVisible(true);
 	pb->setValue(66);
 	QGraphicsProxyWidget* pbProxy = new QGraphicsProxyWidget();
