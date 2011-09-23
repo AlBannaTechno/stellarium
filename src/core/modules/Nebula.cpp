@@ -72,6 +72,7 @@ QString Nebula::getTypeString(void) const
 	{
 		case NebGx:
 			wsType = q_("Galaxy");
+			wsType += q_(" (") + q_(hubbleType) + q_(")");
 			break;
 		case NebGNe:
 			wsType = q_("Galactic Nebula");
@@ -206,19 +207,19 @@ void Nebula::drawHints(StelPainter& sPainter, float maxMagHints)
 		case NebPNe:
 			sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
 			Nebula::texPlanetNebula->bind();
-			sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+			sPainter.drawSprite2dMode(XY[0], XY[1], 6);
 			break;
 			
 		case NebOpenC:
 			sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
 			Nebula::texOpenCluster->bind();
-			sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+			sPainter.drawSprite2dMode(XY[0], XY[1], 6);
 			break;
 			
 		case NebGlobC:
 			sPainter.setColor(circleColor[0]*lum*hintsBrightness, circleColor[1]*lum*hintsBrightness, circleColor[2]*lum*hintsBrightness, 1);
 			Nebula::texGlobularCluster->bind();
-			sPainter.drawSprite2dMode(XY[0], XY[1], 4);
+			sPainter.drawSprite2dMode(XY[0], XY[1], 6);
 			break;
 			
 		default:
@@ -357,7 +358,9 @@ void Nebula::parseRecord(const QString& record, int idx)
 
 	ra *= M_PI/12.;     // Convert from hours to rad
 	dec *= M_PI/180.;    // Convert from deg to rad
-
+#if defined(GEN_BIN_CATALOG)
+	_ra = ra; _dec = dec;
+#endif
 	// Calc the Cartesian coord with RA and DE
 	StelUtils::spheToRect(ra, dec, XYZ);	
 
@@ -366,18 +369,15 @@ void Nebula::parseRecord(const QString& record, int idx)
 	mag = magV = record.mid(64, 4).toFloat();
 
 	// B-V colour
-	BmV = record.mid(70, 3).toFloat();
+	BminusV = record.mid(70, 3).toFloat();
 	
 	// surface brightness
-	SBrightness = record.mid(74,4).toFloat();
+	SBrightness = record.mid(74, 4).toFloat();
 	
-	// Calc the angular size in radian
-	// TODO: this should be independant of tex_angular_size
-	// TODO: now have major and minor axes and PA available for galaxies
 	// TODO: also have surface brightness (rendering option?)
 	
-	sizeX = record.mid(81, 5).toFloat();
-	sizeY = record.mid(89, 5).toFloat();
+	sizeX = record.mid(79, 7).toFloat();
+	sizeY = record.mid(87, 7).toFloat();
 	PAdeg = record.mid(95, 3).toFloat();
 	float size;		// size (arcmin)
 	if (sizeY > 0)
@@ -388,7 +388,7 @@ void Nebula::parseRecord(const QString& record, int idx)
 	angularSize = size/60;
 
 	// Hubble classification
-	hubbleType = record.mid(98, 9);
+	hubbleType = record.mid(98, 14);
 	
 	// TODO: PGC/GCGC/ other designations
 	PGC_nb = record.mid(113, 6).toInt();
@@ -431,6 +431,77 @@ void Nebula::readNGC(QDataStream& in)
 	nType = (Nebula::NebulaType)type;
 	pointRegion = SphericalRegionP(new SphericalPoint(getJ2000EquatorialPos(NULL)));
 }
+
+void Nebula::readExtendedNGC(QDataStream& in)
+{
+	int nb;
+	qint32 type;
+	float ra, dec;
+
+	in 	>> bNGCObject
+		>> nb
+		>> bDreyerObject
+		>> type
+		>> constellationAbbr
+		>> ra
+		>> dec
+		>> magB
+		>> magV
+		>> BminusV
+		>> SBrightness
+		>> sizeX
+		>> sizeY
+		>> PAdeg
+		>> hubbleType
+		>> PGC_nb
+		>> M_nb;
+
+	if (bNGCObject)
+	{
+		NGC_nb = nb;
+	}
+	else
+	{
+		IC_nb = nb;
+	}
+	
+	float size;		// size (arcmin)
+	if (sizeY > 0)
+		size = 0.5 * (sizeX + sizeY);
+	else
+		size = sizeX;
+	angularSize = size/60;
+
+	mag = magV; // default is visual magnitude
+	
+	StelUtils::spheToRect(ra,dec,XYZ);
+	Q_ASSERT(fabs(XYZ.lengthSquared()-1.)<0.000000001);
+	nType = (Nebula::NebulaType)type;
+	pointRegion = SphericalRegionP(new SphericalPoint(getJ2000EquatorialPos(NULL)));
+
+}
+#if defined(GEN_BIN_CATALOG)
+void Nebula::writeExtendedNGC(QDataStream& out)
+{
+	out << bNGCObject
+		<< ((NGC_nb > 0) ? NGC_nb : IC_nb)
+		<< bDreyerObject
+		<< ((qint32) nType)
+		<< constellationAbbr
+		<< _ra
+		<< _dec
+		<< magB
+		<< magV
+		<< BminusV
+		<< SBrightness
+		<< sizeX
+		<< sizeY
+		<< PAdeg
+		<< hubbleType
+		<< PGC_nb
+		<< M_nb;
+}
+#endif
 
 #if 0
 QFile filess("filess.dat");

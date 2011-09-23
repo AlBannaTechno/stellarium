@@ -26,6 +26,8 @@
 #include "StelTranslator.hpp"
 #include "StelTextureTypes.hpp"
 
+//#define GEN_BIN_CATALOG
+
 class StelPainter;
 class QDataStream;
 
@@ -96,8 +98,12 @@ private:
 	//! Translate nebula name using the passed translator
 	void translateName(StelTranslator& trans) {nameI18 = trans.qtranslate(englishName);}
 
-	void readNGC(QDataStream& in);	//TODO: implement binary file with new catalogue
+	void readNGC(QDataStream& in);
+	void readExtendedNGC(QDataStream& in);
 	bool readNGC(QString& record);
+#if defined(GEN_BIN_CATALOG)
+	void writeExtendedNGC(QDataStream& out);
+#endif
 	void readIdentifiers(const QString& record);
 	void parseRecord(const QString& record, int idx);
 	
@@ -120,7 +126,7 @@ private:
 	NebulaType nType;
 
 	bool bNGCObject;
-	float BmV;
+	float BminusV;
 	int PGC_nb;
 	QString altDesig1;			//!< alternative designation 1
 
@@ -137,6 +143,10 @@ private:
 	float PAdeg;				//!< principal angle (range 0..360 degrees)
 	QString hubbleType;			//!< Hubble type for galaxies
 
+#if defined(GEN_BIN_CATALOG)
+// for creating binary file
+	float _ra, _dec;
+#endif
 // Stellarium properties
 	static StelTextureSP texCircle;   // The symbolic circle texture
 	static StelTextureSP texOpenCluster;

@@ -119,8 +119,7 @@ struct DrawNebulaFuncObject
 	void operator()(StelRegionObjectP obj)
 	{
 		Nebula* n = obj.staticCast<Nebula>().data();
-		//qDebug("%f %f", n->angularSize, n->mag);
-		//if (n->angularSize>angularSizeLimit || (checkMaxMagHints && n->mag <= maxMagHints))
+		if (n->angularSize>angularSizeLimit || (checkMaxMagHints && n->mag <= maxMagHints))
 		{
 			sPainter->getProjector()->project(n->XYZ,n->XY);
 			n->drawLabel(*sPainter, maxMagLabels);
@@ -234,9 +233,8 @@ void NebulaMgr::loadNebulaSet(const QString& setName)
 {
 	try
 	{
-		//loadNGC(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000.dat"));
-		// TODO: convert W Steinitz's catalogue to binary format
-		loadNGCOld(StelFileMgr::findFile("nebulae/" + setName + "/ngc2011steinicke.dat"));
+		loadNGC(StelFileMgr::findFile("nebulae/" + setName + "/ngc2011.dat"));
+		//loadNGCOld(StelFileMgr::findFile("nebulae/" + setName + "/ngc2011steinicke.dat"));
 		loadNGCNames(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000names.dat"));
 	}
 	catch (std::runtime_error& e)
@@ -312,7 +310,7 @@ NebulaP NebulaMgr::searchIC(unsigned int IC)
 	return NebulaP();
 }
 
-#if 1
+#if 0
 // read from stream
 bool NebulaMgr::loadNGCOld(const QString& catNGC)
 {
@@ -320,6 +318,14 @@ bool NebulaMgr::loadNGCOld(const QString& catNGC)
 	if (!in.open(QIODevice::ReadOnly | QIODevice::Text))
 		return false;
 
+#if defined(GEN_BIN_CATALOG)
+	QFile out("NGC2011.dat");
+	if (!out.open(QIODevice::WriteOnly))
+		return false;
+	QDataStream outstream(&out);
+	
+	outstream.setVersion(QDataStream::Qt_4_7);
+#endif
 	int totalRecords=0;
 	QString record;
 	while (!in.atEnd())
@@ -356,9 +362,15 @@ bool NebulaMgr::loadNGCOld(const QString& catNGC)
 			nebGrid.insert(qSharedPointerCast<StelRegionObject>(e));
 			if (e->NGC_nb!=0)
 				ngcIndex.insert(e->NGC_nb, e);
+#if defined(GEN_BIN_CATALOG)
+			e->writeExtendedNGC(outstream);
+#endif
 			++readOk;
 		}
 	}
+#if defined(GEN_BIN_CATALOG)
+	out.close();
+#endif
 	in.close();
 	qDebug() << "loadNGCOld(): Loaded" << readOk << "/" << totalRecords << "NGC records";
 	return true;
@@ -371,19 +383,21 @@ bool NebulaMgr::loadNGC(const QString& catNGC)
 	if (!in.open(QIODevice::ReadOnly))
 		return false;
 	QDataStream ins(&in);
-	ins.setVersion(QDataStream::Qt_4_5);
+	//ins.setVersion(QDataStream::Qt_4_5);
+	ins.setVersion(QDataStream::Qt_4_7);
 
 	int totalRecords=0;
 	while (!ins.atEnd())
 	{
 		// Create a new Nebula record
 		NebulaP e = NebulaP(new Nebula);
-		e->readNGC(ins);
+		e->readExtendedNGC(ins);
 
 		nebArray.append(e);
 		nebGrid.insert(qSharedPointerCast<StelRegionObject>(e));
 		if (e->NGC_nb!=0)
 			ngcIndex.insert(e->NGC_nb, e);
+		// TODO: create IC index
 		++totalRecords;
 	}
 	in.close();
