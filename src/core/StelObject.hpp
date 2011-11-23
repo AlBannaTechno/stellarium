@@ -25,7 +25,6 @@
 #include "StelObjectType.hpp"
 #include "StelRegionObject.hpp"
 
-class StelNavigator;
 class StelCore;
 
 //! The base abstract class for sky objects used in Stellarium like Stars, Planets, Constellations etc...

@@ -189,7 +189,7 @@ void TelescopePropertiesWindow::prepareNewVirtualConfiguration(const QString& id
 #ifdef Q_OS_WIN32
 void TelescopePropertiesWindow::prepareNewAscomConfiguration(const QString& id)
 {
-	if (!telescopeManager->canUseAscom())
+	if (!deviceManager->canUseAscom())
 	{
 		emit changesDiscarded();
 		return;
@@ -433,7 +433,7 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& i
 #ifdef Q_OS_WIN32
 	else if (interface == "ASCOM")
 	{
-		if (!telescopeManager->canUseAscom())
+		if (!deviceManager->canUseAscom())
 		{
 			emit changesDiscarded();
 			return;
@@ -767,7 +767,7 @@ void TelescopePropertiesWindow::showNetworkTab(bool show)
 #ifdef Q_OS_WIN32
 void TelescopePropertiesWindow::showAscomSelector()
 {
-	if (!telescopeManager->canUseAscom())
+	if (!deviceManager->canUseAscom())
 		return;
 
 	QAxObject ascomChooser(this);
@@ -784,7 +784,7 @@ void TelescopePropertiesWindow::showAscomSelector()
 
 void TelescopePropertiesWindow::showAscomDeviceSetup()
 {
-	if (!telescopeManager->canUseAscom() || ascomDriverObjectId.isEmpty())
+	if (!deviceManager->canUseAscom() || ascomDriverObjectId.isEmpty())
 		return;
 
 	QAxObject ascomDriver(this);

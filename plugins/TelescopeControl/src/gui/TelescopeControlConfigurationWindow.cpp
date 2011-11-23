@@ -123,7 +123,7 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 
 	//Deal with the ASCOM-specific fields
 #ifdef Q_OS_WIN32
-	if (telescopeManager->canUseAscom())
+	if (deviceManager->canUseAscom())
 		ui->labelAscomNotice->setVisible(false);
 	else
 		ui->pushButtonNewAscom->setEnabled(false);
@@ -283,7 +283,7 @@ void TelescopeControlConfigurationWindow::createNewVirtualConnection()
 #ifdef Q_OS_WIN32
 void TelescopeControlConfigurationWindow::createNewAscomConnection()
 {
-	configuredTelescopeIsNew = true;
+	configuredConnectionIsNew = true;
 	configuredId = createDefaultId();
 
 	setVisible(false);

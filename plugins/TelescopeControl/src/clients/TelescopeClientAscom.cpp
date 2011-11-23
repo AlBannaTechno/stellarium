@@ -123,7 +123,7 @@ bool TelescopeClientAscom::isConnected(void) const
 	return isConnected;
 }
 
-Vec3d TelescopeClientAscom::getJ2000EquatorialPos(const StelNavigator *nav) const
+Vec3d TelescopeClientAscom::getJ2000EquatorialPos(const StelCore* core) const
 {
 	//TODO: see what to do about time_delay
 	const qint64 now = getNow() - POSITION_REFRESH_INTERVAL;// - time_delay;
@@ -191,8 +191,8 @@ void TelescopeClientAscom::performCommunication()
 	//if (equatorialCoordinateType == 1)//coordinates are in JNow
 	if (equinox == EquinoxJNow)
 	{
-		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
-		j2000Coordinates = navigator->equinoxEquToJ2000(coordinates);
+		StelCore* core = StelApp::getInstance().getCore();
+		j2000Coordinates = core->equinoxEquToJ2000(coordinates);
 	}
 
 	interpolatedPosition.add(j2000Coordinates, getNow(), serverTime);
@@ -269,8 +269,8 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 	//if (equatorialCoordinateType == 1)//coordinates are in JNow
 	if (equinox == EquinoxJNow)
 	{
-		const StelNavigator* navigator = StelApp::getInstance().getCore()->getNavigator();
-		targetCoordinates = navigator->j2000ToEquinoxEqu(j2000Coordinates);
+		StelCore* core = StelApp::getInstance().getCore();
+		targetCoordinates = core->j2000ToEquinoxEqu(j2000Coordinates);
 	}
 
 	//Convert coordinates from the vector
