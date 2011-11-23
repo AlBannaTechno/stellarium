@@ -127,10 +127,22 @@ public slots:
 	//! Set the color of the Meridian Line.
 	void setColorMeridianLine(const Vec3f& v);
 
+	//! Set flag for displaying Horizon Line.
+	void setFlagHorizonLine(bool b);
+	//! Get flag for displaying Horizon Line.
+	bool getFlagHorizonLine(void) const;
+	//! Get the current color of the Horizon Line.
+	Vec3f getColorHorizonLine(void) const;
+	//! Set the color of the Horizon Line.
+	void setColorHorizonLine(const Vec3f& v);
+
 private slots:
 	//! Sets the colors of: grids and great circles, Equatorial Grid, Azimuthal Grid, 
 	//! Meridian Line, Equator Line and Ecliptic Line.
 	void setStelStyle(const QString& section);
+	//! Re-translate the labels of the great circles.
+	//! Contains only calls to SkyLine::updateLabel().
+	void updateLineLabels();
 
 private:
 	SkyGrid * equGrid;      // Equatorial grid
@@ -140,6 +152,7 @@ private:
 	SkyLine * equatorLine;  // Celestial Equator line
 	SkyLine * eclipticLine; // Ecliptic line
 	SkyLine * meridianLine; // Meridian line
+	SkyLine * horizonLine;	// Horizon line
 };
 
 #endif // _GRIDLINESMGR_HPP_

@@ -58,12 +58,20 @@ protected:
 	
 private:
 	void populateConnectionList();
-
+	
 	//! Update the text and the tooltip of the ChangeStatus button
 	void updateStatusButton(const QString& id);
-
+	
 	QString createDefaultId();
 	QString getStatusString(const QString& id);
+	
+	void setAboutText();
+	void setHeaderNames();
+	void updateWarningTexts();
+	
+	//QString getTypeLabel(ConnectionType type);
+	//void addModelRow(int slotNumber, ConnectionType type, TelescopeStatus status, const QString& name);
+	//void updateModelRow(int rowNumber, ConnectionType type, TelescopeStatus status, const QString& name);
 	
 private slots:
 	//! Connects or disconnects the connection selected in the list.

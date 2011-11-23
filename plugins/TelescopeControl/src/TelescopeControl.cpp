@@ -86,10 +86,10 @@ StelPluginInfo TelescopeControlStelPluginInterface::getPluginInfo() const
 
 	StelPluginInfo info;
 	info.id = "TelescopeControl";
-	info.displayedName = q_("Telescope Control");
+	info.displayedName = N_("Telescope Control");
 	info.authors = "Bogdan Marinov, Johannes Gajdosik";
 	info.contact = "http://stellarium.org";
-	info.description = q_("This plug-in allows Stellarium to send \"slew\" commands to a telescope on a computerized mount (a \"GoTo telescope\"). It can also simulate a moving telescope reticle surrounded by field-of-view circles without connecting to any real telescope.");
+	info.description = N_("This plug-in allows Stellarium to send \"slew\" commands to a telescope on a computerized mount (a \"GoTo telescope\").");
 	return info;
 }
 
@@ -277,7 +277,6 @@ void TelescopeControl::deinit()
 	{
 		delete slewWindow;
 	}
-
 	//Destroy all clients first in order to avoid displaying a TCP error
 	removeAllConnections();
 
@@ -1115,6 +1114,7 @@ bool TelescopeControl::isValidDelay(int delay)
 {
 	return (delay > 0 && delay <= MICROSECONDS_FROM_SECONDS(10));
 }
+
 
 bool TelescopeControl::startClient(const QString& id,
                                    const QVariantMap& properties)

@@ -108,6 +108,7 @@ void StelGui::init(QGraphicsWidget* atopLevelGraphicsWidget, StelAppGraphicsWidg
 	addGuiActions("actionShow_Ecliptic_Line", N_("Ecliptic line"), ",", group, true, false);
 	addGuiActions("actionShow_Equator_Line", N_("Equator line"), ".", group, true, false);
 	addGuiActions("actionShow_Meridian_Line", N_("Meridian line"), ";", group, true, false);
+	addGuiActions("actionShow_Horizon_Line", N_("Horizon line"), "", group, true, false);
 	addGuiActions("actionShow_Cardinal_Points", N_("Cardinal points"), "Q", group, true, false);
 
 	addGuiActions("actionShow_Ground", N_("Ground"), "G", group, true, false);
@@ -117,7 +118,7 @@ void StelGui::init(QGraphicsWidget* atopLevelGraphicsWidget, StelAppGraphicsWidg
 	addGuiActions("actionShow_Nebulas", N_("Nebulas"), "N", group, true, false);
 	addGuiActions("actionShow_DSS", N_("Nebulas background images"), "", group, true, false);
 	addGuiActions("actionShow_Stars", N_("Stars"), "S", group, true, false);
-	addGuiActions("actionShow_Planets_Labels", N_("Planets labels"), "P", group, true, false);
+	addGuiActions("actionShow_Planets_Labels", N_("Planet labels"), "P", group, true, false);
 	addGuiActions("actionShow_Planets_Orbits", N_("Planet orbits"), "O", group, true, false);
 	addGuiActions("actionShow_Planets_Trails", N_("Planet trails"), "Shift+T", group, true, false);
 
@@ -170,7 +171,11 @@ void StelGui::init(QGraphicsWidget* atopLevelGraphicsWidget, StelAppGraphicsWidg
 	addGuiActions("actionSwitch_Equatorial_Mount", N_("Switch between equatorial and azimuthal mount"), "Ctrl+M", group, true, false);
 	addGuiActions("actionQuit_Global", N_("Quit"), "Ctrl+Q", group, false, false);
 	addGuiActions("actionSave_Screenshot_Global", N_("Save screenshot"), "Ctrl+S", group, false, false);
-	addGuiActions("action_Reload_Style", "Reload style", "Ctrl+R", "Debug", false, false);
+	
+	// As the stylesheet files are embedded in the resource file and not loaded
+	// from the /data/gui directory any more, this is useless, except
+	// for theoretical special builds. --Bogdan Marinov
+	//addGuiActions("action_Reload_Style", N_("Reload style"), "Ctrl+R", N_("Debug"), false, false);
 
 	addGuiActions("actionAutoHideHorizontalButtonBar", N_("Auto hide horizontal button bar"), "", group, true, false);
 	addGuiActions("actionAutoHideVerticalButtonBar", N_("Auto hide vertical button bar"), "", group, true, false);
@@ -182,7 +187,10 @@ void StelGui::init(QGraphicsWidget* atopLevelGraphicsWidget, StelAppGraphicsWidg
 	connect(getGuiActions("actionQuit_Global"), SIGNAL(triggered()), this, SLOT(quit()));
 
 	// Debug
-	connect(getGuiActions("action_Reload_Style"), SIGNAL(triggered()), this, SLOT(reloadStyle()));
+	// As the stylesheet files are embedded in the resource file and not loaded
+	// from the /data/gui directory any more, this is useless, except
+	// for theoretical special builds. --Bogdan Marinov
+	//connect(getGuiActions("action_Reload_Style"), SIGNAL(triggered()), this, SLOT(reloadStyle()));
 
 	ConstellationMgr* cmgr = GETSTELMODULE(ConstellationMgr);
 	connect(getGuiActions("actionShow_Constellation_Lines"), SIGNAL(toggled(bool)), cmgr, SLOT(setFlagLines(bool)));
@@ -205,6 +213,8 @@ void StelGui::init(QGraphicsWidget* atopLevelGraphicsWidget, StelAppGraphicsWidg
 	getGuiActions("actionShow_Equator_Line")->setChecked(gmgr->getFlagEquatorLine());
 	connect(getGuiActions("actionShow_Meridian_Line"), SIGNAL(toggled(bool)), gmgr, SLOT(setFlagMeridianLine(bool)));
 	getGuiActions("actionShow_Meridian_Line")->setChecked(gmgr->getFlagMeridianLine());
+	connect(getGuiActions("actionShow_Horizon_Line"), SIGNAL(toggled(bool)), gmgr, SLOT(setFlagHorizonLine(bool)));
+	getGuiActions("actionShow_Horizon_Line")->setChecked(gmgr->getFlagHorizonLine());
 	connect(getGuiActions("actionShow_Equatorial_J2000_Grid"), SIGNAL(toggled(bool)), gmgr, SLOT(setFlagEquatorJ2000Grid(bool)));
 	getGuiActions("actionShow_Equatorial_J2000_Grid")->setChecked(gmgr->getFlagEquatorJ2000Grid());
 	connect(getGuiActions("actionShow_Galactic_Grid"), SIGNAL(toggled(bool)), gmgr, SLOT(setFlagGalacticGrid(bool)));
@@ -623,6 +633,9 @@ void StelGui::update()
 	flag = gmgr->getFlagMeridianLine();
 	if (getGuiActions("actionShow_Meridian_Line")->isChecked() != flag)
 		getGuiActions("actionShow_Meridian_Line")->setChecked(flag);
+	flag = gmgr->getFlagHorizonLine();
+	if (getGuiActions("actionShow_Horizon_Line")->isChecked() != flag)
+		getGuiActions("actionShow_Horizon_Line")->setChecked(flag);
 	flag = gmgr->getFlagEquatorJ2000Grid();
 	if (getGuiActions("actionShow_Equatorial_J2000_Grid")->isChecked() != flag)
 		getGuiActions("actionShow_Equatorial_J2000_Grid")->setChecked(flag);

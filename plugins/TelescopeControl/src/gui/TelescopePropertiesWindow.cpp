@@ -28,6 +28,7 @@
 #include "StelFileMgr.hpp"
 #include "StelLocaleMgr.hpp"
 #include "StelStyle.hpp"
+#include "StelTranslator.hpp"
 
 #include <QDebug>
 #include <QCompleter>

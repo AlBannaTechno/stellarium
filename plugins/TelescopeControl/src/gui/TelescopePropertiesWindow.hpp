@@ -37,7 +37,7 @@ using namespace TelescopeControlGlobals;
 
 class Ui_widgetTelescopeProperties;
 class TelescopeControl;
-struct StelStyle;
+class StelStyle;
 
 class TelescopePropertiesWindow : public StelDialogTelescopeControl
 {
