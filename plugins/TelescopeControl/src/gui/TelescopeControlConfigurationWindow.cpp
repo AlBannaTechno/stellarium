@@ -69,6 +69,7 @@ void TelescopeControlConfigurationWindow::languageChanged()
 		ui->retranslateUi(dialog);
 		setAboutText();
 		setHeaderNames();
+		updateConnectionStates();
 		updateWarningTexts();
 		
 		//Retranslate type strings
@@ -223,10 +224,12 @@ void TelescopeControlConfigurationWindow::setHeaderNames()
 {
 	QStringList headerStrings;
 	// TRANSLATORS: Symbol for "number"
-	headerStrings << q_("#");
+	//headerStrings << q_("#");
 	//headerStrings << "Start";
 	headerStrings << q_("Status");
-	headerStrings << q_("Type");
+	headerStrings << q_("Connection");
+	headerStrings << q_("Interface");
+	headerStrings << q_("Keys");
 	headerStrings << q_("Name");
 	connectionListModel->setHorizontalHeaderLabels(headerStrings);
 }
@@ -261,33 +264,6 @@ void TelescopeControlConfigurationWindow::updateWarningTexts()
 	ui->labelWarning->setText(text);
 }
 
-/*QString TelescopeControlConfigurationWindow::getTypeLabel(ConnectionType type)
-{
-	QString typeLabel;
-	switch (type)
-	{
-		case ConnectionInternal:
-			// TRANSLATORS: Telescope connection type
-			typeLabel = N_("local, Stellarium");
-			break;
-		case ConnectionLocal:
-			// TRANSLATORS: Telescope connection type
-			typeLabel = N_("local, external");
-			break;
-		case ConnectionRemote:
-			// TRANSLATORS: Telescope connection type
-			typeLabel = N_("remote, unknown");
-			break;
-		case ConnectionVirtual:
-			// TRANSLATORS: Telescope connection type
-			typeLabel = N_("virtual");
-			break;
-		default:
-			;
-	}
-	return typeLabel;
-}*/
-
 void TelescopeControlConfigurationWindow::populateConnectionList()
 {
 	//Remember the previously selected connection, if any
@@ -300,16 +276,7 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 	connectionCount = 0;
 
 	connectionListModel->setColumnCount(ColumnCount);
-	QStringList headerStrings;
-	// TRANSLATORS: Symbol for "number"
-	//headerStrings << "#";
-	//headerStrings << "Start";
-	headerStrings <<  "Status";
-	headerStrings << "Connection";
-	headerStrings << "Interface";
-	headerStrings << "Keys";
-	headerStrings << "Name";
-	connectionListModel->setHorizontalHeaderLabels(headerStrings);
+	setHeaderNames();
 
 	ui->telescopeTreeView->setModel(connectionListModel);
 	ui->telescopeTreeView->header()->setMovable(false);
@@ -346,16 +313,19 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		{
 			if (properties.value("host") == "localhost")
 			{
-				connectionTypeLabel = "local";
+				// TRANSLATORS: Device connection type: local IP connection (on the same computer)
+				connectionTypeLabel = N_("local");
 			}
 			else
 			{
-				connectionTypeLabel = "remote";
+				// TRANSLATORS: Device connection type: remote connection (over a network)
+				connectionTypeLabel = N_("remote");
 			}
 		}
 		else
 		{
-			connectionTypeLabel = "direct";
+			// TRANSLATORS: Device connection type: direct connection via a serial port
+			connectionTypeLabel = N_("direct");
 		}
 
 		int lastRow = connectionListModel->rowCount();
@@ -374,8 +344,9 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		connectionListModel->setItem(lastRow, ColumnStatus, tempItem);
 
 		//New column on a new row in the list: Connection type
-		tempItem = new QStandardItem(connectionTypeLabel);
+		tempItem = new QStandardItem(q_(connectionTypeLabel));
 		tempItem->setEditable(false);
+		tempItem->setData(connectionTypeLabel, Qt::UserRole);
 		connectionListModel->setItem(lastRow, ColumnType, tempItem);
 
 		//New column on a new row in the list: Interface type
@@ -387,7 +358,11 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		QString shortcutString;
 		if (shortcutNumber > 0 && shortcutNumber < 10)
 		{
+#ifdef Q_WS_MAC
+			shortcutString = QString("Cmd+%1, Alt+%1").arg(shortcutNumber);
+#else
 			shortcutString = QString("Ctrl+%1, Alt+%1").arg(shortcutNumber);
+#endif
 		}
 		tempItem = new QStandardItem(shortcutString);
 		tempItem->setEditable(false);
@@ -424,50 +399,9 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 		ui->telescopeTreeView->header()->setResizeMode(ColumnType, QHeaderView::Interactive);
 		ui->pushButtonNewStellarium->setFocus();
 	}
-		updateWarningTexts();
+	updateWarningTexts();
 
 }
-
-/*void TelescopeControlConfigurationWindow::addModelRow(int number,
-                                  ConnectionType type,
-                                  TelescopeStatus status,
-                                  const QString& name)
-{
-	Q_ASSERT(connectionsListModel);
-	
-	QStandardItem* tempItem = 0;
-	int lastRow = connectionsListModel->rowCount();
-	// Number
-	tempItem = new QStandardItem(QString::number(number));
-	tempItem->setEditable(false);
-	connectionsListModel->setItem(lastRow, ColumnSlot, tempItem);
-	
-	// Checkbox
-	//TODO: This is not updated, because it was commented out
-	//tempItem = new QStandardItem;
-	//tempItem->setEditable(false);
-	//tempItem->setCheckable(true);
-	//tempItem->setCheckState(Qt::Checked);
-	//tempItem->setData("If checked, this telescope will start when Stellarium is started", Qt::ToolTipRole);
-	//connectionsListModel->setItem(lastRow, ColumnStartup, tempItem);//Start-up checkbox
-	
-	//Status
-	tempItem = new QStandardItem(q_(statusString[status]));
-	tempItem->setEditable(false);
-	connectionsListModel->setItem(lastRow, ColumnStatus, tempItem);
-	
-	//Type
-	QString typeLabel = getTypeLabel(type);
-	tempItem = new QStandardItem(q_(typeLabel));
-	tempItem->setEditable(false);
-	tempItem->setData(typeLabel, Qt::UserRole);
-	connectionsListModel->setItem(lastRow, ColumnType, tempItem);
-	
-	//Name
-	tempItem = new QStandardItem(name);
-	tempItem->setEditable(false);
-	connectionsListModel->setItem(lastRow, ColumnName, tempItem);
-}*/
 
 void TelescopeControlConfigurationWindow::selectConnection(const QModelIndex & index)
 {
@@ -637,11 +571,12 @@ void TelescopeControlConfigurationWindow::updateConnectionStates()
 	QString id;
 	for (int i=0; i<(connectionListModel->rowCount()); i++)
 	{
-		QModelIndex index = connectionListModel->index(i, ColumnName);
-		id = connectionListModel->data(index).toString();
-		QString newStatusString = getStatusString(id);
+		QModelIndex indexId = connectionListModel->index(i, ColumnName);
+		id = connectionListModel->data(indexId).toString();
+		QString status = getStatusString(id);
 		
-		connectionListModel->setData(connectionListModel->index(i, ColumnStatus), newStatusString, Qt::DisplayRole);
+		QModelIndex indexStatus = connectionListModel->index(i, ColumnStatus);
+		connectionListModel->setData(indexStatus, status, Qt::DisplayRole);
 	}
 	
 	if(ui->telescopeTreeView->currentIndex().isValid())
@@ -658,14 +593,14 @@ void TelescopeControlConfigurationWindow::updateStatusButton(const QString& id)
 {
 	if(deviceManager->isClientConnected(id))
 	{
-		ui->pushButtonChangeStatus->setText("Disconnect");
-		ui->pushButtonChangeStatus->setToolTip("Disconnect from the selected telescope");
+		ui->pushButtonChangeStatus->setText(q_("Disconnect"));
+		ui->pushButtonChangeStatus->setToolTip(q_("Disconnect from the selected telescope"));
 		ui->pushButtonChangeStatus->setEnabled(true);
 	}
 	else
 	{
-		ui->pushButtonChangeStatus->setText("Connect");
-		ui->pushButtonChangeStatus->setToolTip("Connect to the selected telescope");
+		ui->pushButtonChangeStatus->setText(q_("Connect"));
+		ui->pushButtonChangeStatus->setToolTip(q_("Connect to the selected telescope"));
 		ui->pushButtonChangeStatus->setEnabled(true);
 	}
 }
@@ -677,8 +612,7 @@ QString TelescopeControlConfigurationWindow::createDefaultId()
 	int i = 1;
 	do
 	{
-		//TODO: Localization
-		id = QString("New Telescope %1").arg(i++);
+		id = QString(q_("New Telescope %1")).arg(i++);
 	}
 	while (existingIds.contains(id));
 	return id;
