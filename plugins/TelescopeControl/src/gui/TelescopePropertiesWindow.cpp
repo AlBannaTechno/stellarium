@@ -772,7 +772,7 @@ void TelescopePropertiesWindow::showAscomSelector()
 		return;
 
 	QAxObject ascomChooser(this);
-	if (!ascomChooser.setControl("DriverHelper.Chooser"))
+	if (!ascomChooser.setControl("ASCOM.Utilities.Chooser"))
 	{
 		emit changesDiscarded();
 		return;
