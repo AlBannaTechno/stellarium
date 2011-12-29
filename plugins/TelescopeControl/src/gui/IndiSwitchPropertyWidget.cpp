@@ -26,22 +26,11 @@
 IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
                                                    const QString& title,
                                                    QWidget* parent)
-	: IndiPropertyWidget(title, parent),
+	: IndiPropertyWidget(property, title, parent),
 	signalMapper(0)
 {
 	Q_ASSERT(property);
-
-	propertyName = property->getName();
-	setGroup(property->getGroup());
 	switchRule = property->getSwitchRule();
-
-	mainLayout = new QHBoxLayout();
-	mainLayout->setContentsMargins(0, 0, 0, 0);
-	mainLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-
-	//State
-	stateWidget = new IndiStateWidget(property->getCurrentState());
-	mainLayout->addWidget(stateWidget);
 
 	buttonsLayout = new QVBoxLayout();
 	buttonsLayout->setContentsMargins(0, 0, 0, 0);
@@ -102,8 +91,6 @@ IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
 		connect(signalMapper, SIGNAL(mapped(QString)),
 		        this, SLOT(handleClickedButton(QString)));
 	}
-
-	this->setLayout(mainLayout);
 }
 
 IndiSwitchPropertyWidget::~IndiSwitchPropertyWidget()

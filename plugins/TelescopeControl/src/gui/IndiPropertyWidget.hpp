@@ -35,18 +35,31 @@ class IndiPropertyWidget : public QGroupBox
 {
 	Q_OBJECT
 public:
-	IndiPropertyWidget(const QString& title,
-	                   QWidget* parent = 0) : QGroupBox(title, parent) {;}
+	IndiPropertyWidget(Property* property,
+	                   const QString& title,
+	                   QWidget* parent = 0)
+	    : QGroupBox(title, parent)
+	{
+		Q_ASSERT(property);
+		propertyName = property->getName();
+		QString newGroupName = property->getGroup();
+		if (newGroupName.isEmpty())
+			groupName = "Main";//TODO: Default name.
+		else
+			groupName = newGroupName;
+		
+		mainLayout = new QHBoxLayout();
+		mainLayout->setContentsMargins(0, 0, 0, 0);
+		mainLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+		
+		stateWidget = new IndiStateWidget(property->getCurrentState());
+		mainLayout->addWidget(stateWidget);
+		
+		setLayout(mainLayout);
+	}
 	//virtual ~IndiPropertyWidget() = 0;
 
 	QString getGroup() const {return groupName;}
-	void setGroup(const QString& _groupName)
-	{
-		if (_groupName.isEmpty())
-			groupName = "Main";//TODO: Default name.
-		else
-			groupName = _groupName;
-	}
 
 public slots:
 	//What calls this?

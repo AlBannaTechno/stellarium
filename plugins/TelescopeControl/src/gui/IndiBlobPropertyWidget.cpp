@@ -24,24 +24,11 @@
 IndiBlobPropertyWidget::IndiBlobPropertyWidget(BlobProperty *property,
                                                const QString& title,
                                                QWidget* parent)
-	: IndiPropertyWidget(title, parent)
+	: IndiPropertyWidget(property, title, parent)
 {
 	Q_ASSERT(property);
 
-	propertyName = property->getName();
-	setGroup(property->getGroup());
-
-	mainLayout = new QHBoxLayout();
-	mainLayout->setContentsMargins(0, 0, 0, 0);
-	mainLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-
-	//State
-	stateWidget = new IndiStateWidget(property->getCurrentState());
-	mainLayout->addWidget(stateWidget);
-
 	//TODO
-
-	this->setLayout(mainLayout);
 }
 
 void IndiBlobPropertyWidget::updateProperty(Property* property)

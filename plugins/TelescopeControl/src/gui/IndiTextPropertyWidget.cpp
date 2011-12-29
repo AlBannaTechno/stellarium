@@ -22,22 +22,11 @@
 IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
                                                const QString& title,
                                                QWidget* parent)
-	: IndiPropertyWidget(title, parent),
+	: IndiPropertyWidget(property, title, parent),
 	setButton(0),
 	gridLayout(0)
 {
 	Q_ASSERT(property);
-
-	propertyName = property->getName();
-	setGroup(property->getGroup());
-
-	mainLayout = new QHBoxLayout();
-	mainLayout->setContentsMargins(0, 0, 0, 0);
-	mainLayout->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-
-	//State
-	stateWidget = new IndiStateWidget(property->getCurrentState());
-	mainLayout->addWidget(stateWidget);
 
 	gridLayout = new QGridLayout();
 	gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -87,8 +76,6 @@ IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
 		        this, SLOT(setNewPropertyValue()));
 		mainLayout->addWidget(setButton);
 	}
-
-	this->setLayout(mainLayout);
 }
 
 IndiTextPropertyWidget::~IndiTextPropertyWidget()
