@@ -124,7 +124,7 @@ void IndiDeviceWidget::defineProperty(Property* property)
 	if (!groupWidgets.contains(group))
 	{
 		IndiGroupWidget* widget = new IndiGroupWidget();
-		groupsTabWidget->insertTab(0, widget, group);
+		groupsTabWidget->addTab(widget, group);
 		groupWidgets.insert(group, widget);
 	}
 	groupWidgets[group]->addPropertyWidget(propertyWidget);
