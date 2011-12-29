@@ -52,7 +52,10 @@ void DeviceControlPanel::createDialogContent()
 {
 	ui->setupUi(dialog);
 	
-	//Inherited connect
+	// TODO: Better default size
+	dialog->resize(560, 420);
+	
+	// Connect the Close button
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 	
 	//Initialize the style
@@ -76,7 +79,7 @@ void DeviceControlPanel::createDialogContent()
 	//ui->verticalLayout->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
 	ui->verticalLayout->addWidget(splitter);
 	splitter->show();
-
+	
 	//TEST
 	/*
 	logMessage("Does everything look OK?");
