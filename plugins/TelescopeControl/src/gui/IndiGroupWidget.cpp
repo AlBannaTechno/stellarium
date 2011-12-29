@@ -29,6 +29,7 @@ IndiGroupWidget::IndiGroupWidget(QWidget* parent) : QScrollArea(parent)
 	layout = new QVBoxLayout();
 	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(0);
+	layout->addStretch(1);
 
 	QWidget* innerWidget = new QWidget(this);
 	innerWidget->setLayout(layout);
@@ -43,7 +44,9 @@ IndiGroupWidget::~IndiGroupWidget()
 
 void IndiGroupWidget::addPropertyWidget(IndiPropertyWidget* widget)
 {
-	layout->addWidget(widget);
+	// There is already at least one widget in the layout and it should
+	// be always the last one - the spacer/stretch area.
+	layout->insertWidget(layout->count()-1, widget);
 }
 
 void IndiGroupWidget::removePropertyWidget(IndiPropertyWidget* widget)
@@ -53,5 +56,6 @@ void IndiGroupWidget::removePropertyWidget(IndiPropertyWidget* widget)
 
 int IndiGroupWidget::propertyWidgetsCount() const
 {
-	return layout->count();
+	// The spacer widget is not an INDI property widget
+	return layout->count() - 1;
 }

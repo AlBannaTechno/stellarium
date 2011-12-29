@@ -136,7 +136,7 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
 	if (property->isWritable())
 	{
 		setButton = new QPushButton("Set");
-		setButton->setSizePolicy(QSizePolicy::Expanding,
+		setButton->setSizePolicy(QSizePolicy::Preferred,
 		                         QSizePolicy::Preferred);
 		connect(setButton, SIGNAL(clicked()),
 		        this, SLOT(setNewPropertyValue()));
