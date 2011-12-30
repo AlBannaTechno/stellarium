@@ -93,25 +93,6 @@ public:
 	static const char* T_ONE_LIGHT;
 	static const char* T_ONE_BLOB;
 
-
-	//INDI XML attributes
-	static const char* A_VERSION;
-	static const char* A_DEVICE;
-	static const char* A_NAME;
-	static const char* A_LABEL;
-	static const char* A_GROUP;
-	static const char* A_STATE;
-	static const char* A_PERMISSION;
-	static const char* A_TIMEOUT;
-	static const char* A_TIMESTAMP;
-	static const char* A_MESSAGE;
-	static const char* A_FORMAT;
-	static const char* A_MINIMUM;
-	static const char* A_MAXIMUM;
-	static const char* A_STEP;
-	static const char* A_RULE;
-	static const char* A_SIZE;
-
 	//INDI standard properties
 	//TODO: Move to the telescope client?
 	//http://www.indilib.org/index.php?title=Standard_Properties
@@ -190,43 +171,11 @@ private:
 	//!
 	void parseIndiCommand(const QString& command);
 
-	//!
-	Permission readPermissionFromString(const QString& string);
-	//!
-	State readStateFromString(const QString& string);
-	//!
-	SwitchRule readSwitchRuleFromString(const QString& string);
-
-	//!
-	//! \param checkPermission should be false when reading a LightProperty.
-	//! \param checkSwitchRule should be true when reading a SwitchProperty.
-	bool readPropertyAttributes(const QXmlStreamAttributes& attributes,
-	                            QString& device,
-	                            QString& property,
-	                            QString& label,
-	                            QString& group,
-	                            State& state,
-	                            Permission& permission,
-	                            SwitchRule& switchRule,
-	                            QString& timeout,
-	                            QDateTime& timestamp,
-	                            bool checkPermission,
-	                            bool checkSwitchRule);
-	//!
-	bool readPropertyAttributes(const QXmlStreamAttributes& attributes,
-	                            QString& device,
-	                            QString& name,
-	                            QString& state,
-	                            QString& timeout);
-	//! Attempts to read the \b timestamp attribute of the current element.
-	//! \returns a UTC datetime if the timestamp can be parsed, otherwise
-	//! an invalid QDateTime object.
-	QDateTime readTimestampAttribute(const QXmlStreamAttributes& attributes);
-	//! Attempts to read the \b message attribute of the current element.
-	//! Emits messageReceived() if it's not empty.
-	void readMessageAttribute(const QXmlStreamAttributes& attributes,
-	                          const QString& device,
-	                          const QDateTime& timestamp);
+	//! Returns the property matching the \b device and \b name attributes.
+	//! \returns 0 if no such property exists.
+	Property* getProperty(const SetTagAttributes& attributes);
+	//! Emits messageReceived() if the \b message attribute is not empty.
+	void handleMessageAttribute(const TagAttributes& attributes);
 	//!
 	void readMessageElement(QXmlStreamReader& xmlReader);
 	//!

@@ -23,9 +23,94 @@
 #include <QDateTime>
 #include <QHash>
 #include <QString>
+#include <QXmlStreamReader>
 
 #include "IndiTypes.hpp"
 #include "IndiElement.hpp"
+
+//! Base class for data structures for the attributes of a vector tag
+class TagAttributes
+{
+public:
+	TagAttributes (const QXmlStreamReader& xmlStream);
+	
+	//! Attempts to read the \b timestamp attribute of the current element.
+	//! \returns a UTC datetime if the timestamp can be parsed, otherwise
+	//! an invalid QDateTime object.
+	static QDateTime readTimestampAttribute(const QXmlStreamAttributes& attributes);
+	
+	bool areValid;
+	
+	QString device;
+	QString name;
+	QString timeoutString;
+	QDateTime timestamp;
+	QString message;
+	
+	//INDI XML attributes
+	static const char* VERSION;
+	static const char* DEVICE;
+	static const char* NAME;
+	static const char* LABEL;
+	static const char* GROUP;
+	static const char* STATE;
+	static const char* PERMISSION;
+	static const char* TIMEOUT;
+	static const char* TIMESTAMP;
+	static const char* MESSAGE;
+	static const char* FORMAT;
+	static const char* MINIMUM;
+	static const char* MAXIMUM;
+	static const char* STEP;
+	static const char* RULE;
+	static const char* SIZE;
+	
+protected:
+	QXmlStreamAttributes attributes;
+};
+
+//! Self-populating data structure for the attributes of a defintion tag.
+//! This class should be used in its pure form only in LightProperty only.
+//! For everything else, use StandardPropertyDefinitionAttributes and
+//! SwitchPropertyDefinitionAttributes.
+class BasicDefTagAttributes : public TagAttributes
+{
+public:
+	BasicDefTagAttributes (const QXmlStreamReader& xmlReader);
+	
+	QString label;
+	QString group;
+	State state;
+};
+
+//! Self-populating data structure for the attributes of a defintion tag.
+class StandardDefTagAttributes :
+        public BasicDefTagAttributes
+{
+public:
+	StandardDefTagAttributes (const QXmlStreamReader& xmlReader);
+	
+	Permission permission;
+};
+
+//! Self-populating data structure for the attributes of a defintion tag.
+class DefSwitchTagAttributes :
+        public StandardDefTagAttributes
+{
+public:
+	DefSwitchTagAttributes (const QXmlStreamReader& xmlReader);
+	
+	SwitchRule rule;
+};
+
+class SetTagAttributes : public TagAttributes
+{
+public:
+	SetTagAttributes (const QXmlStreamReader& xmlReader);
+	
+	bool stateChanged;
+	State state;
+};
 
 //! Base class of all property classes.
 //TODO: Base class or template?
@@ -45,7 +130,8 @@ public:
 	         Permission accessPermission,
 	         const QString& propertyLabel = QString(),
 	         const QString& propertyGroup = QString(),
-	         const QDateTime& timestamp = QDateTime());
+	         const QDateTime& firstTimestamp = QDateTime());
+	Property(const BasicDefTagAttributes& attributes);
 	virtual ~Property();
 	PropertyType getType() const;
 	QString getName();
@@ -68,7 +154,6 @@ protected:
 	//! Property type
 	PropertyType type;
 
-private:
 	//! Name used to identify the property internally.
 	QString name;
 	//! Human-readable label used to represent the property in the GUI.
@@ -96,6 +181,7 @@ public:
 	             const QString& propertyLabel = QString(),
 	             const QString& propertyGroup = QString(),
 	             const QDateTime& timestamp = QDateTime());
+	TextProperty(const StandardDefTagAttributes& attributes);
 	~TextProperty();
 
 	void addElement(TextElement* element);
@@ -120,6 +206,7 @@ public:
 	               const QString& propertyLabel = QString(),
 	               const QString& propertyGroup = QString(),
 	               const QDateTime& timestamp = QDateTime());
+	NumberProperty(const StandardDefTagAttributes& attributes);
 	virtual ~NumberProperty();
 
 	void addElement(NumberElement* element);
@@ -147,6 +234,7 @@ public:
 	               const QString& propertyLabel = QString(),
 	               const QString& propertyGroup = QString(),
 	               const QDateTime& timestamp = QDateTime());
+	SwitchProperty(const DefSwitchTagAttributes& attributes);
 	virtual ~SwitchProperty();
 
 	SwitchRule getSwitchRule() const;
@@ -178,6 +266,7 @@ public:
 	              const QString& propertyLabel = QString(),
 	              const QString& propertyGroup = QString(),
 	              const QDateTime& timestamp = QDateTime());
+	LightProperty(const BasicDefTagAttributes& attributes);
 	~LightProperty();
 
 	void addElement(LightElement* element);
@@ -200,6 +289,7 @@ public:
 	             const QString& propertyLabel = QString(),
 	             const QString& propertyGroup = QString(),
 	             const QDateTime& timestamp = QDateTime());
+	BlobProperty(const StandardDefTagAttributes& attributes);
 	~BlobProperty();
 
 	void addElement(BlobElement* element);

@@ -21,6 +21,153 @@
 
 #include <QDir>
 #include <QStringList>
+#include <QDebug>
+
+
+const char* TagAttributes::VERSION = "version";
+const char* TagAttributes::DEVICE = "device";
+const char* TagAttributes::NAME = "name";
+const char* TagAttributes::LABEL = "label";
+const char* TagAttributes::GROUP = "group";
+const char* TagAttributes::STATE = "state";
+const char* TagAttributes::PERMISSION = "perm";
+const char* TagAttributes::TIMEOUT = "timeout";
+const char* TagAttributes::TIMESTAMP = "timestamp";
+const char* TagAttributes::MESSAGE = "message";
+const char* TagAttributes::FORMAT = "format";
+const char* TagAttributes::MINIMUM = "min";
+const char* TagAttributes::MAXIMUM = "max";
+const char* TagAttributes::STEP = "step";
+const char* TagAttributes::RULE = "rule";
+const char* TagAttributes::SIZE = "size";
+
+TagAttributes::TagAttributes(const QXmlStreamReader& xmlReader) : 
+    areValid(false)
+{
+	attributes = xmlReader.attributes();
+	
+	// Required attributes
+	device = attributes.value(DEVICE).toString();
+	name = attributes.value(NAME).toString();
+	if (device.isEmpty() || name.isEmpty())
+	{
+		qDebug() << "A required attribute is missing (device, name):"
+		         << device << name;
+		return;
+	}
+	
+	areValid = true;
+	
+	timeoutString = attributes.value(TIMEOUT).toString();
+	timestamp = readTimestampAttribute(attributes);
+	message = attributes.value(MESSAGE).toString();
+}
+
+QDateTime TagAttributes::readTimestampAttribute(const QXmlStreamAttributes& attributes)
+{
+	QString timestampString = attributes.value(TIMESTAMP).toString();
+	QDateTime timestamp;
+	if (!timestampString.isEmpty())
+	{
+		timestamp = QDateTime::fromString(timestampString, Qt::ISODate);
+		timestamp.setTimeSpec(Qt::UTC);
+	}
+	return timestamp;
+}
+
+BasicDefTagAttributes::BasicDefTagAttributes
+(const QXmlStreamReader& xmlReader) : 
+    TagAttributes(xmlReader)
+{
+	if (!areValid)
+		return;
+	
+	QString stateString = attributes.value(STATE).toString();
+	if (stateString == "Idle")
+		state = StateIdle;
+	else if (stateString == "Ok")
+		state = StateOk;
+	else if (stateString == "Busy")
+		state = StateBusy;
+	else if (stateString == "Alert")
+		state = StateAlert;
+	else
+	{
+		qDebug() << "Invalid value for required state attribute:"
+		         << stateString;
+		areValid = false;
+		return;
+	}
+	
+	// Other common attributes
+	label = attributes.value(LABEL).toString();
+	group = attributes.value(GROUP).toString();
+}
+
+StandardDefTagAttributes::StandardDefTagAttributes(const QXmlStreamReader& xmlReader) :
+    BasicDefTagAttributes(xmlReader)
+{
+	// The basic validity should have been evaluated by now
+	if (!areValid)
+		return;
+	
+	QString permissionString = attributes.value(PERMISSION).toString();
+	if (permissionString == "rw")
+		permission = PermissionReadWrite;
+	else if (permissionString == "wo")
+		permission = PermissionWriteOnly;
+	else if (permissionString == "ro")
+		permission = PermissionReadOnly;
+	else
+	{
+		qDebug() << "Invalid value for required permission attribute:"
+		         << permissionString;
+		areValid = false;
+	}
+}
+
+DefSwitchTagAttributes::DefSwitchTagAttributes(const QXmlStreamReader& xmlReader) :
+    StandardDefTagAttributes(xmlReader)
+{
+	// The basic validity should have been evaluated by now
+	if (!areValid)
+		return;
+	
+	QString ruleString  = attributes.value(RULE).toString();
+	if (ruleString == "OneOfMany")
+		rule = SwitchOnlyOne;
+	else if (ruleString == "AtMostOne")
+		rule = SwitchAtMostOne;
+	else if (ruleString == "AnyOfMany")
+		rule = SwitchAny;
+	else
+	{
+		qDebug() << "Invalid value for rule attribute:"
+		         << ruleString;
+		areValid = false;
+	}
+}
+
+
+SetTagAttributes::SetTagAttributes(const QXmlStreamReader& xmlReader) :
+    TagAttributes(xmlReader),
+    stateChanged(true)
+{
+	if (!areValid)
+		return;
+	
+	QString stateString = attributes.value(STATE).toString();
+	if (stateString == "Idle")
+		state = StateIdle;
+	else if (stateString == "Ok")
+		state = StateOk;
+	else if (stateString == "Busy")
+		state = StateBusy;
+	else if (stateString == "Alert")
+		state = StateAlert;
+	else
+		stateChanged = false;
+}
 
 /* ********************************************************************* */
 #if 0
@@ -33,7 +180,7 @@ Property::Property(const QString& propertyName,
 				   Permission accessPermission,
 				   const QString& propertyLabel,
 				   const QString& propertyGroup,
-				   const QDateTime& _timestamp)
+				   const QDateTime& firstTimestamp)
 {
 	name = propertyName;
 	if (propertyLabel.isEmpty())
@@ -44,7 +191,21 @@ Property::Property(const QString& propertyName,
 	group = propertyGroup;
 	permission = accessPermission;
 	state = propertyState;
-	setTimestamp(_timestamp);
+	setTimestamp(firstTimestamp);
+}
+
+Property::Property(const BasicDefTagAttributes& attributes)
+{
+	name = attributes.name;
+	if (attributes.label.isEmpty())
+		label = name;
+	else
+		label = attributes.label;
+	
+	group = attributes.group;
+	permission = PermissionReadOnly;
+	state = attributes.state;
+	setTimestamp(attributes.timestamp);
 }
 
 Property::~Property()
@@ -138,6 +299,13 @@ TextProperty::TextProperty(const QString& propertyName,
 	type = Property::TextProperty;
 }
 
+TextProperty::TextProperty(const StandardDefTagAttributes& attributes) :
+    Property(attributes)
+{
+	permission = attributes.permission;
+	type = Property::TextProperty;
+}
+
 TextProperty::~TextProperty()
 {
 	qDeleteAll(elements);
@@ -182,6 +350,13 @@ NumberProperty::NumberProperty(const QString& propertyName,
 	         propertyGroup,
 	         timestamp)
 {
+	type = Property::NumberProperty;
+}
+
+NumberProperty::NumberProperty(const StandardDefTagAttributes& attributes) :
+    Property(attributes)
+{
+	permission = attributes.permission;
 	type = Property::NumberProperty;
 }
 
@@ -255,6 +430,14 @@ SwitchProperty::SwitchProperty(const QString &propertyName,
 	type = Property::SwitchProperty;
 }
 
+SwitchProperty::SwitchProperty(const DefSwitchTagAttributes& attributes) :
+    Property(attributes)
+{
+	permission = attributes.permission;
+	rule = attributes.rule;
+	type = Property::SwitchProperty;
+}
+
 SwitchProperty::~SwitchProperty()
 {
 	qDeleteAll(elements);
@@ -322,6 +505,12 @@ LightProperty::LightProperty(const QString& propertyName,
 	type = Property::LightProperty;
 }
 
+LightProperty::LightProperty(const BasicDefTagAttributes& attributes) :
+    Property(attributes)
+{
+	type = Property::LightProperty;
+}
+
 LightProperty::~LightProperty()
 {
 	qDeleteAll(elements);
@@ -361,6 +550,13 @@ BlobProperty::BlobProperty(const QString& propertyName,
 	         propertyGroup,
 	         timestamp)
 {
+	type = Property::BlobProperty;
+}
+
+BlobProperty::BlobProperty(const StandardDefTagAttributes& attributes) :
+    Property(attributes)
+{
+	permission = attributes.permission;
 	type = Property::BlobProperty;
 }
 
