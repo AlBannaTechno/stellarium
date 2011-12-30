@@ -79,25 +79,22 @@ const char* IndiClient::SP_JNOW_COORDINATES = "EQUATORIAL_EOD_COORD";
 const char* IndiClient::SP_J2000_COORDINATES_REQUEST = "EQUATORIAL_COORD_REQUEST";
 const char* IndiClient::SP_JNOW_COORDINATES_REQUEST = "EQUATORIAL_EOD_COORD_REQUEST";
 
-IndiClient::IndiClient(const QString& _clientId,
-                       QIODevice* _ioDevice,
+IndiClient::IndiClient(const QString& newClientId,
+                       QIODevice* openIoDevice,
                        QObject* parent)
 	: QObject(parent),
-	clientId(_clientId),
-	ioDevice(0),
-	textStream(0)
+	clientId(newClientId),
+	ioDevice(0)
 {
-	if (_ioDevice == 0 ||
-		!_ioDevice->isOpen() ||
-		!_ioDevice->isReadable() ||
-		!_ioDevice->isWritable())
+	if (openIoDevice == 0 ||
+		!openIoDevice->isOpen() ||
+		!openIoDevice->isReadable() ||
+		!openIoDevice->isWritable())
 	{
 		throw std::invalid_argument(std::string("ioDevice is not ready."));
 	}
 	else
-		ioDevice = _ioDevice;
-
-	textStream = new QTextStream(ioDevice);
+		ioDevice = openIoDevice;
 
 	connect(ioDevice, SIGNAL(readyRead()),
 	        this, SLOT(handleIncomingCommands()));
@@ -117,11 +114,6 @@ IndiClient::~IndiClient()
 		disconnect(ioDevice, SIGNAL(readyRead()),
 		           this, SLOT(handleIncomingCommands()));
 	}
-
-	if (textStream)
-	{
-		delete textStream;
-	}
 }
 
 QString IndiClient::getId() const
@@ -131,10 +123,6 @@ QString IndiClient::getId() const
 
 bool IndiClient::isConnected() const
 {
-	//TODO: Rewrite
-	if (textStream == 0)
-		return false;
-
 	if (ioDevice == 0 ||
 		!ioDevice->isOpen() ||
 		!ioDevice->isReadable() ||
@@ -216,6 +204,7 @@ QHash<QString,QString> IndiClient::loadDeviceDescriptions()
 
 void IndiClient::handleIncomingCommands()
 {
+	qDebug() << "handleIncomingCommands()";
 	if (!isConnected())
 		return;
 
@@ -226,7 +215,10 @@ void IndiClient::handleIncomingCommands()
 	//buffer.remove(xmlDeclaration);
 	//xmlReader.addData(buffer);
 
-	buffer.append(textStream->readAll());
+	// TODO: Initialize the QXmlStreamReader only once...
+	QByteArray newPortion = ioDevice->readAll();
+	//qDebug() << newPortion;
+	buffer.append(newPortion);
 	QXmlStreamReader xmlReader(buffer);
 	qint64 startPos = 0, offset = 0;
 
@@ -237,7 +229,7 @@ void IndiClient::handleIncomingCommands()
 		//TODO: Is this check necessary? Will it work?
 		if (xmlReader.isEndDocument())
 		{
-			//TODO
+			qDebug() << "EOF reached?" << buffer << xmlReader.name();
 			buffer.clear();
 			break;
 		}
@@ -249,7 +241,7 @@ void IndiClient::handleIncomingCommands()
 				//Happens when the end of the current "transmission" has been
 				//reached.
 				//TODO: Better way of handling this.
-				//qDebug() << "Command segment read.";
+				qDebug() << "Command segment read.";
 				//break;
 				return;
 			}
@@ -281,67 +273,59 @@ void IndiClient::handleIncomingCommands()
 
 		offset = xmlReader.characterOffset();
 	}
+	qDebug() << "handleIncomingCommands() ends.";
 }
 
 void IndiClient::parseIndiCommand(const QString& command)
 {
+	// TODO: Use only one XML parser!
 	QXmlStreamReader xmlReader(command);
 
-	while (!xmlReader.atEnd())
+	// If we are going to use two, let's at least assume that this is well-formed XML...
+	while (xmlReader.readNextStartElement())
 	{
-		if (xmlReader.isWhitespace())
-			continue;
-
-		if (xmlReader.tokenType() == QXmlStreamReader::Invalid)
+		//TODO: Sort by frequence.
+		if (xmlReader.name() == T_DEF_TEXT_VECTOR)
 		{
-			QXmlStreamReader::Error errorCode = xmlReader.error();
-			qDebug() << errorCode << xmlReader.errorString();
-			break;
+			readTextPropertyDefinition(xmlReader);
 		}
-
-		if (xmlReader.isStartElement())
+		else if (xmlReader.name() == T_DEF_NUMBER_VECTOR)
 		{
-			//TODO: Sort by frequence.
-			if (xmlReader.name() == T_DEF_TEXT_VECTOR)
-			{
-				readTextPropertyDefinition(xmlReader);
-			}
-			else if (xmlReader.name() == T_DEF_NUMBER_VECTOR)
-			{
-				readNumberPropertyDefinition(xmlReader);
-			}
-			else if (xmlReader.name() == T_DEF_SWITCH_VECTOR)
-			{
-				readSwitchPropertyDefinition(xmlReader);
-			}
-			else if (xmlReader.name() == T_DEF_LIGHT_VECTOR)
-			{
-				readLightPropertyDefintion(xmlReader);
-			}
-			else if (xmlReader.name() == T_DEF_BLOB_VECTOR)
-			{
-				readBlobPropertyDefinition(xmlReader);
-			}
-			else if (xmlReader.name() == T_SET_NUMBER_VECTOR)
-			{
-				readNumberProperty(xmlReader);
-			}
-			else if (xmlReader.name() == T_SET_SWITCH_VECTOR)
-			{
-				readSwitchProperty(xmlReader);
-			}
-			else if (xmlReader.name() == T_SET_BLOB_VECTOR)
-			{
-				readBlobProperty(xmlReader);
-			}
-			else if (xmlReader.name() == T_MESSAGE)
-			{
-				readMessageElement(xmlReader);
-			}
-			//TODO: To be continued...
+			readNumberPropertyDefinition(xmlReader);
 		}
-
-		xmlReader.readNext();
+		else if (xmlReader.name() == T_DEF_SWITCH_VECTOR)
+		{
+			readSwitchPropertyDefinition(xmlReader);
+		}
+		else if (xmlReader.name() == T_DEF_LIGHT_VECTOR)
+		{
+			readLightPropertyDefintion(xmlReader);
+		}
+		else if (xmlReader.name() == T_DEF_BLOB_VECTOR)
+		{
+			readBlobPropertyDefinition(xmlReader);
+		}
+		else if (xmlReader.name() == T_SET_NUMBER_VECTOR)
+		{
+			readNumberProperty(xmlReader);
+		}
+		else if (xmlReader.name() == T_SET_SWITCH_VECTOR)
+		{
+			readSwitchProperty(xmlReader);
+		}
+		else if (xmlReader.name() == T_SET_BLOB_VECTOR)
+		{
+			readBlobProperty(xmlReader);
+		}
+		else if (xmlReader.name() == T_MESSAGE)
+		{
+			readMessageElement(xmlReader);
+		}
+		//TODO: To be continued...
+		else
+		{
+			xmlReader.skipCurrentElement();
+		}
 	}
 }
 
@@ -1062,9 +1046,6 @@ void IndiClient::readBlobProperty(QXmlStreamReader& xmlReader)
 void IndiClient::writeGetProperties(const QString& device,
                                     const QString& property)
 {
-	if (textStream == 0)
-		return;
-
 	if (ioDevice == 0 ||
 		!ioDevice->isOpen() ||
 		!ioDevice->isWritable())
@@ -1086,9 +1067,6 @@ void IndiClient::writeEnableBlob(SendBlobs sendBlobs,
                                  const QString& device,
                                  const QString& property)
 {
-	if (textStream == 0)
-		return;
-
 	if (ioDevice == 0 ||
 		!ioDevice->isOpen() ||
 		!ioDevice->isWritable())

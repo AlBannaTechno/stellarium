@@ -45,8 +45,8 @@ class IndiClient : public QObject
 	Q_OBJECT
 
 public:
-	IndiClient(const QString& clientId,
-	           QIODevice* ioDevice = 0,
+	IndiClient(const QString& newClientId,
+	           QIODevice* openIoDevice = 0,
 	           QObject* parent = 0);
 	~IndiClient();
 
@@ -176,14 +176,11 @@ private:
 	//! May be a QProcess or a QTcpSocket.
 	QIODevice* ioDevice;
 
-	//! \todo Do I really need this?
-	QTextStream* textStream;
-
 	//! \todo Better name...
 	//QXmlStreamReader xmlReader;
 
 	//!
-	QString buffer;
+	QByteArray buffer;
 
 	//! Represents all the named properties of a single device.
 	typedef QHash<QString,Property*> DeviceProperties;
