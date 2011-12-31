@@ -384,10 +384,12 @@ void IndiClient::readPropertyElementsDefinitions
 		else if (xmlReader.name() == elementTag)
 		{
 			QXmlStreamAttributes attributes = xmlReader.attributes();
-			QString name = attributes.value(TagAttributes::NAME).toString();
-			QString label = attributes.value(TagAttributes::LABEL).toString();
-			if (name.isEmpty())
+			E* element = new E(attributes);
+			if (!element->isValid())
+			{
+				delete element;
 				return;
+			}
 
 			QString value = readElementRawValue(xmlReader, elementTag);
 			if (value.isEmpty() && elementTag != T_DEF_BLOB)
@@ -395,67 +397,11 @@ void IndiClient::readPropertyElementsDefinitions
 				return;
 			}
 
-			E* element = new E(name, value, label);
-			property->addElement(element);
-		}
-	}
-
-	if (property->elementCount() > 0)
-	{
-		deviceProperties[device].insert(propertyName, property);
-		emit propertyDefined(clientId, device, property);
-	}
-	else
-	{
-		delete property;
-	}
-}
-
-template<>
-void IndiClient::readPropertyElementsDefinitions<NumberProperty,NumberElement>
-	(QXmlStreamReader& xmlReader,
-	 const QString& propertyName,
-	 const QString& device,
-	 NumberProperty* property,
-	 const QString& propertyTag,
-	 const QString& elementTag)
-{
-	while (true)
-	{
-		xmlReader.readNext();
-		if (xmlReader.name() == propertyTag && xmlReader.isEndElement())
-			break;
-		else if (xmlReader.name() == elementTag)
-		{
-			QXmlStreamAttributes attributes = xmlReader.attributes();
-			QString name = attributes.value(TagAttributes::NAME).toString();
-			QString label = attributes.value(TagAttributes::LABEL).toString();
-			QString format = attributes.value(TagAttributes::FORMAT).toString();
-			QString min = attributes.value(TagAttributes::MINIMUM).toString();
-			QString max = attributes.value(TagAttributes::MAXIMUM).toString();
-			QString step = attributes.value(TagAttributes::STEP).toString();
-			if (name.isEmpty() ||
-			    format.isEmpty() ||
-			    min.isEmpty() ||
-			    max.isEmpty() ||
-			    step.isEmpty())
-			{
-				qDebug() << "A required attribute is missing"
-						<< "(name, format, min, max, step):"
-						<< name << format << min << max << step;
-				xmlReader.skipCurrentElement();
-				return;
-			}
-			//TODO: Validation
-
-			QString value = readElementRawValue(xmlReader, elementTag);
-			if (value.isEmpty())
-			{
-				return;
-			}
-
-			NumberElement* numberElement = new NumberElement(name, value, format, min, max, step, label);
-			property->addElement(numberElement);
+			element->setValue(value);
+			if (!element->isEmpty())
+				property->addElement(element);
+			else
+				delete element;
 		}
 	}
 
@@ -654,9 +600,9 @@ void IndiClient::readBlobElement(QXmlStreamReader& xmlReader,
                                  BlobProperty* blobProperty)
 {
 	QXmlStreamAttributes attributes = xmlReader.attributes();
-	QString name = attributes.value(TagAttributes::NAME).toString();
-	QString size = attributes.value(TagAttributes::SIZE).toString();
-	QString format = attributes.value(TagAttributes::FORMAT).toString();
+	QString name = attributes.value(Element::A_NAME).toString();
+	QString size = attributes.value(Element::A_SIZE).toString();
+	QString format = attributes.value(Element::A_FORMAT).toString();
 	if (name.isEmpty() ||
 	    size.isEmpty() ||
 	    format.isEmpty())

@@ -34,12 +34,7 @@ const char* TagAttributes::PERMISSION = "perm";
 const char* TagAttributes::TIMEOUT = "timeout";
 const char* TagAttributes::TIMESTAMP = "timestamp";
 const char* TagAttributes::MESSAGE = "message";
-const char* TagAttributes::FORMAT = "format";
-const char* TagAttributes::MINIMUM = "min";
-const char* TagAttributes::MAXIMUM = "max";
-const char* TagAttributes::STEP = "step";
 const char* TagAttributes::RULE = "rule";
-const char* TagAttributes::SIZE = "size";
 
 TagAttributes::TagAttributes(const QXmlStreamReader& xmlReader) : 
     areValid(false)

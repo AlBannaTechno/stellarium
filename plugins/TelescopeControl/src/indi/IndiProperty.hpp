@@ -58,12 +58,7 @@ public:
 	static const char* TIMEOUT;
 	static const char* TIMESTAMP;
 	static const char* MESSAGE;
-	static const char* FORMAT;
-	static const char* MINIMUM;
-	static const char* MAXIMUM;
-	static const char* STEP;
 	static const char* RULE;
-	static const char* SIZE;
 	
 protected:
 	QXmlStreamAttributes attributes;

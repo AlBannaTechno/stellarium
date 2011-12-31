@@ -26,6 +26,15 @@
 #include <QStringList>
 #include "kzip.h"
 
+// If it turns out that I have to make a separate class for attribute parsing,
+// I'll kick myself...
+const char* Element::A_NAME = "name";
+const char* Element::A_LABEL = "label";
+const char* Element::A_FORMAT = "format";
+const char* Element::A_MINIMUM = "min";
+const char* Element::A_MAXIMUM = "max";
+const char* Element::A_STEP = "step";
+const char* Element::A_SIZE = "size";
 
 /* ********************************************************************* */
 #if 0
@@ -40,6 +49,20 @@ Element::Element(const QString &elementName, const QString &elementLabel)
 		label = name;
 	else
 		label = elementLabel;
+}
+
+Element::Element(const QXmlStreamAttributes& attributes) :
+    valid (false),
+    used (false)
+{
+	name = attributes.value(Element::A_NAME).toString();
+	if (name.isEmpty())
+		return; //TODO: Probably a debug is necessary here...
+	valid = true;
+	
+	label = attributes.value(Element::A_LABEL).toString();
+	if (label.isEmpty())
+		label = name;
 }
 
 const QString& Element::getName() const
@@ -61,6 +84,12 @@ TextElement::TextElement(const QString& elementName,
 	//
 }
 
+TextElement::TextElement(const QXmlStreamAttributes &attributes) :
+    Element(attributes)
+{
+	//
+}
+
 QString TextElement::getValue() const
 {
 	return value;
@@ -70,6 +99,7 @@ void TextElement::setValue(const QString& stringValue)
 {
 	//TODO: Validation?
 	value = stringValue;
+	used = true;
 }
 
 /* ********************************************************************* */
@@ -113,6 +143,36 @@ Element(elementName, elementLabel)
 	value = readDoubleFromString(initialValue);
 }
 
+NumberElement::NumberElement(const QXmlStreamAttributes &attributes) :
+    Element(attributes)
+{
+	if (!valid)
+		return;
+	
+	// Required attributes
+	formatString = attributes.value(Element::A_FORMAT).toString();
+	QString minString = attributes.value(Element::A_MINIMUM).toString();
+	QString maxString = attributes.value(Element::A_MAXIMUM).toString();
+	QString stepString = attributes.value(Element::A_STEP).toString();
+	if (formatString.isEmpty() ||
+	    minString.isEmpty() ||
+	    maxString.isEmpty() ||
+	    stepString.isEmpty())
+	{
+		qDebug() << "Invalid required attribute(s) in defNumber:"
+		         << "format, min, max, step"
+		         << formatString << minString << maxString << stepString;
+		valid = false;
+		return;
+	}
+	
+	// TODO: Validation of the format string
+	
+	minValue = readDoubleFromString(minString);
+	maxValue = readDoubleFromString(maxString);
+	step = readDoubleFromString(stepString);
+}
+
 double NumberElement::readDoubleFromString(const QString& string)
 {
 	if (string.isEmpty())
@@ -151,6 +211,9 @@ double NumberElement::readDoubleFromString(const QString& string)
 
 QString NumberElement::getFormattedValue() const
 {
+	if (!(valid && used))
+		return QString();
+	
 	//TODO: Optimize
 	QString formattedValue;
 	QRegExp indiFormat("^\\%(\\d+)\\.(\\d)\\m$");
@@ -223,6 +286,7 @@ void NumberElement::setValue(const QString& stringValue)
 	}
 
 	value = newValue;
+	used = true;
 }
 
 QString NumberElement::getFormatString() const
@@ -260,6 +324,13 @@ SwitchElement::SwitchElement(const QString& elementName,
 	setValue(initialValue);
 }
 
+SwitchElement::SwitchElement(const QXmlStreamAttributes &attributes) :
+    Element(attributes),
+    state(false)
+{
+	//
+}
+
 bool SwitchElement::isOn()
 {
 	return state;
@@ -268,9 +339,15 @@ bool SwitchElement::isOn()
 void SwitchElement::setValue(const QString& string)
 {
 	if (string == "On")
+	{
 		state = true;
+		used = true;
+	}
 	else if (string == "Off")
+	{
 		state = false;
+		used = true;
+	}
 	else
 		return;
 	//TODO: Output?
@@ -285,6 +362,13 @@ LightElement::LightElement(const QString& elementName,
 	setValue(initialValue);
 }
 
+LightElement::LightElement(const QXmlStreamAttributes& attributes) :
+    Element(attributes),
+    state(StateIdle)
+{
+	//
+}
+
 State LightElement::getValue() const
 {
 	return state;
@@ -293,13 +377,25 @@ State LightElement::getValue() const
 void LightElement::setValue(const QString& stringValue)
 {
 	if (stringValue == "Idle")
+	{
 		state = StateIdle;
+		used = true;
+	}
 	else if (stringValue == "Ok")
+	{
 		state = StateOk;
+		used = true;
+	}
 	else if (stringValue == "Busy")
+	{
 		state = StateBusy;
+		used = true;
+	}
 	else if (stringValue == "Alert")
+	{
 		state = StateAlert;
+		used = true;
+	}
 	else
 		return;
 }
@@ -311,6 +407,13 @@ BlobElement::BlobElement(const QString& elementName,
 	compressed(false)
 {
 	Q_UNUSED(initialValue);
+}
+
+BlobElement::BlobElement(const QXmlStreamAttributes &attributes) :
+    Element(attributes),
+    compressed(false)
+{
+	//
 }
 
 #include "zlib.h"
@@ -415,6 +518,8 @@ void BlobElement::setValue(const QString& blobSize,
 		binaryData.clear();
 	}
 }
+
+void BlobElement::setValue(const QString &){;}
 
 const QByteArray& BlobElement::getValue() const
 {

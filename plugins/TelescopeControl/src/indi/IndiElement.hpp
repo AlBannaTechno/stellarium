@@ -22,6 +22,7 @@
 
 #include <QByteArray>
 #include <QString>
+#include <QXmlStreamReader>
 
 #include <limits>
 const double DOUBLE_MAX = std::numeric_limits<double>::max();
@@ -35,13 +36,33 @@ class Element
 {
 public:
 	Element(const QString& elementName, const QString& elementLabel = QString());
+	//! Creates an element with the given attributes.
+	//! If the attributes are missing or invalid, returns an invalid Element.
+	Element(const QXmlStreamAttributes& attributes);
+	
+	virtual void setValue(const QString& stringValue) = 0;
 
 	const QString& getName() const;
 	const QString& getLabel() const;
+	//! All the required attributes have been provided in the definition.
+	//! Can return true even if the element is empty.
+	bool isValid() const {return valid;}
+	//! Returns false if the element has not been assigned a value.
+	bool isEmpty() const {return !used;}
+	
+	static const char* A_NAME;
+	static const char* A_LABEL;
+	static const char* A_FORMAT;
+	static const char* A_MINIMUM;
+	static const char* A_MAXIMUM;
+	static const char* A_STEP;
+	static const char* A_SIZE;
 
-private:
+protected:
 	QString name;
 	QString label;
+	bool valid;
+	bool used;
 };
 
 //! Sub-property representing a single string.
@@ -51,15 +72,19 @@ public:
 	TextElement(const QString& elementName,
 	            const QString& initialValue,
 	            const QString& label = QString());
+	//! This constructor does not provide an initial value.
+	//! Use setValue() after construction to pass it.
+	TextElement(const QXmlStreamAttributes& attributes);
 
-	QString getValue() const;
 	void setValue(const QString& stringValue);
+	QString getValue() const;
 
 private:
 	QString value;
 };
 
 //! Sub-property representing a single number.
+//! \todo Better handling of sexagesimal numbers.
 class NumberElement : public Element
 {
 public:
@@ -78,7 +103,12 @@ public:
 	              const QString& maximalValue,
 	              const QString& step,
 	              const QString& label = QString());
-
+	
+	//! This constructor does not provide an initial value.
+	//! Use setValue() after construction to pass it.
+	//! \todo Add validation of the format string.
+	NumberElement(const QXmlStreamAttributes& attributes);
+	
 	double getValue() const;
 	QString getFormattedValue() const;
 	void setValue(const QString& stringValue);
@@ -88,6 +118,7 @@ public:
 	double getMaxValue() const;
 	double getStep() const;
 
+	//! \todo Add error handling instead of returning 0.
 	static double readDoubleFromString(const QString& string);
 
 private:
@@ -111,6 +142,10 @@ public:
 	SwitchElement(const QString& elementName,
 				  const QString& initialValue,
 				  const QString& label = QString());
+	
+	//! This constructor does not provide an initial value.
+	//! Use setValue() after construction to pass it.
+	SwitchElement(const QXmlStreamAttributes& attributes);
 
 	bool isOn();
 	void setValue(const QString& stringValue);
@@ -127,10 +162,12 @@ public:
 	LightElement(const QString& elementName,
 	             const QString& initialValue,
 	             const QString& label = QString());
+	
+	//! This constructor does not provide an initial value.
+	//! Use setValue() after construction to pass it.
+	LightElement(const QXmlStreamAttributes& attributes);
 
 	State getValue() const;
-	//! \todo Decide what to do with the duplication with
-	//! IndiClient::readStateFromString().
 	//! \todo Decide how to handle wrong values. (At the moment if the parameter
 	//! is not recognised it ignores it).
 	void setValue(const QString& stringValue);
@@ -150,12 +187,19 @@ public:
 	BlobElement(const QString& elementName,
 	            const QString& initialValue,
 	            const QString& label = QString());
+	
+	//! This constructor does not provide an initial value.
+	//! (And BLOB shouldn't have any, so forget about setValue().)
+	BlobElement(const QXmlStreamAttributes& attributes);
 
 	//! Decodes the string to a QByteArray?
 	//! And saves it to disk? Emits a signal to the previewer?
 	void setValue(const QString& blobSize,
 	              const QString& blobFormat,
 	              const QString& blobData);
+	
+	//! Does nothing.
+	void setValue(const QString&);
 
 	//! Example: Returns the decoded data?
 	const QByteArray& getValue() const;
