@@ -620,7 +620,10 @@ void IndiClient::readBlobElement(QXmlStreamReader& xmlReader,
 		if (!value.isEmpty())
 		{
 			qDebug() << "setValue called";
-			blobProperty->getElement(name)->setValue(size, format, value);
+			BlobElement* element = blobProperty->getElement(name);
+			element->prepareToReceiveData(size, format);
+			element->receiveData(value);
+			element->finishReceivingData();
 		}
 	}
 }

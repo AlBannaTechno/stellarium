@@ -191,15 +191,17 @@ public:
 	//! This constructor does not provide an initial value.
 	//! (And BLOB shouldn't have any, so forget about setValue().)
 	BlobElement(const QXmlStreamAttributes& attributes);
-
-	//! Decodes the string to a QByteArray?
-	//! And saves it to disk? Emits a signal to the previewer?
-	void setValue(const QString& blobSize,
-	              const QString& blobFormat,
-	              const QString& blobData);
 	
 	//! Does nothing.
-	void setValue(const QString&);
+	void setValue(const QString&){;}
+	
+	//! \todo bool or void?
+	bool prepareToReceiveData(const QString& blobSize,
+	                          const QString& blobFormat);
+	//! Handle another portion of data.
+	void receiveData(const QString& dataString);
+	//! 
+	void finishReceivingData();
 
 	//! Example: Returns the decoded data?
 	const QByteArray& getValue() const;
@@ -213,9 +215,11 @@ public:
 	bool isCompressed() const {return compressed;}
 
 private:
-	QByteArray binaryData;
+	//! Original size of the current BLOB before encoding (and compression, if any).
+	int originalSize;
 	QString format;
 	bool compressed;
+	QByteArray binaryData;
 };
 
 #endif//_ELEMENT_HPP_

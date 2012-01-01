@@ -419,34 +419,43 @@ BlobElement::BlobElement(const QXmlStreamAttributes &attributes) :
 #include "zlib.h"
 #define ZLIB_CHUNK (16*1024)
 
-void BlobElement::setValue(const QString& blobSize,
-                           const QString& blobFormat,
-                           const QString& blobDataString)
+bool BlobElement::prepareToReceiveData(const QString &blobSize,
+                                       const QString &blobFormat)
 {
-	//TODO: This is just a sketch.
-	//TODO: What happens if the device deliberately sends empty data?
-	int size = blobSize.toInt();
-	if (size <= 0)
+	originalSize = blobSize.toInt();
+	if (originalSize <= 0)
 	{
-		//TODO: Debug
-		return;
+		qDebug() << "Invalid required attribute for oneBLOB:"
+		         << " size: " << blobSize;
+		return false;
 	}
 	//Length is the length of the binary file *after decompression*.
 
 	if (blobFormat.isEmpty())
 	{
-		//TODO: Debug
-		return;
+		qDebug() << "Missing required attribute for oneBLOB: format";
+		return false;
 	}
 	format = blobFormat;
+	return true;
+}
 
-	if (blobDataString.isEmpty())
-	{
-		//TODO: Debug
+//! \todo Handle partial data
+//! \todo Handle large files (with a temporary file?)
+//! \todo Add an option to ignore compression?
+void BlobElement::receiveData(const QString& dataString)
+{
+	//TODO: This actually is the code from the old "setValue" method,
+	//it needs to be made to handle partial data.
+	
+	//TODO: WTF?
+	if (dataString.isEmpty())
 		return;
-	}
-	QByteArray rawBinaryData = QByteArray::fromBase64(blobDataString.toAscii());
-
+	
+	// Decode
+	QByteArray rawBinaryData = QByteArray::fromBase64(dataString.toAscii());
+	
+	// If decompression is necessary, decompress
 	if (format.endsWith(".z"))
 	{
 		qDebug() << "Compressed blob";
@@ -510,16 +519,19 @@ void BlobElement::setValue(const QString& blobSize,
 	}
 	else
 		binaryData = rawBinaryData;
+}
 
-	if (binaryData.size() != size)
+void BlobElement::finishReceivingData()
+{
+	if (binaryData.size() != originalSize)
 	{
-		qDebug() << "BLOB size mismatch: From XML:" << size
+		qDebug() << "BLOB size mismatch: From XML:" << originalSize
 		         << "Actual data length:" << binaryData.size();
 		binaryData.clear();
 	}
+	
+	//TODO: Save to file?
 }
-
-void BlobElement::setValue(const QString &){;}
 
 const QByteArray& BlobElement::getValue() const
 {
