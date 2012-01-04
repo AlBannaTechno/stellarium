@@ -257,6 +257,96 @@ void IndiClient::handleIncomingCommands()
 		offset = xmlReader.characterOffset();
 	}
 	qDebug() << "handleIncomingCommands() ends.";
+	
+	/*
+	Pseudocode:
+	
+	value buffer (string?)
+	
+	current property ptr
+	current element ptr
+	
+	current element name
+	element values (hash)
+	
+	if starting element:
+		if defVector element:
+			clear current property
+			clear current element
+			clear element values
+			clear blob value
+			create new property
+			make it current property
+		else if defSingle
+			if current property and type matches and no current element
+				create new element
+				make it current element
+				clear value buffer
+		else if setVector
+			if anything else is being read
+				clear current property
+				clear current element
+				clear element values
+			if property is in the list
+				make current property
+				(what about the state, timestamp, etc?)
+		else if oneSingle
+			if anything else is being read
+				(raise error flag?)
+			if current property and its type matches
+				if element is BLOB
+					prepare BLOB
+				else
+					rememeber name and type as current element?
+					(create empty entry in element values?)
+		else if message
+			handle message
+		(delProperty)
+		(getProperties)
+	else if end element
+		if defVector
+			if current element
+				there has been a problem:
+				clear current element
+				clear current property
+			else if current property and it matches
+				if everything is OK
+					add property to property list
+					emit property defined
+					clear current property ptr
+				if anything is wrong
+					clear stuff
+		else if defSingle
+			if current element and it matches
+				set its accumulated value
+				add it to current property
+				clear accumulated value
+				clear current element ptr
+			(if there no current element - sign of problem? or make it a flag)
+		else if setVector
+			if current property and it matches and nothing is waiting to be read
+				update it with element values
+				(emit property changed or leave it to the property object?)
+			else
+				clear stuff
+		else if oneSingle
+			if it matches (name and type)
+				add value buffer to the entry in element values
+				clear value buffer
+				clear current element
+	else if whitespace
+		continue
+	else if characters
+		if (element value is being read)
+			if element is BLOB
+				send to BLOB
+			else 
+				add to value buffer
+		
+	TODO:
+	- check what is the difference between DTD's with "EMPTY" and those with nothing
+	- add "property tag" and "elementTag" attributes to Properties
+	*/
 }
 
 void IndiClient::parseIndiCommand(const QString& command)

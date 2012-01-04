@@ -40,6 +40,16 @@
 //! \todo Device snooping!
 //! \todo Split the Indi.hpp file. (Partially DONE.)
 //! \todo Use shared pointers.
+/*! Blueprint for device snooping if necessary on the client side:
+Tree hashes (or maps?):
+  reportpropertyto: if contains device/property, report to value
+  reportallpropertiesto: if contains device, report to value
+  reportalldevices (list?): if contains device, report to that device?
+  
+  Alternative: make device/driver an object that handles the incoming XML and emits property defined/deleted signals. Device objects are tied to device widgets, Property objects - to property widgets, snooping is done mainly with signals. (Works well for property-to-device snooping? Device-to-device will require signals between the Device object and its Property objects. All-to-device... :()
+  
+  All of that requires the properties to be parsed, validated and then written again, which is slow. Another option: send stuff to a QXmlStreamWriter during the parsing.
+  */
 class IndiClient : public QObject
 {
 	Q_OBJECT
