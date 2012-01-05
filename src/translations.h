@@ -78,6 +78,10 @@ class Translations
 		N_("Oberon");
 		N_("Pluto");
 		N_("Charon");
+		// TRANSLATORS: Moon of Pluto (II)
+		N_("Nix");
+		// TRANSLATORS: Moon of Pluto (III)
+		N_("Hydra (moon)");
 		N_("Eris");
 		N_("Triton");
 		N_("Nereid");
@@ -93,6 +97,17 @@ class Translations
 		N_("Laomedeia");
 		N_("Neso");
 		N_("Solar System Observer");
+		
+		//TNO's that are in the default ssystem.ini
+		// TRANSLATORS: TNO/Asteroid (90377) Sedna
+		N_("Sedna");
+		// TRANSLATORS: TNO/Asteroid (50000) Quaoar
+		N_("Quaoar");
+		// TRANSLATORS: TNO/Asteroid (90482) Orcus
+		N_("Orcus");
+		// TRANSLATORS: TNO/Asteroid (136108) Haumea
+		N_("Haumea");
+		
 		//Asteroids that are not in the default ssystem.ini
 		// TRANSLATORS: Asteroid (5) Astraea
 		N_("Astraea");
@@ -117,6 +132,11 @@ class Translations
 		// TRANSLATORS: Asteroid (624) Hektor
 		N_("Hektor");
 		
+		// TRANSLATORS: Name of supernova SN 1572A
+		N_("Tycho's Supernova");
+		// TRANSLATORS: Name of supernova SN 1604A
+		N_("Kepler's Supernova");
+		
 		
 		// Cardinals names
 		N_("N");	// North
@@ -125,6 +145,7 @@ class Translations
 		N_("W");	// West
 
 		// Constellation cultures
+		N_("Arabic");
 		N_("Aztec");
 		N_("Chinese");
 		N_("Egyptian");
@@ -139,81 +160,22 @@ class Translations
 		N_("Tupi-Guarani");
 		N_("Western");
 
-		///////////////////////////////////////////////////////
-		// Text UI, should be moved somewhere else at somepoint
-		N_("Set Location ");
-		N_("Set Time ");
-		N_("General ");
-		N_("Stars ");
-		N_("Colors ");
-		N_("Effects ");
-		N_("Scripts ");
-		N_("Administration ");
-		// Set location
-		N_("Latitude: ");
-		N_("Longitude: ");
-		N_("Altitude (m): ");
-		N_("Solar System Body: ");
-		// Set time
-		N_("Sky Time: ");
-		N_("Set Time Zone: ");
-		N_("Day keys: ");
-		N_("Calendar");
-		N_("Sidereal");
-		N_("Preset Sky Time: ");
-		N_("Sky Time At Start-up: ");
-		N_("Actual Time");
-		N_("Preset Time");
-		N_("Time Display Format: ");
-		N_("Date Display Format: ");
-		// General
-		N_("Sky Culture: ");
-		N_("Sky Language: ");
-		// Stars
-		N_("Show: ");
-		N_("Star Value Multiplier: ");
-		N_("Magnitude Sizing Multiplier: ");
-		N_("Maximum Magnitude to Label: ");
-		N_("Twinkling: ");
-		N_("Limiting Magnitude: ");
-		// Colors
-		N_("Constellation Lines");
-		N_("Constellation Names");
-		N_("Constellation Art Intensity");
-		N_("Constellation Boundaries");
-		N_("Cardinal Points");
-		N_("Planet Names");
-		N_("Planet Orbits");
-		N_("Planet Trails");
-		N_("Meridian Line");
-		N_("Azimuthal Grid");
-		N_("Equatorial Grid");
-		N_("Equator Line");
-		N_("Ecliptic Line");
-		N_("Nebula Names");
-		N_("Nebula Circles");
-		// Effects
-		N_("Light Pollution Luminance: ");
-		N_("Landscape: ");
-		N_("Manual zoom: ");
-		N_("Object Sizing Rule: ");
-		N_("Magnitude Scaling Multiplier: ");
-		N_("Milky Way intensity: ");
-		N_("Maximum Nebula Magnitude to Label: ");
-		N_("Zoom Duration: ");
-		N_("Cursor Timeout: ");
-		N_("Correct for light travel time: ");
-		// Scripts
-		N_("Local Script: ");
-		N_("CD/DVD Script: ");
-		N_("USB Script: ");
-		N_("Arrow down to load list.");
-		N_("Select and exit to run.");
-		// Administration
-		N_("Load Default Configuration: ");
-		N_("Save Current Configuration as Default: ");
-		N_("Shut Down: ");
-		N_("Update me via Internet: ");
-		N_("Set UI Locale: ");
+		// Landscapes names
+		// TRANSLATORS: Name of landscape
+		N_("Guereins");
+		// TRANSLATORS: Name of landscape
+		N_("Trees");
+		// TRANSLATORS: Name of landscape and Earth's satellite
+		N_("Moon");
+		// TRANSLATORS: Landscape name: Hurricane Ridge
+		N_("Hurricane");
+		// TRANSLATORS: Name of landscape
+		N_("Ocean");
+		// TRANSLATORS: Landscape name: Garching bei Munchen
+		N_("Garching");
+		// TRANSLATORS: Name of landscape and planet
+		N_("Mars");
+		// TRANSLATORS: Name of landscape and planet
+		N_("Saturn");
 	}
 };

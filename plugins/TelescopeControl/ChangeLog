@@ -2,9 +2,17 @@
 Added (experimental) support for the Celestron Ultima 2000 GOTO telescope
 (may also include support for Celestron 16-bit commands).
 
-[0.3.0]
 Added (experimental) support for the ServoCAT GOTO kit (may also include
 read-only support for the Sky Commander digital setting cirlce).
+
+[0.3.0]
+Minor code cleanup.
+Partial translation.
+Fixed local IP connections not being recognized by the telescope configuration
+window. (LP: #843837)
+
+[0.2.2]
+?
 
 [0.2.1]
 Code cleanup and refactoring.

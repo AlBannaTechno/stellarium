@@ -61,9 +61,11 @@ public:
 	//! \param flags a set of InfoStringGroup items to include in the return value.
 	//! \return a QString containing an HMTL encoded description of the Comet.
 	virtual QString getInfoString(const StelCore *core, const InfoStringGroup &flags) const;
-	virtual QString getType() const {return "Comet";}
+	//The Comet class inherits the "Planet" type because the SolarSystem class
+	//was not designed to handle different types of objects.
+	//virtual QString getType() const {return "Comet";}
 	//! \todo Find better sources for the g,k system
-	virtual float getVMagnitude(const StelCore* core) const;
+	virtual float getVMagnitude(const StelCore* core, bool withExtinction=false) const;
 
 	//! \brief sets absolute magnitude and slope parameter.
 	//! These are the parameters in the IAU's two-parameter magnitude system

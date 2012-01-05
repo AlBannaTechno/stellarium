@@ -73,6 +73,10 @@ void ViewDialog::languageChanged()
 		ui->retranslateUi(dialog);
 		shootingStarsZHRChanged();
 		populateLists();
+
+		//Hack to shrink the tabs to optimal size after language change
+		//by causing the list items to be laid out again.
+		ui->stackListWidget->setWrapping(false);
 	}
 }
 
@@ -237,10 +241,25 @@ void ViewDialog::createDialogContent()
 	connect(a, SIGNAL(toggled(bool)), ui->showMeridianLineCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showMeridianLineCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
+	ui->showHorizonLineCheckBox->setChecked(glmgr->getFlagHorizonLine());
+	a = gui->getGuiActions("actionShow_Horizon_Line");
+	connect(a, SIGNAL(toggled(bool)), ui->showHorizonLineCheckBox, SLOT(setChecked(bool)));
+	connect(ui->showHorizonLineCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
+
 	ui->showEquatorialGridCheckBox->setChecked(glmgr->getFlagEquatorGrid());
 	a = gui->getGuiActions("actionShow_Equatorial_Grid");
 	connect(a, SIGNAL(toggled(bool)), ui->showEquatorialGridCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showEquatorialGridCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
+
+	ui->showGalacticGridCheckBox->setChecked(glmgr->getFlagGalacticGrid());
+	a = gui->getGuiActions("actionShow_Galactic_Grid");
+	connect(a, SIGNAL(toggled(bool)), ui->showGalacticGridCheckBox, SLOT(setChecked(bool)));
+	connect(ui->showGalacticGridCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
+
+	ui->showGalacticPlaneLineCheckBox->setChecked(glmgr->getFlagGalacticPlaneLine());
+	a = gui->getGuiActions("actionShow_Galactic_Plane_Line");
+	connect(a, SIGNAL(toggled(bool)), ui->showGalacticPlaneLineCheckBox, SLOT(setChecked(bool)));
+	connect(ui->showGalacticPlaneLineCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
 	ui->showAzimuthalGridCheckBox->setChecked(glmgr->getFlagAzimuthalGrid());
 	a = gui->getGuiActions("actionShow_Azimuthal_Grid");
@@ -333,8 +352,23 @@ void ViewDialog::populateLists()
 	l->blockSignals(true);
 	l->clear();
 	LandscapeMgr* lmgr = GETSTELMODULE(LandscapeMgr);
-	l->addItems(lmgr->getAllLandscapeNames());
-	l->setCurrentItem(l->findItems(lmgr->getCurrentLandscapeName(), Qt::MatchExactly).at(0));
+	QStringList landscapeList = lmgr->getAllLandscapeNames();
+	foreach (const QString landscapeId, landscapeList)
+	{
+		QString label = q_(landscapeId);
+		QListWidgetItem* item = new QListWidgetItem(label);
+		item->setData(Qt::UserRole, landscapeId);
+		l->addItem(item);
+	}
+	QString selectedLandscapeId = lmgr->getCurrentLandscapeName();
+	for (int i = 0; i < l->count(); i++)
+	{
+		if (l->item(i)->data(Qt::UserRole).toString() == selectedLandscapeId)
+		{
+			l->setCurrentRow(i);
+			break;
+		}
+	}
 	l->blockSignals(false);
 	ui->landscapeTextBrowser->setHtml(lmgr->getCurrentLandscapeHtmlDescription());
 	ui->useAsDefaultLandscapeCheckBox->setChecked(lmgr->getDefaultLandscapeID()==lmgr->getCurrentLandscapeID());
@@ -386,7 +420,12 @@ void ViewDialog::updateSkyCultureText()
 	QString descPath;
 	try
 	{
-		descPath = StelFileMgr::findFile("skycultures/" + StelApp::getInstance().getSkyCultureMgr().getCurrentSkyCultureID() + "/description."+StelApp::getInstance().getLocaleMgr().getAppLanguage()+".utf8");
+                QString lang = StelApp::getInstance().getLocaleMgr().getAppLanguage();
+                if (!QString("pt_BR zh_CN zh_HK zh_TW").contains(lang)) 
+                {
+                        lang = lang.split("_").at(0);
+                }
+                descPath = StelFileMgr::findFile("skycultures/" + StelApp::getInstance().getSkyCultureMgr().getCurrentSkyCultureID() + "/description."+lang+".utf8");
 	}
 	catch (std::runtime_error& e)
 	{
@@ -437,7 +476,7 @@ void ViewDialog::projectionChanged(const QString& projectionNameI18n)
 void ViewDialog::landscapeChanged(QListWidgetItem* item)
 {
 	LandscapeMgr* lmgr = GETSTELMODULE(LandscapeMgr);
-	lmgr->setCurrentLandscapeName(item->text());
+	lmgr->setCurrentLandscapeName(item->data(Qt::UserRole).toString());
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 	Q_ASSERT(gui);
 	ui->landscapeTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
