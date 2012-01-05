@@ -1,9 +1,10 @@
-[0.3.1]
-Added (experimental) support for the Celestron Ultima 2000 GOTO telescope
-(may also include support for Celestron 16-bit commands).
-
+[branch]
 Added (experimental) support for the ServoCAT GOTO kit (may also include
 read-only support for the Sky Commander digital setting cirlce).
+Experimented with support for the Celestron Ultima 2000 GOTO telescope
+(may also include support for Celestron 16-bit commands). The experiment was
+unsuccessfull. The code was removed at local revision 4866 (the files can be
+re-added with the merge command - see the Bazaar documentation/use Google).
 
 [0.3.0]
 Minor code cleanup.
