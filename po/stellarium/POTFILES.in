@@ -40,10 +40,14 @@ src/ui_AtmosphereDialog.h
 plugins/AngleMeasure/src/AngleMeasure.cpp
 plugins/CompassMarks/src/CompassMarks.cpp
 plugins/Oculars/src/Oculars.cpp
+plugins/Oculars/src/gui/OcularsGuiPanel.cpp
+plugins/Oculars/src/ui_ocularDialog.h
 plugins/Satellites/src/Satellites.cpp
 plugins/Satellites/src/Satellite.cpp
 plugins/Satellites/src/gui/SatellitesDialog.cpp
+plugins/Satellites/src/gui/SatellitesImportDialog.cpp
 plugins/Satellites/src/ui_satellitesDialog.h
+plugins/Satellites/src/ui_satellitesImportDialog.h
 plugins/TelescopeControl/src/TelescopeControl.cpp
 plugins/TelescopeControl/src/gui/TelescopeConfigurationDialog.cpp
 plugins/TelescopeControl/src/gui/TelescopeDialog.cpp
@@ -58,6 +62,7 @@ plugins/TimeZoneConfiguration/src/ui_timeZoneConfigurationWindow.h
 plugins/TextUserInterface/src/TextUserInterface.cpp
 plugins/TextUserInterface/src/TuiNodeBool.cpp
 plugins/TextUserInterface/src/TuiNodeColor.cpp
+plugins/TextUserInterface/src/TuiNodeActivate.cpp
 plugins/SolarSystemEditor/src/SolarSystemEditor.cpp
 #plugins/SolarSystemEditor/src/gui/ManualImportWindow.cpp
 plugins/SolarSystemEditor/src/gui/MpcImportWindow.cpp
@@ -67,3 +72,5 @@ plugins/SolarSystemEditor/src/ui_mpcImportWindow.h
 plugins/SolarSystemEditor/src/ui_solarSystemManagerWindow.h
 plugins/Supernovae/src/Supernovae.cpp
 plugins/Supernovae/src/Supernova.cpp
+plugins/Quasars/src/Quasars.cpp
+plugins/Quasars/src/Quasar.cpp

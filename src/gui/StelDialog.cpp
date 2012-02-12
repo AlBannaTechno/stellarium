@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
 
@@ -115,12 +115,18 @@ void StelDialog::setVisible(bool v)
 
 		proxy = new CustomProxy(NULL, Qt::Tool);
 		proxy->setWidget(dialog);
-		QRectF bound = proxy->boundingRect();
+		QSizeF size = proxy->size();
 
 		// centre with dialog according to current window size.
-		proxy->setPos((int)((screenSize.width()-bound.width())/2), (int)((screenSize.height()-bound.height())/2));
+		int newX = (int)((screenSize.width() - size.width())/2);
+		int newY = (int)((screenSize.height() - size.height())/2);
+		// Make sure that the window's title bar is accessible
+		if (newY <-0)
+			newY = 0;
+		proxy->setPos(newX, newY);
 		StelMainGraphicsView::getInstance().scene()->addItem(proxy);
 		proxy->setWindowFrameMargins(2,0,2,2);
+		// (this also changes the bounding rectangle size)
 
 		// The caching is buggy on all plateforms with Qt 4.5.2
 		proxy->setCacheMode(QGraphicsItem::ItemCoordinateCache);

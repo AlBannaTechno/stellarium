@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
 #include "Dialog.hpp"
@@ -44,7 +44,9 @@
 #include "StarMgr.hpp"
 #include "NebulaMgr.hpp"
 #include "GridLinesMgr.hpp"
+#ifndef DISABLE_SCRIPTING
 #include "StelScriptMgr.hpp"
+#endif
 #include "LabelMgr.hpp"
 #include "ScreenImageMgr.hpp"
 #include "SkyGui.hpp"
@@ -86,7 +88,9 @@ void ConfigurationDialog::languageChanged()
 
 		//Script information
 		//(trigger re-displaying the description of the current item)
+		#ifndef DISABLE_SCRIPTING
 		scriptSelectionChanged(ui->scriptListWidget->currentItem()->text());
+		#endif
 
 		//Plug-in information
 		populatePluginsList();
@@ -163,6 +167,7 @@ void ConfigurationDialog::createDialogContent()
 
 	ui->todayTimeSpinBox->setTime(core->getInitTodayTime());
 	connect(ui->todayTimeSpinBox, SIGNAL(timeChanged(QTime)), core, SLOT(setInitTodayTime(QTime)));
+	ui->fixedDateTimeEdit->setMinimumDate(QDate(100,1,1));
 	ui->fixedDateTimeEdit->setDateTime(StelUtils::jdToQDateTime(core->getPresetSkyTime()));
 	connect(ui->fixedDateTimeEdit, SIGNAL(dateTimeChanged(QDateTime)), core, SLOT(setPresetSkyTime(QDateTime)));
 
@@ -207,6 +212,7 @@ void ConfigurationDialog::createDialogContent()
 	connect(ui->invertScreenShotColorsCheckBox, SIGNAL(toggled(bool)), &StelMainGraphicsView::getInstance(), SLOT(setFlagInvertScreenShotColors(bool)));
 
 	// script tab controls
+	#ifndef DISABLE_SCRIPTING
 	StelScriptMgr& scriptMgr = StelMainGraphicsView::getInstance().getScriptMgr();
 	connect(ui->scriptListWidget, SIGNAL(currentTextChanged(const QString&)), this, SLOT(scriptSelectionChanged(const QString&)));
 	connect(ui->runScriptButton, SIGNAL(clicked()), this, SLOT(runScriptClicked()));
@@ -220,6 +226,7 @@ void ConfigurationDialog::createDialogContent()
 	ui->scriptListWidget->setSortingEnabled(true);
 	populateScriptsList();
 	connect(this, SIGNAL(visibleChanged(bool)), this, SLOT(populateScriptsList()));
+	#endif
 
 	// plugins control
 	connect(ui->pluginsListWidget, SIGNAL(currentTextChanged(const QString&)), this, SLOT(pluginsSelectionChanged(const QString&)));
@@ -381,6 +388,8 @@ void ConfigurationDialog::saveCurrentViewOptions()
 	conf->setValue("viewing/flag_meridian_line", glmgr->getFlagMeridianLine());
 	conf->setValue("viewing/flag_horizon_line", glmgr->getFlagHorizonLine());
 	conf->setValue("viewing/flag_equatorial_J2000_grid", glmgr->getFlagEquatorJ2000Grid());
+	conf->setValue("viewing/flag_galactic_grid", glmgr->getFlagGalacticGrid());
+	conf->setValue("viewing/flag_galactic_plane_line", glmgr->getFlagGalacticPlaneLine());
 	conf->setValue("viewing/flag_cardinal_points", lmgr->getFlagCardinalsPoints());
 	conf->setValue("viewing/flag_constellation_drawing", cmgr->getFlagLines());
 	conf->setValue("viewing/flag_constellation_name", cmgr->getFlagLabels());
@@ -461,8 +470,11 @@ void ConfigurationDialog::saveCurrentViewOptions()
 	conf->setValue("video/fullscreen", StelMainWindow::getInstance().getFullScreen());
 	if (!StelMainWindow::getInstance().getFullScreen())
 	{
-		conf->setValue("video/screen_w", StelMainWindow::getInstance().size().width());
-		conf->setValue("video/screen_h", StelMainWindow::getInstance().size().height());
+		StelMainWindow& mainWindow = StelMainWindow::getInstance();
+		conf->setValue("video/screen_w", mainWindow.size().width());
+		conf->setValue("video/screen_h", mainWindow.size().height());
+		conf->setValue("video/screen_x", mainWindow.x());
+		conf->setValue("video/screen_y", mainWindow.y());
 	}
 
 	// clear the restore defaults flag if it is set.
@@ -578,12 +590,13 @@ void ConfigurationDialog::loadAtStartupChanged(int state)
 	}
 }
 
+#ifndef DISABLE_SCRIPTING
 void ConfigurationDialog::populateScriptsList(void)
 {
-	int prevSel = ui->scriptListWidget->currentRow();
-	StelScriptMgr& scriptMgr = StelMainGraphicsView::getInstance().getScriptMgr();
-	ui->scriptListWidget->clear();
-	ui->scriptListWidget->addItems(scriptMgr.getScriptList());
+	int prevSel = ui->scriptListWidget->currentRow();	
+	StelScriptMgr& scriptMgr = StelMainGraphicsView::getInstance().getScriptMgr();	
+	ui->scriptListWidget->clear();	
+	ui->scriptListWidget->addItems(scriptMgr.getScriptList());	
 	// If we had a valid previous selection (i.e. not first time we populate), restore it
 	if (prevSel >= 0 && prevSel < ui->scriptListWidget->count())
 		ui->scriptListWidget->setCurrentRow(prevSel);
@@ -594,44 +607,49 @@ void ConfigurationDialog::populateScriptsList(void)
 void ConfigurationDialog::scriptSelectionChanged(const QString& s)
 {
 	if (s.isEmpty())
-		return;
-	StelScriptMgr& scriptMgr = StelMainGraphicsView::getInstance().getScriptMgr();
+		return;	
+	StelScriptMgr& scriptMgr = StelMainGraphicsView::getInstance().getScriptMgr();	
 	//ui->scriptInfoBrowser->document()->setDefaultStyleSheet(QString(StelApp::getInstance().getCurrentStelStyle()->htmlStyleSheet));
 	QString html = "<html><head></head><body>";
-	html += "<h2>" + q_(scriptMgr.getName(s)) + "</h2>";
-	html += "<h3>" + q_("Author") + ": " + scriptMgr.getAuthor(s) + "</h3>";
-	html += "<h3>" + q_("License") + ": " + scriptMgr.getLicense(s) + "</h3>";
-	QString d = scriptMgr.getDescription(s);
+	html += "<h2>" + q_(scriptMgr.getName(s).trimmed()) + "</h2>";
+	if (!scriptMgr.getAuthor(s).trimmed().isEmpty())
+	{
+		html += "<h3>" + q_("Author") + ": " + scriptMgr.getAuthor(s) + "</h3>";
+	}
+	if (!scriptMgr.getLicense(s).trimmed().isEmpty())
+	{
+		html += "<h3>" + q_("License") + ": " + scriptMgr.getLicense(s) + "</h3>";
+	}
+	QString d = scriptMgr.getDescription(s).trimmed();
 	d.replace("\n", "<br />");
 	html += "<p>" + q_(d) + "</p>";
-	html += "</body></html>";
-	ui->scriptInfoBrowser->setHtml(html);
+	html += "</body></html>";	
+	ui->scriptInfoBrowser->setHtml(html);	
 }
 
 void ConfigurationDialog::runScriptClicked(void)
 {
 	if (ui->closeWindowAtScriptRunCheckbox->isChecked())
-		this->close();
-
+		this->close();	
 	StelScriptMgr& scriptMgr = StelMainGraphicsView::getInstance().getScriptMgr();
 	if (ui->scriptListWidget->currentItem())
 	{
 		scriptMgr.runScript(ui->scriptListWidget->currentItem()->text());
-	}
+	}	
 }
 
 void ConfigurationDialog::stopScriptClicked(void)
 {
 	GETSTELMODULE(LabelMgr)->deleteAllLabels();
-	GETSTELMODULE(ScreenImageMgr)->deleteAllImages();
-	StelMainGraphicsView::getInstance().getScriptMgr().stopScript();
+	GETSTELMODULE(ScreenImageMgr)->deleteAllImages();	
+	StelMainGraphicsView::getInstance().getScriptMgr().stopScript();	
 }
 
 void ConfigurationDialog::aScriptIsRunning(void)
-{
+{	
 	ui->scriptStatusLabel->setText(q_("Running script: ") + StelMainGraphicsView::getInstance().getScriptMgr().runningScriptId());
 	ui->runScriptButton->setEnabled(false);
-	ui->stopScriptButton->setEnabled(true);
+	ui->stopScriptButton->setEnabled(true);	
 }
 
 void ConfigurationDialog::aScriptHasStopped(void)
@@ -640,6 +658,7 @@ void ConfigurationDialog::aScriptHasStopped(void)
 	ui->runScriptButton->setEnabled(true);
 	ui->stopScriptButton->setEnabled(false);
 }
+#endif
 
 
 void ConfigurationDialog::setFixedDateTimeToCurrent(void)
