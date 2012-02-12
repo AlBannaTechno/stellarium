@@ -26,13 +26,12 @@
 #include <QStringList>
 #include "StelStyle.hpp"
 
-//#include "StelDialog.hpp"
-#include "StelDialogTelescopeControl.hpp"
+#include "StelDialog.hpp"
 
 class Ui_widgetSlew;
 class TelescopeControl;
 
-class SlewWindow : public StelDialogTelescopeControl
+class SlewWindow : public StelDialog
 {
 	Q_OBJECT
 public:

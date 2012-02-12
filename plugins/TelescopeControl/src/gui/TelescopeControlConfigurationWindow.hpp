@@ -27,8 +27,7 @@
 #include <QModelIndex>
 #include <QStandardItemModel>
 
-//#include "StelDialog.hpp"
-#include "StelDialogTelescopeControl.hpp"
+#include "StelDialog.hpp"
 #include "TelescopeControlGlobals.hpp"
 #include "TelescopePropertiesWindow.hpp"
 
@@ -40,7 +39,7 @@ class TelescopeControl;
 
 //! The configuration window of the TelescopeControl plug-in.
 //! \author Bogdan Marinov
-class TelescopeControlConfigurationWindow : public StelDialogTelescopeControl
+class TelescopeControlConfigurationWindow : public StelDialog
 {
 	Q_OBJECT
 public:

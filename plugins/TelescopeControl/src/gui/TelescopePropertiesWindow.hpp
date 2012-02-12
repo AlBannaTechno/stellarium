@@ -29,8 +29,7 @@
 #include <QAxObject>
 #endif
 
-//#include "StelDialog.hpp"
-#include "StelDialogTelescopeControl.hpp"
+#include "StelDialog.hpp"
 #include "TelescopeControlGlobals.hpp"
 
 using namespace TelescopeControlGlobals;
@@ -39,7 +38,7 @@ class Ui_widgetTelescopeProperties;
 class TelescopeControl;
 class StelStyle;
 
-class TelescopePropertiesWindow : public StelDialogTelescopeControl
+class TelescopePropertiesWindow : public StelDialog
 {
 	Q_OBJECT
 public:

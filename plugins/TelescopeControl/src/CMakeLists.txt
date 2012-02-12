@@ -38,8 +38,6 @@ SET(TelescopeControl_SRCS
   gui/TelescopeControlConfigurationWindow.cpp
   gui/TelescopePropertiesWindow.hpp
   gui/TelescopePropertiesWindow.cpp
-  gui/StelDialogTelescopeControl.hpp
-  gui/StelDialogTelescopeControl.cpp
   gui/DeviceControlPanel.hpp
   gui/DeviceControlPanel.cpp
   gui/IndiDeviceWidget.hpp
@@ -119,7 +117,6 @@ SET(TelescopeControl_MOC_HDRS
   clients/TelescopeClientIndiLocal.hpp
   clients/TelescopeClientIndiTcp.hpp
   clients/TelescopeClientIndiPointer.hpp
-  gui/StelDialogTelescopeControl.hpp
   gui/TelescopePropertiesWindow.hpp
   gui/TelescopeControlConfigurationWindow.hpp
   gui/DeviceControlPanel.hpp
