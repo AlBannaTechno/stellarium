@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifdef ENABLE_STRATOSCRIPT_COMPAT
@@ -114,25 +114,27 @@ bool StelScriptMgr::preprocessStratoScript(QFile& input, QString& output, const 
 			if (args.at(1) == "atmosphere")
 				line = QString("LandscapeMgr.setFlagAtmosphere(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "azimuthal_grid")
-				line = QString("GridLinesMgr.setFlagAzimuthalGrid(%1);").arg(strToBool(args.at(2)));
+				line = QString("GridLinesMgr.setAzimuthalGridDisplayed(%1);").arg(strToBool(args.at(2)));
+			else if (args.at(1) == "galactic_grid")
+				line = QString("GridLinesMgr.setGalacticGridDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "cardinal_points")
 				line = QString("LandscapeMgr.setFlagCardinalsPoints(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "constellation_art")
-				line = QString("ConstellationMgr.setFlagArt(%1);").arg(strToBool(args.at(2)));
+				line = QString("ConstellationMgr.setArtDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "constellation_boundaries")
-				line = QString("ConstellationMgr.setFlagBoundaries(%1);").arg(strToBool(args.at(2)));
+				line = QString("ConstellationMgr.setBoundariesDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "constellation_drawing" || args.at(1) == "constellations")
-				line = QString("ConstellationMgr.setFlagLines(%1);").arg(strToBool(args.at(2)));
+				line = QString("ConstellationMgr.setLinesDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "constellation_names")
-				line = QString("ConstellationMgr.setFlagLabels(%1);").arg(strToBool(args.at(2)));
+				line = QString("ConstellationMgr.setNamesDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "constellation_pick")
-				line = QString("ConstellationMgr.setFlagIsolateSelected(%1);").arg(strToBool(args.at(2)));
+				line = QString("ConstellationMgr.setIsolateSelected(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "ecliptic_line")
-				line = QString("GridLinesMgr.setFlagEclipticLine(%1);").arg(strToBool(args.at(2)));
+				line = QString("GridLinesMgr.setEclipticLineDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "equator_line")
-				line = QString("GridLinesMgr.setFlagEquatorLine(%1);").arg(strToBool(args.at(2)));
+				line = QString("GridLinesMgr.setEquatorLineDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "equator_grid")
-				line = QString("GridLinesMgr.setFlagEquatorGrid(%1);").arg(strToBool(args.at(2)));
+				line = QString("GridLinesMgr.setEquatorGridDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "fog")
 				line = QString("LandscapeMgr.setFlagFog(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "gravity_labels") // TODO when in new script API
@@ -144,7 +146,11 @@ bool StelScriptMgr::preprocessStratoScript(QFile& input, QString& output, const 
 			else if (args.at(1) == "landscape_sets_location")
 				line = QString("LandscapeMgr.setFlagLandscapeSetsLocation(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "meridian_line")
-				line = QString("GridLinesMgr.setFlagMeridianLine(%1);").arg(strToBool(args.at(2)));
+				line = QString("GridLinesMgr.setMeridianLineDisplayed(%1);").arg(strToBool(args.at(2)));
+			else if (args.at(1) == "horizon_line")
+				line = QString("GridLinesMgr.setHorizonLineDisplayed(%1);").arg(strToBool(args.at(2)));
+			else if (args.at(1) == "galactic_plane_line")
+				line = QString("GridLinesMgr.setGalacticPlaneLineDisplayed(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "milky_way")
 				line = QString("MilkyWay.setFlagShow(%1);").arg(strToBool(args.at(2)));
 			else if (args.at(1) == "nebulae")

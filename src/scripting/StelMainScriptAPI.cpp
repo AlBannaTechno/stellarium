@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "StelMainScriptAPI.hpp"
@@ -571,17 +571,20 @@ void StelMainScriptAPI::clear(const QString& state)
 		ssmgr->setFlagMoonScale(false);
 		ssmgr->setFlagTrails(false);
 		mmgr->setZHR(10);
-		glmgr->setFlagAzimuthalGrid(false);
-		glmgr->setFlagEquatorGrid(false);
-		glmgr->setFlagEquatorLine(false);
-		glmgr->setFlagEclipticLine(false);
-		glmgr->setFlagMeridianLine(false);
-		glmgr->setFlagEquatorJ2000Grid(false);
+		glmgr->setAzimuthalGridDisplayed(false);
+		glmgr->setGalacticGridDisplayed(false);
+		glmgr->setEquatorGridDisplayed(false);
+		glmgr->setEquatorLineDisplayed(false);
+		glmgr->setEclipticLineDisplayed(false);
+		glmgr->setMeridianLineDisplayed(false);
+		glmgr->setHorizonLineDisplayed(false);
+		glmgr->setGalacticPlaneLineDisplayed(false);
+		glmgr->setEquatorJ2000GridDisplayed(false);
 		lmgr->setFlagCardinalsPoints(false);
-		cmgr->setFlagLines(false);
-		cmgr->setFlagLabels(false);
-		cmgr->setFlagBoundaries(false);
-		cmgr->setFlagArt(false);
+		cmgr->setLinesDisplayed(false);
+		cmgr->setNamesDisplayed(false);
+		cmgr->setBoundariesDisplayed(false);
+		cmgr->setArtDisplayed(false);
 		smgr->setFlagLabels(false);
 		ssmgr->setFlagLabels(false);
 		nmgr->setFlagHints(false);
@@ -600,17 +603,20 @@ void StelMainScriptAPI::clear(const QString& state)
 		ssmgr->setFlagMoonScale(false);
 		ssmgr->setFlagTrails(false);
 		mmgr->setZHR(0);
-		glmgr->setFlagAzimuthalGrid(false);
-		glmgr->setFlagEquatorGrid(true);
-		glmgr->setFlagEquatorLine(false);
-		glmgr->setFlagEclipticLine(false);
-		glmgr->setFlagMeridianLine(false);
-		glmgr->setFlagEquatorJ2000Grid(false);
+		glmgr->setAzimuthalGridDisplayed(false);
+		glmgr->setGalacticGridDisplayed(false);
+		glmgr->setEquatorGridDisplayed(true);
+		glmgr->setEquatorLineDisplayed(false);
+		glmgr->setEclipticLineDisplayed(false);
+		glmgr->setMeridianLineDisplayed(false);
+		glmgr->setHorizonLineDisplayed(false);
+		glmgr->setGalacticPlaneLineDisplayed(false);
+		glmgr->setEquatorJ2000GridDisplayed(false);
 		lmgr->setFlagCardinalsPoints(false);
-		cmgr->setFlagLines(true);
-		cmgr->setFlagLabels(true);
-		cmgr->setFlagBoundaries(true);
-		cmgr->setFlagArt(false);
+		cmgr->setLinesDisplayed(true);
+		cmgr->setNamesDisplayed(true);
+		cmgr->setBoundariesDisplayed(true);
+		cmgr->setArtDisplayed(false);
 		smgr->setFlagLabels(true);
 		ssmgr->setFlagLabels(true);
 		nmgr->setFlagHints(true);
@@ -629,17 +635,20 @@ void StelMainScriptAPI::clear(const QString& state)
 		ssmgr->setFlagMoonScale(false);
 		ssmgr->setFlagTrails(false);
 		mmgr->setZHR(0);
-		glmgr->setFlagAzimuthalGrid(false);
-		glmgr->setFlagEquatorGrid(false);
-		glmgr->setFlagEquatorLine(false);
-		glmgr->setFlagEclipticLine(false);
-		glmgr->setFlagMeridianLine(false);
-		glmgr->setFlagEquatorJ2000Grid(false);
+		glmgr->setAzimuthalGridDisplayed(false);
+		glmgr->setGalacticGridDisplayed(false);
+		glmgr->setEquatorGridDisplayed(false);
+		glmgr->setEquatorLineDisplayed(false);
+		glmgr->setEclipticLineDisplayed(false);
+		glmgr->setMeridianLineDisplayed(false);
+		glmgr->setHorizonLineDisplayed(false);
+		glmgr->setGalacticPlaneLineDisplayed(false);
+		glmgr->setEquatorJ2000GridDisplayed(false);
 		lmgr->setFlagCardinalsPoints(false);
-		cmgr->setFlagLines(false);
-		cmgr->setFlagLabels(false);
-		cmgr->setFlagBoundaries(false);
-		cmgr->setFlagArt(false);
+		cmgr->setLinesDisplayed(false);
+		cmgr->setNamesDisplayed(false);
+		cmgr->setBoundariesDisplayed(false);
+		cmgr->setArtDisplayed(false);
 		smgr->setFlagLabels(false);
 		ssmgr->setFlagLabels(false);
 		nmgr->setFlagHints(false);
