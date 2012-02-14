@@ -80,6 +80,10 @@ void DeviceControlPanel::createDialogContent()
 	ui->verticalLayout->addWidget(splitter);
 	splitter->show();
 	
+	collapsed = false;
+	connect(ui->foldWindowButton, SIGNAL(clicked(bool)),
+	        this, SLOT(collapseWindow(bool)));
+	
 	//TEST
 	/*
 	logMessage("Does everything look OK?");
@@ -98,6 +102,28 @@ void DeviceControlPanel::createDialogContent()
 	sp.addElement(se2);
 	deviceWidget->defineProperty(&sp);
 	deviceTabWidget->addTab(deviceWidget, "Simulated");*/
+}
+
+void DeviceControlPanel::collapseWindow(bool collapse)
+{
+	if (collapse && !collapsed)
+	{
+		splitter->setVisible(false);
+		// Force re-calculation of the layout-controlled dialog->minimumSize()
+		ui->verticalLayout->activate();
+		QSize size = dialog->size();
+		size.setHeight(ui->TitleBar->height());
+		dialog->resize(size);
+		collapsed = true;
+	}
+	else if (collapsed && !collapse)
+	{
+		QSize size = dialog->size();
+		size.setHeight(ui->TitleBar->height() + splitter->height());
+		dialog->resize(size);
+		splitter->setVisible(true);
+		collapsed = false;
+	}
 }
 
 void DeviceControlPanel::updateStyle()

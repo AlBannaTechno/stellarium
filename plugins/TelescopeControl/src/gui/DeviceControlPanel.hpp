@@ -85,8 +85,11 @@ private:
 	//! All device widgets displayed in this control panel.
 	QHash<DeviceId, IndiDeviceWidget*> deviceWidgets;
 	
+	bool collapsed;
+	
 private slots:
-	//
+	//! Collapses the window to its title bar.
+	void collapseWindow(bool collapse);
 };
 
 #endif //_DEVICE_CONTROL_PANEL_HPP_
