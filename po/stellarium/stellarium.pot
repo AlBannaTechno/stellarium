@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-02-15 19:32+0700\n"
+"POT-Creation-Date: 2012-02-15 19:54+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2457,6 +2457,7 @@ msgstr ""
 
 #: src/ui_locationDialogGui.h:387
 #: plugins/TextUserInterface/src/TextUserInterface.cpp:133
+#: plugins/PrintSky/src/gui/PrintSkyDialog.cpp:345
 msgid "Location"
 msgstr ""
 
@@ -5246,10 +5247,6 @@ msgstr ""
 
 #: plugins/PrintSky/src/gui/PrintSkyDialog.cpp:339
 msgid "CHART INFORMATION"
-msgstr ""
-
-#: plugins/PrintSky/src/gui/PrintSkyDialog.cpp:345
-msgid "Location:"
 msgstr ""
 
 #: plugins/PrintSky/src/gui/PrintSkyDialog.cpp:352
