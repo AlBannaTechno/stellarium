@@ -95,11 +95,13 @@ QString TextElement::getValue() const
 	return value;
 }
 
-void TextElement::setValue(const QString& stringValue)
+bool TextElement::setValue(const QString& stringValue)
 {
 	//TODO: Validation?
 	value = stringValue;
 	used = true;
+	
+	return true;
 }
 
 /* ********************************************************************* */
@@ -264,15 +266,15 @@ double NumberElement::getValue() const
 	return value;
 }
 
-void NumberElement::setValue(const QString& stringValue)
+bool NumberElement::setValue(const QString& stringValue)
 {
 	double newValue = readDoubleFromString(stringValue);
 	if (newValue < minValue)
-		return;
+		return false;
 
 	//If maxValue == minValue, it should be ignored per the INDI specification.
 	if (maxValue > minValue && newValue > maxValue)
-		return;
+		return false;
 
 	//If step is 0, it should be ignored per the INDI specification.
 	//TODO: Doesn't work very well for non-integers.
@@ -282,11 +284,12 @@ void NumberElement::setValue(const QString& stringValue)
 	{
 		double remainder = fmod((newValue - minValue), step);
 		if (qFuzzyCompare(remainder+1, 0.0+1))
-			return;
+			return false;
 	}
 
 	value = newValue;
 	used = true;
+	return true;
 }
 
 QString NumberElement::getFormatString() const
@@ -336,20 +339,22 @@ bool SwitchElement::isOn()
 	return state;
 }
 
-void SwitchElement::setValue(const QString& string)
+bool SwitchElement::setValue(const QString& string)
 {
 	if (string == "On")
 	{
 		state = true;
 		used = true;
+		return true;
 	}
 	else if (string == "Off")
 	{
 		state = false;
 		used = true;
+		return true;
 	}
 	else
-		return;
+		return false;
 	//TODO: Output?
 }
 
@@ -374,30 +379,34 @@ State LightElement::getValue() const
 	return state;
 }
 
-void LightElement::setValue(const QString& stringValue)
+bool LightElement::setValue(const QString& stringValue)
 {
 	if (stringValue == "Idle")
 	{
 		state = StateIdle;
 		used = true;
+		return true;
 	}
 	else if (stringValue == "Ok")
 	{
 		state = StateOk;
 		used = true;
+		return true;
 	}
 	else if (stringValue == "Busy")
 	{
 		state = StateBusy;
 		used = true;
+		return true;
 	}
 	else if (stringValue == "Alert")
 	{
 		state = StateAlert;
 		used = true;
+		return true;
 	}
 	else
-		return;
+		return false;
 }
 
 BlobElement::BlobElement(const QString& elementName,

@@ -40,7 +40,9 @@ public:
 	//! If the attributes are missing or invalid, returns an invalid Element.
 	Element(const QXmlStreamAttributes& attributes);
 	
-	virtual void setValue(const QString& stringValue) = 0;
+	//! Used to pass a raw value to be parsed.
+	//! \returns true if a valid value has been assigned.
+	virtual bool setValue(const QString& stringValue) = 0;
 
 	const QString& getName() const;
 	const QString& getLabel() const;
@@ -48,7 +50,10 @@ public:
 	//! Can return true even if the element is empty.
 	bool isValid() const {return valid;}
 	//! Returns false if the element has not been assigned a value.
+	//! \todo I don't remember right now why I have added this. It's used only once and that use can be replaced by setValue() returning a bool. I'm going to remove it if after I finish the rest no purpose is obvious.
 	bool isEmpty() const {return !used;}
+	//! \returns true if the element is a BLOB.
+	virtual bool isBlob() const {return false;}
 	
 	static const char* A_NAME;
 	static const char* A_LABEL;
@@ -76,7 +81,7 @@ public:
 	//! Use setValue() after construction to pass it.
 	TextElement(const QXmlStreamAttributes& attributes);
 
-	void setValue(const QString& stringValue);
+	bool setValue(const QString& stringValue);
 	QString getValue() const;
 
 private:
@@ -111,7 +116,7 @@ public:
 	
 	double getValue() const;
 	QString getFormattedValue() const;
-	void setValue(const QString& stringValue);
+	bool setValue(const QString& stringValue);
 
 	QString getFormatString() const;
 	double getMinValue() const;
@@ -148,7 +153,7 @@ public:
 	SwitchElement(const QXmlStreamAttributes& attributes);
 
 	bool isOn();
-	void setValue(const QString& stringValue);
+	bool setValue(const QString& stringValue);
 
 private:
 	//! State of the switch. True is "on", false is "off". :)
@@ -170,7 +175,7 @@ public:
 	State getValue() const;
 	//! \todo Decide how to handle wrong values. (At the moment if the parameter
 	//! is not recognised it ignores it).
-	void setValue(const QString& stringValue);
+	bool setValue(const QString& stringValue);
 
 private:
 	State state;
@@ -193,7 +198,9 @@ public:
 	BlobElement(const QXmlStreamAttributes& attributes);
 	
 	//! Does nothing.
-	void setValue(const QString&){;}
+	bool setValue(const QString&) {return true;}
+	
+	bool isBlob() const {return true;}
 	
 	//! \todo bool or void?
 	bool prepareToReceiveData(const QString& blobSize,

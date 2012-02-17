@@ -1,7 +1,7 @@
 /*
  * Qt-based INDI wire protocol client
  * 
- * Copyright (C) 2010-2011 Bogdan Marinov
+ * Copyright (C) 2010-2012 Bogdan Marinov
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -129,9 +129,10 @@ public:
 	Property(const BasicDefTagAttributes& attributes);
 	virtual ~Property();
 	PropertyType getType() const;
-	QString getName();
-	QString getLabel();
-	QString getGroup();
+	QString getName() const;
+	QString getLabel() const;
+	QString getGroup() const;
+	QString getDevice() const;
 	bool isReadable();
 	bool isWritable();
 	Permission getPermission() const;
@@ -139,8 +140,40 @@ public:
 	State getCurrentState() const;
 	QDateTime getTimestamp() const;
 	qint64 getTimestampInMilliseconds() const;
+	virtual void addElement(Element* element) = 0;
 	virtual int elementCount() const = 0;
 	virtual QStringList getElementNames() const = 0;
+	
+	virtual const char* defVectorTag() const = 0;
+	virtual const char* setVectorTag() const = 0;
+	virtual const char* defElementTag() const = 0;
+	virtual const char* oneElementTag() const = 0;
+	
+	// INDI tag names
+	static const char* T_DEF_TEXT_VECTOR;
+	static const char* T_DEF_NUMBER_VECTOR;
+	static const char* T_DEF_SWITCH_VECTOR;
+	static const char* T_DEF_LIGHT_VECTOR;
+	static const char* T_DEF_BLOB_VECTOR;
+	static const char* T_SET_TEXT_VECTOR;
+	static const char* T_SET_NUMBER_VECTOR;
+	static const char* T_SET_SWITCH_VECTOR;
+	static const char* T_SET_LIGHT_VECTOR;
+	static const char* T_SET_BLOB_VECTOR;
+	static const char* T_NEW_TEXT_VECTOR;
+	static const char* T_NEW_NUMBER_VECTOR;
+	static const char* T_NEW_SWITCH_VECTOR;
+	static const char* T_NEW_BLOB_VECTOR;
+	static const char* T_DEF_TEXT;
+	static const char* T_DEF_NUMBER;
+	static const char* T_DEF_SWITCH;
+	static const char* T_DEF_LIGHT;
+	static const char* T_DEF_BLOB;
+	static const char* T_ONE_TEXT;
+	static const char* T_ONE_NUMBER;
+	static const char* T_ONE_SWITCH;
+	static const char* T_ONE_LIGHT;
+	static const char* T_ONE_BLOB;
 
 protected:
 	//! Sets the timestamp value. If necessary, reinterprets the data as UTC.
@@ -156,6 +189,8 @@ protected:
 	QString label;
 	//! Group name.
 	QString group;
+	//! Device name.
+	QString device;
 	//! Permission limiting client-side actions on this property.
 	Permission permission;
 	//! Current state of the property
@@ -179,11 +214,17 @@ public:
 	TextProperty(const StandardDefTagAttributes& attributes);
 	~TextProperty();
 
+	void addElement(Element* element);
 	void addElement(TextElement* element);
 	TextElement* getElement(const QString& name);
 
 	int elementCount() const;
 	QStringList getElementNames() const;
+	
+	const char* defVectorTag() const {return T_DEF_TEXT_VECTOR;}
+	const char* defElementTag() const {return T_DEF_TEXT;}
+	const char* setVectorTag() const {return T_SET_TEXT_VECTOR;}
+	const char* oneElementTag() const {return T_ONE_TEXT;}
 
 private:
 	QHash<QString,TextElement*> elements;
@@ -204,6 +245,7 @@ public:
 	NumberProperty(const StandardDefTagAttributes& attributes);
 	virtual ~NumberProperty();
 
+	void addElement(Element* element);
 	void addElement(NumberElement* element);
 	NumberElement* getElement(const QString& name);
 	void update(const QHash<QString,QString>& newValues,
@@ -214,6 +256,11 @@ public:
 	int elementCount() const;
 	QStringList getElementNames() const;
 
+	const char* defVectorTag() const {return T_DEF_NUMBER_VECTOR;}
+	const char* defElementTag() const {return T_DEF_NUMBER;}
+	const char* setVectorTag() const {return T_SET_NUMBER_VECTOR;}
+	const char* oneElementTag() const {return T_ONE_NUMBER;}
+	
 private:
 	QHash<QString,NumberElement*> elements;
 };
@@ -234,6 +281,7 @@ public:
 
 	SwitchRule getSwitchRule() const;
 
+	void addElement(Element* element);
 	void addElement(SwitchElement* element);
 	//! Ignores the SwitchRule - everything is supposed to be checked on the
 	//! device side.
@@ -245,6 +293,11 @@ public:
 	SwitchElement* getElement(const QString& name);
 	int elementCount() const;
 	QStringList getElementNames() const;
+	
+	const char* defVectorTag() const {return T_DEF_SWITCH_VECTOR;}
+	const char* defElementTag() const {return T_DEF_SWITCH;}
+	const char* setVectorTag() const {return T_SET_SWITCH_VECTOR;}
+	const char* oneElementTag() const {return T_ONE_SWITCH;}
 
 private:
 	SwitchRule rule;
@@ -264,11 +317,17 @@ public:
 	LightProperty(const BasicDefTagAttributes& attributes);
 	~LightProperty();
 
+	void addElement(Element* element);
 	void addElement(LightElement* element);
 	LightElement* getElement(const QString& name);
 
 	int elementCount() const;
 	QStringList getElementNames() const;
+	
+	const char* defVectorTag() const {return T_DEF_LIGHT_VECTOR;}
+	const char* defElementTag() const {return T_DEF_LIGHT;}
+	const char* setVectorTag() const {return T_SET_LIGHT_VECTOR;}
+	const char* oneElementTag() const {return T_ONE_LIGHT;}
 
 private:
 	QHash<QString,LightElement*> elements;
@@ -287,15 +346,20 @@ public:
 	BlobProperty(const StandardDefTagAttributes& attributes);
 	~BlobProperty();
 
+	void addElement(Element* element);
 	void addElement(BlobElement* element);
 	BlobElement* getElement(const QString& name);
 
 	void update(const QDateTime& timestamp);
 	void update(const QDateTime& timestamp, State newState);
 
-
 	int elementCount() const;
 	QStringList getElementNames() const;
+	
+	const char* defVectorTag() const {return T_DEF_BLOB_VECTOR;}
+	const char* defElementTag() const {return T_DEF_BLOB;}
+	const char* setVectorTag() const {return T_SET_BLOB_VECTOR;}
+	const char* oneElementTag() const {return T_ONE_BLOB;}
 
 private:
 	QHash<QString,BlobElement*> elements;

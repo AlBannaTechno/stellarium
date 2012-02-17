@@ -23,6 +23,7 @@
 #include <QDateTime>
 #include <QHash>
 #include <QObject>
+#include <QSet>
 #include <QSignalMapper>
 #include <QString>
 #include <QTextStream>
@@ -78,30 +79,6 @@ public:
 	static const char* T_DEL_PROPERTY;
 	static const char* T_ENABLE_BLOB;
 	static const char* T_MESSAGE;
-	static const char* T_DEF_TEXT_VECTOR;
-	static const char* T_DEF_NUMBER_VECTOR;
-	static const char* T_DEF_SWITCH_VECTOR;
-	static const char* T_DEF_LIGHT_VECTOR;
-	static const char* T_DEF_BLOB_VECTOR;
-	static const char* T_SET_TEXT_VECTOR;
-	static const char* T_SET_NUMBER_VECTOR;
-	static const char* T_SET_SWITCH_VECTOR;
-	static const char* T_SET_LIGHT_VECTOR;
-	static const char* T_SET_BLOB_VECTOR;
-	static const char* T_NEW_TEXT_VECTOR;
-	static const char* T_NEW_NUMBER_VECTOR;
-	static const char* T_NEW_SWITCH_VECTOR;
-	static const char* T_NEW_BLOB_VECTOR;
-	static const char* T_DEF_TEXT;
-	static const char* T_DEF_NUMBER;
-	static const char* T_DEF_SWITCH;
-	static const char* T_DEF_LIGHT;
-	static const char* T_DEF_BLOB;
-	static const char* T_ONE_TEXT;
-	static const char* T_ONE_NUMBER;
-	static const char* T_ONE_SWITCH;
-	static const char* T_ONE_LIGHT;
-	static const char* T_ONE_BLOB;
 
 	//INDI standard properties
 	//TODO: Move to the telescope client?
@@ -154,7 +131,7 @@ signals:
 	void messageReceived(const QString& deviceName, const QDateTime& timestamp, const QString& message);
 
 private slots:
-	void handleIncomingCommands();
+	void parseStreamData();
 	//! Example log message handling function.
 	void logMessage(const QString& deviceName,
 	                const QDateTime& timestamp,
@@ -166,38 +143,69 @@ private:
 
 	//! May be a QProcess or a QTcpSocket.
 	QIODevice* ioDevice;
-
-	//! \todo Better name...
-	//QXmlStreamReader xmlReader;
-
-	//!
-	QByteArray buffer;
-
+	
 	//! Represents all the named properties of a single device.
 	typedef QHash<QString,Property*> DeviceProperties;
 	//! The properties of all named devices.
 	QHash<QString,DeviceProperties> deviceProperties;
-
-	//!
-	void parseIndiCommand(const QString& command);
-
 	//! Returns the property matching the \b device and \b name attributes.
 	//! \returns 0 if no such property exists.
 	Property* getProperty(const SetTagAttributes& attributes);
+	
+	//! \todo Think of a better way to do these or make them static.
+	QSet<QString> defVectorTags;
+	QSet<QString> setVectorTags;
+	QSet<QString> defElementTags;
+	QSet<QString> oneElementTags;
+	
+	//! Tag name of the property/vector being parsed at the moment.
+	//! Empty if no property is being parsed.
+	//! Used to match start tag to end tag.
+	QString currentPropertyTag;
+	//! Tag name of the property element being parsed at the moment.
+	//! Empty if no property element is being parsed.
+	//! Used to match start tag to end tag.
+	QString currentElementTag;
+	//! The Property being parsed at the moment.
+	//! 0 if no INDI vector is being parsed.
+	Property* currentProperty;
+	//! The Element being parsed at the moment.
+	//! 0 if no Element is being parsed.
+	Element* currentElement;
+	//! Buffer for the value of the property element being read.
+	QString currentElementValue;
+	//! Used when defining property elements.
+	QList<Element*> definedElements;
+	//! Used when updating property values.
+	QHash<QString,QString> elementsValues;
+	//!
+	bool definitionInProgress;
+	//! 
+	void resetParserState();
+	
+	//! Read a property vector definition and create one at currentProperty.
+	//! No validation - make sure that currentProperty is null, etc.
+	void readPropertyVectorDefinition(const QString& tag);
+	//! Read a property element definition and create one at currentElement.
+	//! No validation - make sure that currentElement is null, etc.
+	void readPropertyElementDefinition(const QString& tag);
+	//...
+	//! Read a message tag.
+	void readMessage();
+
+	//! \todo Better name...
+	QXmlStreamReader xmlReader;
+
+	//!
+	QByteArray buffer;
+
+	//! \obsolete
+	void parseIndiCommand(const QString& command);
+	
+	//! 
+
 	//! Emits messageReceived() if the \b message attribute is not empty.
 	void handleMessageAttribute(const TagAttributes& attributes);
-	//!
-	void readMessageElement(QXmlStreamReader& xmlReader);
-	//!
-	void readTextPropertyDefinition(QXmlStreamReader& xmlReader);
-	//!
-	void readNumberPropertyDefinition(QXmlStreamReader& xmlReader);
-	//!
-	void readSwitchPropertyDefinition(QXmlStreamReader& xmlReader);
-	//!
-	void readLightPropertyDefintion(QXmlStreamReader& xmlReader);
-	//!
-	void readBlobPropertyDefinition(QXmlStreamReader& xmlReader);
 	//!
 	template<class P,class E> void readPropertyElementsDefinitions
 		(QXmlStreamReader& xmlReader,

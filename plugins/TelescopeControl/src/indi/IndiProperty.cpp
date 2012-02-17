@@ -164,6 +164,31 @@ SetTagAttributes::SetTagAttributes(const QXmlStreamReader& xmlReader) :
 		stateChanged = false;
 }
 
+const char* Property::T_DEF_TEXT_VECTOR = "defTextVector";
+const char* Property::T_DEF_NUMBER_VECTOR = "defNumberVector";
+const char* Property::T_DEF_SWITCH_VECTOR = "defSwitchVector";
+const char* Property::T_DEF_LIGHT_VECTOR = "defLightVector";
+const char* Property::T_DEF_BLOB_VECTOR = "defBLOBVector";
+const char* Property::T_SET_TEXT_VECTOR = "setTextVector";
+const char* Property::T_SET_NUMBER_VECTOR = "setNumberVector";
+const char* Property::T_SET_SWITCH_VECTOR = "setSwitchVector";
+const char* Property::T_SET_LIGHT_VECTOR = "setLightVector";
+const char* Property::T_SET_BLOB_VECTOR = "setBLOBVector";
+const char* Property::T_NEW_TEXT_VECTOR = "newTextVector";
+const char* Property::T_NEW_NUMBER_VECTOR = "newNumberVector";
+const char* Property::T_NEW_SWITCH_VECTOR = "newSwitchVector";
+const char* Property::T_NEW_BLOB_VECTOR = "newBLOBVector";
+const char* Property::T_DEF_TEXT = "defText";
+const char* Property::T_DEF_NUMBER = "defNumber";
+const char* Property::T_DEF_SWITCH = "defSwitch";
+const char* Property::T_DEF_LIGHT = "defLight";
+const char* Property::T_DEF_BLOB = "defBLOB";
+const char* Property::T_ONE_TEXT = "oneText";
+const char* Property::T_ONE_NUMBER = "oneNumber";
+const char* Property::T_ONE_SWITCH = "oneSwitch";
+const char* Property::T_ONE_LIGHT = "oneLight";
+const char* Property::T_ONE_BLOB = "oneBLOB";
+
 /* ********************************************************************* */
 #if 0
 #pragma mark -
@@ -212,19 +237,24 @@ Property::PropertyType Property::getType() const
 	return type;
 }
 
-QString Property::getName()
+QString Property::getName() const
 {
 	return name;
 }
 
-QString Property::getLabel()
+QString Property::getLabel() const
 {
 	return label;
 }
 
-QString Property::getGroup()
+QString Property::getGroup() const
 {
 	return group;
+}
+
+QString Property::getDevice() const
+{
+	return device;
 }
 
 bool Property::isReadable()
@@ -306,6 +336,13 @@ TextProperty::~TextProperty()
 	qDeleteAll(elements);
 }
 
+void TextProperty::addElement(Element* element)
+{
+	TextElement* newElement = 0;
+	if (newElement = dynamic_cast<TextElement*>(element))
+		elements.insert(newElement->getName(), newElement);
+}
+
 void TextProperty::addElement(TextElement* element)
 {
 	elements.insert(element->getName(), element);
@@ -358,6 +395,13 @@ NumberProperty::NumberProperty(const StandardDefTagAttributes& attributes) :
 NumberProperty::~NumberProperty()
 {
 	qDeleteAll(elements);
+}
+
+void NumberProperty::addElement(Element* element)
+{
+	NumberElement* newElement = 0;
+	if (newElement = dynamic_cast<NumberElement*>(element))
+		elements.insert(newElement->getName(), newElement);
 }
 
 void NumberProperty::addElement(NumberElement* element)
@@ -443,6 +487,13 @@ SwitchRule SwitchProperty::getSwitchRule() const
 	return rule;
 }
 
+void SwitchProperty::addElement(Element* element)
+{
+	SwitchElement* newElement = 0;
+	if (newElement = dynamic_cast<SwitchElement*>(element))
+		elements.insert(newElement->getName(), newElement);
+}
+
 void SwitchProperty::addElement(SwitchElement* element)
 {
 	elements.insert(element->getName(), element);
@@ -511,6 +562,13 @@ LightProperty::~LightProperty()
 	qDeleteAll(elements);
 }
 
+void LightProperty::addElement(Element* element)
+{
+	LightElement* newElement = 0;
+	if (newElement = dynamic_cast<LightElement*>(element))
+		elements.insert(newElement->getName(), newElement);
+}
+
 void LightProperty::addElement(LightElement* element)
 {
 	elements.insert(element->getName(), element);
@@ -568,6 +626,13 @@ int BlobProperty::elementCount() const
 QStringList BlobProperty::getElementNames() const
 {
 	return elements.keys();
+}
+
+void BlobProperty::addElement(Element *element)
+{
+	BlobElement* newElement = 0;
+	if (newElement = dynamic_cast<BlobElement*>(element))
+		elements.insert(newElement->getName(), newElement);
 }
 
 void BlobProperty::addElement(BlobElement* element)
