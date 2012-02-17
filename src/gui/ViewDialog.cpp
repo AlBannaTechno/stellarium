@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
 
@@ -66,13 +66,17 @@ ViewDialog::~ViewDialog()
         atmosphereDialog = NULL;
 }
 
-void ViewDialog::languageChanged()
+void ViewDialog::retranslate()
 {
 	if (dialog)
 	{
 		ui->retranslateUi(dialog);
 		shootingStarsZHRChanged();
 		populateLists();
+
+		//Hack to shrink the tabs to optimal size after language change
+		//by causing the list items to be laid out again.
+		ui->stackListWidget->setWrapping(false);
 	}
 }
 
@@ -87,7 +91,7 @@ void ViewDialog::styleChanged()
 void ViewDialog::createDialogContent()
 {
 	ui->setupUi(dialog);
-	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 
 	// Set the Sky tab activated by default
 	ui->stackedWidget->setCurrentIndex(0);
@@ -222,37 +226,47 @@ void ViewDialog::createDialogContent()
 
 	// Grid and lines
 	GridLinesMgr* glmgr = GETSTELMODULE(GridLinesMgr);
-	ui->showEquatorLineCheckBox->setChecked(glmgr->getFlagEquatorLine());
+	ui->showEquatorLineCheckBox->setChecked(glmgr->isEquatorLineDisplayed());
 	a = gui->getGuiActions("actionShow_Equator_Line");
 	connect(a, SIGNAL(toggled(bool)), ui->showEquatorLineCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showEquatorLineCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showEclipticLineCheckBox->setChecked(glmgr->getFlagEclipticLine());
+	ui->showEclipticLineCheckBox->setChecked(glmgr->isEclipticLineDisplayed());
 	a = gui->getGuiActions("actionShow_Ecliptic_Line");
 	connect(a, SIGNAL(toggled(bool)), ui->showEclipticLineCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showEclipticLineCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showMeridianLineCheckBox->setChecked(glmgr->getFlagMeridianLine());
+	ui->showMeridianLineCheckBox->setChecked(glmgr->isMeridianLineDisplayed());
 	a = gui->getGuiActions("actionShow_Meridian_Line");
 	connect(a, SIGNAL(toggled(bool)), ui->showMeridianLineCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showMeridianLineCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showHorizonLineCheckBox->setChecked(glmgr->getFlagHorizonLine());
+	ui->showHorizonLineCheckBox->setChecked(glmgr->isHorizonLineDisplayed());
 	a = gui->getGuiActions("actionShow_Horizon_Line");
 	connect(a, SIGNAL(toggled(bool)), ui->showHorizonLineCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showHorizonLineCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showEquatorialGridCheckBox->setChecked(glmgr->getFlagEquatorGrid());
+	ui->showEquatorialGridCheckBox->setChecked(glmgr->isEquatorGridDisplayed());
 	a = gui->getGuiActions("actionShow_Equatorial_Grid");
 	connect(a, SIGNAL(toggled(bool)), ui->showEquatorialGridCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showEquatorialGridCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showAzimuthalGridCheckBox->setChecked(glmgr->getFlagAzimuthalGrid());
+	ui->showGalacticGridCheckBox->setChecked(glmgr->isGalacticGridDisplayed());
+	a = gui->getGuiActions("actionShow_Galactic_Grid");
+	connect(a, SIGNAL(toggled(bool)), ui->showGalacticGridCheckBox, SLOT(setChecked(bool)));
+	connect(ui->showGalacticGridCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
+
+	ui->showGalacticPlaneLineCheckBox->setChecked(glmgr->isGalacticPlaneLineDisplayed());
+	a = gui->getGuiActions("actionShow_Galactic_Plane_Line");
+	connect(a, SIGNAL(toggled(bool)), ui->showGalacticPlaneLineCheckBox, SLOT(setChecked(bool)));
+	connect(ui->showGalacticPlaneLineCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
+
+	ui->showAzimuthalGridCheckBox->setChecked(glmgr->isAzimuthalGridDisplayed());
 	a = gui->getGuiActions("actionShow_Azimuthal_Grid");
 	connect(a, SIGNAL(toggled(bool)), ui->showAzimuthalGridCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showAzimuthalGridCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showEquatorialJ2000GridCheckBox->setChecked(glmgr->getFlagEquatorJ2000Grid());
+	ui->showEquatorialJ2000GridCheckBox->setChecked(glmgr->isEquatorJ2000GridDisplayed());
 	a = gui->getGuiActions("actionShow_Equatorial_J2000_Grid");
 	connect(a, SIGNAL(toggled(bool)), ui->showEquatorialJ2000GridCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showEquatorialJ2000GridCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
@@ -265,22 +279,22 @@ void ViewDialog::createDialogContent()
 	// Constellations
 	ConstellationMgr* cmgr = GETSTELMODULE(ConstellationMgr);
 
-	ui->showConstellationLinesCheckBox->setChecked(cmgr->getFlagLines());
+	ui->showConstellationLinesCheckBox->setChecked(cmgr->isLinesDisplayed());
 	a = gui->getGuiActions("actionShow_Constellation_Lines");
 	connect(a, SIGNAL(toggled(bool)), ui->showConstellationLinesCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showConstellationLinesCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showConstellationLabelsCheckBox->setChecked(cmgr->getFlagLabels());
+	ui->showConstellationLabelsCheckBox->setChecked(cmgr->isNamesDisplayed());
 	a = gui->getGuiActions("actionShow_Constellation_Labels");
 	connect(a, SIGNAL(toggled(bool)), ui->showConstellationLabelsCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showConstellationLabelsCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showConstellationBoundariesCheckBox->setChecked(cmgr->getFlagBoundaries());
+	ui->showConstellationBoundariesCheckBox->setChecked(cmgr->isBoundariesDisplayed());
 	a = gui->getGuiActions("actionShow_Constellation_Boundaries");
 	connect(a, SIGNAL(toggled(bool)), ui->showConstellationBoundariesCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showConstellationBoundariesCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
 
-	ui->showConstellationArtCheckBox->setChecked(cmgr->getFlagArt());
+	ui->showConstellationArtCheckBox->setChecked(cmgr->isArtDisplayed());
 	a = gui->getGuiActions("actionShow_Constellation_Art");
 	connect(a, SIGNAL(toggled(bool)), ui->showConstellationArtCheckBox, SLOT(setChecked(bool)));
 	connect(ui->showConstellationArtCheckBox, SIGNAL(toggled(bool)), a, SLOT(setChecked(bool)));
@@ -338,8 +352,23 @@ void ViewDialog::populateLists()
 	l->blockSignals(true);
 	l->clear();
 	LandscapeMgr* lmgr = GETSTELMODULE(LandscapeMgr);
-	l->addItems(lmgr->getAllLandscapeNames());
-	l->setCurrentItem(l->findItems(lmgr->getCurrentLandscapeName(), Qt::MatchExactly).at(0));
+	QStringList landscapeList = lmgr->getAllLandscapeNames();
+	foreach (const QString landscapeId, landscapeList)
+	{
+		QString label = q_(landscapeId);
+		QListWidgetItem* item = new QListWidgetItem(label);
+		item->setData(Qt::UserRole, landscapeId);
+		l->addItem(item);
+	}
+	QString selectedLandscapeId = lmgr->getCurrentLandscapeName();
+	for (int i = 0; i < l->count(); i++)
+	{
+		if (l->item(i)->data(Qt::UserRole).toString() == selectedLandscapeId)
+		{
+			l->setCurrentRow(i);
+			break;
+		}
+	}
 	l->blockSignals(false);
 	ui->landscapeTextBrowser->setHtml(lmgr->getCurrentLandscapeHtmlDescription());
 	ui->useAsDefaultLandscapeCheckBox->setChecked(lmgr->getDefaultLandscapeID()==lmgr->getCurrentLandscapeID());
@@ -391,7 +420,12 @@ void ViewDialog::updateSkyCultureText()
 	QString descPath;
 	try
 	{
-		descPath = StelFileMgr::findFile("skycultures/" + StelApp::getInstance().getSkyCultureMgr().getCurrentSkyCultureID() + "/description."+StelApp::getInstance().getLocaleMgr().getAppLanguage()+".utf8");
+                QString lang = StelApp::getInstance().getLocaleMgr().getAppLanguage();
+                if (!QString("pt_BR zh_CN zh_HK zh_TW").contains(lang)) 
+                {
+                        lang = lang.split("_").at(0);
+                }
+                descPath = StelFileMgr::findFile("skycultures/" + StelApp::getInstance().getSkyCultureMgr().getCurrentSkyCultureID() + "/description."+lang+".utf8");
 	}
 	catch (std::runtime_error& e)
 	{
@@ -442,7 +476,7 @@ void ViewDialog::projectionChanged(const QString& projectionNameI18n)
 void ViewDialog::landscapeChanged(QListWidgetItem* item)
 {
 	LandscapeMgr* lmgr = GETSTELMODULE(LandscapeMgr);
-	lmgr->setCurrentLandscapeName(item->text());
+	lmgr->setCurrentLandscapeName(item->data(Qt::UserRole).toString());
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 	Q_ASSERT(gui);
 	ui->landscapeTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));

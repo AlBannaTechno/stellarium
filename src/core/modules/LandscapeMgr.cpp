@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include <QDebug>
@@ -239,7 +239,7 @@ void LandscapeMgr::update(double deltaTime)
 	else
 		landscapeBrightness = (0.01 + 1.5*(sinSunAngleRad+0.1/1.5));
 	if (moonPos[2] > -0.1/1.5)
-		landscapeBrightness += qMax(0.2/-12.*ssystem->getMoon()->getVMagnitude(core),0.)*moonPos[2];
+		landscapeBrightness += qMax(0.2/-12.*ssystem->getMoon()->getVMagnitude(core, true),0.)*moonPos[2];
 
 	// TODO make this more generic for non-atmosphere planets
 	if(atmosphere->getFadeIntensity() == 1)
@@ -481,8 +481,6 @@ QString LandscapeMgr::getCurrentLandscapeName() const
 
 QString LandscapeMgr::getCurrentLandscapeHtmlDescription() const
 {
-	SolarSystem* ssmgr = GETSTELMODULE(SolarSystem);
-	QString planetName = ssmgr->searchByEnglishName(landscape->getLocation().planetName)->getNameI18n();
 	QString desc = getDescription();
 	desc+="<p>";
 	desc+="<b>"+q_("Author: ")+"</b>";
@@ -494,9 +492,10 @@ QString LandscapeMgr::getCurrentLandscapeHtmlDescription() const
 		desc += StelUtils::radToDmsStrAdapt(landscape->getLocation().longitude * M_PI/180.);
 		desc += "/" + StelUtils::radToDmsStrAdapt(landscape->getLocation().latitude *M_PI/180.);
 		desc += QString(q_(", %1 m")).arg(landscape->getLocation().altitude);
-		if (planetName!="")
+		QString planetName = landscape->getLocation().planetName;
+		if (!planetName.isEmpty())
 		{
-			desc += "<br><b>"+q_("Planet: ")+"</b>"+planetName;
+			desc += "<br><b>"+q_("Planet: ")+"</b>"+ q_(planetName);
 		}
 		desc += "<br><br>";
 	}
@@ -963,7 +962,11 @@ quint64 LandscapeMgr::loadLandscapeSize(QString landscapeID)
 
 QString LandscapeMgr::getDescription() const
 {
-	QString lang = StelApp::getInstance().getLocaleMgr().getAppLanguage();
+        QString lang = StelApp::getInstance().getLocaleMgr().getAppLanguage();
+        if (!QString("pt_BR zh_CN zh_HK zh_TW").contains(lang))
+        {
+                lang = lang.split("_").at(0);
+        }
 	QString descriptionFile = StelFileMgr::findFile("landscapes/" + getCurrentLandscapeID(), StelFileMgr::Directory) + "/description." + lang + ".utf8";
 	QString desc;
 

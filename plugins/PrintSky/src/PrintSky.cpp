@@ -43,15 +43,12 @@ StelModule* PrintSkyStelPluginInterface::getStelModule() const
 
 StelPluginInfo PrintSkyStelPluginInterface::getPluginInfo() const
 {
-	// Allow to load the resources when used as a static plugin
-	Q_INIT_RESOURCE(PrintSky);
-
 	StelPluginInfo info;
 	info.id = "PrintSky";
-	info.displayedName =  q_("Print Sky");
+	info.displayedName =  N_("Print Sky");
 	info.authors = "Pep Pujols";
 	info.contact = "maslarocaxica@gmail.com";
-	info.description = q_("Provides a system printing sky");
+	info.description = N_("Provides a system printing sky");
 	return info;
 }
 
@@ -78,7 +75,7 @@ void PrintSky::init()
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 	Q_ASSERT(gui);
 
-	gui->addGuiActions("actionInit_Printing_Sky", N_("Printing Sky"), "Ctrl+P", "Plugin Key Bindings", true, false);
+	gui->addGuiActions("actionInit_Printing_Sky", N_("Printing Sky"), "Ctrl+P", N_("Plugin Key Bindings"), true, false);
 	gui->getGuiActions("actionInit_Printing_Sky")->setChecked(true);
 	connect(gui->getGuiActions("actionInit_Printing_Sky"), SIGNAL(triggered()), this, SLOT(initPrintingSky()));
 
@@ -100,23 +97,7 @@ void PrintSky::init()
 	catch (std::runtime_error& e)
 	{
 		qWarning() << "WARNING: unable to locate printsky.ini file or create a default one for PrintSky plugin: " << e.what();
-	}
-
-	//Load the module's custom style sheets
-	QFile styleSheetFile;
-	styleSheetFile.setFileName(":/printsky/normalStyle.css");
-	if(styleSheetFile.open(QFile::ReadOnly|QFile::Text))
-	{
-		normalStyleSheet = styleSheetFile.readAll();
-	}
-	styleSheetFile.close();
-	styleSheetFile.setFileName(":/printsky/nightStyle.css");
-	if(styleSheetFile.open(QFile::ReadOnly|QFile::Text))
-	{
-		nightStyleSheet = styleSheetFile.readAll();
-	}
-	styleSheetFile.close();
-
+	}	
 }
 
 void PrintSky::update(double deltaTime)
@@ -155,21 +136,6 @@ void PrintSky::initPrintingSky()
 {
 	printskyDialog->setVisible(true);
 	printskyDialog->enableOutputOptions(true);
-}
-
-
-const StelStyle PrintSky::getModuleStyleSheet(const StelStyle& style)
-{
-	StelStyle pluginStyle(style);
-	if (style.confSectionName == "color")
-	{
-		pluginStyle.qtStyleSheet.append(normalStyleSheet);
-	}
-	else
-	{
-		pluginStyle.qtStyleSheet.append(nightStyleSheet);
-	}
-	return pluginStyle;
 }
 
 void PrintSky::setStelStyle(const QString& section)
