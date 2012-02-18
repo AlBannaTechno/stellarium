@@ -404,7 +404,7 @@ void IndiClient::parseStreamData()
 					}
 					
 					// Even if the value is empty or invalid, add the element.
-					currentElement->setValue(currentElementValue);
+					currentElement->setValue(currentElementValue.trimmed());
 					definedElements.append(currentElement);
 					
 					currentElement = 0;
@@ -453,7 +453,7 @@ void IndiClient::parseStreamData()
 					
 					if (!currentElementValue.isEmpty())
 					{
-						elementsValues.insert(currentElementName, currentElementValue);
+						elementsValues.insert(currentElementName, currentElementValue.trimmed());
 					}
 					currentElementName.clear();
 					currentElementTag.clear();
