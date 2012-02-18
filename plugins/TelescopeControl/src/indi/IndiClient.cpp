@@ -45,7 +45,8 @@ IndiClient::IndiClient(const QString& newClientId,
 	clientId(newClientId),
 	ioDevice(0),
 	currentProperty(0),
-	currentElement(0)
+	currentElement(0),
+	currentPropertyAttributes(0)
 {
 	if (openIoDevice == 0 ||
 		!openIoDevice->isOpen() ||
@@ -308,17 +309,29 @@ void IndiClient::parseStreamData()
 //				if property is in the list
 //					make current property
 //					(what about the state, timestamp, etc?)
+				resetParserState();
+				readPropertyVector(tag);
+				definitionInProgress = false;
 			}
 			else if (oneElementTags.contains(tag))
 			{
-//				if anything else is being read
-//					(raise error flag?)
-//				if current property and its type matches
-//					if element is BLOB
-//						prepare BLOB
-//					else
-//						rememeber name and type as current element?
-//						(create empty entry in element values?)
+				if (currentProperty)
+				{
+					if (currentElement || definitionInProgress ||
+					    tag != currentProperty->oneElementTag())
+					{
+						resetParserState();
+						continue;
+					}
+					
+					readPropertyElement(tag);
+					currentElementValue.clear();
+					//					if element is BLOB
+					//						prepare BLOB
+					//					else
+					//						rememeber name and type as current element?
+					//						(create empty entry in element values?)
+				}
 			}
 			else if (tag == T_MESSAGE)
 			{
@@ -379,7 +392,7 @@ void IndiClient::parseStreamData()
 					definitionInProgress = false;
 				}
 			}
-			else if (defElementTags.contains(tag))
+			else if (defElementTags.contains(tag)) //End tag
 			{
 				if (currentProperty && currentElement)
 				{
@@ -399,22 +412,55 @@ void IndiClient::parseStreamData()
 					currentElementValue.clear();
 				}
 			}
-			else if (setVectorTags.contains(tag))
+			else if (setVectorTags.contains(tag)) //End tag
 			{
 //				if current property and it matches and nothing is waiting to be read
 //					update it with element values
 //					(emit property changed or leave it to the property object?)
 //				else
 //					clear stuff
+				if (currentProperty)
+				{
+					if (currentElement || tag != currentPropertyTag)
+					{
+						resetParserState();
+						continue;
+					}
+					
+					currentProperty->update(elementsValues,
+					                        *currentPropertyAttributes);
+					emit propertyUpdated(clientId,
+					                     currentPropertyAttributes->device,
+					                     currentProperty);
+					currentProperty = 0;
+					currentPropertyTag.clear();
+					delete currentPropertyAttributes;
+					currentPropertyAttributes = 0;
+					elementsValues.clear();
+					// TODO: Handle BLOBs
+				}
 			}
-			else if (oneElementTags.contains(tag))
+			else if (oneElementTags.contains(tag)) //End tag
 			{
-				/*
-				if it matches (name and type)
-					add value buffer to the entry in element values
-					clear value buffer
-					clear current element
-				*/
+				if (currentProperty && !currentElementName.isEmpty())
+				{
+					if (tag != currentElementTag)
+					{
+						//TODO:
+						resetParserState();
+						continue;
+					}
+					
+					if (!currentElementValue.isEmpty())
+					{
+						elementsValues.insert(currentElementName, currentElementValue);
+					}
+					currentElementName.clear();
+					currentElementTag.clear();
+					currentElementValue.clear();
+					
+					//TODO: Handle BLOBs
+				}
 			}
 		}
 		else if (xmlReader.isWhitespace())
@@ -459,6 +505,7 @@ void IndiClient::resetParserState()
 	definitionInProgress = false;
 	currentPropertyTag.clear();
 	currentElementTag.clear();
+	currentElementName.clear();
 	if (currentProperty)
 	{
 		delete currentProperty;
@@ -468,6 +515,11 @@ void IndiClient::resetParserState()
 	{
 		delete currentElement;
 		currentElement = 0;
+	}
+	if (currentPropertyAttributes)
+	{
+		delete currentPropertyAttributes;
+		currentPropertyAttributes = 0;
 	}
 	qDeleteAll(definedElements);
 	definedElements.clear();
@@ -481,7 +533,7 @@ void IndiClient::readPropertyVectorDefinition(const QString& tag)
 	if (tag == Property::T_DEF_TEXT_VECTOR)
 	{
 		StandardDefTagAttributes attributes(xmlReader);
-		if (attributes.areValid)
+		if (attributes.areValid && !hasProperty(attributes))
 		{
 			handleMessageAttribute(attributes);
 			currentProperty = new TextProperty(attributes);
@@ -491,7 +543,7 @@ void IndiClient::readPropertyVectorDefinition(const QString& tag)
 	else if (tag == Property::T_DEF_NUMBER_VECTOR)
 	{
 		StandardDefTagAttributes attributes(xmlReader);
-		if (attributes.areValid)
+		if (attributes.areValid && !hasProperty(attributes))
 		{
 			handleMessageAttribute(attributes);
 			currentProperty = new NumberProperty(attributes);
@@ -501,7 +553,7 @@ void IndiClient::readPropertyVectorDefinition(const QString& tag)
 	else if (tag == Property::T_DEF_SWITCH_VECTOR)
 	{
 		DefSwitchTagAttributes attributes(xmlReader);
-		if (attributes.areValid)
+		if (attributes.areValid && !hasProperty(attributes))
 		{
 			handleMessageAttribute(attributes);
 			currentProperty = new SwitchProperty(attributes);
@@ -511,7 +563,7 @@ void IndiClient::readPropertyVectorDefinition(const QString& tag)
 	else if (tag == Property::T_DEF_LIGHT_VECTOR)
 	{
 		BasicDefTagAttributes attributes(xmlReader);
-		if (attributes.areValid)
+		if (attributes.areValid && !hasProperty(attributes))
 		{
 			handleMessageAttribute(attributes);
 			currentProperty = new LightProperty(attributes);
@@ -521,7 +573,7 @@ void IndiClient::readPropertyVectorDefinition(const QString& tag)
 	else if (tag == Property::T_DEF_BLOB_VECTOR)
 	{
 		StandardDefTagAttributes attributes(xmlReader);
-		if (attributes.areValid)
+		if (attributes.areValid && !hasProperty(attributes))
 		{
 			handleMessageAttribute(attributes);
 			currentProperty = new BlobProperty(attributes);
@@ -554,6 +606,38 @@ void IndiClient::readPropertyElementDefinition(const QString& tag)
 		delete element;
 }
 
+void IndiClient::readPropertyVector(const QString& tag)
+{
+	SetTagAttributes* attributes = new SetTagAttributes(xmlReader);
+	if (!attributes->areValid)
+		return;
+	
+	Property* property = getProperty(*attributes);
+	if (property)
+	{
+		currentProperty = property;
+		currentPropertyTag = tag;
+		currentPropertyAttributes = attributes;
+	}
+	else
+		delete attributes;
+	
+	//TODO: Handle BLOBs
+}
+
+void IndiClient::readPropertyElement(const QString& tag)
+{
+	QXmlStreamAttributes attributes = xmlReader.attributes();
+	QString name = attributes.value(TagAttributes::NAME).toString();
+	if (name.isEmpty())
+		return;
+	
+	currentElementTag = tag;
+	currentElementName = name;
+	
+	//TODO: Handle BLOBs
+}
+
 void IndiClient::parseIndiCommand(const QString& command)
 {
 	// TODO: Use only one XML parser!
@@ -562,15 +646,7 @@ void IndiClient::parseIndiCommand(const QString& command)
 	// If we are going to use two, let's at least assume that this is well-formed XML...
 	while (localXmlReader.readNextStartElement())
 	{
-		if (localXmlReader.name() == Property::T_SET_NUMBER_VECTOR)
-		{
-			readNumberProperty(localXmlReader);
-		}
-		else if (localXmlReader.name() == Property::T_SET_SWITCH_VECTOR)
-		{
-			readSwitchProperty(localXmlReader);
-		}
-		else if (localXmlReader.name() == Property::T_SET_BLOB_VECTOR)
+		if (localXmlReader.name() == Property::T_SET_BLOB_VECTOR)
 		{
 			readBlobProperty(localXmlReader);
 		}
@@ -636,6 +712,19 @@ void IndiClient::readMessage()
 	QString message = attributes.value(TagAttributes::MESSAGE).toString();
 	if (!message.isEmpty())
 		emit messageReceived(device, timestamp, message);
+}
+
+bool IndiClient::hasProperty(const TagAttributes& attributes)
+{
+	if (!attributes.areValid)
+		return false;
+	
+	if (deviceProperties.contains(attributes.device))
+	{
+		if (deviceProperties[attributes.device].contains(attributes.name))
+			return true;
+	}
+	return false;
 }
 
 template<class P, class E>
@@ -722,46 +811,6 @@ QString IndiClient::readElementRawValue(QXmlStreamReader& xmlReader,
 	return value;
 }
 
-void IndiClient::readNumberProperty(QXmlStreamReader& xmlReader)
-{
-	SetTagAttributes attributes(xmlReader);
-	if (!attributes.areValid)
-	{
-		xmlReader.skipCurrentElement();
-		return;
-	}
-	handleMessageAttribute(attributes);
-	//TODO: Handle state, timeout
-	
-	Property* property = getProperty(attributes);
-	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
-	if (numberProperty == 0)//TODO: What does it return exactly if the cast fails?
-	{
-		qDebug() << "Not a number property:" << attributes.name;
-		xmlReader.skipCurrentElement();
-		return;
-	}
-
-	QHash<QString,QString> values;
-	while (!(xmlReader.name() == Property::T_SET_NUMBER_VECTOR && xmlReader.isEndElement()))
-	{
-		if (xmlReader.name() == Property::T_ONE_NUMBER)
-		{
-			readOneElement(xmlReader, Property::T_ONE_NUMBER, values);
-		}
-		xmlReader.readNext();
-	}
-	//TODO: Is this a valid algorithm? Probably not... FIXME!
-	if (!values.isEmpty())
-	{
-		if (!attributes.stateChanged)
-			numberProperty->update(values, attributes.timestamp);
-		else
-			numberProperty->update(values, attributes.timestamp, attributes.state);
-		emit propertyUpdated(clientId, attributes.device, numberProperty);
-	}
-}
-
 void IndiClient::readOneElement(QXmlStreamReader& xmlReader,
                                 const QString& tag,
                                 QHash<QString, QString>& newValues)
@@ -818,45 +867,6 @@ void IndiClient::readBlobElement(QXmlStreamReader& xmlReader,
 	}
 }
 
-void IndiClient::readSwitchProperty(QXmlStreamReader& xmlReader)
-{
-	SetTagAttributes attributes(xmlReader);
-	if (!attributes.areValid)
-	{
-		xmlReader.skipCurrentElement();
-		return;
-	}
-	handleMessageAttribute(attributes);
-	//TODO: Handle state, timeout
-	
-	Property* property = getProperty(attributes);
-	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
-	if (switchProperty == 0)
-	{
-		qDebug() << "Not a SwitchProperty" << attributes.name;
-		xmlReader.skipCurrentElement();
-		return;
-	}
-
-	QHash<QString,QString> values;
-	while(!(xmlReader.name() == Property::T_SET_SWITCH_VECTOR && xmlReader.isEndElement()))
-	{
-		if (xmlReader.name() == Property::T_ONE_SWITCH)
-		{
-			readOneElement(xmlReader, Property::T_ONE_SWITCH, values);
-		}
-		xmlReader.readNext();
-	}
-	if (!values.isEmpty())
-	{
-		if (!attributes.stateChanged)
-			switchProperty->update(values, attributes.timestamp);
-		else
-			switchProperty->update(values, attributes.timestamp, attributes.state);
-		emit propertyUpdated(clientId, attributes.device, switchProperty);
-	}
-}
-
 void IndiClient::readBlobProperty(QXmlStreamReader& xmlReader)
 {
 	qDebug() << "readBlobProperty()";
@@ -890,11 +900,11 @@ void IndiClient::readBlobProperty(QXmlStreamReader& xmlReader)
 		xmlReader.readNext();
 	}
 
-	if (!attributes.stateChanged)
-		blobProperty->update(attributes.timestamp);
-	else
-		blobProperty->update(attributes.timestamp, attributes.state);
-	qDebug() << "end of readBlobProperty";
+//	if (!attributes.stateChanged)
+//		blobProperty->update(attributes.timestamp);
+//	else
+//		blobProperty->update(attributes.timestamp, attributes.state);
+//	qDebug() << "end of readBlobProperty";
 	emit propertyUpdated(clientId, attributes.device, blobProperty);
 }
 

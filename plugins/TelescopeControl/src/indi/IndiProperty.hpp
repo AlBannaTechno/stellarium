@@ -141,8 +141,11 @@ public:
 	QDateTime getTimestamp() const;
 	qint64 getTimestampInMilliseconds() const;
 	virtual void addElement(Element* element) = 0;
-	virtual int elementCount() const = 0;
-	virtual QStringList getElementNames() const = 0;
+	virtual int elementCount() const;
+	virtual QStringList getElementNames() const;
+	
+	virtual void update(const QHash<QString,QString>& newValues,
+	                    SetTagAttributes attributes);
 	
 	virtual const char* defVectorTag() const = 0;
 	virtual const char* setVectorTag() const = 0;
@@ -199,6 +202,9 @@ protected:
 	double timeout;
 	//! Time of the last change (UTC)
 	QDateTime timestamp;
+	
+	//! Property elements
+	QHash<QString,Element*> elements;
 };
 
 //! A vector/array of string values (TextElement-s).
@@ -218,16 +224,10 @@ public:
 	void addElement(TextElement* element);
 	TextElement* getElement(const QString& name);
 
-	int elementCount() const;
-	QStringList getElementNames() const;
-	
 	const char* defVectorTag() const {return T_DEF_TEXT_VECTOR;}
 	const char* defElementTag() const {return T_DEF_TEXT;}
 	const char* setVectorTag() const {return T_SET_TEXT_VECTOR;}
 	const char* oneElementTag() const {return T_ONE_TEXT;}
-
-private:
-	QHash<QString,TextElement*> elements;
 };
 
 //! A vector/array of numeric values (NumberElement-s).
@@ -248,21 +248,11 @@ public:
 	void addElement(Element* element);
 	void addElement(NumberElement* element);
 	NumberElement* getElement(const QString& name);
-	void update(const QHash<QString,QString>& newValues,
-	            const QDateTime& timestamp);
-	void update(const QHash<QString,QString>& newValues,
-	            const QDateTime& timestamp,
-	            State newState);
-	int elementCount() const;
-	QStringList getElementNames() const;
-
+	
 	const char* defVectorTag() const {return T_DEF_NUMBER_VECTOR;}
 	const char* defElementTag() const {return T_DEF_NUMBER;}
 	const char* setVectorTag() const {return T_SET_NUMBER_VECTOR;}
 	const char* oneElementTag() const {return T_ONE_NUMBER;}
-	
-private:
-	QHash<QString,NumberElement*> elements;
 };
 
 //! A vector/array of switches (boolean SwitchElement-s)
@@ -283,16 +273,7 @@ public:
 
 	void addElement(Element* element);
 	void addElement(SwitchElement* element);
-	//! Ignores the SwitchRule - everything is supposed to be checked on the
-	//! device side.
-	void update(const QHash<QString,QString>& newValues,
-	            const QDateTime& timestamp);
-	void update(const QHash<QString,QString>& newValues,
-	            const QDateTime& timestamp,
-	            State newState);
 	SwitchElement* getElement(const QString& name);
-	int elementCount() const;
-	QStringList getElementNames() const;
 	
 	const char* defVectorTag() const {return T_DEF_SWITCH_VECTOR;}
 	const char* defElementTag() const {return T_DEF_SWITCH;}
@@ -301,7 +282,6 @@ public:
 
 private:
 	SwitchRule rule;
-	QHash<QString,SwitchElement*> elements;
 };
 
 //! A vector/array of lights (LightElement-s).
@@ -320,17 +300,11 @@ public:
 	void addElement(Element* element);
 	void addElement(LightElement* element);
 	LightElement* getElement(const QString& name);
-
-	int elementCount() const;
-	QStringList getElementNames() const;
 	
 	const char* defVectorTag() const {return T_DEF_LIGHT_VECTOR;}
 	const char* defElementTag() const {return T_DEF_LIGHT;}
 	const char* setVectorTag() const {return T_SET_LIGHT_VECTOR;}
 	const char* oneElementTag() const {return T_ONE_LIGHT;}
-
-private:
-	QHash<QString,LightElement*> elements;
 };
 
 //! A vector/array of BLOBs (BlobElement-s).
@@ -349,20 +323,15 @@ public:
 	void addElement(Element* element);
 	void addElement(BlobElement* element);
 	BlobElement* getElement(const QString& name);
-
-	void update(const QDateTime& timestamp);
-	void update(const QDateTime& timestamp, State newState);
-
-	int elementCount() const;
-	QStringList getElementNames() const;
 	
 	const char* defVectorTag() const {return T_DEF_BLOB_VECTOR;}
 	const char* defElementTag() const {return T_DEF_BLOB;}
 	const char* setVectorTag() const {return T_SET_BLOB_VECTOR;}
 	const char* oneElementTag() const {return T_ONE_BLOB;}
 
-private:
-	QHash<QString,BlobElement*> elements;
+	//! Reimplemented from Property::update(), ignores the newValues param.
+	void update(const QHash<QString, QString> &newValues,
+	            SetTagAttributes attributes);
 };
 
 #endif//_INDI_PROPERTY_HPP_

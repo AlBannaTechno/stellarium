@@ -222,6 +222,7 @@ Property::Property(const BasicDefTagAttributes& attributes)
 	else
 		label = attributes.label;
 	
+	device = attributes.device;
 	group = attributes.group;
 	permission = PermissionReadOnly;
 	state = attributes.state;
@@ -292,6 +293,32 @@ qint64 Property::getTimestampInMilliseconds() const
 	return timestamp.toMSecsSinceEpoch();
 }
 
+int Property::elementCount() const
+{
+	return elements.count();
+}
+ 
+QStringList Property::getElementNames() const
+{
+	return elements.keys();
+}
+
+void Property::update(const QHash<QString, QString>& newValues,
+                      SetTagAttributes attributes)
+{
+	QHashIterator<QString, QString> it(newValues);
+	while(it.hasNext())
+	{
+		it.next();
+		if (elements.contains(it.key()))
+			elements[it.key()]->setValue(it.value());
+	}
+	
+	if (attributes.stateChanged)
+		setState(attributes.state);
+	setTimestamp(attributes.timestamp);
+}
+
 void Property::setTimestamp(const QDateTime& newTimestamp)
 {
 	if (newTimestamp.isValid())
@@ -350,17 +377,7 @@ void TextProperty::addElement(TextElement* element)
 
 TextElement* TextProperty::getElement(const QString& name)
 {
-	return elements.value(name);
-}
-
-int TextProperty::elementCount() const
-{
-	return elements.count();
-}
-
-QStringList TextProperty::getElementNames() const
-{
-	return elements.keys();
+	return dynamic_cast<TextElement*>(elements.value(name));
 }
 
 /* ********************************************************************* */
@@ -409,40 +426,9 @@ void NumberProperty::addElement(NumberElement* element)
 	elements.insert(element->getName(), element);
 }
 
-void NumberProperty::update(const QHash<QString, QString>& newValues,
-                            const QDateTime& newTimestamp)
-{
-	QHashIterator<QString, QString> it(newValues);
-	while(it.hasNext())
-	{
-		it.next();
-		if (elements.contains(it.key()))
-			elements[it.key()]->setValue(it.value());
-	}
-	setTimestamp(newTimestamp);
-}
-
-void NumberProperty::update(const QHash<QString, QString>& newValues,
-                            const QDateTime &timestamp,
-                            State newState)
-{
-	setState(newState);
-	update(newValues, timestamp);
-}
-
 NumberElement* NumberProperty::getElement(const QString& name)
 {
-	return elements.value(name);
-}
-
-int NumberProperty::elementCount() const
-{
-	return elements.count();
-}
-
-QStringList NumberProperty::getElementNames() const
-{
-	return elements.keys();
+	return dynamic_cast<NumberElement*>(elements.value(name));
 }
 
 /* ********************************************************************* */
@@ -499,40 +485,9 @@ void SwitchProperty::addElement(SwitchElement* element)
 	elements.insert(element->getName(), element);
 }
 
-void SwitchProperty::update(const QHash<QString, QString>& newValues,
-                            const QDateTime& newTimestamp)
-{
-	QHashIterator<QString, QString> it(newValues);
-	while(it.hasNext())
-	{
-		it.next();
-		if (elements.contains(it.key()))
-			elements[it.key()]->setValue(it.value());
-	}
-	setTimestamp(newTimestamp);
-}
-
-void SwitchProperty::update(const QHash<QString, QString>& newValues,
-                            const QDateTime& newTimestamp,
-                            State newState)
-{
-	setState(newState);
-	update(newValues, newTimestamp);
-}
-
 SwitchElement* SwitchProperty::getElement(const QString& name)
 {
-	return elements.value(name);
-}
-
-int SwitchProperty::elementCount() const
-{
-	return elements.count();
-}
-
-QStringList SwitchProperty::getElementNames() const
-{
-	return elements.keys();
+	return dynamic_cast<SwitchElement*>(elements.value(name));
 }
 
 
@@ -576,17 +531,7 @@ void LightProperty::addElement(LightElement* element)
 
 LightElement* LightProperty::getElement(const QString& name)
 {
-	return elements.value(name);
-}
-
-int LightProperty::elementCount() const
-{
-	return elements.count();
-}
-
-QStringList LightProperty::getElementNames() const
-{
-	return elements.keys();
+	return dynamic_cast<LightElement*>(elements.value(name));
 }
 
 
@@ -618,16 +563,6 @@ BlobProperty::~BlobProperty()
 	qDeleteAll(elements);
 }
 
-int BlobProperty::elementCount() const
-{
-	return elements.count();
-}
-
-QStringList BlobProperty::getElementNames() const
-{
-	return elements.keys();
-}
-
 void BlobProperty::addElement(Element *element)
 {
 	BlobElement* newElement = 0;
@@ -642,16 +577,15 @@ void BlobProperty::addElement(BlobElement* element)
 
 BlobElement* BlobProperty::getElement(const QString& name)
 {
-	return elements[name];
+	return (dynamic_cast<BlobElement*>(elements[name]));
 }
 
-void BlobProperty::update(const QDateTime& newTimestamp)
+void BlobProperty::update(const QHash<QString, QString>& newValues,
+                          SetTagAttributes attributes)
 {
-	setTimestamp(newTimestamp);
-}
-
-void BlobProperty::update(const QDateTime& newTimestamp, State newState)
-{
-	setState(newState);
-	setTimestamp(newTimestamp);
+	Q_UNUSED(newValues);
+	
+	if (attributes.stateChanged)
+		setState(attributes.state);
+	setTimestamp(attributes.timestamp);
 }

@@ -172,6 +172,10 @@ private:
 	//! The Element being parsed at the moment.
 	//! 0 if no Element is being parsed.
 	Element* currentElement;
+	//! This is getting ridiculous.
+	SetTagAttributes* currentPropertyAttributes;
+	//! Really ridiculous.
+	QString currentElementName;
 	//! Buffer for the value of the property element being read.
 	QString currentElementValue;
 	//! Used when defining property elements.
@@ -189,9 +193,16 @@ private:
 	//! Read a property element definition and create one at currentElement.
 	//! No validation - make sure that currentElement is null, etc.
 	void readPropertyElementDefinition(const QString& tag);
+	//!
+	void readPropertyVector(const QString& tag);
+	//! 
+	void readPropertyElement(const QString& tag);
 	//...
 	//! Read a message tag.
 	void readMessage();
+	
+	//!
+	bool hasProperty(const TagAttributes& attributes);
 
 	//! \todo Better name...
 	QXmlStreamReader xmlReader;
