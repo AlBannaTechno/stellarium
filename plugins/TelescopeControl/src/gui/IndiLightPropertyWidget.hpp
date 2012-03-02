@@ -36,13 +36,13 @@ class IndiLightPropertyWidget : public IndiPropertyWidget
 	Q_OBJECT
 
 public:
-	IndiLightPropertyWidget(LightProperty* property,
+	IndiLightPropertyWidget(const LightPropertyP& property,
 	                        const QString& title,
 	                        QWidget* parent = 0);
 	~IndiLightPropertyWidget();
 
 	//Slot implementation:
-	void updateProperty(Property* property);
+	void updateProperty(const PropertyP& property);
 
 private:
 	QGridLayout* gridLayout;

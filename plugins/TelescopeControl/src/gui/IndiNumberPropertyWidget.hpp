@@ -39,13 +39,13 @@ class IndiNumberPropertyWidget : public IndiPropertyWidget
 	Q_OBJECT
 
 public:
-	IndiNumberPropertyWidget(NumberProperty* property,
+	IndiNumberPropertyWidget(const NumberPropertyP& property,
 	                         const QString& title,
 	                         QWidget* parent = 0);
 	~IndiNumberPropertyWidget();
 
 	//Slot implementation:
-	void updateProperty(Property* property);
+	void updateProperty(const PropertyP& property);
 
 private slots:
 	//! Called by #setButton.

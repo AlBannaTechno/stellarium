@@ -19,14 +19,14 @@
 
 #include "IndiTextPropertyWidget.hpp"
 
-IndiTextPropertyWidget::IndiTextPropertyWidget(TextProperty* property,
+IndiTextPropertyWidget::IndiTextPropertyWidget(const TextPropertyP& property,
                                                const QString& title,
                                                QWidget* parent)
 	: IndiPropertyWidget(property, title, parent),
 	setButton(0),
 	gridLayout(0)
 {
-	Q_ASSERT(property);
+	Q_ASSERT(!property.isNull());
 
 	gridLayout = new QGridLayout();
 	gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -83,26 +83,26 @@ IndiTextPropertyWidget::~IndiTextPropertyWidget()
 	//TODO
 }
 
-void IndiTextPropertyWidget::updateProperty(Property* property)
+void IndiTextPropertyWidget::updateProperty(const PropertyP& property)
 {
-	TextProperty* textProperty = dynamic_cast<TextProperty*>(property);
-	if (textProperty)
+	TextPropertyP textProperty = qSharedPointerDynamicCast<TextProperty>(property);
+	if (textProperty.isNull())
+		return;
+	
+	//State
+	State newState = textProperty->getCurrentState();
+	stateWidget->setState(newState);
+	
+	if (textProperty->isReadable())
 	{
-		//State
-		State newState = textProperty->getCurrentState();
-		stateWidget->setState(newState);
-
-		if (textProperty->isReadable())
+		QStringList elementNames = textProperty->getElementNames();
+		foreach (const QString& elementName, elementNames)
 		{
-			QStringList elementNames = textProperty->getElementNames();
-			foreach (const QString& elementName, elementNames)
+			if (displayWidgets.contains(elementName))
 			{
-				if (displayWidgets.contains(elementName))
-				{
-					TextElement* element = textProperty->getElement(elementName);
-					QString value = element->getValue();
-					displayWidgets[elementName]->setText(value);
-				}
+				TextElement* element = textProperty->getElement(elementName);
+				QString value = element->getValue();
+				displayWidgets[elementName]->setText(value);
 			}
 		}
 	}

@@ -21,48 +21,48 @@
 #include <QDesktopServices>
 #include <QFile>
 
-IndiBlobPropertyWidget::IndiBlobPropertyWidget(BlobProperty *property,
+IndiBlobPropertyWidget::IndiBlobPropertyWidget(const BlobPropertyP& property,
                                                const QString& title,
                                                QWidget* parent)
 	: IndiPropertyWidget(property, title, parent)
 {
-	Q_ASSERT(property);
+	Q_ASSERT(!property.isNull());
 
 	//TODO
 }
 
-void IndiBlobPropertyWidget::updateProperty(Property* property)
+void IndiBlobPropertyWidget::updateProperty(const PropertyP& property)
 {
-	BlobProperty* blobProperty = dynamic_cast<BlobProperty*>(property);
-	if (blobProperty)
+	BlobPropertyP blobProperty = qSharedPointerDynamicCast<BlobProperty>(property);
+	if (blobProperty.isNull())
+		return;
+	
+	//State
+	State newState = blobProperty->getCurrentState();
+	stateWidget->setState(newState);
+	
+	//This is rather poorly thought-out. Though I doubt that it will often
+	//encounter vectors of multiple BLOBs.
+	//TODO: Remember format/fileaname extension so you don't have to
+	//generate them every time.
+	QString timestamp = blobProperty->getTimestamp().toString(Qt::ISODate);
+	QStringList elementNames = blobProperty->getElementNames();
+	foreach (const QString& elementName, elementNames)
 	{
-		//State
-		State newState = blobProperty->getCurrentState();
-		stateWidget->setState(newState);
-
-		//This is rather poorly thought-out. Though I doubt that it will often
-		//encounter vectors of multiple BLOBs.
-		//TODO: Remember format/fileaname extension so you don't have to
-		//generate them every time.
-		QString timestamp = blobProperty->getTimestamp().toString(Qt::ISODate);
-		QStringList elementNames = blobProperty->getElementNames();
-		foreach (const QString& elementName, elementNames)
+		BlobElement* element = blobProperty->getElement(elementName);
+		if (element->getSize() == 0)
+			continue;
+		//TODO: Temporary
+		QString desktopPath = QDesktopServices::storageLocation(QDesktopServices::DesktopLocation);
+		QString name = element->getName();
+		QString format =  element->getFormat();
+		QString filename = QString("%1/blob_%2.%3%4")
+		                   .arg(desktopPath, name, timestamp, format);
+		QFile blobFile(filename);
+		if (blobFile.open(QFile::WriteOnly))
 		{
-			BlobElement* element = blobProperty->getElement(elementName);
-			if (element->getSize() == 0)
-				continue;
-			//TODO: Temporary
-			QString desktopPath = QDesktopServices::storageLocation(QDesktopServices::DesktopLocation);
-			QString name = element->getName();
-			QString format =  element->getFormat();
-			QString filename = QString("%1/blob_%2.%3%4")
-				.arg(desktopPath, name, timestamp, format);
-			QFile blobFile(filename);
-			if (blobFile.open(QFile::WriteOnly))
-			{
-				blobFile.write(element->getValue());
-				blobFile.close();
-			}
+			blobFile.write(element->getValue());
+			blobFile.close();
 		}
 	}
 }

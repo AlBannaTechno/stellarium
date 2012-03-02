@@ -19,12 +19,12 @@
 
 #include "IndiLightPropertyWidget.hpp"
 
-IndiLightPropertyWidget::IndiLightPropertyWidget(LightProperty* property,
+IndiLightPropertyWidget::IndiLightPropertyWidget(const LightPropertyP& property,
                                                  const QString& title,
                                                  QWidget* parent)
 	: IndiPropertyWidget(property, title, parent)
 {
-	Q_ASSERT(property);
+	Q_ASSERT(!property.isNull());
 
 	gridLayout = new QGridLayout();
 	gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -53,24 +53,24 @@ IndiLightPropertyWidget::~IndiLightPropertyWidget()
 	//
 }
 
-void IndiLightPropertyWidget::updateProperty(Property* property)
+void IndiLightPropertyWidget::updateProperty(const PropertyP& property)
 {
-	LightProperty* lightProperty = dynamic_cast<LightProperty*>(property);
-	if (lightProperty)
+	LightPropertyP lightProperty = qSharedPointerDynamicCast<LightProperty>(property);
+	if (lightProperty.isNull())
+		return;
+	
+	//State
+	State newState = lightProperty->getCurrentState();
+	stateWidget->setState(newState);
+	
+	QStringList elementNames = lightProperty->getElementNames();
+	foreach (const QString& elementName, elementNames)
 	{
-		//State
-		State newState = lightProperty->getCurrentState();
-		stateWidget->setState(newState);
-
-		QStringList elementNames = lightProperty->getElementNames();
-		foreach (const QString& elementName, elementNames)
+		if (lightsWidgets.contains(elementName))
 		{
-			if (lightsWidgets.contains(elementName))
-			{
-				LightElement* element = lightProperty->getElement(elementName);
-				State value = element->getValue();
-				lightsWidgets[elementName]->setState(value);
-			}
+			LightElement* element = lightProperty->getElement(elementName);
+			State value = element->getValue();
+			lightsWidgets[elementName]->setState(value);
 		}
 	}
 }

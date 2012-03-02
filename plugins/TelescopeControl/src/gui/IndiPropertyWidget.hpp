@@ -35,7 +35,7 @@ class IndiPropertyWidget : public QGroupBox
 {
 	Q_OBJECT
 public:
-	IndiPropertyWidget(Property* property,
+	IndiPropertyWidget(const PropertyP& property,
 	                   const QString& title,
 	                   QWidget* parent = 0)
 	    : QGroupBox(title, parent)
@@ -63,7 +63,7 @@ public:
 
 public slots:
 	//What calls this?
-	virtual void updateProperty(Property* property) = 0;
+	virtual void updateProperty(const PropertyP& property) = 0;
 
 signals:
 	void newPropertyValue(const QString& property, const QVariantHash& elements);

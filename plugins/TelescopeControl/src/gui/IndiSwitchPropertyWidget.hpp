@@ -41,13 +41,13 @@ class IndiSwitchPropertyWidget : public IndiPropertyWidget
 	Q_OBJECT
 
 public:
-	IndiSwitchPropertyWidget(SwitchProperty* property,
+	IndiSwitchPropertyWidget(const SwitchPropertyP& property,
 	                         const QString& title,
 	                         QWidget* parent = 0);
 	~IndiSwitchPropertyWidget();
 
 	//Slot implementation:
-	void updateProperty(Property* property);
+	void updateProperty(const PropertyP& property);
 
 private slots:
 	//! Called when one of the buttons is clicked.

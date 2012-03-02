@@ -155,10 +155,10 @@ void DeviceControlPanel::addClient(IndiClient* client)
 		}
 
 		indiClients.insert(clientName, client);
-		connect(client, SIGNAL(propertyDefined(QString,QString,Property*)),
-		        this, SLOT(defineProperty(QString,QString,Property*)));
-		connect(client, SIGNAL(propertyUpdated(QString,QString,Property*)),
-		        this, SLOT(updateProperty(QString,QString,Property*)));
+		connect(client, SIGNAL(propertyDefined(QString,QString,PropertyP)),
+		        this, SLOT(defineProperty(QString,QString,PropertyP)));
+		connect(client, SIGNAL(propertyUpdated(QString,QString,PropertyP)),
+		        this, SLOT(updateProperty(QString,QString,PropertyP)));
 		connect(client, SIGNAL(propertyRemoved(QString,QString,QString)),
 		        this, SLOT(removeProperty(QString,QString,QString)));
 		connect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
@@ -175,10 +175,10 @@ void DeviceControlPanel::removeClient(const QString& clientName)
 	IndiClient* client = indiClients[clientName];
 
 	//Disconnect
-	disconnect(client, SIGNAL(propertyDefined(QString,QString,Property*)),
-	           this, SLOT(defineProperty(QString,QString,Property*)));
-	disconnect(client, SIGNAL(propertyUpdated(QString,QString,Property*)),
-	           this, SLOT(updateProperty(QString,QString,Property*)));
+	disconnect(client, SIGNAL(propertyDefined(QString,QString,PropertyP)),
+	           this, SLOT(defineProperty(QString,QString,PropertyP)));
+	disconnect(client, SIGNAL(propertyUpdated(QString,QString,PropertyP)),
+	           this, SLOT(updateProperty(QString,QString,PropertyP)));
 	disconnect(client, SIGNAL(propertyRemoved(QString,QString,QString)),
 	           this, SLOT(removeProperty(QString,QString,QString)));
 	disconnect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
@@ -202,7 +202,7 @@ void DeviceControlPanel::removeClient(const QString& clientName)
 
 void DeviceControlPanel::defineProperty(const QString& clientName,
                                         const QString& deviceName,
-                                        Property* property)
+                                        const PropertyP& property)
 {
 	DeviceId deviceId(clientName, deviceName);
 	if (deviceWidgets.contains(deviceId))
@@ -243,7 +243,7 @@ void DeviceControlPanel::defineProperty(const QString& clientName,
 
 void DeviceControlPanel::updateProperty(const QString& clientName,
                                         const QString& deviceName,
-                                        Property *property)
+                                        const PropertyP& property)
 {
 	DeviceId deviceId(clientName, deviceName);
 	if (deviceWidgets.contains(deviceId))

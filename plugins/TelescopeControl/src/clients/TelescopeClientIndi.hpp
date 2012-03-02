@@ -73,8 +73,8 @@ public:
 signals:
 
 protected slots:
-	void handlePropertyDefinition(const QString& device, Property *property);
-	void handlePropertyUpdate(const QString& device, Property* property);
+	void handlePropertyDefinition(const QString& device, const PropertyP& property);
+	void handlePropertyUpdate(const QString& device, const PropertyP &property);
 
 protected:
 	TelescopeClientIndi(const QString& name, Equinox eq);

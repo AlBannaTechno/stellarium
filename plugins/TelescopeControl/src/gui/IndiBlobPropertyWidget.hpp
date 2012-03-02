@@ -31,12 +31,12 @@ class IndiBlobPropertyWidget : public IndiPropertyWidget
 	Q_OBJECT
 
 public:
-	IndiBlobPropertyWidget(BlobProperty* property,
+	IndiBlobPropertyWidget(const BlobPropertyP& property,
 	                       const QString& title,
 	                       QWidget* parent = 0);
 
 //Slots:
-	void updateProperty(Property* property);
+	void updateProperty(const PropertyP& property);
 
 //Signals: no need to re-declare them.
 

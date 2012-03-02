@@ -29,10 +29,11 @@
 
 #include "StelDialog.hpp"
 
+#include "IndiProperty.hpp"
+
 class Ui_deviceControlPanelWidget;
 class IndiClient;
 class IndiDeviceWidget;
-class Property;
 class QPlainTextEdit;
 class QSplitter;
 class QTabWidget;
@@ -55,10 +56,10 @@ public slots:
 	void removeClient(const QString& clientName);
 	void defineProperty(const QString& clientName,
 	                    const QString& deviceName,
-	                    Property* property);
+	                    const PropertyP& property);
 	void updateProperty(const QString& clientName,
 	                    const QString& deviceName,
-	                    Property* property);
+	                    const PropertyP& property);
 	void removeProperty(const QString& clientName,
 	                    const QString& deviceName,
 	                    const QString& propertyName);

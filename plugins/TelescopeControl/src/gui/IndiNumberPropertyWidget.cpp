@@ -24,14 +24,14 @@
 #include <QRegExp>
 #include <QRegExpValidator>
 
-IndiNumberPropertyWidget::IndiNumberPropertyWidget(NumberProperty* property,
+IndiNumberPropertyWidget::IndiNumberPropertyWidget(const NumberPropertyP& property,
                                                    const QString& title,
                                                    QWidget* parent)
 	: IndiPropertyWidget(property, title, parent),
 	setButton(0),
 	gridLayout(0)
 {
-	Q_ASSERT(property);
+	Q_ASSERT(!property.isNull());
 
 	gridLayout = new QGridLayout();
 	gridLayout->setContentsMargins(0, 0, 0, 0);
@@ -138,26 +138,26 @@ IndiNumberPropertyWidget::~IndiNumberPropertyWidget()
 	//TODO
 }
 
-void IndiNumberPropertyWidget::updateProperty(Property *property)
+void IndiNumberPropertyWidget::updateProperty(const PropertyP& property)
 {
-	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
-	if (numberProperty)
+	NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
+	if (numberProperty.isNull())
+		return;
+	
+	//State
+	State newState = numberProperty->getCurrentState();
+	stateWidget->setState(newState);
+	
+	if (numberProperty->isReadable())
 	{
-		//State
-		State newState = numberProperty->getCurrentState();
-		stateWidget->setState(newState);
-
-		if (numberProperty->isReadable())
+		QStringList elementNames = numberProperty->getElementNames();
+		foreach (const QString& elementName, elementNames)
 		{
-			QStringList elementNames = numberProperty->getElementNames();
-			foreach (const QString& elementName, elementNames)
+			if (displayWidgets.contains(elementName))
 			{
-				if (displayWidgets.contains(elementName))
-				{
-					NumberElement* element = numberProperty->getElement(elementName);
-					QString value = element->getFormattedValue();
-					displayWidgets[elementName]->setText(value);
-				}
+				NumberElement* element = numberProperty->getElement(elementName);
+				QString value = element->getFormattedValue();
+				displayWidgets[elementName]->setText(value);
 			}
 		}
 	}

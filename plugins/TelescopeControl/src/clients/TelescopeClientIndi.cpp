@@ -44,10 +44,10 @@ void TelescopeClientIndi::initialize()
 	isDefinedJNowCoordinateRequest = false;
 	hasQueuedGoto = false;
 
-	connect(indiClient, SIGNAL(propertyDefined(QString,Property*)),
-	        this, SLOT(handlePropertyDefinition(QString,Property*)));
-	connect(indiClient, SIGNAL(propertyUpdated(QString,Property*)),
-	        this, SLOT(handlePropertyUpdate(QString,Property*)));
+	connect(indiClient, SIGNAL(propertyDefined(QString,PropertyP)),
+	        this, SLOT(handlePropertyDefinition(QString,PropertyP)));
+	connect(indiClient, SIGNAL(propertyUpdated(QString,PropertyP)),
+	        this, SLOT(handlePropertyUpdate(QString,PropertyP)));
 }
 
 IndiClient* TelescopeClientIndi::getIndiClient() const
@@ -123,14 +123,16 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	indiClient->writeProperty(deviceName, property, newValues);
 }
 
-void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Property* property)
+void TelescopeClientIndi::handlePropertyDefinition(const QString& device, const PropertyP& property)
 {
 	//Ignore this property if it belongs to another device.
 	if (device != deviceName)
 		return;
 
-	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
-	if (numberProperty)
+	NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
+	if (numberProperty.isNull())
+		return;
+	else
 	{
 		//TODO: Check permissions, too.
 		if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES)
@@ -151,12 +153,12 @@ void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Proper
 		{
 			isDefinedJNowCoordinateRequest = true;
 		}
-
-		return;
 	}
-
-	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
-	if (switchProperty)
+	
+	SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
+	if (switchProperty.isNull())
+		return;
+	else
 	{
 		if (switchProperty->getName() == IndiClient::SP_CONNECTION)
 		{
@@ -165,14 +167,14 @@ void TelescopeClientIndi::handlePropertyDefinition(const QString& device, Proper
 	}
 }
 
-void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* property)
+void TelescopeClientIndi::handlePropertyUpdate(const QString& device, const PropertyP& property)
 {
 	//Ignore this property if it belongs to another device.
 	if (deviceName != device)
 		return;
 
-	NumberProperty* numberProperty = dynamic_cast<NumberProperty*>(property);
-	if (numberProperty)
+	NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
+	if (!numberProperty.isNull())
 	{
 		//Use INDI standard properties to receive location
 		bool hasReceivedCoordinates = false;
@@ -213,8 +215,8 @@ void TelescopeClientIndi::handlePropertyUpdate(const QString& device, Property* 
 		return;
 	}
 
-	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
-	if (switchProperty)
+	SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
+	if (!switchProperty.isNull())
 	{
 		if (isDefinedConnection && switchProperty->getName() == IndiClient::SP_CONNECTION)
 		{

@@ -23,7 +23,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 
-IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(SwitchProperty* property,
+IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(const SwitchPropertyP& property,
                                                    const QString& title,
                                                    QWidget* parent)
 	: IndiPropertyWidget(property, title, parent),
@@ -98,24 +98,24 @@ IndiSwitchPropertyWidget::~IndiSwitchPropertyWidget()
 	//
 }
 
-void IndiSwitchPropertyWidget::updateProperty(Property *property)
+void IndiSwitchPropertyWidget::updateProperty(const PropertyP& property)
 {
-	SwitchProperty* switchProperty = dynamic_cast<SwitchProperty*>(property);
-	if (switchProperty)
+	SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
+	if (switchProperty.isNull())
+		return;
+	
+	//State
+	State newState = switchProperty->getCurrentState();
+	stateWidget->setState(newState);
+	
+	QStringList elementNames = switchProperty->getElementNames();
+	foreach (const QString& elementName, elementNames)
 	{
-		//State
-		State newState = switchProperty->getCurrentState();
-		stateWidget->setState(newState);
-
-		QStringList elementNames = switchProperty->getElementNames();
-		foreach (const QString& elementName, elementNames)
+		if (buttons.contains(elementName))
 		{
-			if (buttons.contains(elementName))
-			{
-				SwitchElement* element = switchProperty->getElement(elementName);
-				bool value = element->isOn();
-				buttons[elementName]->setChecked(value);;
-			}
+			SwitchElement* element = switchProperty->getElement(elementName);
+			bool value = element->isOn();
+			buttons[elementName]->setChecked(value);;
 		}
 	}
 }

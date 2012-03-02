@@ -44,7 +44,7 @@ IndiDeviceWidget::IndiDeviceWidget(const QString& _deviceName, QWidget* parent)
 	this->setLayout(layout);
 }
 
-void IndiDeviceWidget::defineProperty(Property* property)
+void IndiDeviceWidget::defineProperty(const PropertyP& property)
 {
 	QString name = property->getName();
 	QString label = property->getLabel();
@@ -58,58 +58,58 @@ void IndiDeviceWidget::defineProperty(Property* property)
 	{
 		case Property::TextProperty:
 		{
-			TextProperty* tp = dynamic_cast<TextProperty*>(property);
-			if (tp)
+			TextPropertyP tp = qSharedPointerDynamicCast<TextProperty>(property);
+			if (tp.isNull())
+				return;
+			else
 			{
 				propertyWidget = new IndiTextPropertyWidget(tp, label);
 				break;
 			}
-			else
-				return;
 		}
 		case Property::NumberProperty:
 		{
-			NumberProperty* np = dynamic_cast<NumberProperty*>(property);
-			if (np)
+			NumberPropertyP np = qSharedPointerDynamicCast<NumberProperty>(property);
+			if (np.isNull())
+				return;
+			else
 			{
 				propertyWidget = new IndiNumberPropertyWidget(np, label);
 				break;
 			}
-			else
-				return;
 		}
 		case Property::SwitchProperty:
 		{
-			SwitchProperty* sp = dynamic_cast<SwitchProperty*>(property);
-			if (sp)
+			SwitchPropertyP sp = qSharedPointerDynamicCast<SwitchProperty>(property);
+			if (sp.isNull())
+				return;
+			else
 			{
 				propertyWidget = new IndiSwitchPropertyWidget(sp, label);
 				break;
 			}
-			else
-				return;
 		}
 		case Property::LightProperty:
 		{
-			LightProperty* lp = dynamic_cast<LightProperty*>(property);
-			if (lp)
+			LightPropertyP lp = qSharedPointerDynamicCast<LightProperty>(property);
+			if (lp.isNull())
+				return;
+			else
 			{
 				propertyWidget = new IndiLightPropertyWidget(lp, label);
 				break;
 			}
-			else
-				return;
 		}
 		case Property::BlobProperty:
 		{
-			BlobProperty* bp = dynamic_cast<BlobProperty*>(property);
-			if (bp)
+			BlobPropertyP bp = qSharedPointerDynamicCast<BlobProperty>(property);
+			if (bp.isNull())
+				return;
+			else
 			{
 				propertyWidget = new IndiBlobPropertyWidget(bp, label);
 				break;
 			}
-			else
-				return;
 		}
 		default:
 			return;
@@ -130,7 +130,7 @@ void IndiDeviceWidget::defineProperty(Property* property)
 	groupWidgets[group]->addPropertyWidget(propertyWidget);
 }
 
-void IndiDeviceWidget::updateProperty(Property* property)
+void IndiDeviceWidget::updateProperty(const PropertyP& property)
 {
 	QString name = property->getName();
 

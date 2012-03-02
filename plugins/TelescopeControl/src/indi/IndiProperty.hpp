@@ -22,6 +22,8 @@
 
 #include <QDateTime>
 #include <QHash>
+#define QT_SHAREDPOINTER_TRACK_POINTERS 1
+#include <QSharedPointer>
 #include <QString>
 #include <QXmlStreamReader>
 
@@ -147,8 +149,8 @@ public:
 	virtual void update(const QHash<QString,QString>& newValues,
 	                    SetTagAttributes attributes);
 	
-	virtual void send(const QHash<QString,QString>& newValues,
-	                  const QIODevice& ioDevice);
+	//virtual void send(const QHash<QString,QString>& newValues,
+	//                  const QIODevice& ioDevice);
 	
 	//! Name of the property vector definition element.
 	virtual const char* defVectorTag() const = 0;
@@ -221,6 +223,8 @@ protected:
 	QString newVectorValuesEndTag;
 };
 
+typedef QSharedPointer<Property> PropertyP;
+
 //! A vector/array of string values (TextElement-s).
 class TextProperty : public Property
 {
@@ -244,6 +248,8 @@ public:
 	const char* newVectorTag() const {return T_NEW_TEXT_VECTOR;}
 	const char* oneElementTag() const {return T_ONE_TEXT;}
 };
+
+typedef QSharedPointer<TextProperty> TextPropertyP;
 
 //! A vector/array of numeric values (NumberElement-s).
 class NumberProperty : public Property
@@ -270,6 +276,8 @@ public:
 	const char* newVectorTag() const {return T_NEW_NUMBER_VECTOR;}
 	const char* oneElementTag() const {return T_ONE_NUMBER;}
 };
+
+typedef QSharedPointer<NumberProperty> NumberPropertyP;
 
 //! A vector/array of switches (boolean SwitchElement-s)
 class SwitchProperty : public Property
@@ -301,6 +309,8 @@ private:
 	SwitchRule rule;
 };
 
+typedef QSharedPointer<SwitchProperty> SwitchPropertyP;
+
 //! A vector/array of lights (LightElement-s).
 class LightProperty : public Property
 {
@@ -325,6 +335,8 @@ public:
 	const char* newVectorTag() const {return "";}
 	const char* oneElementTag() const {return T_ONE_LIGHT;}
 };
+
+typedef QSharedPointer<LightProperty> LightPropertyP;
 
 //! A vector/array of BLOBs (BlobElement-s).
 class BlobProperty : public Property
@@ -353,5 +365,7 @@ public:
 	void update(const QHash<QString, QString> &newValues,
 	            SetTagAttributes attributes);
 };
+
+typedef QSharedPointer<BlobProperty> BlobPropertyP;
 
 #endif//_INDI_PROPERTY_HPP_

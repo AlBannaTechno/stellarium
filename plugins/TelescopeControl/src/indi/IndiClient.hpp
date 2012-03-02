@@ -112,13 +112,13 @@ signals:
 	//! Emitted when a \b def[type]Vector element has been parsed.
 	void propertyDefined(const QString& clientId,
 	                     const QString& deviceName,
-	                     Property* property);
+	                     const PropertyP& property);
 	//! Emitted when a \b new[type]Vector element has been parsed.
 	//! Such a message is sent by the device to notify that a given property
 	//! or its attributes have changed and have a \b new value.
 	void propertyUpdated(const QString& clientId,
 	                     const QString& deviceName,
-	                     Property* property);
+	                     const PropertyP& property);
 	//! Emitted when a \b delProperty message has been parsed.
 	void propertyRemoved(const QString& clientId,
 	                     const QString& deviceName,
@@ -145,12 +145,12 @@ private:
 	QIODevice* ioDevice;
 	
 	//! Represents all the named properties of a single device.
-	typedef QHash<QString,Property*> DeviceProperties;
+	typedef QHash<QString,PropertyP> DeviceProperties;
 	//! The properties of all named devices.
 	QHash<QString,DeviceProperties> deviceProperties;
 	//! Returns the property matching the \b device and \b name attributes.
 	//! \returns 0 if no such property exists.
-	Property* getProperty(const SetTagAttributes& attributes);
+	PropertyP getProperty(const SetTagAttributes& attributes);
 	
 	//! \todo Think of a better way to do these or make them static.
 	QSet<QString> defVectorTags;
@@ -168,7 +168,7 @@ private:
 	QString currentElementTag;
 	//! The Property being parsed at the moment.
 	//! 0 if no INDI vector is being parsed.
-	Property* currentProperty;
+	PropertyP currentProperty;
 	//! The Element being parsed at the moment.
 	//! 0 if no Element is being parsed.
 	Element* currentElement;
@@ -211,13 +211,14 @@ private:
 	QByteArray buffer;
 
 	//! \obsolete
-	void parseIndiCommand(const QString& command);
+	//void parseIndiCommand(const QString& command);
 	
 	//! 
 
 	//! Emits messageReceived() if the \b message attribute is not empty.
 	void handleMessageAttribute(const TagAttributes& attributes);
 	//!
+	/*
 	template<class P,class E> void readPropertyElementsDefinitions
 		(QXmlStreamReader& xmlReader,
 		 const QString& propertyName,
@@ -225,6 +226,7 @@ private:
 		 P* property,
 		 const QString& propertyTagName,
 		 const QString& elementTagName);
+	
 	//!
 	QString	readElementRawValue(QXmlStreamReader& xmlReader, const QString& tag);
 	//!
@@ -237,6 +239,7 @@ private:
 	void readLightProperty(QXmlStreamReader& xmlReader);
 	//!
 	void readBlobProperty(QXmlStreamReader& xmlReader);
+	*/
 	//! Reads all \b oneX tags except \b onewBLOB.
 	//! \param[in] tag
 	//! \param[out] newValues
@@ -245,7 +248,7 @@ private:
 	                    QHash<QString,QString>& newValues);
 	//! Reads a \b oneBLOB tag.
 	void readBlobElement(QXmlStreamReader& xmlReader,
-	                     BlobProperty* blobProperty);
+	                     const BlobPropertyP& blobProperty);
 
 	//! Helper for writeProperty().
 	//! Writes \b newTextVector element, including a series of \b oneText
@@ -254,7 +257,7 @@ private:
 	//! \todo Needs to be actually implemented.
 	void writeTextProperty(QXmlStreamWriter& xmlWriter,
 	                       const QString& device,
-	                       Property* property,
+	                       const TextPropertyP& property,
 	                       const QVariantHash& newValues);
 	//! Helper for writeProperty().
 	//! Writes \b newNumberVector element, including a series of \b oneNumber
@@ -263,7 +266,7 @@ private:
 	//! \todo Support string values.
 	void writeNumberProperty(QXmlStreamWriter& xmlWriter,
 	                         const QString& device,
-	                         NumberProperty* property,
+	                         const NumberPropertyP& property,
 	                         const QVariantHash& newValues);
 	//! Helper for writeProperty().
 	//! Writes \b newSwitchVector element, including a series of \b oneSwitch
@@ -271,7 +274,7 @@ private:
 	//! \param newValues is expected to have "bool" values.
 	void writeSwitchProperty(QXmlStreamWriter& xmlWriter,
 	                         const QString& device,
-	                         SwitchProperty* property,
+	                         const SwitchPropertyP& property,
 	                         const QVariantHash& newValues);
 	//! Helper for writeProperty().
 	//! Writes \b newBLOBVector element, including a series of \b oneBLOB
@@ -280,7 +283,7 @@ private:
 	//! \todo Needs to be actually implemented.
 	void writeBlobProperty(QXmlStreamWriter& xmlWriter,
 	                       const QString& device,
-	                       Property* property,
+	                       const BlobPropertyP& property,
 	                       const QVariantHash& newValues);
 };
 

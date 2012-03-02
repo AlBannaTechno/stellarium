@@ -44,8 +44,8 @@ class IndiDeviceWidget : public QWidget
 public:
 	IndiDeviceWidget(const QString& deviceName, QWidget* parent = 0);
 
-	void defineProperty(Property* property);
-	void updateProperty(Property* property);
+	void defineProperty(const PropertyP& property);
+	void updateProperty(const PropertyP& property);
 	void removeProperty(const QString& propertyName);
 	//! Are there any properties defined in this device?
 	bool isEmpty() const;
