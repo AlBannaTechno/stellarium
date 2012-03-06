@@ -31,7 +31,7 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(const NumberPropertyP& proper
 	setButton(0),
 	gridLayout(0)
 {
-	Q_ASSERT(!property.isNull());
+	Q_ASSERT(property);
 
 	gridLayout = new QGridLayout();
 	gridLayout->setContentsMargins(0, 0, 0, 0);

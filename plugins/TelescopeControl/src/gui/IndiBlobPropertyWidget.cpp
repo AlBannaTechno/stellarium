@@ -26,7 +26,7 @@ IndiBlobPropertyWidget::IndiBlobPropertyWidget(const BlobPropertyP& property,
                                                QWidget* parent)
 	: IndiPropertyWidget(property, title, parent)
 {
-	Q_ASSERT(!property.isNull());
+	Q_ASSERT(property);
 
 	//TODO
 }

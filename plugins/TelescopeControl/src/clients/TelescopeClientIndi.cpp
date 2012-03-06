@@ -174,7 +174,7 @@ void TelescopeClientIndi::handlePropertyUpdate(const QString& device, const Prop
 		return;
 
 	NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
-	if (!numberProperty.isNull())
+	if (numberProperty)
 	{
 		//Use INDI standard properties to receive location
 		bool hasReceivedCoordinates = false;
@@ -216,7 +216,7 @@ void TelescopeClientIndi::handlePropertyUpdate(const QString& device, const Prop
 	}
 
 	SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
-	if (!switchProperty.isNull())
+	if (switchProperty)
 	{
 		if (isDefinedConnection && switchProperty->getName() == IndiClient::SP_CONNECTION)
 		{

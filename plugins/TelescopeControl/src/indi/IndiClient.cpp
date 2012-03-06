@@ -612,7 +612,7 @@ void IndiClient::readPropertyVector(const QString& tag)
 		return;
 	
 	PropertyP property = getProperty(*attributes);
-	if (!property.isNull())
+	if (property)
 	{
 		currentProperty = property;
 		currentPropertyTag = tag;
@@ -982,7 +982,7 @@ void IndiClient::writeProperty(const QString& deviceName,
 	}
 
 	PropertyP property = deviceProperties[deviceName][propertyName];
-	Q_ASSERT(!property.isNull()); //TODO: Check this!
+	Q_ASSERT(property); //TODO: Check this!
 
 	QXmlStreamWriter xmlWriter(ioDevice);
 	xmlWriter.writeStartDocument();
@@ -998,7 +998,7 @@ void IndiClient::writeProperty(const QString& deviceName,
 		case Property::NumberProperty:
 		{
 			NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
-			if (!numberProperty.isNull())
+			if (numberProperty)
 				writeNumberProperty(xmlWriter, deviceName,
 				                    numberProperty, newValues);
 			break;
@@ -1007,7 +1007,7 @@ void IndiClient::writeProperty(const QString& deviceName,
 		case Property::SwitchProperty:
 		{
 			SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
-			if (!switchProperty.isNull())
+			if (switchProperty)
 				writeSwitchProperty(xmlWriter, deviceName,
 				                    switchProperty, newValues);
 			break;
@@ -1044,7 +1044,7 @@ void IndiClient::writeNumberProperty(QXmlStreamWriter& xmlWriter,
                                      const NumberPropertyP& property,
                                      const QVariantHash& newValues)
 {
-	Q_ASSERT(!property.isNull()); //TODO: Proper check!
+	Q_ASSERT(property); //TODO: Proper check!
 
 	xmlWriter.writeStartElement(Property::T_NEW_NUMBER_VECTOR);
 	xmlWriter.writeAttribute(TagAttributes::DEVICE, device);
@@ -1078,7 +1078,7 @@ void IndiClient::writeSwitchProperty(QXmlStreamWriter& xmlWriter,
                                      const SwitchPropertyP& property,
                                      const QVariantHash& newValues)
 {
-	Q_ASSERT(!property.isNull()); //TODO: Proper check!
+	Q_ASSERT(property); //TODO: Proper check!
 
 	xmlWriter.writeStartElement(Property::T_NEW_SWITCH_VECTOR);
 	xmlWriter.writeAttribute(TagAttributes::DEVICE, device);

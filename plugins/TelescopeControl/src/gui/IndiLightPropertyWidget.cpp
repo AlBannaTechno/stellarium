@@ -24,7 +24,7 @@ IndiLightPropertyWidget::IndiLightPropertyWidget(const LightPropertyP& property,
                                                  QWidget* parent)
 	: IndiPropertyWidget(property, title, parent)
 {
-	Q_ASSERT(!property.isNull());
+	Q_ASSERT(property);
 
 	gridLayout = new QGridLayout();
 	gridLayout->setContentsMargins(0, 0, 0, 0);
