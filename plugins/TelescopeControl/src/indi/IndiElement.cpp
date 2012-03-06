@@ -496,7 +496,7 @@ void BlobElement::receiveData(const QString& dataString)
 			zstream.next_out = (Bytef*)outputBuffer;
 
 			returnCode = inflate(&zstream, Z_NO_FLUSH);
-			Q_ASSERT(zstream.state != Z_STREAM_ERROR);//TODO!
+			Q_ASSERT(returnCode != Z_STREAM_ERROR);//TODO!
 			switch (returnCode)
 			{
 				case Z_NEED_DICT:
