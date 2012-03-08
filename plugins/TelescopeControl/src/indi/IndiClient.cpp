@@ -186,9 +186,9 @@ QHash<QString,QString> IndiClient::loadDeviceDescriptions()
 
 void IndiClient::parseStreamData()
 {
-	qDebug() << "parseStreamData()";
-	if (!isConnected())
+	if (!ioDevice)
 		return;
+	qDebug() << "Starting to parse chunk...";
 
 	//Get rid of "XML declaration not at start of document." errors
 	//(Damn INDI and badly formed code!)
@@ -427,6 +427,7 @@ void IndiClient::parseStreamData()
 						continue;
 					}
 					
+					handleMessageAttribute(*currentPropertyAttributes);
 					currentProperty->update(elementsValues,
 					                        *currentPropertyAttributes);
 					emit propertyUpdated(clientId,
