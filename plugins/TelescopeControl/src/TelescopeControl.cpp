@@ -216,7 +216,7 @@ void TelescopeControl::init()
 		controlPanelWindow = new DeviceControlPanel();
 		foreach (IndiClient* indiClient, indiClients)
 		{
-			controlPanelWindow->addClient(indiClient);
+			controlPanelWindow->addIndiClient(indiClient);
 		}
 		
 		//TODO: Think of a better keyboard shortcut
@@ -1213,7 +1213,7 @@ bool TelescopeControl::startClient(const QString& id,
 			//TODO: Name == ID? This will be used in removing it!
 			indiClients.insert(id, indiClient);
 			if (controlPanelWindow)
-				controlPanelWindow->addClient(indiClient);
+				controlPanelWindow->addIndiClient(indiClient);
 		}
 	}
 	else if (interfaceType == "INDI Pointer")
@@ -1313,7 +1313,7 @@ bool TelescopeControl::stopClient(const QString& id)
 				}
 			}
 		}
-		controlPanelWindow->removeClient(id);
+		controlPanelWindow->removeIndiClient(id);
 	}
 
 	//If a telescope is selected, deselect it first.

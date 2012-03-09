@@ -1,7 +1,7 @@
 /*
  * Stellarium Device Control plug-in
  * 
- * Copyright (C) 2011 Bogdan Marinov
+ * Copyright (C) 2011, 2012 Bogdan Marinov
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,16 +22,22 @@
 #include <QTabWidget>
 #include <QVBoxLayout>
 
+#include "IndiDevice.hpp"
 #include "IndiTextPropertyWidget.hpp"
 #include "IndiNumberPropertyWidget.hpp"
 #include "IndiSwitchPropertyWidget.hpp"
 #include "IndiLightPropertyWidget.hpp"
 #include "IndiBlobPropertyWidget.hpp"
 
-IndiDeviceWidget::IndiDeviceWidget(const QString& _deviceName, QWidget* parent)
-	: QWidget(parent),
-	deviceName(_deviceName)
+IndiDeviceWidget::IndiDeviceWidget(const DeviceP& newDevice, QWidget* parent)
+	: QWidget(parent)
 {
+	if (newDevice.isNull())
+		return;
+	
+	device = newDevice;
+	deviceName = newDevice->getName();
+	
 	groupsTabWidget = new QTabWidget();
 	groupsTabWidget->setSizePolicy(QSizePolicy::Expanding,
 	                               QSizePolicy::Expanding);
@@ -42,10 +48,18 @@ IndiDeviceWidget::IndiDeviceWidget(const QString& _deviceName, QWidget* parent)
 	layout->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
 	layout->addWidget(groupsTabWidget);
 	this->setLayout(layout);
+	
+	connect(device.data(), SIGNAL(propertyDefined(const PropertyP&)),
+	        this, SLOT(addProperty(const PropertyP&)));
+	connect(device.data(), SIGNAL(propertyRemoved(const QString&)),
+	        this, SLOT(removeProperty(const QString&)));
 }
 
-void IndiDeviceWidget::defineProperty(const PropertyP& property)
+void IndiDeviceWidget::addProperty(const PropertyP& property)
 {
+	if (property.isNull())
+		return;
+	
 	QString name = property->getName();
 	QString label = property->getLabel();
 	//TODO: Handle duplicate names.

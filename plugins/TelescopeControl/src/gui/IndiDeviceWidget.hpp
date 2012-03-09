@@ -1,7 +1,7 @@
 /*
  * Qt-based INDI wire protocol client
  * 
- * Copyright (C) 2011 Bogdan Marinov
+ * Copyright (C) 2011, 2012 Bogdan Marinov
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +26,7 @@
 #include <QVariant>
 #include <QWidget>
 
+#include "IndiDevice.hpp"
 #include "IndiProperty.hpp"
 
 //Control panel GUI elements:
@@ -42,15 +43,24 @@ class IndiDeviceWidget : public QWidget
 	Q_OBJECT
 
 public:
-	IndiDeviceWidget(const QString& deviceName, QWidget* parent = 0);
+	IndiDeviceWidget(const DeviceP& newDevice, QWidget* parent = 0);
 
-	void defineProperty(const PropertyP& property);
+	//! \todo Move to property widgets.
 	void updateProperty(const PropertyP& property);
-	void removeProperty(const QString& propertyName);
+	
 	//! Are there any properties defined in this device?
 	bool isEmpty() const;
+	
+public slots:
+	//! Adds a sub-widget of the appropriate type in the appropriate group tab.
+	//! If no such group tab exists, a new one is created.
+	void addProperty(const PropertyP& property);
+	//! Removes the sub-widget of the property.
+	//! If this was the last sub-widget in the group tab, it is also removed.
+	void removeProperty(const QString& propertyName);
 
 signals:
+	//! \todo Remove this? Property widgets should call properties directly?
 	void propertySet(const QString& deviceName,
 	                 const QString& propertyName,
 	                 const QVariantHash& elements);
@@ -60,7 +70,10 @@ private slots:
 	                            const QVariantHash& elements);
 
 private:
+	//! \todo may become obsolete when I get rid of propertySet().
 	QString deviceName;
+	DeviceP device;
+	
 	//! Contains a tab for each property group defined for the device.
 	QTabWidget* groupsTabWidget;
 	//! Groups are rendered as tabs inside the device tab.

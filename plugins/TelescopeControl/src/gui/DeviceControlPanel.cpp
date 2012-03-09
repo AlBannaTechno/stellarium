@@ -136,7 +136,7 @@ void DeviceControlPanel::updateStyle()
 	}
 }
 
-void DeviceControlPanel::addClient(IndiClient* client)
+void DeviceControlPanel::addIndiClient(IndiClient* client)
 {
 	Q_ASSERT(client);
 
@@ -155,19 +155,19 @@ void DeviceControlPanel::addClient(IndiClient* client)
 		}
 
 		indiClients.insert(clientName, client);
-		connect(client, SIGNAL(propertyDefined(QString,QString,PropertyP)),
-		        this, SLOT(defineProperty(QString,QString,PropertyP)));
+		connect(client, SIGNAL(deviceDefined(QString,DeviceP)),
+		        this, SLOT(addIndiDevice(QString,DeviceP)));
+		connect(client, SIGNAL(deviceRemoved(QString,QString)),
+		        this, SLOT(removeIndiDevice(QString,QString)));
 		connect(client, SIGNAL(propertyUpdated(QString,QString,PropertyP)),
 		        this, SLOT(updateProperty(QString,QString,PropertyP)));
-		connect(client, SIGNAL(propertyRemoved(QString,QString,QString)),
-		        this, SLOT(removeProperty(QString,QString,QString)));
 		connect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
 		        this, SLOT(logMessage(QString,QDateTime,QString)));
 		client->writeGetProperties();
 	}
 }
 
-void DeviceControlPanel::removeClient(const QString& clientName)
+void DeviceControlPanel::removeIndiClient(const QString& clientName)
 {
 	if (!indiClients.contains(clientName))
 		return;
@@ -175,12 +175,12 @@ void DeviceControlPanel::removeClient(const QString& clientName)
 	IndiClient* client = indiClients[clientName];
 
 	//Disconnect
-	disconnect(client, SIGNAL(propertyDefined(QString,QString,PropertyP)),
-	           this, SLOT(defineProperty(QString,QString,PropertyP)));
+	disconnect(client, SIGNAL(deviceDefined(QString,DeviceP)),
+	           this, SLOT(addIndiDevice(QString,DeviceP)));
+	disconnect(client, SIGNAL(deviceRemoved(QString,QString)),
+	           this, SLOT(removeIndiDevice(QString,QString)));
 	disconnect(client, SIGNAL(propertyUpdated(QString,QString,PropertyP)),
 	           this, SLOT(updateProperty(QString,QString,PropertyP)));
-	disconnect(client, SIGNAL(propertyRemoved(QString,QString,QString)),
-	           this, SLOT(removeProperty(QString,QString,QString)));
 	disconnect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
 	           this, SLOT(logMessage(QString,QDateTime,QString)));
 
@@ -200,45 +200,61 @@ void DeviceControlPanel::removeClient(const QString& clientName)
 	}
 }
 
-void DeviceControlPanel::defineProperty(const QString& clientName,
-                                        const QString& deviceName,
-                                        const PropertyP& property)
+void DeviceControlPanel::addIndiDevice(const QString& clientId,
+                                       const DeviceP& device)
 {
-	DeviceId deviceId(clientName, deviceName);
-	if (deviceWidgets.contains(deviceId))
+	if (clientId.isEmpty() || device.isNull())
 	{
-		deviceWidgets[deviceId]->defineProperty(property);
+		// TODO: Log?
 		return;
 	}
-
-	//If no such device exists...
-	if (!indiClients.contains(clientName))
+	
+	// If no such client exists...
+	if (!indiClients.contains(clientId))
 	{
 		qDebug() << "Unrecognized client name";
 		return;
 	}
-
-	//Show the window if it hasn't been initialized.
+	
+	// Show the window if it hasn't been initialized.
+	// TODO: Decide if this is the appropriate behaviour
+	// and if this is the right point to show it.
 	if (!visible())
 	{
 		setVisible(true);
 		emit visibleChanged(true);//StelDialog doesn't do this
 	}
-
+	
+	QString deviceName = device->getName();
+	DeviceId deviceId(clientId, deviceName);
+	
 	//Add a new device widget/tab
-	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget(deviceName);
+	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget(device);
 	deviceWidgets.insert(deviceId, deviceWidget);
+	deviceTypes.insert(deviceId, IndiDevice);
 	deviceTabWidget->addTab(deviceWidget, deviceName);
-	//TODO: Connect log?
-	IndiClient* indiClient = indiClients[clientName];
-	connect(deviceWidget, SIGNAL(propertySet(QString,QString,QVariantHash)),
-	        indiClient, SLOT(writeProperty(QString,QString,QVariantHash)));
+	
+	// TODO: Decide how to handle sending new property data
+//	IndiClient* indiClient = indiClients[clientName];
+//	connect(deviceWidget, SIGNAL(propertySet(QString,QString,QVariantHash)),
+//	        indiClient, SLOT(writeProperty(QString,QString,QVariantHash)));
+}
 
-	//And pass the received property to it.
-	deviceWidget->defineProperty(property);
-	//TODO: Place somewhere else.
-	//TODO: IndiClient should support "accept BLOBs" flags.
-	indiClient->writeEnableBlob(AlsoSendBlobs, deviceName);
+void DeviceControlPanel::removeIndiDevice(const QString& clientId,
+                                          const QString& deviceName)
+{
+	DeviceId deviceId(clientId, deviceName);
+	if (deviceWidgets.contains(deviceId))
+	{
+		IndiDeviceWidget* deviceWidget = deviceWidgets[deviceId];
+		//if (deviceWidget->isEmpty())
+		{
+			int index = deviceTabWidget->indexOf(deviceWidget);
+			deviceTabWidget->removeTab(index);
+			deviceWidgets.remove(deviceId);
+			delete deviceWidget;
+		}
+	}
 }
 
 void DeviceControlPanel::updateProperty(const QString& clientName,
@@ -249,25 +265,6 @@ void DeviceControlPanel::updateProperty(const QString& clientName,
 	if (deviceWidgets.contains(deviceId))
 	{
 		deviceWidgets[deviceId]->updateProperty(property);
-	}
-}
-
-void DeviceControlPanel::removeProperty(const QString& clientName,
-                                        const QString& deviceName,
-                                        const QString& propertyName)
-{
-	DeviceId deviceId(clientName, deviceName);
-	if (deviceWidgets.contains(deviceId))
-	{
-		IndiDeviceWidget* deviceWidget = deviceWidgets[deviceId];
-		deviceWidget->removeProperty(propertyName);
-		if (deviceWidget->isEmpty())
-		{
-			int index = deviceTabWidget->indexOf(deviceWidget);
-			deviceTabWidget->removeTab(index);
-			deviceWidgets.remove(deviceId);
-			delete deviceWidget;
-		}
 	}
 }
 

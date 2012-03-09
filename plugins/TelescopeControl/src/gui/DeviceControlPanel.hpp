@@ -29,6 +29,7 @@
 
 #include "StelDialog.hpp"
 
+#include "IndiDevice.hpp"
 #include "IndiProperty.hpp"
 
 class Ui_deviceControlPanelWidget;
@@ -52,17 +53,19 @@ public:
 public slots:
 	//! \param clientName must be unique among client names.
 	//! \param client must point to a valid client.
-	void addClient(IndiClient* client);
-	void removeClient(const QString& clientName);
-	void defineProperty(const QString& clientName,
-	                    const QString& deviceName,
-	                    const PropertyP& property);
+	void addIndiClient(IndiClient* client);
+	//! Removes the client and all associated tabs (devices and properties).
+	void removeIndiClient(const QString& clientName);
+	
+	//! 
+	void addIndiDevice(const QString& clientId, const DeviceP& device);
+	//! 
+	void removeIndiDevice(const QString& clientId, const QString& deviceName);
+	
+	//! \todo move to the property widgets.
 	void updateProperty(const QString& clientName,
 	                    const QString& deviceName,
 	                    const PropertyP& property);
-	void removeProperty(const QString& clientName,
-	                    const QString& deviceName,
-	                    const QString& propertyName);
 	void logMessage(const QString& deviceName,
 	                const QDateTime& timestamp,
 	                const QString& message);
@@ -85,6 +88,10 @@ private:
 	typedef QPair<QString,QString> DeviceId;
 	//! All device widgets displayed in this control panel.
 	QHash<DeviceId, IndiDeviceWidget*> deviceWidgets;
+	
+	//! \todo This should probably go in a parent class for all widgets.
+	enum DeviceType {StelDevice, IndiDevice, AscomDevice};
+	QHash<DeviceId, DeviceType> deviceTypes;
 	
 	bool collapsed;
 	

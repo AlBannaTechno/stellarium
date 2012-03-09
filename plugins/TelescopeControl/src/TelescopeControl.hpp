@@ -292,7 +292,7 @@ private:
 	QHash<QString, DeviceModel> deviceModels;
 	//! \todo Temporary.
 	QHash<QString, QString> indiDeviceModels;
-	//! \todo Move to IndiClient?
+	//! \todo Move to IndiClient or TelescopeClientIndi?
 	QHash<QString, IndiClient*> indiClients;
 
 	//! Matches shortcut numbers and connection IDs.
