@@ -33,6 +33,7 @@
 #include "IndiTypes.hpp"
 #include "IndiElement.hpp"
 #include "IndiProperty.hpp"
+#include "IndiDevice.hpp"
 
 //! Class implementing a client for the INDI wire protocol.
 //! Properties are stored internally. Qt signals are emitted when a property
@@ -70,7 +71,17 @@ public:
 
 	//! Loads drivers.xml
 	//! \returns a hash with keys device names, values driver names.
+	//! \todo move to separate class
 	static QHash<QString, QString> loadDeviceDescriptions();
+	
+	//! Get the given device object.
+	//! \returns null pointer if no such device is registered.
+	DeviceP getDevice (const QString& deviceName);
+	
+	//! Get the given property.
+	//! \returns null pointer if no such property is registered.
+	PropertyP getProperty (const QString& deviceName,
+	                       const QString& propertyName);
 
 	static const int DEFAULT_INDI_TCP_PORT = 7624;
 
@@ -109,6 +120,11 @@ public slots:
 	                     const QString& property = QString());
 
 signals:
+	//! Emitted when a new device has been defined.
+	void deviceDefined(const QString& clientId,
+	                   const DeviceP& device);
+	void deviceRemoved(const QString& clientId,
+	                   const QString& deviceName);
 	//! Emitted when a \b def[type]Vector element has been parsed.
 	void propertyDefined(const QString& clientId,
 	                     const QString& deviceName,
@@ -144,10 +160,8 @@ private:
 	//! May be a QProcess or a QTcpSocket.
 	QIODevice* ioDevice;
 	
-	//! Represents all the named properties of a single device.
-	typedef QHash<QString,PropertyP> DeviceProperties;
-	//! The properties of all named devices.
-	QHash<QString,DeviceProperties> deviceProperties;
+	//! All devices represented by this connection
+	QHash<QString,DeviceP> devices;
 	//! Returns the property matching the \b device and \b name attributes.
 	//! \returns 0 if no such property exists.
 	PropertyP getProperty(const SetTagAttributes& attributes);

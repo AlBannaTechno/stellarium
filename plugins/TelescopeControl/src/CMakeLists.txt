@@ -62,6 +62,8 @@ SET(TelescopeControl_SRCS
   indi/IndiElement.cpp
   indi/IndiProperty.hpp
   indi/IndiProperty.cpp
+  indi/IndiDevice.hpp
+  indi/IndiDevice.cpp
   indi/IndiClient.hpp
   indi/IndiClient.cpp
   servers/LogFile.hpp
@@ -130,6 +132,7 @@ SET(TelescopeControl_MOC_HDRS
   gui/IndiLightPropertyWidget.hpp
   gui/IndiBlobPropertyWidget.hpp
   gui/IndiStateWidget.hpp
+  indi/IndiDevice.hpp
   indi/IndiClient.hpp
   )
 

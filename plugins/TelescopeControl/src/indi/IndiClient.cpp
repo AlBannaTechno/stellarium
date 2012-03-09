@@ -380,9 +380,16 @@ void IndiClient::parseStreamData()
 					
 					if (currentProperty->elementCount() > 0)
 					{
-						const QString& device = currentProperty->getDevice();
-						deviceProperties[device].insert(currentProperty->getName(), currentProperty);
-						emit propertyDefined(clientId, device, currentProperty);
+						const QString& devId = currentProperty->getDevice();
+						DeviceP device = devices.value(devId);
+						if (device.isNull())
+						{
+							device = DeviceP(new Device(devId));
+							devices.insert(devId, device);
+							emit deviceDefined(clientId, device);
+						}
+						device->addProperty(currentProperty);
+						emit propertyDefined(clientId, devId, currentProperty);
 					}
 					else
 						currentProperty.clear();
@@ -678,20 +685,22 @@ void IndiClient::logMessage(const QString& device,
 
 PropertyP IndiClient::getProperty(const SetTagAttributes& attributes)
 {
-	const QString& device = attributes.device;
-	if (!deviceProperties.contains(device))
+	const QString& deviceName = attributes.device;
+	DeviceP device = devices.value(deviceName);
+	if (device.isNull())
 	{
-		qDebug() << "Unknown device name:" << device;
+		qDebug() << "Unknown device name:" << deviceName;
 		return PropertyP();
 	}
 	const QString& name = attributes.name;
-	if (!deviceProperties[device].contains(name))
+	PropertyP property = device->getProperty(name);
+	if (property.isNull())
 	{
 		qDebug() << "Unknown property name" << name
-		         << "for device" << device;
+		         << "for device" << deviceName;
 		return PropertyP();
 	}
-	return deviceProperties[device].value(name);
+	return property;
 }
 
 void IndiClient::handleMessageAttribute(const TagAttributes& attributes)
@@ -719,9 +728,10 @@ bool IndiClient::hasProperty(const TagAttributes& attributes)
 	if (!attributes.areValid)
 		return false;
 	
-	if (deviceProperties.contains(attributes.device))
+	DeviceP device = devices.value(attributes.device);
+	if (device)
 	{
-		if (deviceProperties[attributes.device].contains(attributes.name))
+		if (device->hasProperty(attributes.name))
 			return true;
 	}
 	return false;
@@ -974,16 +984,15 @@ void IndiClient::writeProperty(const QString& deviceName,
                                const QString& propertyName,
                                const QVariantHash& newValues)
 {
-	if (!deviceProperties.contains(deviceName) ||
-	    !deviceProperties[deviceName].contains(propertyName) ||
-	    newValues.isEmpty())
+	DeviceP device = devices.value(deviceName);
+	if (device.isNull() || newValues.isEmpty())
 	{
 		//TODO: Log?
 		return;
 	}
-
-	PropertyP property = deviceProperties[deviceName][propertyName];
-	Q_ASSERT(property); //TODO: Check this!
+	PropertyP property = device->getProperty(propertyName);
+	if (property.isNull())
+		return;
 
 	QXmlStreamWriter xmlWriter(ioDevice);
 	xmlWriter.writeStartDocument();
