@@ -34,7 +34,7 @@ IndiLightPropertyWidget::IndiLightPropertyWidget(const LightPropertyP& property,
 	foreach (const QString& elementName, elementNames)
 	{
 		LightElement* element = property->getElement(elementName);
-
+		
 		IndiStateWidget* stateWidget = new IndiStateWidget(element->getValue());
 		lightsWidgets.insert(elementName, stateWidget);
 		gridLayout->addWidget(stateWidget, row, 0, 1, 1);
@@ -47,6 +47,8 @@ IndiLightPropertyWidget::IndiLightPropertyWidget(const LightPropertyP& property,
 
 		row++;
 	}
+	
+	mainLayout->addLayout(gridLayout);
 }
 
 IndiLightPropertyWidget::~IndiLightPropertyWidget()
