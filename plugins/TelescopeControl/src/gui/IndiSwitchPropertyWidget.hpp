@@ -46,8 +46,8 @@ public:
 	                         QWidget* parent = 0);
 	~IndiSwitchPropertyWidget();
 
-	//Slot implementation:
-	void updateProperty(const PropertyP& property);
+public slots:
+	void updateFromProperty();
 
 private slots:
 	//! Called when one of the buttons is clicked.
@@ -57,6 +57,7 @@ private slots:
 	void handleClickedButton(const QString& buttonId);
 
 private:
+	SwitchPropertyP property;
 	QVBoxLayout* buttonsLayout;
 	QHash<QString,QAbstractButton*> buttons;
 	//! Used to enforce the "at most one" switch rule.

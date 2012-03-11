@@ -44,10 +44,8 @@ void TelescopeClientIndi::initialize()
 	isDefinedJNowCoordinateRequest = false;
 	hasQueuedGoto = false;
 
-	connect(indiClient, SIGNAL(propertyDefined(QString,PropertyP)),
-	        this, SLOT(handlePropertyDefinition(QString,PropertyP)));
-	connect(indiClient, SIGNAL(propertyUpdated(QString,PropertyP)),
-	        this, SLOT(handlePropertyUpdate(QString,PropertyP)));
+	connect(indiClient, SIGNAL(deviceDefined(QString,DeviceP)),
+	        this, SLOT(handleDeviceDefinition(QString,DeviceP)));
 }
 
 IndiClient* TelescopeClientIndi::getIndiClient() const
@@ -123,110 +121,113 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	indiClient->writeProperty(deviceName, property, newValues);
 }
 
-void TelescopeClientIndi::handlePropertyDefinition(const QString& device, const PropertyP& property)
+void TelescopeClientIndi::handleDeviceDefinition(const QString& client,
+                                                 const DeviceP& newDevice)
 {
-	//Ignore this property if it belongs to another device.
-	if (device != deviceName)
-		return;
+	Q_UNUSED(client)
+	
+	if (device.isNull() && newDevice && newDevice->getName() == deviceName)
+	{
+		device = newDevice;
+		
+		connect(device.data(), SIGNAL(newValuesReceived()),
+		        this, SLOT(handlePropertyDefinition(QString,PropertyP)));
+	}
+}
 
-	NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
-	if (numberProperty.isNull())
+void TelescopeClientIndi::handlePropertyDefinition(const PropertyP& property)
+{
+	if (property.isNull())
+		return;
+	
+	QString propName = property->getName();
+	NumberPropertyP np = qSharedPointerDynamicCast<NumberProperty>(property);
+	if (np.isNull())
 		return;
 	else
 	{
 		//TODO: Check permissions, too.
-		if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES)
+		//TODO: Room for improvement: detect standard property types at definition.
+		if (propName == IndiClient::SP_J2000_COORDINATES ||
+		    propName == IndiClient::SP_JNOW_COORDINATES)
 		{
+			posProp = np;
 			//Make sure the intial coordinates values are handled.
-			handlePropertyUpdate(device, property);
+			updatePositionFromProperty();
+			connect(np.data(), SIGNAL(newValuesReceived()),
+			        this, SLOT(updatePositionFromProperty()));
 		}
-		else if (numberProperty->getName() == IndiClient::SP_JNOW_COORDINATES)
+		else if (np->getName() == IndiClient::SP_J2000_COORDINATES_REQUEST)
 		{
-			//Make sure the intial coordinates values are handled.
-			handlePropertyUpdate(device, property);
-		}
-		else if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES_REQUEST)
-		{
+			requestedPosProp = np;
 			isDefinedJ2000CoordinateRequest = true;
 		}
-		else if (numberProperty->getName() == IndiClient::SP_JNOW_COORDINATES_REQUEST)
+		else if (np->getName() == IndiClient::SP_JNOW_COORDINATES_REQUEST)
 		{
+			requestedPosProp = np;
 			isDefinedJNowCoordinateRequest = true;
 		}
 	}
 	
-	SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
-	if (switchProperty.isNull())
+	SwitchPropertyP sp = qSharedPointerDynamicCast<SwitchProperty>(property);
+	if (sp.isNull())
 		return;
 	else
 	{
-		if (switchProperty->getName() == IndiClient::SP_CONNECTION)
+		if (propName == IndiClient::SP_CONNECTION)
 		{
+			connectionProp = sp;
 			isDefinedConnection = true;
+			connect(connectionProp.data(), SIGNAL(newValuesReceived()),
+			        this, SLOT(handleConnectionEstablished()));
 		}
 	}
 }
 
-void TelescopeClientIndi::handlePropertyUpdate(const QString& device, const PropertyP& property)
+void TelescopeClientIndi::updatePositionFromProperty()
 {
-	//Ignore this property if it belongs to another device.
-	if (deviceName != device)
+	if (posProp.isNull())
 		return;
-
-	NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
-	if (numberProperty)
+	
+	//Use INDI standard properties to receive location
+	bool coordinatesAreInEod = false;
+	
+	// TODO: Again, this can be better.
+	if (posProp->getName() == IndiClient::SP_JNOW_COORDINATES)
 	{
-		//Use INDI standard properties to receive location
-		bool hasReceivedCoordinates = false;
-		bool coordinatesAreInEod = false;
-
-		if (numberProperty->getName() == IndiClient::SP_J2000_COORDINATES)
-		{
-			hasReceivedCoordinates = true;
-		}
-		else if (numberProperty->getName() == IndiClient::SP_JNOW_COORDINATES)
-		{
-			hasReceivedCoordinates = true;
-			coordinatesAreInEod = true;
-		}
-
-		if (hasReceivedCoordinates)
-		{
-			//Get the coordinates and convert them to a vector
-			//TODO: Get serverTime from the property timestamp
-			const qint64 serverTime = getNow();
-			const double raHours = numberProperty->getElement("RA")->getValue();
-			const double decDegrees = numberProperty->getElement("DEC")->getValue();
-			const double raRadians = raHours * (M_PI / 12);
-			const double decRadians = decDegrees * (M_PI / 180);
-			Vec3d coordinates;
-			StelUtils::spheToRect(raRadians, decRadians, coordinates);
-
-			Vec3d j2000Coordinates = coordinates;
-			if (coordinatesAreInEod)
-			{
-				const StelCore* core = StelApp::getInstance().getCore();
-				j2000Coordinates = core->equinoxEquToJ2000(coordinates);
-			}
-
-			interpolatedPosition.add(j2000Coordinates, getNow(), serverTime);
-		}
-
-		return;
+		coordinatesAreInEod = true;
 	}
-
-	SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
-	if (switchProperty)
+	
+	//Get the coordinates and convert them to a vector
+	//TODO: Get serverTime from the property timestamp
+	const qint64 serverTime = getNow();
+	const double raHours = posProp->getElement("RA")->getValue();
+	const double decDegrees = posProp->getElement("DEC")->getValue();
+	const double raRadians = raHours * (M_PI / 12);
+	const double decRadians = decDegrees * (M_PI / 180);
+	Vec3d coordinates;
+	StelUtils::spheToRect(raRadians, decRadians, coordinates);
+	
+	Vec3d j2000Coordinates = coordinates;
+	if (coordinatesAreInEod)
 	{
-		if (isDefinedConnection && switchProperty->getName() == IndiClient::SP_CONNECTION)
-		{
-			isConnectionConnected = switchProperty->getElement(IndiClient::SP_CONNECT)->isOn();
-			if (isConnectionConnected && hasQueuedGoto)
-			{
-				telescopeGoto(queuedGotoJ2000Pos);
-				hasQueuedGoto = false;
-			}
-		}
+		const StelCore* core = StelApp::getInstance().getCore();
+		j2000Coordinates = core->equinoxEquToJ2000(coordinates);
+	}
+	
+	interpolatedPosition.add(j2000Coordinates, getNow(), serverTime);
+}
+
+void TelescopeClientIndi::handleConnectionEstablished()
+{
+	if (connectionProp.isNull())
+		return;
+	
+	isConnectionConnected = connectionProp->getElement(IndiClient::SP_CONNECT)->isOn();
+	if (isConnectionConnected && hasQueuedGoto)
+	{
+		telescopeGoto(queuedGotoJ2000Pos);
+		hasQueuedGoto = false;
 	}
 }
 

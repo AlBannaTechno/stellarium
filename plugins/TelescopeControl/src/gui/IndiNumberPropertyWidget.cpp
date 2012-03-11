@@ -28,6 +28,7 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(const NumberPropertyP& proper
                                                    const QString& title,
                                                    QWidget* parent)
 	: IndiPropertyWidget(property, title, parent),
+	property(property),
 	setButton(0),
 	gridLayout(0)
 {
@@ -138,24 +139,23 @@ IndiNumberPropertyWidget::~IndiNumberPropertyWidget()
 	//TODO
 }
 
-void IndiNumberPropertyWidget::updateProperty(const PropertyP& property)
+void IndiNumberPropertyWidget::updateFromProperty()
 {
-	NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
-	if (numberProperty.isNull())
+	if (property.isNull())
 		return;
 	
 	//State
-	State newState = numberProperty->getCurrentState();
+	State newState = property->getCurrentState();
 	stateWidget->setState(newState);
 	
-	if (numberProperty->isReadable())
+	if (property->isReadable())
 	{
-		QStringList elementNames = numberProperty->getElementNames();
+		QStringList elementNames = property->getElementNames();
 		foreach (const QString& elementName, elementNames)
 		{
 			if (displayWidgets.contains(elementName))
 			{
-				NumberElement* element = numberProperty->getElement(elementName);
+				NumberElement* element = property->getElement(elementName);
 				QString value = element->getFormattedValue();
 				displayWidgets[elementName]->setText(value);
 			}

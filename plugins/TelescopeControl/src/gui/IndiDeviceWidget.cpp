@@ -128,6 +128,8 @@ void IndiDeviceWidget::addProperty(const PropertyP& property)
 		default:
 			return;
 	}
+	connect(property.data(), SIGNAL(newValuesReceived()),
+	        propertyWidget, SLOT(updateFromProperty()));
 	connect(propertyWidget, SIGNAL(newPropertyValue(QString,QVariantHash)),
 	        this, SLOT(handleNewPropertyValue(QString,QVariantHash)));
 	propertyWidgets.insert(name, propertyWidget);
@@ -142,16 +144,6 @@ void IndiDeviceWidget::addProperty(const PropertyP& property)
 		groupWidgets.insert(group, widget);
 	}
 	groupWidgets[group]->addPropertyWidget(propertyWidget);
-}
-
-void IndiDeviceWidget::updateProperty(const PropertyP& property)
-{
-	QString name = property->getName();
-
-	if (propertyWidgets.contains(name))
-	{
-		propertyWidgets[name]->updateProperty(property);
-	}
 }
 
 void IndiDeviceWidget::removeProperty(const QString& propertyName)

@@ -123,22 +123,9 @@ signals:
 	//! Emitted when a new device has been defined.
 	void deviceDefined(const QString& clientId,
 	                   const DeviceP& device);
+	//! Emitted when a device has been removed.
 	void deviceRemoved(const QString& clientId,
 	                   const QString& deviceName);
-	//! Emitted when a \b def[type]Vector element has been parsed.
-	void propertyDefined(const QString& clientId,
-	                     const QString& deviceName,
-	                     const PropertyP& property);
-	//! Emitted when a \b new[type]Vector element has been parsed.
-	//! Such a message is sent by the device to notify that a given property
-	//! or its attributes have changed and have a \b new value.
-	void propertyUpdated(const QString& clientId,
-	                     const QString& deviceName,
-	                     const PropertyP& property);
-	//! Emitted when a \b delProperty message has been parsed.
-	void propertyRemoved(const QString& clientId,
-	                     const QString& deviceName,
-	                     const QString& propertyName);
 	//! Emitted when a property definition or update contains a message, or when
 	//! a \b message element has been received.
 	//! \param timestamp uses QDateTime for now. It supports millisecond

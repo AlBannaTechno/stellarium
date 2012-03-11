@@ -35,13 +35,13 @@ public:
 	                       const QString& title,
 	                       QWidget* parent = 0);
 
-//Slots:
-	void updateProperty(const PropertyP& property);
+public slots:
+	void updateFromProperty();
 
 //Signals: no need to re-declare them.
 
 private:
-
+	BlobPropertyP property;
 };
 
 #endif//_INDI_BLOG_PROPERTY_WIDGET_HPP_

@@ -23,6 +23,7 @@ IndiTextPropertyWidget::IndiTextPropertyWidget(const TextPropertyP& property,
                                                const QString& title,
                                                QWidget* parent)
 	: IndiPropertyWidget(property, title, parent),
+	property(property),
 	setButton(0),
 	gridLayout(0)
 {
@@ -83,24 +84,23 @@ IndiTextPropertyWidget::~IndiTextPropertyWidget()
 	//TODO
 }
 
-void IndiTextPropertyWidget::updateProperty(const PropertyP& property)
+void IndiTextPropertyWidget::updateFromProperty()
 {
-	TextPropertyP textProperty = qSharedPointerDynamicCast<TextProperty>(property);
-	if (textProperty.isNull())
+	if (property.isNull())
 		return;
 	
 	//State
-	State newState = textProperty->getCurrentState();
+	State newState = property->getCurrentState();
 	stateWidget->setState(newState);
 	
-	if (textProperty->isReadable())
+	if (property->isReadable())
 	{
-		QStringList elementNames = textProperty->getElementNames();
+		QStringList elementNames = property->getElementNames();
 		foreach (const QString& elementName, elementNames)
 		{
 			if (displayWidgets.contains(elementName))
 			{
-				TextElement* element = textProperty->getElement(elementName);
+				TextElement* element = property->getElement(elementName);
 				QString value = element->getValue();
 				displayWidgets[elementName]->setText(value);
 			}

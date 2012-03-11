@@ -44,8 +44,8 @@ public:
 	                       QWidget* parent = 0);
 	~IndiTextPropertyWidget();
 
-	//Slot implementation:
-	void updateProperty(const PropertyP& property);
+public slots:
+	void updateFromProperty();
 
 private slots:
 	//! Called by #setButton.
@@ -54,6 +54,7 @@ private slots:
 	void setNewPropertyValue();
 
 private:
+	TextPropertyP property;
 	//! Button for setting a new value for the property.
 	//! Unused if the property is read-only.
 	QPushButton* setButton;

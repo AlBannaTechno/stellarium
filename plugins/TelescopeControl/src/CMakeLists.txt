@@ -132,6 +132,7 @@ SET(TelescopeControl_MOC_HDRS
   gui/IndiLightPropertyWidget.hpp
   gui/IndiBlobPropertyWidget.hpp
   gui/IndiStateWidget.hpp
+  indi/IndiProperty.hpp
   indi/IndiDevice.hpp
   indi/IndiClient.hpp
   )

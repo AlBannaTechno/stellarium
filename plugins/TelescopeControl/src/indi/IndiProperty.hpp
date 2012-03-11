@@ -110,9 +110,9 @@ public:
 };
 
 //! Base class of all property classes.
-//TODO: Base class or template?
-class Property
+class Property : public QObject
 {
+	Q_OBJECT
 public:
 	enum PropertyType {
 		TextProperty,
@@ -135,8 +135,8 @@ public:
 	QString getLabel() const;
 	QString getGroup() const;
 	QString getDevice() const;
-	bool isReadable();
-	bool isWritable();
+	bool isReadable() const;
+	bool isWritable() const;
 	Permission getPermission() const;
 	void setState(State newState);
 	State getCurrentState() const;
@@ -188,6 +188,10 @@ public:
 	static const char* T_ONE_SWITCH;
 	static const char* T_ONE_LIGHT;
 	static const char* T_ONE_BLOB;
+	
+signals:
+	//! Emitted when the property is updated with new values from the device.
+	void newValuesReceived();
 
 protected:
 	//! Sets the timestamp value. If necessary, reinterprets the data as UTC.

@@ -63,7 +63,7 @@ public:
 
 public slots:
 	//What calls this?
-	virtual void updateProperty(const PropertyP& property) = 0;
+	virtual void updateFromProperty() = 0;
 
 signals:
 	void newPropertyValue(const QString& property, const QVariantHash& elements);

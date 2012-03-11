@@ -159,8 +159,6 @@ void DeviceControlPanel::addIndiClient(IndiClient* client)
 		        this, SLOT(addIndiDevice(QString,DeviceP)));
 		connect(client, SIGNAL(deviceRemoved(QString,QString)),
 		        this, SLOT(removeIndiDevice(QString,QString)));
-		connect(client, SIGNAL(propertyUpdated(QString,QString,PropertyP)),
-		        this, SLOT(updateProperty(QString,QString,PropertyP)));
 		connect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
 		        this, SLOT(logMessage(QString,QDateTime,QString)));
 		client->writeGetProperties();
@@ -179,8 +177,6 @@ void DeviceControlPanel::removeIndiClient(const QString& clientName)
 	           this, SLOT(addIndiDevice(QString,DeviceP)));
 	disconnect(client, SIGNAL(deviceRemoved(QString,QString)),
 	           this, SLOT(removeIndiDevice(QString,QString)));
-	disconnect(client, SIGNAL(propertyUpdated(QString,QString,PropertyP)),
-	           this, SLOT(updateProperty(QString,QString,PropertyP)));
 	disconnect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
 	           this, SLOT(logMessage(QString,QDateTime,QString)));
 
@@ -254,17 +250,6 @@ void DeviceControlPanel::removeIndiDevice(const QString& clientId,
 			deviceWidgets.remove(deviceId);
 			delete deviceWidget;
 		}
-	}
-}
-
-void DeviceControlPanel::updateProperty(const QString& clientName,
-                                        const QString& deviceName,
-                                        const PropertyP& property)
-{
-	DeviceId deviceId(clientName, deviceName);
-	if (deviceWidgets.contains(deviceId))
-	{
-		deviceWidgets[deviceId]->updateProperty(property);
 	}
 }
 

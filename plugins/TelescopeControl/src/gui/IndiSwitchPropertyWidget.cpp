@@ -27,6 +27,7 @@ IndiSwitchPropertyWidget::IndiSwitchPropertyWidget(const SwitchPropertyP& proper
                                                    const QString& title,
                                                    QWidget* parent)
 	: IndiPropertyWidget(property, title, parent),
+	property(property),
 	signalMapper(0)
 {
 	Q_ASSERT(property);
@@ -98,22 +99,21 @@ IndiSwitchPropertyWidget::~IndiSwitchPropertyWidget()
 	//
 }
 
-void IndiSwitchPropertyWidget::updateProperty(const PropertyP& property)
+void IndiSwitchPropertyWidget::updateFromProperty()
 {
-	SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
-	if (switchProperty.isNull())
+	if (property.isNull())
 		return;
 	
 	//State
-	State newState = switchProperty->getCurrentState();
+	State newState = property->getCurrentState();
 	stateWidget->setState(newState);
 	
-	QStringList elementNames = switchProperty->getElementNames();
+	QStringList elementNames = property->getElementNames();
 	foreach (const QString& elementName, elementNames)
 	{
 		if (buttons.contains(elementName))
 		{
-			SwitchElement* element = switchProperty->getElement(elementName);
+			SwitchElement* element = property->getElement(elementName);
 			bool value = element->isOn();
 			buttons[elementName]->setChecked(value);;
 		}

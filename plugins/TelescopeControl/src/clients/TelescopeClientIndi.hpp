@@ -1,6 +1,6 @@
 /*
  * Stellarium Telescope Control plug-in
- * Copyright (C) 2010-2011  Bogdan Marinov
+ * Copyright (C) 2010-2012  Bogdan Marinov
  * Copyright (C) 2011  Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #include "TelescopeClient.hpp"
 #include "InterpolatedPosition.hpp"
 #include "IndiClient.hpp"
+#include "IndiProperty.hpp"
 
 #include <QObject>
 #include <QString>
@@ -45,6 +46,7 @@
 //!  - EQUATORIAL_EOD_COORD
 //! \todo Support custom property names.
 //! \todo Get rid of the auto-connection.
+//! \todo Major overhaul of the main logic and handling of INDI client management.
 class TelescopeClientIndi : public TelescopeClient
 {
 	Q_OBJECT
@@ -73,8 +75,17 @@ public:
 signals:
 
 protected slots:
-	void handlePropertyDefinition(const QString& device, const PropertyP& property);
-	void handlePropertyUpdate(const QString& device, const PropertyP &property);
+	//! If the device matches the wanted one, connect to it and wait for properties.
+	//! \todo Deal with this on management level? A client is useless without a device.
+	void handleDeviceDefinition(const QString& client, const DeviceP& newDevice);
+	//! If the property is a useful standard property, connect to it.
+	//! \todo Save a pointer to the property.
+	//! \todo Connect each type of property to the appropriate handling function.
+	void handlePropertyDefinition(const PropertyP& property);
+	//! 
+	void updatePositionFromProperty();
+	//! 
+	void handleConnectionEstablished();
 
 protected:
 	TelescopeClientIndi(const QString& name, Equinox eq);
@@ -92,9 +103,18 @@ protected:
 	//! The name identifying this device's properties.
 	//! Properties belonging to other devices are ignored.
 	QString deviceName;
+	//! 
+	DeviceP device;
 
 	bool isDefinedConnection;
 	bool isConnectionConnected;
+	SwitchPropertyP connectionProp;
+	
+	//! Property holding the current position.
+	//! J2000 properties are preferred, if not JNow.
+	//! \todo Handle altaz.
+	NumberPropertyP posProp;
+	NumberPropertyP requestedPosProp;
 	bool isDefinedJ2000CoordinateRequest;
 	bool isDefinedJNowCoordinateRequest;
 

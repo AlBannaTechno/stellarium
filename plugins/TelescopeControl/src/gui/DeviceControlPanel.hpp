@@ -62,10 +62,6 @@ public slots:
 	//! 
 	void removeIndiDevice(const QString& clientId, const QString& deviceName);
 	
-	//! \todo move to the property widgets.
-	void updateProperty(const QString& clientName,
-	                    const QString& deviceName,
-	                    const PropertyP& property);
 	void logMessage(const QString& deviceName,
 	                const QDateTime& timestamp,
 	                const QString& message);

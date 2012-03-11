@@ -41,10 +41,12 @@ public:
 	                        QWidget* parent = 0);
 	~IndiLightPropertyWidget();
 
-	//Slot implementation:
-	void updateProperty(const PropertyP& property);
+public slots:
+	void updateFromProperty();
 
 private:
+	LightPropertyP property;
+	
 	QGridLayout* gridLayout;
 	QHash<QString,IndiStateWidget*> lightsWidgets;
 };

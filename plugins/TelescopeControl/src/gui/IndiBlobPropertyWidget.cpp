@@ -24,32 +24,30 @@
 IndiBlobPropertyWidget::IndiBlobPropertyWidget(const BlobPropertyP& property,
                                                const QString& title,
                                                QWidget* parent)
-	: IndiPropertyWidget(property, title, parent)
+	: IndiPropertyWidget(property, title, parent),
+	property(property)
 {
 	Q_ASSERT(property);
-
-	//TODO
 }
 
-void IndiBlobPropertyWidget::updateProperty(const PropertyP& property)
+void IndiBlobPropertyWidget::updateFromProperty()
 {
-	BlobPropertyP blobProperty = qSharedPointerDynamicCast<BlobProperty>(property);
-	if (blobProperty.isNull())
+	if (property.isNull())
 		return;
 	
 	//State
-	State newState = blobProperty->getCurrentState();
+	State newState = property->getCurrentState();
 	stateWidget->setState(newState);
 	
 	//This is rather poorly thought-out. Though I doubt that it will often
 	//encounter vectors of multiple BLOBs.
 	//TODO: Remember format/fileaname extension so you don't have to
 	//generate them every time.
-	QString timestamp = blobProperty->getTimestamp().toString(Qt::ISODate);
-	QStringList elementNames = blobProperty->getElementNames();
+	QString timestamp = property->getTimestamp().toString(Qt::ISODate);
+	QStringList elementNames = property->getElementNames();
 	foreach (const QString& elementName, elementNames)
 	{
-		BlobElement* element = blobProperty->getElement(elementName);
+		BlobElement* element = property->getElement(elementName);
 		if (element->getSize() == 0)
 			continue;
 		//TODO: Temporary

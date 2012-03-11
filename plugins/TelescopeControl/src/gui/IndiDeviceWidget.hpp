@@ -44,9 +44,6 @@ class IndiDeviceWidget : public QWidget
 
 public:
 	IndiDeviceWidget(const DeviceP& newDevice, QWidget* parent = 0);
-
-	//! \todo Move to property widgets.
-	void updateProperty(const PropertyP& property);
 	
 	//! Are there any properties defined in this device?
 	bool isEmpty() const;

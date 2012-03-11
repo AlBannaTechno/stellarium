@@ -22,7 +22,8 @@
 IndiLightPropertyWidget::IndiLightPropertyWidget(const LightPropertyP& property,
                                                  const QString& title,
                                                  QWidget* parent)
-	: IndiPropertyWidget(property, title, parent)
+	: IndiPropertyWidget(property, title, parent),
+	property(property)
 {
 	Q_ASSERT(property);
 
@@ -53,22 +54,21 @@ IndiLightPropertyWidget::~IndiLightPropertyWidget()
 	//
 }
 
-void IndiLightPropertyWidget::updateProperty(const PropertyP& property)
+void IndiLightPropertyWidget::updateFromProperty()
 {
-	LightPropertyP lightProperty = qSharedPointerDynamicCast<LightProperty>(property);
-	if (lightProperty.isNull())
+	if (property.isNull())
 		return;
 	
 	//State
-	State newState = lightProperty->getCurrentState();
+	State newState = property->getCurrentState();
 	stateWidget->setState(newState);
 	
-	QStringList elementNames = lightProperty->getElementNames();
+	QStringList elementNames = property->getElementNames();
 	foreach (const QString& elementName, elementNames)
 	{
 		if (lightsWidgets.contains(elementName))
 		{
-			LightElement* element = lightProperty->getElement(elementName);
+			LightElement* element = property->getElement(elementName);
 			State value = element->getValue();
 			lightsWidgets[elementName]->setState(value);
 		}

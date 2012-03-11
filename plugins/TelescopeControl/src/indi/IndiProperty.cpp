@@ -258,12 +258,12 @@ QString Property::getDevice() const
 	return device;
 }
 
-bool Property::isReadable()
+bool Property::isReadable() const
 {
 	return (permission == PermissionReadOnly || permission == PermissionReadWrite);
 }
 
-bool Property::isWritable()
+bool Property::isWritable() const
 {
 	return (permission == PermissionWriteOnly || permission == PermissionReadWrite);
 }
@@ -310,13 +310,15 @@ void Property::update(const QHash<QString, QString>& newValues,
 	while(it.hasNext())
 	{
 		it.next();
-		if (elements.contains(it.key()))
-			elements[it.key()]->setValue(it.value());
+		Element* element = elements.value(it.key(), 0);
+		if (element)
+			element->setValue(it.value());
 	}
 	
 	if (attributes.stateChanged)
 		setState(attributes.state);
 	setTimestamp(attributes.timestamp);
+	emit newValuesReceived();
 }
 
 void Property::setTimestamp(const QDateTime& newTimestamp)

@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <IndiProperty.hpp>
 
 //! Container for the Property objects of a single device.
+//! \todo Handle BLOB policy.
 class Device : public QObject
 {
 	Q_OBJECT

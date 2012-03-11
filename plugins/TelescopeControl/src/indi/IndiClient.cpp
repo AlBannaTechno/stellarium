@@ -389,7 +389,7 @@ void IndiClient::parseStreamData()
 							emit deviceDefined(clientId, device);
 						}
 						device->addProperty(currentProperty);
-						emit propertyDefined(clientId, devId, currentProperty);
+						//emit propertyDefined(clientId, devId, currentProperty);
 					}
 					else
 						currentProperty.clear();
@@ -437,9 +437,6 @@ void IndiClient::parseStreamData()
 					handleMessageAttribute(*currentPropertyAttributes);
 					currentProperty->update(elementsValues,
 					                        *currentPropertyAttributes);
-					emit propertyUpdated(clientId,
-					                     currentPropertyAttributes->device,
-					                     currentProperty);
 					currentProperty.clear();
 					currentPropertyTag.clear();
 					delete currentPropertyAttributes;
@@ -774,15 +771,7 @@ bool IndiClient::hasProperty(const TagAttributes& attributes)
 //		}
 //	}
 
-//	if (property->elementCount() > 0)
-//	{
-//		deviceProperties[device].insert(propertyName, property);
-//		emit propertyDefined(clientId, device, property);
-//	}
-//	else
-//	{
-//		delete property;
-//	}
+//	[snip]
 //}
 
 /*
