@@ -65,8 +65,7 @@ public slots:
 	//What calls this?
 	virtual void updateFromProperty() = 0;
 
-signals:
-	void newPropertyValue(const QString& property, const QVariantHash& elements);
+//signals:
 
 protected:
 	QString propertyName;

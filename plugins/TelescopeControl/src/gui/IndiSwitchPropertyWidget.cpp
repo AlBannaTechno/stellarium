@@ -122,15 +122,16 @@ void IndiSwitchPropertyWidget::updateFromProperty()
 
 void IndiSwitchPropertyWidget::setNewPropertyValue()
 {
-	QVariantHash elements;
+	QHash<QString, bool> newValues;
 	QHashIterator<QString,QAbstractButton*> i(buttons);
 	while (i.hasNext())
 	{
 		i.next();
 		bool value = i.value()->isChecked();
-		elements.insert(i.key(), value);
+		newValues.insert(i.key(), value);
 	}
-	emit newPropertyValue(propertyName, elements);
+	stateWidget->setState(StateBusy);
+	property->send(newValues);
 }
 
 void IndiSwitchPropertyWidget::handleClickedButton(const QString& buttonId)

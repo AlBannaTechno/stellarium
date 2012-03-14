@@ -38,7 +38,6 @@ TelescopeClientIndi::~TelescopeClientIndi()
 
 void TelescopeClientIndi::initialize()
 {
-	isDefinedConnection = false;
 	isConnectionConnected = false;
 	isDefinedJ2000CoordinateRequest = false;
 	isDefinedJNowCoordinateRequest = false;
@@ -70,34 +69,33 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	{
 		return;
 	}
+	
+	if (requestedPosProp.isNull())
+		return;
 
 	//If it's not connected, attempt to connect
-	if (isDefinedConnection && !isConnectionConnected)
+	if (connectionProp && !isConnectionConnected)
 	{
 		hasQueuedGoto = true;
 		queuedGotoJ2000Pos = j2000Coordinates;
-		QVariantHash elements;
-		elements.insert(IndiClient::SP_CONNECT, true);
-		elements.insert(IndiClient::SP_DISCONNECT, false);
-		indiClient->writeProperty(deviceName, IndiClient::SP_CONNECTION, elements);
-		//(isDefinedConnection == true ensures that deviceName is not empty)
+		QHash<QString,bool> newValues;
+		newValues.insert(IndiClient::SP_CONNECT, true);
+		newValues.insert(IndiClient::SP_DISCONNECT, false);
+		connectionProp->send(newValues);
 		return;
 	}
 
 	//TODO: Verify what kind of action (SLEW, SYNC) is going to be performed on a request
 
 	Vec3d targetCoordinates;
-	QString property;
 	if (isDefinedJ2000CoordinateRequest)
 	{
 		targetCoordinates = j2000Coordinates;
-		property = IndiClient::SP_J2000_COORDINATES_REQUEST;
 	}
 	else if (isDefinedJNowCoordinateRequest)
 	{
 		const StelCore* core = StelApp::getInstance().getCore();
 		targetCoordinates = core->j2000ToEquinoxEqu(j2000Coordinates);
-		property = IndiClient::SP_JNOW_COORDINATES_REQUEST;
 	}
 	else
 	{
@@ -115,10 +113,10 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 	const double decDegrees = decRadians * (180 / M_PI);
 
 	//Send the "go to" command
-	QVariantHash newValues;
-	newValues.insert("RA", raHours);
-	newValues.insert("DEC", decDegrees);
-	indiClient->writeProperty(deviceName, property, newValues);
+	QHash<QString,QString> newValues;
+	newValues.insert("RA", QString::number(raHours));
+	newValues.insert("DEC", QString::number(decDegrees));
+	requestedPosProp->send(newValues);
 }
 
 void TelescopeClientIndi::handleDeviceDefinition(const QString& client,
@@ -177,7 +175,6 @@ void TelescopeClientIndi::handlePropertyDefinition(const PropertyP& property)
 		if (propName == IndiClient::SP_CONNECTION)
 		{
 			connectionProp = sp;
-			isDefinedConnection = true;
 			connect(connectionProp.data(), SIGNAL(newValuesReceived()),
 			        this, SLOT(handleConnectionEstablished()));
 		}

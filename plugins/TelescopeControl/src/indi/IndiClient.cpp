@@ -188,7 +188,7 @@ void IndiClient::parseStreamData()
 {
 	if (!ioDevice)
 		return;
-	qDebug() << "Starting to parse chunk...";
+	//qDebug() << "Starting to parse chunk...";
 
 	//Get rid of "XML declaration not at start of document." errors
 	//(Damn INDI and badly formed code!)
@@ -291,7 +291,9 @@ void IndiClient::parseStreamData()
 					if (currentElement || !definitionInProgress ||
 					    tag != currentProperty->defElementTag())
 					{
-						qDebug() << "Bad INDI structure - no closing tag for the previous element or mismatched element type.";
+						qDebug() << "Bad INDI structure - no closing tag for "
+						            "the previous element or mismatched "
+						            "element type.";
 						resetParserState();
 						continue;
 					}
@@ -388,11 +390,16 @@ void IndiClient::parseStreamData()
 							devices.insert(devId, device);
 							emit deviceDefined(clientId, device);
 						}
-						device->addProperty(currentProperty);
+						bool added = device->addProperty(currentProperty);
+						if (added)
+						{
+							connect(currentProperty.data(),
+							        SIGNAL(valuesToSend(QByteArray)),
+							        this,
+							        SLOT(sendData(QByteArray)));
+						}
 						//emit propertyDefined(clientId, devId, currentProperty);
 					}
-					else
-						currentProperty.clear();
 					
 					currentProperty.clear();
 					currentPropertyTag.clear();
@@ -494,7 +501,7 @@ void IndiClient::parseStreamData()
 	{
 		if (xmlReader.error() == QXmlStreamReader::PrematureEndOfDocumentError)
 		{
-			qDebug() << "End of pseudo-XML chunk in INDI client" << clientId;
+			//qDebug() << "End of pseudo-XML chunk in INDI client" << clientId;
 		}
 		else
 		{
@@ -969,150 +976,21 @@ void IndiClient::writeEnableBlob(SendBlobs sendBlobs,
 	xmlWriter.writeEndDocument();
 }
 
-void IndiClient::writeProperty(const QString& deviceName,
-                               const QString& propertyName,
-                               const QVariantHash& newValues)
+void IndiClient::sendData(const QByteArray& indiText)
 {
-	DeviceP device = devices.value(deviceName);
-	if (device.isNull() || newValues.isEmpty())
+	if (ioDevice && ioDevice->isOpen() && ioDevice->isWritable())
 	{
-		//TODO: Log?
-		return;
-	}
-	PropertyP property = device->getProperty(propertyName);
-	if (property.isNull())
-		return;
-
-	QXmlStreamWriter xmlWriter(ioDevice);
-	xmlWriter.writeStartDocument();
-
-	Property::PropertyType type = property->getType();
-	switch (type)
-	{
-		case Property::TextProperty:
+		qint64 bytesWritten = ioDevice->write(indiText);
+		if (bytesWritten != indiText.length())
 		{
-			break;
-		}
-
-		case Property::NumberProperty:
-		{
-			NumberPropertyP numberProperty = qSharedPointerDynamicCast<NumberProperty>(property);
-			if (numberProperty)
-				writeNumberProperty(xmlWriter, deviceName,
-				                    numberProperty, newValues);
-			break;
-		}
-
-		case Property::SwitchProperty:
-		{
-			SwitchPropertyP switchProperty = qSharedPointerDynamicCast<SwitchProperty>(property);
-			if (switchProperty)
-				writeSwitchProperty(xmlWriter, deviceName,
-				                    switchProperty, newValues);
-			break;
-		}
-
-		case Property::BlobProperty:
-		{
-			break;
-		}
-
-		default:
-		{
-			//TODO: Log?
-			break;
+			qDebug() << "INDI client" << clientId
+			         << "There might be a problem";
 		}
 	}
-
-	xmlWriter.writeEndDocument();
-}
-
-void IndiClient::writeTextProperty(QXmlStreamWriter& xmlWriter,
-                                   const QString& device,
-                                   const TextPropertyP& property,
-                                   const QVariantHash& newValues)
-{
-	Q_UNUSED(xmlWriter)
-	Q_UNUSED(device)
-	Q_UNUSED(property)
-	Q_UNUSED(newValues)
-}
-
-void IndiClient::writeNumberProperty(QXmlStreamWriter& xmlWriter,
-                                     const QString& device,
-                                     const NumberPropertyP& property,
-                                     const QVariantHash& newValues)
-{
-	Q_ASSERT(property); //TODO: Proper check!
-
-	xmlWriter.writeStartElement(Property::T_NEW_NUMBER_VECTOR);
-	xmlWriter.writeAttribute(TagAttributes::DEVICE, device);
-	xmlWriter.writeAttribute(TagAttributes::NAME, property->getName());
-	//TODO: Add timestamp?
-
-	QStringList elements = property->getElementNames();//TODO: Optimize this
-	foreach (const QString& element, elements)
+	else
 	{
-		xmlWriter.writeStartElement(Property::T_ONE_NUMBER);
-		xmlWriter.writeAttribute(TagAttributes::NAME, element);
-		double value;
-		QVariant elementValue = newValues.value(element, QVariant());
-		//Doubles as a check if such an element exists:
-		//an empty QVariant is of type Invalid.
-		if (elementValue.type() == QVariant::Double)
-			value = elementValue.toDouble();
-		else
-			value = property->getElement(element)->getValue();
-		xmlWriter.writeCharacters(QString::number(value, 'f'));
-		xmlWriter.writeEndElement();
+		qWarning() << "INDI client" << clientId
+		           << "can't write to device. Skipping:"
+		           << indiText;
 	}
-
-	xmlWriter.writeEndElement();
-
-	//TODO: Update property state and send it to the UI (additional signal?)
-}
-
-void IndiClient::writeSwitchProperty(QXmlStreamWriter& xmlWriter,
-                                     const QString& device,
-                                     const SwitchPropertyP& property,
-                                     const QVariantHash& newValues)
-{
-	Q_ASSERT(property); //TODO: Proper check!
-
-	xmlWriter.writeStartElement(Property::T_NEW_SWITCH_VECTOR);
-	xmlWriter.writeAttribute(TagAttributes::DEVICE, device);
-	xmlWriter.writeAttribute(TagAttributes::NAME, property->getName());
-	//TODO: Add timestamp?
-
-	QStringList elements = property->getElementNames();//TODO: Optimize this
-	foreach (const QString& element, elements)
-	{
-		xmlWriter.writeStartElement(Property::T_ONE_SWITCH);
-		xmlWriter.writeAttribute(TagAttributes::NAME, element);
-		bool value;
-		QVariant elementValue = newValues.value(element, QVariant());
-		//Doubles as a check if such an element exists:
-		//an empty QVariant is of type Invalid.
-		if (elementValue.type() == QVariant::Bool)
-			value = elementValue.toBool();
-		else
-			value = property->getElement(element)->isOn();
-		xmlWriter.writeCharacters((value)?"On":"Off");
-		xmlWriter.writeEndElement();
-	}
-
-	xmlWriter.writeEndElement();
-
-	//TODO: Update property state and send it to the UI (additional signal?)
-}
-
-void IndiClient::writeBlobProperty(QXmlStreamWriter& xmlWriter,
-                                   const QString& device,
-                                   const BlobPropertyP& property,
-                                   const QVariantHash& newValues)
-{
-	Q_UNUSED(xmlWriter)
-	Q_UNUSED(device)
-	Q_UNUSED(property)
-	Q_UNUSED(newValues)
 }

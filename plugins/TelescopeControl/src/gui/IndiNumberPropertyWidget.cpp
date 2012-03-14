@@ -165,14 +165,15 @@ void IndiNumberPropertyWidget::updateFromProperty()
 
 void IndiNumberPropertyWidget::setNewPropertyValue()
 {
-	QVariantHash elements;
+	QHash<QString,QString> newValues;
 	QHashIterator<QString,QLineEdit*> i(inputWidgets);
 	while (i.hasNext())
 	{
 		i.next();
 		QString stringValue = i.value()->text().trimmed();
 		double value = NumberElement::readDoubleFromString(stringValue);
-		elements.insert(i.key(), value);
+		newValues.insert(i.key(), QString::number(value, 'f'));
 	}
-	emit newPropertyValue(propertyName, elements);
+	stateWidget->setState(StateBusy);
+	property->send(newValues);
 }

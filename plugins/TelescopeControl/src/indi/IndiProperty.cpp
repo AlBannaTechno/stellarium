@@ -321,6 +321,35 @@ void Property::update(const QHash<QString, QString>& newValues,
 	emit newValuesReceived();
 }
 
+void Property::send(const QHash<QString, QString>& newValues)
+{
+	if (type == BlobProperty)
+	{
+		qWarning() << name << "Writing BLOBs is not supported!";
+		return;
+	}
+	initTagTemplates();
+	
+	QString timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+	QString tag = newVectorStartTag.arg(timestamp);
+	tag.reserve(100 + elements.count() * 100);
+	
+	QHashIterator<QString, QString> it(newValues);
+	while(it.hasNext())
+	{
+		it.next();
+		Element* element = elements.value(it.key(), 0);
+		if (element)
+		{
+			tag += oneElementTemplate.arg(it.key(), it.value());
+		}
+	}
+	
+	tag += newVectorEndTag;
+	
+	emit valuesToSend(tag.toAscii());
+}
+
 void Property::setTimestamp(const QDateTime& newTimestamp)
 {
 	if (newTimestamp.isValid())
@@ -333,6 +362,24 @@ void Property::setTimestamp(const QDateTime& newTimestamp)
 	else
 	{
 		timestamp = QDateTime::currentDateTimeUtc();
+	}
+}
+
+void Property::initTagTemplates()
+{
+	// Init the templates if necessary
+	if (newVectorStartTag.isEmpty())
+	{
+		newVectorStartTag = QString("<%1 device=\"%2\" name=\"%3\" timestamp=\"%4\">").arg(newVectorTag(), device, name, "%1");
+		//qDebug() << newVectorStartTag;
+	}
+	if (newVectorEndTag.isEmpty())
+	{
+		newVectorEndTag = QString("</%1>").arg(newVectorTag());
+	}
+	if (oneElementTemplate.isEmpty())
+	{
+		oneElementTemplate = QString("<%1 name=\"%2\">%3</%1>").arg(oneElementTag(), "%1", "%2");
 	}
 }
 
@@ -490,6 +537,36 @@ void SwitchProperty::addElement(SwitchElement* element)
 SwitchElement* SwitchProperty::getElement(const QString& name)
 {
 	return dynamic_cast<SwitchElement*>(elements.value(name));
+}
+
+void SwitchProperty::send(const QHash<QString, QString>& newValues)
+{
+	send(newValues);
+}
+
+void SwitchProperty::send(const QHash<QString, bool>& newValues)
+{
+	initTagTemplates();
+	
+	QString timestamp = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+	QString tag = newVectorStartTag.arg(timestamp);
+	tag.reserve(100 + elements.count() * 100);
+	
+	QHashIterator<QString, bool> it(newValues);
+	while(it.hasNext())
+	{
+		it.next();
+		Element* element = elements.value(it.key(), 0);
+		if (element)
+		{
+			const char* value = (it.value()) ? "On" : "Off";
+			tag += oneElementTemplate.arg(it.key(), value);
+		}
+	}
+	
+	tag += newVectorEndTag;
+	
+	emit valuesToSend(tag.toAscii());
 }
 
 

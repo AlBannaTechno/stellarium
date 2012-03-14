@@ -110,13 +110,14 @@ void IndiTextPropertyWidget::updateFromProperty()
 
 void IndiTextPropertyWidget::setNewPropertyValue()
 {
-	QVariantHash elements;
+	QHash<QString,QString> newValues;
 	QHashIterator<QString,QLineEdit*> i(inputWidgets);
 	while (i.hasNext())
 	{
 		i.next();
-		QString value = i.value()->text();
-		elements.insert(i.key(), value);
+		QString value = i.value()->text().trimmed();
+		newValues.insert(i.key(), value);
 	}
-	emit newPropertyValue(propertyName, elements);
+	stateWidget->setState(StateBusy);
+	property->send(newValues);
 }

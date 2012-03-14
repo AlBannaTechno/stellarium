@@ -110,14 +110,13 @@ public slots:
 	//! the command applies to all properties.
 	void writeGetProperties(const QString& device = QString(),
 	                        const QString& property = QString());
-	//! Sends a \b newXVector element to the specified device.
-	void writeProperty(const QString& device,
-	                   const QString& property,
-	                   const QVariantHash& newValues);
 	//!
 	void writeEnableBlob(SendBlobs sendBlobs,
 	                     const QString& device,
 	                     const QString& property = QString());
+	
+	//!
+	void sendData(const QByteArray& indiText);
 
 signals:
 	//! Emitted when a new device has been defined.
@@ -250,42 +249,6 @@ private:
 	//! Reads a \b oneBLOB tag.
 	void readBlobElement(QXmlStreamReader& xmlReader,
 	                     const BlobPropertyP& blobProperty);
-
-	//! Helper for writeProperty().
-	//! Writes \b newTextVector element, including a series of \b oneText
-	//! elements to the XML stream.
-	//! \param newValues is expected to have QString values;
-	//! \todo Needs to be actually implemented.
-	void writeTextProperty(QXmlStreamWriter& xmlWriter,
-	                       const QString& device,
-	                       const TextPropertyP& property,
-	                       const QVariantHash& newValues);
-	//! Helper for writeProperty().
-	//! Writes \b newNumberVector element, including a series of \b oneNumber
-	//! elements to the XML stream.
-	//! \param newValues is expected to have "double" values.
-	//! \todo Support string values.
-	void writeNumberProperty(QXmlStreamWriter& xmlWriter,
-	                         const QString& device,
-	                         const NumberPropertyP& property,
-	                         const QVariantHash& newValues);
-	//! Helper for writeProperty().
-	//! Writes \b newSwitchVector element, including a series of \b oneSwitch
-	//! elements to the XML stream.
-	//! \param newValues is expected to have "bool" values.
-	void writeSwitchProperty(QXmlStreamWriter& xmlWriter,
-	                         const QString& device,
-	                         const SwitchPropertyP& property,
-	                         const QVariantHash& newValues);
-	//! Helper for writeProperty().
-	//! Writes \b newBLOBVector element, including a series of \b oneBLOB
-	//! elements to the XML stream.
-	//! \param newValues is expected to have QByteArray values.
-	//! \todo Needs to be actually implemented.
-	void writeBlobProperty(QXmlStreamWriter& xmlWriter,
-	                       const QString& device,
-	                       const BlobPropertyP& property,
-	                       const QVariantHash& newValues);
 };
 
 #endif //_INDI_CLIENT_HPP_

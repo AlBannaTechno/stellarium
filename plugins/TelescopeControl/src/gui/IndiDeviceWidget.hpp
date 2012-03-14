@@ -56,15 +56,7 @@ public slots:
 	//! If this was the last sub-widget in the group tab, it is also removed.
 	void removeProperty(const QString& propertyName);
 
-signals:
-	//! \todo Remove this? Property widgets should call properties directly?
-	void propertySet(const QString& deviceName,
-	                 const QString& propertyName,
-	                 const QVariantHash& elements);
-
-private slots:
-	void handleNewPropertyValue(const QString& propertyName,
-	                            const QVariantHash& elements);
+//signals:
 
 private:
 	//! \todo may become obsolete when I get rid of propertySet().

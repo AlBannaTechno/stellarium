@@ -106,7 +106,6 @@ protected:
 	//! 
 	DeviceP device;
 
-	bool isDefinedConnection;
 	bool isConnectionConnected;
 	SwitchPropertyP connectionProp;
 	
