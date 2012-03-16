@@ -667,4 +667,5 @@ void BlobProperty::update(const QHash<QString, QString>& newValues,
 	if (attributes.stateChanged)
 		setState(attributes.state);
 	setTimestamp(attributes.timestamp);
+	emit newValuesReceived();
 }

@@ -169,9 +169,12 @@ private:
 	//! The Property being parsed at the moment.
 	//! 0 if no INDI vector is being parsed.
 	PropertyP currentProperty;
-	//! The Element being parsed at the moment.
+	//! The Element being defined at the moment.
 	//! 0 if no Element is being parsed.
 	Element* currentElement;
+	//! The BLOB Element being read at the moment.
+	//! (Because of the size and format parameters.)
+	BlobElement* currentBlobElement;
 	//! This is getting ridiculous.
 	SetTagAttributes* currentPropertyAttributes;
 	//! Really ridiculous.

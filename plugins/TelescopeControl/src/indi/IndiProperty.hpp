@@ -375,7 +375,7 @@ public:
 	const char* oneElementTag() const {return T_ONE_BLOB;}
 
 	//! Reimplemented from Property::update(), ignores the newValues param.
-	void update(const QHash<QString, QString> &newValues,
+	void update(const QHash<QString, QString>& newValues,
 	            SetTagAttributes attributes);
 };
 

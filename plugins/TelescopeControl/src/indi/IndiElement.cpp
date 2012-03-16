@@ -467,7 +467,7 @@ void BlobElement::receiveData(const QString& dataString)
 	// If decompression is necessary, decompress
 	if (format.endsWith(".z"))
 	{
-		qDebug() << "Compressed blob";
+		qDebug() << "Decompressing BLOB...";
 		QByteArray decompressedData;
 
 		int returnCode;
@@ -517,13 +517,15 @@ void BlobElement::receiveData(const QString& dataString)
 
 		if (returnCode != Z_STREAM_END)
 		{
-			qDebug() << "WTF? The z-compressed stream hasn't finished yet?" << returnCode;
+			qDebug() << "Something went wrong: The z-compressed stream hasn't finished yet?"
+			         << returnCode;
 		}
 		(void)inflateEnd(&zstream);
 
 		binaryData = decompressedData;
 		compressed = true;
-		//Remove the ".z" suffix, as the format strung will be used for the file extension
+		// Remove the ".z" suffix, as the format string will be used for
+		// the file extension
 		format.chop(2);
 	}
 	else

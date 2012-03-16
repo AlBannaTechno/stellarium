@@ -230,10 +230,8 @@ void DeviceControlPanel::addIndiDevice(const QString& clientId,
 	deviceTypes.insert(deviceId, IndiDevice);
 	deviceTabWidget->addTab(deviceWidget, deviceName);
 	
-	// TODO: Decide how to handle sending new property data
-//	IndiClient* indiClient = indiClients[clientName];
-//	connect(deviceWidget, SIGNAL(propertySet(QString,QString,QVariantHash)),
-//	        indiClient, SLOT(writeProperty(QString,QString,QVariantHash)));
+	// TODO: Individual control for accepting BLOBs
+	indiClients[clientId]->writeEnableBlob(AlsoSendBlobs, deviceName);
 }
 
 void DeviceControlPanel::removeIndiDevice(const QString& clientId,

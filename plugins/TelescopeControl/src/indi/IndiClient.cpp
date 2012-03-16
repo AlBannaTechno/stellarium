@@ -46,6 +46,7 @@ IndiClient::IndiClient(const QString& newClientId,
 	ioDevice(0),
 	currentProperty(0),
 	currentElement(0),
+	currentBlobElement(0),
 	currentPropertyAttributes(0)
 {
 	if (openIoDevice == 0 ||
@@ -328,11 +329,6 @@ void IndiClient::parseStreamData()
 					
 					readPropertyElement(tag);
 					currentElementValue.clear();
-					//					if element is BLOB
-					//						prepare BLOB
-					//					else
-					//						rememeber name and type as current element?
-					//						(create empty entry in element values?)
 				}
 			}
 			else if (tag == T_MESSAGE)
@@ -463,6 +459,12 @@ void IndiClient::parseStreamData()
 						continue;
 					}
 					
+					if (currentBlobElement)
+					{
+						currentBlobElement->finishReceivingData();
+						currentBlobElement = 0;
+					}
+					else
 					if (!currentElementValue.isEmpty())
 					{
 						elementsValues.insert(currentElementName, currentElementValue.trimmed());
@@ -470,8 +472,6 @@ void IndiClient::parseStreamData()
 					currentElementName.clear();
 					currentElementTag.clear();
 					currentElementValue.clear();
-					
-					//TODO: Handle BLOBs
 				}
 			}
 		}
@@ -485,12 +485,10 @@ void IndiClient::parseStreamData()
 		else if (xmlReader.isCharacters())
 		{
 //			if (element value is being read)
-//				if element is BLOB
-//					send to BLOB
-//				else 
-//					add to value buffer
-			//TODO
-			currentElementValue.append(xmlReader.text());
+			if (currentBlobElement)
+				currentBlobElement->receiveData(xmlReader.text().toString());
+			else
+				currentElementValue.append(xmlReader.text());
 		}
 		
 //		TODO:
@@ -526,6 +524,11 @@ void IndiClient::resetParserState()
 	{
 		delete currentElement;
 		currentElement = 0;
+	}
+	if (currentBlobElement)
+	{
+		// Already belongs to a Property, so clear the pointer only.
+		currentBlobElement = 0;
 	}
 	if (currentPropertyAttributes)
 	{
@@ -643,10 +646,27 @@ void IndiClient::readPropertyElement(const QString& tag)
 	if (name.isEmpty())
 		return;
 	
+	if (currentProperty->getType() == Property::BlobProperty)
+	{
+		QString size = attributes.value(Element::A_SIZE).toString();
+		QString format = attributes.value(Element::A_FORMAT).toString();
+		if (size.isEmpty() ||
+		    format.isEmpty())
+		{
+			qWarning() << "Missing BLOB size or format for"
+			           << currentProperty->getName() << name;
+			return;
+		}
+		
+		currentBlobElement = (qSharedPointerDynamicCast<BlobProperty>(currentProperty))->getElement(name);
+		if (currentBlobElement)
+		{
+			currentBlobElement->prepareToReceiveData(size, format);
+		}
+	}
+	
 	currentElementTag = tag;
 	currentElementName = name;
-	
-	//TODO: Handle BLOBs
 }
 
 //void IndiClient::parseIndiCommand(const QString& command)

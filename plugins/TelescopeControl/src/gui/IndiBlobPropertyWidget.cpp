@@ -20,6 +20,7 @@
 #include "IndiBlobPropertyWidget.hpp"
 #include <QDesktopServices>
 #include <QFile>
+#include <QDebug>
 
 IndiBlobPropertyWidget::IndiBlobPropertyWidget(const BlobPropertyP& property,
                                                const QString& title,
@@ -59,7 +60,8 @@ void IndiBlobPropertyWidget::updateFromProperty()
 		QFile blobFile(filename);
 		if (blobFile.open(QFile::WriteOnly))
 		{
-			blobFile.write(element->getValue());
+			if (blobFile.write(element->getValue()) > 0)
+				qWarning() << "BLOB saved:" << filename;
 			blobFile.close();
 		}
 	}
