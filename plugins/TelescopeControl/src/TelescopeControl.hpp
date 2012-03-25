@@ -46,8 +46,10 @@
 #include <QSignalMapper>
 #include <QString>
 #include <QStringList>
-#include <QTextStream>
 #include <QVariant>
+
+class QTextStream;
+class QStandardItemModel;
 
 class StelObject;
 class StelPainter;
@@ -103,7 +105,7 @@ public:
 	//! Safe access to the loaded list of telescope models
 	const QHash<QString, DeviceModel>& getDeviceModels();
 	//! \todo Add description
-	const QHash<QString, QString>& getIndiDeviceModels();
+	QStandardItemModel *getIndiDeviceModels();
 	
 	//! Loads the module's configuration from the configuration file.
 	void loadConfiguration();
@@ -291,7 +293,7 @@ private:
 
 	QHash<QString, DeviceModel> deviceModels;
 	//! \todo Temporary.
-	QHash<QString, QString> indiDeviceModels;
+	QStandardItemModel* indiDeviceModels;
 	//! \todo Move to IndiClient or TelescopeClientIndi?
 	QHash<QString, IndiClient*> indiClients;
 

@@ -33,7 +33,9 @@
 #include <QDebug>
 #include <QCompleter>
 #include <QFrame>
+#include <QStandardItemModel>
 #include <QTimer>
+#include <QTreeView>
 
 TelescopePropertiesWindow::TelescopePropertiesWindow()
 {
@@ -313,23 +315,11 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& i
 			showSerialTab(true);
 
 			QString driver = properties.value("driverId").toString();
-			if (driver.isEmpty())
+			QString deviceModelName = properties.value("deviceModel").toString();
+			if (driver.isEmpty() || deviceModelName.isEmpty())
 			{
 				emit changesDiscarded();
 				return;
-			}
-			QString deviceModelName = properties.value("deviceModel").toString();
-			//If no device model name is specified, pick one from the list
-			if (deviceModelName.isEmpty())
-			{
-				foreach (QString name, deviceModelNames)
-				{
-					if (deviceManager->getDeviceModels().value(name).driver == driver)
-					{
-						deviceModelName = name;
-						break;
-					}
-				}
 			}
 
 			if(!deviceModelName.isEmpty())
@@ -393,33 +383,31 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& i
 				return;
 			}
 			QString deviceModelName = properties.value("deviceModel").toString();
-			//If no device model name is specified, pick one from the list
-			if (deviceModelName.isEmpty())
-			{
-				foreach (QString name, deviceModelNames)
-				{
-					if (deviceManager->getIndiDeviceModels().value(name) == driver)
-					{
-						deviceModelName = name;
-						break;
-					}
-				}
-			}
-
 			if(!deviceModelName.isEmpty())
 			{
 				populateIndiDeviceModelList();
 				//Make the current device model selected in the list
-				int index = ui->comboBoxIndiDeviceModel->findText(deviceModelName);
-				if(index < 0)
+				bool deviceFound = false;
+				QAbstractItemModel* model = ui->comboBoxIndiDeviceModel->model();
+				for (int i = 0; i < model->rowCount(); i++)
 				{
-					qDebug() << "TelescopeConfigurationDialog: Current device model is not in the list?";
-					emit changesDiscarded();
-					return;
-				}
-				else
-				{
-					ui->comboBoxIndiDeviceModel->setCurrentIndex(index);
+					QModelIndex index = model->index(i, 0);
+					int rows = model->rowCount(index);
+					for (int j = 0; j < rows; j++)
+					{
+						QModelIndex childIndex = model->index(j, 0, index);
+						if (model->data(childIndex) == deviceModelName)
+						{
+							QModelIndex oldRoot = ui->comboBoxDeviceModel->rootModelIndex();
+							ui->comboBoxIndiDeviceModel->setRootModelIndex(index);
+							ui->comboBoxIndiDeviceModel->setCurrentIndex(j);
+							ui->comboBoxIndiDeviceModel->setRootModelIndex(oldRoot);
+							deviceFound = true;
+							break;
+						}
+					}
+					if (deviceFound)
+						break;
 				}
 			}
 			else
@@ -493,7 +481,6 @@ void TelescopePropertiesWindow::prepareDirectConnection()
 		showSerialTab(false);
 
 		populateIndiDeviceModelList();
-		ui->comboBoxIndiDeviceModel->setCurrentIndex(0);
 	}
 
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
@@ -629,10 +616,15 @@ void TelescopePropertiesWindow::saveChanges()
 		}
 		else
 		{
-			QString deviceModel = ui->comboBoxIndiDeviceModel->currentText();
+			QModelIndex index = ui->comboBoxIndiDeviceModel->view()->currentIndex();
+			if (!index.isValid())
+				return;
+			QAbstractItemModel* model = ui->comboBoxIndiDeviceModel->model();
+			QString deviceModel = model->data(index).toString();
+			index = model->index(index.row(), 1, index.parent());
+			QString driver = model->data(index, Qt::UserRole).toString();
+			
 			newTelescopeProperties.insert("deviceModel", deviceModel);
-
-			QString driver = deviceManager->getIndiDeviceModels().value(deviceModel);
 			newTelescopeProperties.insert("driverId", driver);
 		}
 	}
@@ -693,12 +685,24 @@ void TelescopePropertiesWindow::populateDeviceModelList()
 void TelescopePropertiesWindow::populateIndiDeviceModelList()
 {
 	ui->comboBoxIndiDeviceModel->clear();
-	QStringList indiModelNames = deviceManager->getIndiDeviceModels().keys();
-	if (!indiModelNames.isEmpty())
+	QTreeView* view = new QTreeView(ui->comboBoxIndiDeviceModel);
+	QStandardItemModel* model = deviceManager->getIndiDeviceModels();
+	view->setUniformRowHeights(true);
+	view->setModel(model);
+	view->setSelectionBehavior(QTreeView::SelectRows);
+	view->setSelectionMode(QTreeView::SingleSelection);
+	QModelIndex rootIndex = model->indexFromItem(model->invisibleRootItem());
+	for (int i = 0; i < model->rowCount(); i++)
 	{
-		indiModelNames.sort();
-		ui->comboBoxIndiDeviceModel->addItems(indiModelNames);
+		if (!model->item(i)->isSelectable())
+			view->setFirstColumnSpanned(i, rootIndex, true);
 	}
+	view->setAllColumnsShowFocus(true);
+	view->header()->setResizeMode(0, QHeaderView::ResizeToContents);
+	
+	ui->comboBoxIndiDeviceModel->setModel(model);
+	ui->comboBoxIndiDeviceModel->setView(view);
+	ui->comboBoxIndiDeviceModel->setCurrentIndex(-1);
 }
 
 void TelescopePropertiesWindow::populateShortcutNumberList()

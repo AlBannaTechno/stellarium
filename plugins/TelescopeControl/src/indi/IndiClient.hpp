@@ -24,16 +24,15 @@
 #include <QHash>
 #include <QObject>
 #include <QSet>
-#include <QSignalMapper>
 #include <QString>
-#include <QTextStream>
-#include <QVariant>
 #include <QXmlStreamReader>
 
 #include "IndiTypes.hpp"
 #include "IndiElement.hpp"
 #include "IndiProperty.hpp"
 #include "IndiDevice.hpp"
+
+class QStandardItemModel;
 
 //! Class implementing a client for the INDI wire protocol.
 //! Properties are stored internally. Qt signals are emitted when a property
@@ -72,8 +71,7 @@ public:
 	//! Loads drivers.xml
 	//! \returns a hash with keys device names, values driver names.
 	//! \todo move to separate class
-	static QHash<QString, QString> loadDeviceDescriptions();
-	
+	static QStandardItemModel* loadDriverDescriptions();	
 	//! Get the given device object.
 	//! \returns null pointer if no such device is registered.
 	DeviceP getDevice (const QString& deviceName);

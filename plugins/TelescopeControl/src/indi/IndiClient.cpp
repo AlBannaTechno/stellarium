@@ -19,8 +19,10 @@
 
 #include "IndiClient.hpp"
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QRegExp>
+#include <QStandardItemModel>
 #include <QStringList>
 #include <QXmlStreamWriter>
 #include <stdexcept>
@@ -124,65 +126,131 @@ void IndiClient::sendRawCommand(const QString& command)
 	outgoing << command;
 }
 
-QHash<QString,QString> IndiClient::loadDeviceDescriptions()
+QStandardItemModel* IndiClient::loadDriverDescriptions()
 {
-	QHash<QString,QString> result;
+	QStandardItemModel* model = new QStandardItemModel();
+	QStandardItem* parent = model->invisibleRootItem();
+	QStandardItem* currentGroup = 0, *currentDevice = 0;
 
 	//TODO: It should allow the file path to be set somewhere
-	QFile indiDriversXmlFile("/usr/share/indi/drivers.xml");
-	if (indiDriversXmlFile.open(QFile::ReadOnly | QFile::Text))
+	QDir indiDriversDir("/usr/share/indi/");
+	indiDriversDir.setNameFilters(QStringList("*.xml"));
+	indiDriversDir.setFilter(QDir::Files | QDir::Readable);
+	QFileInfoList fileList = indiDriversDir.entryInfoList();
+	
+	foreach (const QFileInfo& fi, fileList)
 	{
-		QXmlStreamReader localXmlReader(&indiDriversXmlFile);
-
-		QString deviceName;
-		QString driverName;
-		while (!localXmlReader.atEnd())
+		QFile indiDriversXmlFile(fi.absoluteFilePath());
+		if (indiDriversXmlFile.open(QFile::ReadOnly | QFile::Text))
 		{
-			if (localXmlReader.hasError())
+			qDebug() << "Parsing file" << fi.absoluteFilePath();
+			QXmlStreamReader localXmlReader;
+			localXmlReader.addData("<indi>");
+			localXmlReader.addData(indiDriversXmlFile.readAll());
+			
+			QString deviceName;
+			while (!localXmlReader.atEnd())
 			{
-				qDebug() << "Error parsing drivers.xml:"
-				         << localXmlReader.errorString();
-				break;
+				if (localXmlReader.hasError())
+				{
+					qDebug() << "Error parsing" << fi.absoluteFilePath()
+					         << localXmlReader.errorString();
+					break;
+				}
+				
+				if (localXmlReader.isEndDocument())
+					break;
+				
+				if (localXmlReader.isStartElement())
+				{
+					QXmlStreamAttributes attr = localXmlReader.attributes();
+					if (localXmlReader.name() == "devGroup")
+					{
+						QString groupName = attr.value("group").toString();
+						
+						QList<QStandardItem*> existing = model->findItems(groupName);
+						if (existing.isEmpty())
+						{
+							currentGroup = new QStandardItem(groupName);
+							currentGroup->setSelectable(false);
+							currentGroup->setEditable(false);
+							parent->appendRow(currentGroup);
+						}
+						else
+							currentGroup = existing.first();
+					}
+					else if (localXmlReader.name() == "device")
+					{
+						deviceName = attr.value("label").toString();
+						if (deviceName.isEmpty())
+						{
+							localXmlReader.skipCurrentElement();
+							continue;
+						}
+						
+						if (currentGroup)
+						{
+							currentDevice = new QStandardItem(deviceName);
+							currentDevice->setEditable(false);
+							currentGroup->appendRow(currentDevice);
+						}
+						else
+						{
+							qDebug() << "Error parsing" << fi.absoluteFilePath();
+							break;
+						}
+					}
+					else if (localXmlReader.name() == "driver")
+					{
+						if (currentDevice)
+						{
+							QString driverName = attr.value("name").toString();
+							
+							// TODO: Separate driver name from driver exe
+							QString driverFile = localXmlReader.readElementText().trimmed();
+							if (driverFile.isEmpty())
+							{
+								localXmlReader.skipCurrentElement();
+								continue;
+							}
+							
+							if (driverName.isEmpty())
+								driverName = driverFile;
+							
+							QStandardItem* driver = new QStandardItem(driverName);
+							// TODO: This is because of selections in the combo box. Find a better way!s
+							driver->setSelectable(false);
+							driver->setData(driverFile, Qt::UserRole);
+							driver->setToolTip(driverFile);
+							// TODO: Find if it exists?
+							int row = currentGroup->rowCount() - 1;
+							currentGroup->setChild(row, 1, driver);
+						}
+						// TODO
+					}
+				}
+				else if (localXmlReader.isEndElement())
+				{
+					// Ensure structure validation
+					if (localXmlReader.name() == "devGroup")
+						currentGroup = 0;
+					else if (localXmlReader.name() == "device")
+						currentDevice = 0;
+				}
+				
+				localXmlReader.readNext();
 			}
-
-			if (localXmlReader.isEndDocument())
-				break;
-
-			if (localXmlReader.isStartElement())
-			{
-				if (localXmlReader.name() == "devGroup")
-				{
-					if (localXmlReader.attributes().value("group").toString() != "Telescopes")
-						localXmlReader.skipCurrentElement();
-				}
-				else if (localXmlReader.name() == "device")
-				{
-					deviceName = localXmlReader.attributes().value("label").toString();
-					if (deviceName.isEmpty())
-						localXmlReader.skipCurrentElement();
-				}
-				else if (localXmlReader.name() == "driver")
-				{
-					if (deviceName.isEmpty())
-						localXmlReader.skipCurrentElement();
-					driverName = localXmlReader.readElementText(QXmlStreamReader::SkipChildElements).trimmed();
-					if (driverName.isEmpty())
-						localXmlReader.skipCurrentElement();
-					result.insert(deviceName, driverName);
-				}
-			}
-
-			localXmlReader.readNext();
+			
+			indiDriversXmlFile.close();
 		}
-
-		indiDriversXmlFile.close();
-	}
-	else
-	{
-		qDebug() << "Unable to open drivers.xml.";
+		else
+		{
+			qDebug() << "Unable to open:" << fi.absoluteFilePath();
+		}
 	}
 
-	return result;
+	model->setHorizontalHeaderLabels(QStringList() << "Device" << "Driver");
+	return model;
 }
 
 void IndiClient::parseStreamData()

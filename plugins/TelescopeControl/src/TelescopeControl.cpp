@@ -62,6 +62,7 @@
 #include <QFileInfo>
 #include <QMapIterator>
 #include <QSettings>
+#include <QStandardItemModel>
 #include <QString>
 #include <QStringList>
 #ifdef Q_OS_WIN32
@@ -884,24 +885,47 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 		if (!isRemote)
 		{
 			//TODO: Better check
-			if (driver.isEmpty() ||
-				!indiDeviceModels.values().contains(driver))
+			// TODO: Remove driver field?
+			if (deviceModel.isEmpty()
+			    || driver.isEmpty())
 			{
 				qDebug() << "TelescopeControl: Unable to add connection: "
 				         << "No INDI driver specified for" << name;
 				return false;
 			}
-
+			
+			bool modelFound = false;
+			for (int i = 0; i < indiDeviceModels->rowCount(); i++)
+			{
+				QModelIndex index = indiDeviceModels->index(i, 0);
+				int rows = indiDeviceModels->rowCount(index);
+				for (int j = 0; j < rows; j++)
+				{
+					QModelIndex deviceIndex = indiDeviceModels->index(j, 0, index);
+					QModelIndex driverIndex = indiDeviceModels->index(j, 1, index);
+					if (deviceIndex.data() == deviceModel &&
+					    driverIndex.data(Qt::UserRole) == driver)
+					{
+						modelFound = true;
+						break;
+					}
+				}
+				
+				if (modelFound)
+					break;
+			}
+			
+			if (!modelFound)
+			{
+				qDebug() << "TelescopeControl: Unable to add connection: "
+				         << "Can't find INDI device model or driver for"
+				         << name;
+				return false;
+			}
+			
 			//Add the stuff to the new node
-			if (deviceModel.isEmpty() || !indiDeviceModels.contains(deviceModel))
-			{
-				newProperties.insert("driverId", driver);
-			}
-			else
-			{
-				newProperties.insert("driverId", indiDeviceModels.value(deviceModel));
-				newProperties.insert("deviceModel", deviceModel);
-			}
+			newProperties.insert("driverId", driver);
+			newProperties.insert("deviceModel", deviceModel);
 		}
 	}
 	else if (interfaceType == "INDI Pointer")
@@ -1452,7 +1476,7 @@ void TelescopeControl::loadDeviceModels()
 
 void TelescopeControl::loadIndiDeviceModels()
 {
-	indiDeviceModels = IndiClient::loadDeviceDescriptions();
+	indiDeviceModels = IndiClient::loadDriverDescriptions();
 }
 
 const QHash<QString, DeviceModel>& TelescopeControl::getDeviceModels()
@@ -1460,7 +1484,7 @@ const QHash<QString, DeviceModel>& TelescopeControl::getDeviceModels()
 	return deviceModels;
 }
 
-const QHash<QString, QString>& TelescopeControl::getIndiDeviceModels()
+QStandardItemModel* TelescopeControl::getIndiDeviceModels()
 {
 	return indiDeviceModels;
 }
