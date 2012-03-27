@@ -1,6 +1,6 @@
 /*
  * Stellarium Telescope Control plug-in
- * Copyright (C) 2010  Bogdan Marinov
+ * Copyright (C) 2010-2012  Bogdan Marinov
  * Copyright (C) 2011  Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
@@ -27,15 +27,17 @@
 #include <QObject>
 #include <QProcess>
 #include <QString>
+#include <QTcpSocket>
 
 //! Telescope client that uses a local INDI driver.
 //! This class is a specialization of the TelescopeClientIndi class, that starts a local INDI
 //! driver for its communication medium.
+//! \todo Avoid duplicate instances of IndiClient. This class probably will be removed.
 class TelescopeClientIndiLocal : public TelescopeClientIndi
 {
 	Q_OBJECT
 public:
-	TelescopeClientIndiLocal(const QString& name, const QString& driverName, Equinox eq);
+	TelescopeClientIndiLocal(const QString& name, const QString& driverExe, Equinox eq);
 	virtual ~TelescopeClientIndiLocal();
 	bool isConnected() const;
 	bool isInitialized() const;
@@ -46,9 +48,12 @@ protected:
 
 protected slots:
 	void handleDriverError(QProcess::ProcessError error);
+	void handleConnectionError(QAbstractSocket::SocketError error);
 
 private:
 	QProcess* driverProcess;
+	QTcpSocket* tcpSocket;
+	QString driverName;
 };
 
 #endif //_TELESCOPE_CLIENT_INDI_LOCAL_HPP_

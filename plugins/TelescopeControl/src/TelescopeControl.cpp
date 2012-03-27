@@ -2,7 +2,7 @@
  * Stellarium Telescope Control Plug-in
  *
  * Copyright (C) 2006 Johannes Gajdosik
- * Copyright (C) 2009-2011 Bogdan Marinov
+ * Copyright (C) 2009-2012 Bogdan Marinov
  *
  * This module was originally written by Johannes Gajdosik in 2006
  * as a core module of Stellarium. In 2009 it was significantly extended with
@@ -280,6 +280,8 @@ void TelescopeControl::deinit()
 	}
 	//Destroy all clients first in order to avoid displaying a TCP error
 	removeAllConnections();
+	
+	IndiClient::stopServer();
 
 	//TODO: Decide if it should be saved on change
 	//Save the configuration on exit

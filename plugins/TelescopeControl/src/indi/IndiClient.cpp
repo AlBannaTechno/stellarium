@@ -19,13 +19,21 @@
 
 #include "IndiClient.hpp"
 #include <QDebug>
+#include <QDesktopServices>
 #include <QDir>
 #include <QFile>
+#include <QProcess>
 #include <QRegExp>
 #include <QStandardItemModel>
 #include <QStringList>
 #include <QXmlStreamWriter>
 #include <stdexcept>
+
+#ifndef _WIN32
+#include <sys/types.h> // for mkfifo()
+#include <sys/stat.h>  // for mkfifo()
+#include <stdio.h>     // for remove()
+#endif
 
 const char* IndiClient::T_GET_PROPERTIES = "getProperties";
 const char* IndiClient::T_DEL_PROPERTY = "delProperty";
@@ -39,6 +47,9 @@ const char* IndiClient::SP_J2000_COORDINATES = "EQUATORIAL_COORD";
 const char* IndiClient::SP_JNOW_COORDINATES = "EQUATORIAL_EOD_COORD";
 const char* IndiClient::SP_J2000_COORDINATES_REQUEST = "EQUATORIAL_COORD_REQUEST";
 const char* IndiClient::SP_JNOW_COORDINATES_REQUEST = "EQUATORIAL_EOD_COORD_REQUEST";
+
+QProcess* IndiClient::serverProcess = 0;
+QString IndiClient::commandPipePath = "";
 
 IndiClient::IndiClient(const QString& newClientId,
                        QIODevice* openIoDevice,
@@ -251,6 +262,124 @@ QStandardItemModel* IndiClient::loadDriverDescriptions()
 
 	model->setHorizontalHeaderLabels(QStringList() << "Device" << "Driver");
 	return model;
+}
+
+bool IndiClient::startServer()
+{
+	if (serverProcess)
+		return true;
+
+	// Open a named pipe to send commands to the server.
+	// Platform specific.
+#ifndef _WIN32
+	commandPipePath = QDesktopServices::storageLocation(QDesktopServices::TempLocation);
+	commandPipePath.append("/indi-pipe-");
+	commandPipePath.append(QDateTime::currentDateTimeUtc().toString("yyyyMMddhhmmss"));
+	qDebug() << commandPipePath;
+	// TODO: Different filename in case there are multiple instances of Stellarium
+	if (mkfifo(commandPipePath.toAscii(), 0660) < 0)
+	{
+		// TODO: Handle errno
+		commandPipePath.clear();
+		return false;
+	}
+#endif
+	QStringList arguments;
+	//arguments << "-l" << "~/"; // Log	
+	arguments << "-f" << commandPipePath;
+	serverProcess = new QProcess();
+	serverProcess->setProcessChannelMode(QProcess::ForwardedChannels);
+	serverProcess->start("indiserver", arguments);
+	if (serverProcess->waitForStarted(3000))
+	{
+		return true;
+	}
+	else
+	{
+		serverProcess->close();
+		serverProcess->deleteLater();
+		serverProcess = 0;
+		return false;
+	}
+}
+
+bool IndiClient::stopServer()
+{
+	if (!serverProcess)
+	{
+		return true;
+	}
+	
+	serverProcess->terminate();
+	if (serverProcess->waitForFinished())
+	{
+		serverProcess->deleteLater();
+		serverProcess = 0;
+		
+#ifndef _WIN32
+		// TODO: Store filename separately in case of multiple instances.
+		if (!commandPipePath.isEmpty())
+			remove(commandPipePath.toAscii());
+#endif
+		
+		return true;
+	}
+	
+	return false;
+}
+
+bool IndiClient::startDriver(const QString& driverName,
+                             const QString& deviceName)
+{
+	if (driverName.isEmpty() ||
+	    deviceName.isEmpty())
+	{
+		return false;
+	}
+	
+	if (!serverProcess)
+	{
+		if (!startServer())
+			return false;
+	}
+	
+	QFile pipe(commandPipePath);
+	if (pipe.open(QFile::WriteOnly))
+	{
+		QString command = QString("start %1 \"%2\"").arg(driverName, deviceName);
+		qDebug() << command;
+		pipe.write(qPrintable(command));
+		pipe.flush();
+		pipe.close();
+		return true;
+	}
+	
+	qDebug() << pipe.errorString();
+	
+	return false;
+}
+
+void IndiClient::stopDriver(const QString& driverName,
+                            const QString& deviceName)
+{
+	if (!serverProcess ||
+	    driverName.isEmpty() ||
+	    deviceName.isEmpty())
+	{
+		return;
+	}
+	
+	QFile pipe(commandPipePath);
+	if(pipe.open(QFile::WriteOnly))
+	{
+		QString command = QString("stop %1 \"%2\"").arg(driverName, deviceName);
+		pipe.write(command.toAscii());
+		pipe.close();
+	}
+	else
+	{
+		qDebug() << pipe.errorString();
+	}
 }
 
 void IndiClient::parseStreamData()

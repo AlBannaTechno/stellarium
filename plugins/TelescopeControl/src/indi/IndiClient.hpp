@@ -1,7 +1,7 @@
 /*
  * Qt-based INDI wire protocol client
  * 
- * Copyright (C) 2010 Bogdan Marinov
+ * Copyright (C) 2010, 2012 Bogdan Marinov
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,6 +33,7 @@
 #include "IndiDevice.hpp"
 
 class QStandardItemModel;
+class QProcess;
 
 //! Class implementing a client for the INDI wire protocol.
 //! Properties are stored internally. Qt signals are emitted when a property
@@ -68,10 +69,40 @@ public:
 	//! \todo A temporary function to fill the gap.
 	void sendRawCommand(const QString& command);
 
-	//! Loads drivers.xml
-	//! \returns a hash with keys device names, values driver names.
-	//! \todo move to separate class
-	static QStandardItemModel* loadDriverDescriptions();	
+	//! \addtogroup indi-services Static INDI Services
+	//! \{
+	//! \todo move to a separate class?
+	
+	//! Loads driver info from the INDI driver description directory.
+	//! Parses all *.xml files in the directory. The result is aggregated in
+	//! a tree-table model, where the first column contains the name of the
+	//! device groups (e.g. "Telescopes"). Their children are tables, where
+	//! column 0 is the device model name (e.g. "ETX125") and column 1 displays
+	//! the driver label ("LX200 Autostar") with the name of the driver
+	//! executable ("indi_lx200autostar") in the field.
+	//! \todo Setting the path to the directory (for Windows, etc.)
+	static QStandardItemModel* loadDriverDescriptions();
+	
+	//! Tells indiserver to start the driver.
+	//! If indiserver is not running, starts it with the appropriate args.
+	static bool startDriver (const QString& driverName, const QString& deviceName);
+	
+	//! Tells indiserver to stop a driver.
+	//! \todo Stop the server after the last driver is stopped?
+	static void stopDriver (const QString& driverName, const QString& deviceName);
+	
+	//! Starts an instance of indiserver if it's not already running.
+	//! \todo Log and verbosity level.
+	//! \todo Port number.
+	//! \todo Find a way to check if the process is still running/when an error occurs.
+	//! \returns true on sucess or if the server is already running.
+	static bool startServer();
+	
+	//! Stops the indiserver process.
+	//! \returns true on success or if the server doesn't run.
+	static bool stopServer();
+	//! \}
+	
 	//! Get the given device object.
 	//! \returns null pointer if no such device is registered.
 	DeviceP getDevice (const QString& deviceName);
@@ -211,7 +242,6 @@ private:
 	//!
 	QByteArray buffer;
 
-	//! \obsolete
 	//void parseIndiCommand(const QString& command);
 	
 	//! 
@@ -250,6 +280,13 @@ private:
 	//! Reads a \b oneBLOB tag.
 	void readBlobElement(QXmlStreamReader& xmlReader,
 	                     const BlobPropertyP& blobProperty);
+	
+	//! Common process instance of indiserver.
+	//! \ingroup indi-services
+	static QProcess* serverProcess;
+	//! Path to the command pipe/fifo used to communicate with indiserver.
+	//! \ingroup indi-services
+	static QString commandPipePath;
 };
 
 #endif //_INDI_CLIENT_HPP_
