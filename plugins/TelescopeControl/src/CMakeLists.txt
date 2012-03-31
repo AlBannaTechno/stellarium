@@ -26,10 +26,6 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClientDirectNexStar.cpp
   clients/TelescopeClientIndi.hpp
   clients/TelescopeClientIndi.cpp
-  clients/TelescopeClientIndiLocal.hpp
-  clients/TelescopeClientIndiLocal.cpp
-  clients/TelescopeClientIndiTcp.hpp
-  clients/TelescopeClientIndiTcp.cpp
   clients/TelescopeClientIndiPointer.hpp
   clients/TelescopeClientIndiPointer.cpp
   gui/SlewWindow.hpp
@@ -66,6 +62,8 @@ SET(TelescopeControl_SRCS
   indi/IndiDevice.cpp
   indi/IndiClient.hpp
   indi/IndiClient.cpp
+  indi/IndiServices.hpp
+  indi/IndiServices.cpp
   servers/LogFile.hpp
   servers/LogFile.cpp
   servers/Socket.hpp
@@ -116,8 +114,6 @@ SET(TelescopeControl_MOC_HDRS
   clients/TelescopeClientDirectLx200.hpp
   clients/TelescopeClientDirectNexStar.hpp
   clients/TelescopeClientIndi.hpp
-  clients/TelescopeClientIndiLocal.hpp
-  clients/TelescopeClientIndiTcp.hpp
   clients/TelescopeClientIndiPointer.hpp
   gui/TelescopePropertiesWindow.hpp
   gui/TelescopeControlConfigurationWindow.hpp
@@ -135,6 +131,7 @@ SET(TelescopeControl_MOC_HDRS
   indi/IndiProperty.hpp
   indi/IndiDevice.hpp
   indi/IndiClient.hpp
+  indi/IndiServices.hpp
   )
 
 IF(WIN32)

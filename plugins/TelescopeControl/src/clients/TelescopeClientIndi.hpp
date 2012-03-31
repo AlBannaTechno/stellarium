@@ -28,41 +28,50 @@
 #include <QObject>
 #include <QString>
 
+class IndiServices;
+
 //! Base class for telescope clients that use the INDI protocol.
 //! The INDI protocol is an XML-like, platform-independent interface for
 //! communication between (astronomical) device drivers and clients.
-//! This implementation allows communication via TCP/IP and input/output streams
-//! on all platforms, though for now there are no INDI drivers for Windows.
-//! An actual connection is implemented in TelescopeClientIndiLocal (runs an
-//! INDI driver in a separate process) and TelescopeClientIndiTcp (connects over
-//! a network connection to an INDI server).
-//! An actual TelescopeClient that can read the commands and display a reticle
-//! is implemented in TelescopeClientIndiPointer.
+//! 
 //! This class' implementation of the standard TelescopeClient methods is based
 //! on a limited subset of the INDI "standard property" names (see
 //! http://www.indilib.org/index.php?title=Standard_Properties):
 //!  - CONNECTION
 //!  - EQUATORIAL_COORD
 //!  - EQUATORIAL_EOD_COORD
+//! 
+//! TelescopeClientIndi objects reuse IndiClient objects. Ideally, you should
+//! have only one instance of IndiClient for the local server and one per each
+//! connection to a remote server.
 //! \todo Support custom property names.
 //! \todo Get rid of the auto-connection.
 //! \todo Major overhaul of the main logic and handling of INDI client management.
+//! \todo Expand class documentation.
 class TelescopeClientIndi : public TelescopeClient
 {
 	Q_OBJECT
 public:
-	//! Creates a TelescopeClientIndiLocal.
-	static TelescopeClientIndi* telescopeClient(const QString& name, const QString& driverName, Equinox eq);
-	//! Creates a TelescopeClientIndiTcp.
-	static TelescopeClientIndi* telescopeClient(const QString& name, const QString& host, int port, Equinox eq);
+	//! Constructor.
+	//! \param name standard Stellarium object displayable name/identifier.
+	//! \param deviceName the name/identifier of the device this object is
+	//! supposed to represent.
+	//! \param client if 0, it will wait for attachClient().
+	TelescopeClientIndi(const QString& name,
+	                    const QString& deviceName,
+	                    IndiClient* client = 0);
+	
 	//! Creates a TelescopeClientIndiPointer.
+	//! \obsolete
 	static TelescopeClientIndi* telescopeClient(const QString& name,
 	                                            const QString& deviceId,
-	                                            IndiClient* client,
-	                                            Equinox eq);
+	                                            IndiClient* client, Equinox eq);
 	virtual ~TelescopeClientIndi();
-	virtual bool isConnected() const = 0;
-	virtual bool isInitialized() const = 0;
+	
+	//! \returns true if the object has been initialized correctly.
+	virtual bool isInitialized() const;
+	//! \todo Decide how to define "connected".
+	virtual bool isConnected() const;
 
 	//! Estimates a current position from the stored previous positions.
 	//! InterpolatedPosition is used to make the apparent movement of the
@@ -72,6 +81,10 @@ public:
 
 	IndiClient* getIndiClient() const;
 
+public slots:
+	//! \todo Use this for all kinds of INDI telescope clients?
+	void attachClient(IndiClient* client);
+	
 signals:
 
 protected slots:
@@ -89,17 +102,17 @@ protected slots:
 
 protected:
 	TelescopeClientIndi(const QString& name, Equinox eq);
-	virtual bool prepareCommunication() = 0;
-	virtual void performCommunication() = 0;
+	virtual bool prepareCommunication();
+	virtual void performCommunication();
 	InterpolatedPosition interpolatedPosition;
 	virtual bool hasKnownPosition(void) const
 	{
 		return interpolatedPosition.isKnown();
 	}
 
-	Equinox equinox;
-
 	IndiClient* indiClient;
+	bool waitingForClient;
+	
 	//! The name identifying this device's properties.
 	//! Properties belonging to other devices are ignored.
 	QString deviceName;

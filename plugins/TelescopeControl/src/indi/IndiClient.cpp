@@ -19,21 +19,10 @@
 
 #include "IndiClient.hpp"
 #include <QDebug>
-#include <QDesktopServices>
-#include <QDir>
-#include <QFile>
-#include <QProcess>
 #include <QRegExp>
-#include <QStandardItemModel>
 #include <QStringList>
 #include <QXmlStreamWriter>
 #include <stdexcept>
-
-#ifndef _WIN32
-#include <sys/types.h> // for mkfifo()
-#include <sys/stat.h>  // for mkfifo()
-#include <stdio.h>     // for remove()
-#endif
 
 const char* IndiClient::T_GET_PROPERTIES = "getProperties";
 const char* IndiClient::T_DEL_PROPERTY = "delProperty";
@@ -47,9 +36,6 @@ const char* IndiClient::SP_J2000_COORDINATES = "EQUATORIAL_COORD";
 const char* IndiClient::SP_JNOW_COORDINATES = "EQUATORIAL_EOD_COORD";
 const char* IndiClient::SP_J2000_COORDINATES_REQUEST = "EQUATORIAL_COORD_REQUEST";
 const char* IndiClient::SP_JNOW_COORDINATES_REQUEST = "EQUATORIAL_EOD_COORD_REQUEST";
-
-QProcess* IndiClient::serverProcess = 0;
-QString IndiClient::commandPipePath = "";
 
 IndiClient::IndiClient(const QString& newClientId,
                        QIODevice* openIoDevice,
@@ -137,249 +123,12 @@ void IndiClient::sendRawCommand(const QString& command)
 	outgoing << command;
 }
 
-QStandardItemModel* IndiClient::loadDriverDescriptions()
+DeviceP IndiClient::getDevice(const QString& deviceName)
 {
-	QStandardItemModel* model = new QStandardItemModel();
-	QStandardItem* parent = model->invisibleRootItem();
-	QStandardItem* currentGroup = 0, *currentDevice = 0;
-
-	//TODO: It should allow the file path to be set somewhere
-	QDir indiDriversDir("/usr/share/indi/");
-	indiDriversDir.setNameFilters(QStringList("*.xml"));
-	indiDriversDir.setFilter(QDir::Files | QDir::Readable);
-	QFileInfoList fileList = indiDriversDir.entryInfoList();
+	if (deviceName.isEmpty())
+		return DeviceP();
 	
-	foreach (const QFileInfo& fi, fileList)
-	{
-		QFile indiDriversXmlFile(fi.absoluteFilePath());
-		if (indiDriversXmlFile.open(QFile::ReadOnly | QFile::Text))
-		{
-			qDebug() << "Parsing file" << fi.absoluteFilePath();
-			QXmlStreamReader localXmlReader;
-			localXmlReader.addData("<indi>");
-			localXmlReader.addData(indiDriversXmlFile.readAll());
-			
-			QString deviceName;
-			while (!localXmlReader.atEnd())
-			{
-				if (localXmlReader.hasError())
-				{
-					qDebug() << "Error parsing" << fi.absoluteFilePath()
-					         << localXmlReader.errorString();
-					break;
-				}
-				
-				if (localXmlReader.isEndDocument())
-					break;
-				
-				if (localXmlReader.isStartElement())
-				{
-					QXmlStreamAttributes attr = localXmlReader.attributes();
-					if (localXmlReader.name() == "devGroup")
-					{
-						QString groupName = attr.value("group").toString();
-						
-						QList<QStandardItem*> existing = model->findItems(groupName);
-						if (existing.isEmpty())
-						{
-							currentGroup = new QStandardItem(groupName);
-							currentGroup->setSelectable(false);
-							currentGroup->setEditable(false);
-							parent->appendRow(currentGroup);
-						}
-						else
-							currentGroup = existing.first();
-					}
-					else if (localXmlReader.name() == "device")
-					{
-						deviceName = attr.value("label").toString();
-						if (deviceName.isEmpty())
-						{
-							localXmlReader.skipCurrentElement();
-							continue;
-						}
-						
-						if (currentGroup)
-						{
-							currentDevice = new QStandardItem(deviceName);
-							currentDevice->setEditable(false);
-							currentGroup->appendRow(currentDevice);
-						}
-						else
-						{
-							qDebug() << "Error parsing" << fi.absoluteFilePath();
-							break;
-						}
-					}
-					else if (localXmlReader.name() == "driver")
-					{
-						if (currentDevice)
-						{
-							QString driverName = attr.value("name").toString();
-							
-							// TODO: Separate driver name from driver exe
-							QString driverFile = localXmlReader.readElementText().trimmed();
-							if (driverFile.isEmpty())
-							{
-								localXmlReader.skipCurrentElement();
-								continue;
-							}
-							
-							if (driverName.isEmpty())
-								driverName = driverFile;
-							
-							QStandardItem* driver = new QStandardItem(driverName);
-							// TODO: This is because of selections in the combo box. Find a better way!s
-							driver->setSelectable(false);
-							driver->setData(driverFile, Qt::UserRole);
-							driver->setToolTip(driverFile);
-							// TODO: Find if it exists?
-							int row = currentGroup->rowCount() - 1;
-							currentGroup->setChild(row, 1, driver);
-						}
-						// TODO
-					}
-				}
-				else if (localXmlReader.isEndElement())
-				{
-					// Ensure structure validation
-					if (localXmlReader.name() == "devGroup")
-						currentGroup = 0;
-					else if (localXmlReader.name() == "device")
-						currentDevice = 0;
-				}
-				
-				localXmlReader.readNext();
-			}
-			
-			indiDriversXmlFile.close();
-		}
-		else
-		{
-			qDebug() << "Unable to open:" << fi.absoluteFilePath();
-		}
-	}
-
-	model->setHorizontalHeaderLabels(QStringList() << "Device" << "Driver");
-	return model;
-}
-
-bool IndiClient::startServer()
-{
-	if (serverProcess)
-		return true;
-
-	// Open a named pipe to send commands to the server.
-	// Platform specific.
-#ifndef _WIN32
-	commandPipePath = QDesktopServices::storageLocation(QDesktopServices::TempLocation);
-	commandPipePath.append("/indi-pipe-");
-	commandPipePath.append(QDateTime::currentDateTimeUtc().toString("yyyyMMddhhmmss"));
-	qDebug() << commandPipePath;
-	// TODO: Different filename in case there are multiple instances of Stellarium
-	if (mkfifo(commandPipePath.toAscii(), 0660) < 0)
-	{
-		// TODO: Handle errno
-		commandPipePath.clear();
-		return false;
-	}
-#endif
-	QStringList arguments;
-	//arguments << "-l" << "~/"; // Log	
-	arguments << "-f" << commandPipePath;
-	serverProcess = new QProcess();
-	serverProcess->setProcessChannelMode(QProcess::ForwardedChannels);
-	serverProcess->start("indiserver", arguments);
-	if (serverProcess->waitForStarted(3000))
-	{
-		return true;
-	}
-	else
-	{
-		serverProcess->close();
-		serverProcess->deleteLater();
-		serverProcess = 0;
-		return false;
-	}
-}
-
-bool IndiClient::stopServer()
-{
-	if (!serverProcess)
-	{
-		return true;
-	}
-	
-	serverProcess->terminate();
-	if (serverProcess->waitForFinished())
-	{
-		serverProcess->deleteLater();
-		serverProcess = 0;
-		
-#ifndef _WIN32
-		// TODO: Store filename separately in case of multiple instances.
-		if (!commandPipePath.isEmpty())
-			remove(commandPipePath.toAscii());
-#endif
-		
-		return true;
-	}
-	
-	return false;
-}
-
-bool IndiClient::startDriver(const QString& driverName,
-                             const QString& deviceName)
-{
-	if (driverName.isEmpty() ||
-	    deviceName.isEmpty())
-	{
-		return false;
-	}
-	
-	if (!serverProcess)
-	{
-		if (!startServer())
-			return false;
-	}
-	
-	QFile pipe(commandPipePath);
-	if (pipe.open(QFile::WriteOnly))
-	{
-		QString command = QString("start %1 \"%2\"").arg(driverName, deviceName);
-		qDebug() << command;
-		pipe.write(qPrintable(command));
-		pipe.flush();
-		pipe.close();
-		return true;
-	}
-	
-	qDebug() << pipe.errorString();
-	
-	return false;
-}
-
-void IndiClient::stopDriver(const QString& driverName,
-                            const QString& deviceName)
-{
-	if (!serverProcess ||
-	    driverName.isEmpty() ||
-	    deviceName.isEmpty())
-	{
-		return;
-	}
-	
-	QFile pipe(commandPipePath);
-	if(pipe.open(QFile::WriteOnly))
-	{
-		QString command = QString("stop %1 \"%2\"").arg(driverName, deviceName);
-		pipe.write(command.toAscii());
-		pipe.close();
-	}
-	else
-	{
-		qDebug() << pipe.errorString();
-	}
+	return devices.value(deviceName);
 }
 
 void IndiClient::parseStreamData()

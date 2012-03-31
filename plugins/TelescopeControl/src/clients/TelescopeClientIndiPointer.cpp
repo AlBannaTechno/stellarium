@@ -22,7 +22,7 @@ TelescopeClientIndiPointer::TelescopeClientIndiPointer(const QString& name,
                                                        const QString& deviceId,
                                                        IndiClient* client,
                                                        Equinox eq)
-	: TelescopeClientIndi(name, eq)
+	: TelescopeClientIndi(name, deviceId)
 {
 	Q_ASSERT(client); //TODO: Better check. Throw something?
 	deviceName = deviceId;

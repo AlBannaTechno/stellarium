@@ -1,6 +1,6 @@
 /*
  * Stellarium Telescope Control plug-in
- * Copyright (C) 2010-2011  Bogdan Marinov
+ * Copyright (C) 2010-2012  Bogdan Marinov
  * Copyright (C) 2011  Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
@@ -17,39 +17,120 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "IndiClient.hpp"
+#include "IndiServices.hpp"
 #include "TelescopeClientIndi.hpp"
-#include "TelescopeClientIndiLocal.hpp"
-#include "TelescopeClientIndiTcp.hpp"
 #include "TelescopeClientIndiPointer.hpp"
 
 #include <cmath>
 #include "StelUtils.hpp"
 
-TelescopeClientIndi::TelescopeClientIndi(const QString& name, Equinox eq):
-	TelescopeClient(name),
-	equinox(eq),
-	indiClient(0)
+TelescopeClientIndi::TelescopeClientIndi(const QString& newName,
+                                         const QString& newDeviceName,
+                                         IndiClient* client) :
+    TelescopeClient(newName),
+    indiClient(0),
+    waitingForClient(false),
+    deviceName(newDeviceName),
+    isConnectionConnected(false),
+    isDefinedJ2000CoordinateRequest(false),
+    isDefinedJNowCoordinateRequest(false),
+    hasQueuedGoto(false)
 {
+	if (newName.isEmpty() || newDeviceName.isEmpty())
+		return;
+	
+	if (client)
+	{
+		attachClient(client);
+	}
+	else
+	{
+		// If no IndiClient instance has been passed to the constructor,
+		// wait for one to be passed to attachClient().
+		waitingForClient = true;
+	}
 }
 
 TelescopeClientIndi::~TelescopeClientIndi()
 {
+	//
+}
+
+bool TelescopeClientIndi::isInitialized() const
+{
+	// There could have been more checks...
+	if (waitingForClient || indiClient)
+		return true;
+	else
+		return false;
+}
+
+bool TelescopeClientIndi::isConnected() const
+{
+	//TODO: Should this include a check for the CONNECTION property?
+	if (indiClient)
+		return true;
+	else
+		return false;
+}
+
+bool TelescopeClientIndi::prepareCommunication()
+{
+	if (!isInitialized())
+		return false;
+
+	//TODO: Request properties?
+	//TODO: Try to connect
+
+	return true;
+}
+
+void TelescopeClientIndi::performCommunication()
+{
+	//
 }
 
 void TelescopeClientIndi::initialize()
 {
-	isConnectionConnected = false;
-	isDefinedJ2000CoordinateRequest = false;
-	isDefinedJNowCoordinateRequest = false;
-	hasQueuedGoto = false;
-
-	connect(indiClient, SIGNAL(deviceDefined(QString,DeviceP)),
-	        this, SLOT(handleDeviceDefinition(QString,DeviceP)));
+//	isConnectionConnected = false;
+//	isDefinedJ2000CoordinateRequest = false;
+//	 = false;
+//	 = false;
 }
 
 IndiClient* TelescopeClientIndi::getIndiClient() const
 {
 	return indiClient;
+}
+
+void TelescopeClientIndi::attachClient(IndiClient* client)
+{
+	if(indiClient)
+		return;
+	
+	if (!client)
+	{
+		qDebug() << "Telescope Control: Error: Trying to attach an empty client"
+		         << " to TelescopeClientIndi" << name;
+		return;
+	}
+	
+	waitingForClient = false;
+	indiClient = client;
+	DeviceP device = indiClient->getDevice(deviceName);
+	if (device.isNull())
+	{
+		// Wait for the device to be defined
+		connect(indiClient, SIGNAL(deviceDefined(QString,DeviceP)),
+		        this, SLOT(handleDeviceDefinition(QString,DeviceP)));
+	}
+	else
+	{
+		handleDeviceDefinition(indiClient->getId(), device);
+	}
+	// TODO: Connect error handling slot?
+	// TODO: Extract device name?
 }
 
 Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelCore *core) const
@@ -128,8 +209,8 @@ void TelescopeClientIndi::handleDeviceDefinition(const QString& client,
 	{
 		device = newDevice;
 		
-		connect(device.data(), SIGNAL(newValuesReceived()),
-		        this, SLOT(handlePropertyDefinition(QString,PropertyP)));
+		connect(device.data(), SIGNAL(propertyDefined(PropertyP)),
+		        this, SLOT(handlePropertyDefinition(PropertyP)));
 	}
 }
 
@@ -228,23 +309,10 @@ void TelescopeClientIndi::handleConnectionEstablished()
 	}
 }
 
-TelescopeClientIndi* TelescopeClientIndi::telescopeClient(const QString& name, const QString& driverName, Equinox eq)
-{
-	TelescopeClientIndi* client = new TelescopeClientIndiLocal(name, driverName, eq);
-	return client;
-}
-
-TelescopeClientIndi* TelescopeClientIndi::telescopeClient(const QString& name, const QString& host, int port, Equinox eq)
-{
-	TelescopeClientIndi* client = new TelescopeClientIndiTcp(name, host, port, eq);
-	return client;
-}
-
 TelescopeClientIndi* TelescopeClientIndi::telescopeClient
 	(const QString& name,
 	 const QString& deviceId,
-	 IndiClient* indiClient,
-	 Equinox eq)
+	 IndiClient* indiClient, Equinox eq)
 {
 	TelescopeClientIndi* client = new TelescopeClientIndiPointer(name, deviceId, indiClient, eq);
 	return client;

@@ -59,6 +59,7 @@ class TelescopeControlConfigurationWindow;
 class SlewWindow;
 class DeviceControlPanel;
 class IndiClient;
+class IndiServices;
 
 using namespace TelescopeControlGlobals;
 
@@ -297,6 +298,8 @@ private:
 	//! \todo Move to IndiClient or TelescopeClientIndi?
 	QHash<QString, IndiClient*> indiClients;
 
+	IndiServices* indiService;
+	
 	//! Matches shortcut numbers and connection IDs.
 	QHash<int, QString> idFromShortcutNumber;
 	//!

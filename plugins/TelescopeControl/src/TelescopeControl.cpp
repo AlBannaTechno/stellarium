@@ -39,6 +39,7 @@
 #include "DeviceControlPanel.hpp"
 #include "SlewWindow.hpp"
 #include "LogFile.hpp"
+#include "IndiServices.hpp"
 
 #include "StelApp.hpp"
 #include "StelCore.hpp"
@@ -99,10 +100,11 @@ Q_EXPORT_PLUGIN2(TelescopeControl, TelescopeControlStelPluginInterface)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Constructor and destructor
-TelescopeControl::TelescopeControl()
-	: configurationWindow(0),
-	slewWindow(0),
-	controlPanelWindow(0)
+TelescopeControl::TelescopeControl() :
+    indiService(0),
+    configurationWindow(0),
+    slewWindow(0),
+    controlPanelWindow(0)
 {
 	setObjectName("TelescopeControl");
 
@@ -120,7 +122,11 @@ TelescopeControl::TelescopeControl()
 
 TelescopeControl::~TelescopeControl()
 {
-
+	if (indiService)
+	{
+		delete indiService;
+		indiService = 0;
+	}
 }
 
 
@@ -281,7 +287,10 @@ void TelescopeControl::deinit()
 	//Destroy all clients first in order to avoid displaying a TCP error
 	removeAllConnections();
 	
-	IndiClient::stopServer();
+	if (indiService)
+	{
+		indiService->stopServer();
+	}
 
 	//TODO: Decide if it should be saved on change
 	//Save the configuration on exit
@@ -1091,7 +1100,7 @@ bool TelescopeControl::stopConnection(const QString& id)
 {
 	//Validation
 	if(id.isEmpty())
-		return false;
+		return true;
 
 	return stopClient(id);
 }
@@ -1216,30 +1225,47 @@ bool TelescopeControl::startClient(const QString& id,
 	{
 		if (isRemote)
 		{
+			// TODO: Use the new INDI remote server mechanism
 			QString host = properties.value("host", "localhost").toString();
 			int port = properties.value("tcpPort").toInt();
-			parameters = QString("%1:%2:%3").arg(host).arg(port).arg(delay);
-			newTelescope = TelescopeClientIndi::telescopeClient(name, host, port, equinox);
+			
+//			parameters = QString("%1:%2:%3").arg(host).arg(port).arg(delay);
+//			newTelescope = TelescopeClientIndi::telescopeClient(name, host, port, equinox);
 		}
 		else
 		{
 			QString driver = properties.value("driverId").toString();
-			//TODO: Fix the file check!
+			// TODO: Fix the file check!
 			if (driver.isEmpty()
 				|| !QFile::exists("/usr/bin/" + driver)
 				|| !QFileInfo("/usr/bin/" + driver).isExecutable())
 				return false;
-			parameters = QString("%1:%2").arg(driver).arg(delay);
-			newTelescope = TelescopeClientIndi::telescopeClient(name, driver, equinox);
-		}
 
-		if (newTelescope && newTelescope->isInitialized())
-		{
-			IndiClient* indiClient = static_cast<TelescopeClientIndi*>(newTelescope)->getIndiClient();
-			//TODO: Name == ID? This will be used in removing it!
-			indiClients.insert(id, indiClient);
-			if (controlPanelWindow)
-				controlPanelWindow->addIndiClient(indiClient);
+			if (!indiService)
+			{
+				indiService = new IndiServices(this);
+				if (controlPanelWindow)
+				{
+					connect(indiService,
+					        SIGNAL(commonClientConnected(IndiClient*)),
+					        controlPanelWindow,
+					        SLOT(addIndiClient(IndiClient*)));
+				}
+			}
+			
+			if (!indiService->startDriver(driver, name))
+				return false;
+			
+			IndiClient* indiClient = indiService->getCommonClient();
+			TelescopeClientIndi* temp =  new TelescopeClientIndi(name,
+			                                                     name,
+			                                                     indiClient);
+			if (!indiClient)
+			{
+				connect(indiService, SIGNAL(commonClientConnected(IndiClient*)),
+				        temp, SLOT(attachClient(IndiClient*)));
+			}
+			newTelescope = temp;
 		}
 	}
 	else if (interfaceType == "INDI Pointer")
@@ -1316,8 +1342,36 @@ bool TelescopeControl::stopClient(const QString& id)
 {
 	//Validation
 	//If it doesn't exist, it is stopped :)
-	if(id.isEmpty() ||
-	   !connections.contains(id))
+	if (id.isEmpty())
+		return true;
+	
+	// TODO: This may need to go to stopConnection().
+	const QVariantMap& properties = connectionsProperties.value(id).toMap();
+	if (properties.isEmpty())
+		return true;
+	
+	if (properties.value("interface").toString() == "INDI")
+	{
+		if (properties.value("isRemoteConnection").toBool())
+		{
+			// TODO: Close connection to remote INDI server
+			// TODO: Delete all sub-connection clients
+		}
+		else
+		{
+			// Connection to a local INDI server
+			if (indiService && connections.contains(id))
+			{
+				QString name = properties.value("name").toString();
+				QString driver = properties.value("driverId").toString();
+				indiService->stopDriver(driver, name);
+				// TODO: Anything else? Disconnecting slots?
+			}
+		}
+	}
+	
+	// TODO: Remove "connections".
+	if(!connections.contains(id))
 		return true;
 
 	//If this is one of the INDI clients that provide a connection...
@@ -1478,7 +1532,7 @@ void TelescopeControl::loadDeviceModels()
 
 void TelescopeControl::loadIndiDeviceModels()
 {
-	indiDeviceModels = IndiClient::loadDriverDescriptions();
+	indiDeviceModels = IndiServices::loadDriverDescriptions();
 }
 
 const QHash<QString, DeviceModel>& TelescopeControl::getDeviceModels()
