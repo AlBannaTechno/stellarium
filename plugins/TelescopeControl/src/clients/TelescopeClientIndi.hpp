@@ -86,6 +86,10 @@ public slots:
 	void attachClient(IndiClient* client);
 	
 signals:
+	//! Emitted if a property defining coordinates has been defined.
+	//! The parameter is because I didn't want to bother with a signal mapper.:)
+	//! \todo Better name?
+	void coordinatesDefined(const QString& clientId);
 
 protected slots:
 	//! If the device matches the wanted one, connect to it and wait for properties.

@@ -211,6 +211,8 @@ void TelescopeClientIndi::handleDeviceDefinition(const QString& client,
 		
 		connect(device.data(), SIGNAL(propertyDefined(PropertyP)),
 		        this, SLOT(handlePropertyDefinition(PropertyP)));
+		
+		qDebug() << "Device connected:" << deviceName;
 	}
 }
 
@@ -220,6 +222,8 @@ void TelescopeClientIndi::handlePropertyDefinition(const PropertyP& property)
 		return;
 	
 	QString propName = property->getName();
+	qDebug() << "Property defined:" << propName;
+	
 	NumberPropertyP np = qSharedPointerDynamicCast<NumberProperty>(property);
 	if (np.isNull())
 		return;
@@ -235,6 +239,7 @@ void TelescopeClientIndi::handlePropertyDefinition(const PropertyP& property)
 			updatePositionFromProperty();
 			connect(np.data(), SIGNAL(newValuesReceived()),
 			        this, SLOT(updatePositionFromProperty()));
+			emit coordinatesDefined(name);
 		}
 		else if (np->getName() == IndiClient::SP_J2000_COORDINATES_REQUEST)
 		{

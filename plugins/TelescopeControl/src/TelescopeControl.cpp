@@ -488,6 +488,18 @@ void TelescopeControl::slewTelescopeToViewDirection(int number)
 	telescopeGoto(idFromShortcutNumber.value(number), centerPosition);
 }
 
+void TelescopeControl::treatAsTelescope(const QString& id)
+{
+	if (id.isEmpty())
+		return;
+	
+	TelescopeClientP client = connections.value(id);
+	if (!client.isNull() && !telescopes.contains(id))
+	{
+		telescopes.insert(id, client);
+	}
+}
+
 void TelescopeControl::drawPointer(const StelProjectorP& prj, const StelCore* core, StelPainter& sPainter)
 {
 	const QList<StelObjectP> newSelected = GETSTELMODULE(StelObjectMgr)->getSelectedObject("Telescope");
@@ -1223,6 +1235,7 @@ bool TelescopeControl::startClient(const QString& id,
 	}
 	else if (interfaceType == "INDI")
 	{
+		TelescopeClientIndi* tempP = 0;
 		if (isRemote)
 		{
 			// TODO: Use the new INDI remote server mechanism
@@ -1257,15 +1270,18 @@ bool TelescopeControl::startClient(const QString& id,
 				return false;
 			
 			IndiClient* indiClient = indiService->getCommonClient();
-			TelescopeClientIndi* temp =  new TelescopeClientIndi(name,
-			                                                     name,
-			                                                     indiClient);
+			tempP =  new TelescopeClientIndi(name, name, indiClient);
 			if (!indiClient)
 			{
 				connect(indiService, SIGNAL(commonClientConnected(IndiClient*)),
-				        temp, SLOT(attachClient(IndiClient*)));
+				        tempP, SLOT(attachClient(IndiClient*)));
 			}
-			newTelescope = temp;
+			newTelescope = tempP;
+		}
+		if (tempP && tempP->isInitialized())
+		{
+			connect(tempP, SIGNAL(coordinatesDefined(QString)),
+			        this, SLOT(treatAsTelescope(QString)));
 		}
 	}
 	else if (interfaceType == "INDI Pointer")

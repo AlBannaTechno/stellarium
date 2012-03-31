@@ -226,6 +226,8 @@ signals:
 
 private slots:
 	void setStelStyle(const QString& section);
+	//! Called when a connection declares itself to be a pointing device.
+	void treatAsTelescope(const QString& id);
 
 private:
 	//! Draw a nice animated pointer around the object if it's selected
