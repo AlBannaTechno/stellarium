@@ -43,9 +43,13 @@ enum Equinox {
 };
 
 //! An abstract base class that should never be used directly, only inherited.
+//! Describes a telescope object as a Stellarium object that can be displayed
+//! as a reticle in the position where the connected telescope is currently
+//! pointing.
 //! This class used to be called Telescope, but it has been renamed
 //! to TelescopeClient in order to resolve a compiler/linker conflict
 //! with the identically named Telescope class in Stellarium's main code.
+//! \todo Split off in a TelescopeControl namespace?
 class TelescopeClient : public QObject, public StelObject
 {
 	Q_OBJECT
@@ -76,8 +80,11 @@ public:
 	virtual bool isConnected(void) const = 0;
 	virtual bool isInitialized(void) const {return true;}
 	virtual bool hasKnownPosition(void) const = 0;
-	void addOcular(double fov) {if (fov>=0.0) oculars.push_back(fov);}
-	const QList<double> &getOculars(void) const {return oculars;}
+	//! Add a FOV indicator, a circle with the given angular size.
+	//! There can be multiple indicators for a TelescopeClient.
+	//! \param fov circle diameter in angular degrees.
+	void addFovCircle(double fov) {if (fov>=0.0) fovCircles.push_back(fov);}
+	const QList<double>& getFovCircles() const {return fovCircles;}
 	
 	virtual bool prepareCommunication() {return false;}
 	virtual void performCommunication() {}
@@ -89,7 +96,8 @@ protected:
 private:
 	float getSelectPriority(const StelCore*) const {return -10.f;}
 private:
-	QList<double> oculars; // fov of the oculars
+	//! List of FOV values: circle diameter in angular degrees.
+	QList<double> fovCircles;
 };
 
 #endif // _TELESCOPE_CLIENT_HPP_

@@ -327,7 +327,7 @@ void TelescopeControl::draw(StelCore* core)
 				{
 					glColor4f(circleColor[0], circleColor[1], circleColor[2], circleFader.getInterstate());
 					glDisable(GL_TEXTURE_2D);
-					foreach (double circle, telescope->getOculars())
+					foreach (double circle, telescope->getFovCircles())
 					{
 						sPainter.drawCircle(XY[0], XY[1], 0.5 * prj->getPixelPerRadAtCenter() * (M_PI/180) * (circle));
 					}
@@ -1335,7 +1335,7 @@ bool TelescopeControl::startClient(const QString& id,
 		if(!circleList.isEmpty() && circleList.size() <= MAX_CIRCLE_COUNT)
 		{
 			for(int i = 0; i < circleList.size(); i++)
-				newTelescope->addOcular(circleList.value(i, -1.0).toDouble());
+				newTelescope->addFovCircle(circleList.value(i, -1.0).toDouble());
 		}
 
 		TelescopeClientP newTelescopeP(newTelescope);
