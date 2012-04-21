@@ -226,7 +226,15 @@ signals:
 
 private slots:
 	void setStelStyle(const QString& section);
-	//! Called when a connection declares itself to be a pointing device.
+	
+	//! Watch this INDI client for new device definitions.
+	void watchIndiClient(IndiClient* client);
+	//! Create new telescope client for a newly defined INDI device.
+	//! \todo More elegant way.
+	void handleDeviceDefinition(const QString& clientId, const QString& devId);
+	//! Called when an INDI connection declares itself to be a pointing device.
+	//! \todo Ugly hack. Find a more elegant way.
+	//! \todo Also, use a signal mapper?
 	void treatAsTelescope(const QString& id);
 
 private:
@@ -285,12 +293,14 @@ private:
 	//! Stores internally all the information from the connections file.
 	QVariantMap connectionsProperties;
 	//! All initialized objects representing active connections.
-	QHash<QString, TelescopeClientP> connections;
+	QMap<QString, TelescopeClientP> connections;
 	//! All initialized objects representing a pointing device.
 	//! A "pointing device" is any device that can send and/or accept
 	//! coordinates. #telescopes should be a subset of #connections.
 	//! \todo Fix the connections/telescopes dichotomy.
 	QHash<QString, TelescopeClientP> telescopes;
+	//! \todo Ugly hack.
+	QHash<QString, TelescopeClientP> indiDevices;
 
 	QHash<QString, DeviceModel> deviceModels;
 	//! \todo Temporary.

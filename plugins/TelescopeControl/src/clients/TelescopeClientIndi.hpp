@@ -90,6 +90,8 @@ signals:
 	//! Emitted if a property defining coordinates has been defined.
 	//! The parameter is because I didn't want to bother with a signal mapper.:)
 	//! \todo Better name?
+	//! \todo Remove the parameter and use a signal mapper in TelescopeControl
+	//! to separate the internal client name from the client ID in the hash?
 	void coordinatesDefined(const QString& clientId);
 
 protected slots:

@@ -118,6 +118,8 @@ TelescopeControl::TelescopeControl() :
 #ifdef Q_OS_WIN32
 	ascomPlatformIsInstalled = false;
 #endif
+	
+	indiService = new IndiServices(this);
 }
 
 TelescopeControl::~TelescopeControl()
@@ -225,6 +227,12 @@ void TelescopeControl::init()
 		{
 			controlPanelWindow->addIndiClient(indiClient);
 		}
+		connect(indiService, SIGNAL(commonClientConnected(IndiClient*)),
+		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
+		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
+		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
+		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
+		        this, SLOT(watchIndiClient(IndiClient*)));
 		
 		//TODO: Think of a better keyboard shortcut
 		QAction* slewWindowAction = gui->addGuiActions(
@@ -247,7 +255,10 @@ void TelescopeControl::init()
 		                                  slewWindowAction);
 		gui->getButtonBar()->addButton(slewWindowButton, "065-pluginsGroup");
 
-		QAction* controlPanelAction = gui->addGuiActions("actionShow_Control_Panel", "Device Control Panel", "", group, true, false);
+		QAction* controlPanelAction = gui->addGuiActions(
+		                                  "actionShow_Control_Panel",
+		                                  "Device Control Panel",
+		                                  "", group, true, false);
 		connect(controlPanelAction, SIGNAL(toggled(bool)),
 		        controlPanelWindow, SLOT(setVisible(bool)));
 		connect(controlPanelWindow, SIGNAL(visibleChanged(bool)),
@@ -488,15 +499,52 @@ void TelescopeControl::slewTelescopeToViewDirection(int number)
 	telescopeGoto(idFromShortcutNumber.value(number), centerPosition);
 }
 
+void TelescopeControl::watchIndiClient(IndiClient* client)
+{
+	if (client)
+	{
+		QString id = client->getId();
+		indiClients.insert(id, client);
+		connect (client, SIGNAL(deviceNameDefined(QString,QString)),
+		         this, SLOT(handleDeviceDefinition(QString,QString)));
+	}
+}
+
+void TelescopeControl::handleDeviceDefinition(const QString& clientId,
+                                              const QString& deviceId)
+{
+	IndiClient* client = indiClients.value(clientId, 0);
+	if (client)
+	{
+		//QString name = clientId + "/" + deviceId;
+		QString name = clientId;
+		TelescopeClientIndi* ti = new TelescopeClientIndi(name,
+		                                                  deviceId,
+		                                                  client);
+		
+		// TODO: Add stuff like saved FOV circles?
+		
+		TelescopeClientP tp(ti);		
+		indiDevices.insert(name, tp);
+		// TODO: This won't work very well with treatAsTelescope()... !!!
+		
+		connect(ti, SIGNAL(coordinatesDefined(QString)),
+		        this, SLOT(treatAsTelescope(QString)));
+	}
+}
+
 void TelescopeControl::treatAsTelescope(const QString& id)
 {
 	if (id.isEmpty())
 		return;
 	
-	TelescopeClientP client = connections.value(id);
+	TelescopeClientP client = indiDevices.value(id);
 	if (!client.isNull() && !telescopes.contains(id))
 	{
 		telescopes.insert(id, client);
+		
+		//disconnect(client.data(), SIGNAL(coordinatesDefined(QString)),
+		//           this, SLOT(treatAsTelescope(QString));
 	}
 }
 
@@ -532,7 +580,7 @@ void TelescopeControl::communicate()
 {
 	if (!connections.empty())
 	{
-		QHashIterator<QString, TelescopeClientP> i(connections);
+		QMapIterator<QString, TelescopeClientP> i(connections);
 		while (i.hasNext())
 		{
 			i.next();
@@ -1123,7 +1171,7 @@ bool TelescopeControl::stopAllConnections()
 
 	if (!connections.empty())
 	{
-		QHashIterator<QString, TelescopeClientP> i(connections);
+		QMapIterator<QString, TelescopeClientP> i(connections);
 		while (i.hasNext())
 		{
 			i.next();
@@ -1238,12 +1286,13 @@ bool TelescopeControl::startClient(const QString& id,
 		TelescopeClientIndi* tempP = 0;
 		if (isRemote)
 		{
-			// TODO: Use the new INDI remote server mechanism
 			QString host = properties.value("host", "localhost").toString();
-			int port = properties.value("tcpPort").toInt();
+			quint16 port = properties.value("tcpPort").toUInt();
 			
-//			parameters = QString("%1:%2:%3").arg(host).arg(port).arg(delay);
-//			newTelescope = TelescopeClientIndi::telescopeClient(name, host, port, equinox);
+			// TODO: Difference name/id?
+			indiService->openConnection(name, host, port);
+			
+			return true;
 		}
 		else
 		{
@@ -1253,23 +1302,12 @@ bool TelescopeControl::startClient(const QString& id,
 				|| !QFile::exists("/usr/bin/" + driver)
 				|| !QFileInfo("/usr/bin/" + driver).isExecutable())
 				return false;
-
-			if (!indiService)
-			{
-				indiService = new IndiServices(this);
-				if (controlPanelWindow)
-				{
-					connect(indiService,
-					        SIGNAL(commonClientConnected(IndiClient*)),
-					        controlPanelWindow,
-					        SLOT(addIndiClient(IndiClient*)));
-				}
-			}
 			
 			if (!indiService->startDriver(driver, name))
 				return false;
 			
 			IndiClient* indiClient = indiService->getCommonClient();
+			// TODO: This is stupid.
 			tempP =  new TelescopeClientIndi(name, name, indiClient);
 			if (!indiClient)
 			{
@@ -1286,6 +1324,8 @@ bool TelescopeControl::startClient(const QString& id,
 	}
 	else if (interfaceType == "INDI Pointer")
 	{
+		// TODO: Obsolete branch, reuse the code and remove.
+		
 		QString indiDevice = properties.value("indiDevice").toString();
 		QString indiConnection = properties.value("indiConnection").toString();
 		if (indiClients.contains(indiConnection))
@@ -1343,6 +1383,8 @@ bool TelescopeControl::startClient(const QString& id,
 			connections.insert(id, newTelescopeP);
 		if (interfaceType != "INDI")//Only TCP connections?
 			telescopes.insert(id, newTelescopeP);
+		else
+			indiDevices.insert(id, newTelescopeP);
 
 		return true;
 	}
@@ -1391,9 +1433,10 @@ bool TelescopeControl::stopClient(const QString& id)
 		return true;
 
 	//If this is one of the INDI clients that provide a connection...
-	if (indiClients.contains(id))
+	// TODO: Remove!
+	IndiClient* indiClient = indiClients.take(id);
+	if (indiClient)
 	{
-		IndiClient* indiClient = indiClients.take(id);
 		//Remove the sub-clients (all will be in "telescopes")
 		QHashIterator<QString, TelescopeClientP> i(telescopes);
 		while (i.hasNext())

@@ -115,6 +115,11 @@ signals:
 	//! Emitted when a new device has been defined.
 	void deviceDefined(const QString& clientId,
 	                   const DeviceP& device);
+	//! \todo Ugly hack to avoid including IndiClient.hpp and everything
+	//! included in it to TelescopeControl. Think of a better way. (Or organise
+	//! the includes better.)
+	void deviceNameDefined(const QString& clientId,
+	                       const QString& deviceName);
 	//! Emitted when a device has been removed.
 	void deviceRemoved(const QString& clientId,
 	                   const QString& deviceName);

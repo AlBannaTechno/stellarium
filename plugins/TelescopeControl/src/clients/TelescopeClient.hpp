@@ -55,6 +55,7 @@ enum Equinox {
 //! with the identically named Telescope class in Stellarium's main code.
 //! \ingroup telescope-markers
 //! \todo Split off in a TelescopeControl namespace?
+//! \todo Handle FOV circle change at any moment.
 class TelescopeClient : public QObject, public StelObject
 {
 	Q_OBJECT

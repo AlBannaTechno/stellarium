@@ -324,13 +324,15 @@ void IndiClient::parseStreamData()
 					
 					if (currentProperty->elementCount() > 0)
 					{
-						const QString& devId = currentProperty->getDevice();
-						DeviceP device = devices.value(devId);
+						const QString& deviceId = currentProperty->getDevice();
+						DeviceP device = devices.value(deviceId);
 						if (device.isNull())
 						{
-							device = DeviceP(new Device(devId));
-							devices.insert(devId, device);
+							device = DeviceP(new Device(deviceId));
+							devices.insert(deviceId, device);
 							emit deviceDefined(clientId, device);
+							// TODO: Stupid!
+							emit deviceNameDefined(clientId, deviceId);
 						}
 						bool added = device->addProperty(currentProperty);
 						if (added)
