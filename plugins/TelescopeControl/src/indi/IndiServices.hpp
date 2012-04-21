@@ -26,16 +26,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QTcpSocket>
 
 class IndiClient;
+class QSignalMapper;
 class QStandardItemModel;
 
 //! Provides various functions related to using libindi.
-//! This includes loading the list of installed drivers, starting, stopping, and
-//! sending commands to indiserver, etc.
-//! Must be a singleton.
-//! Maintains a common instance of indiserver and a common IndiClient for all
-//! drivers running on this computer.
+//! This includes loading the list of installed drivers, managing network
+//! connections and maintaining a common instance of indiserver in a separate
+//! process, including sending commands to start and stop named device drivers.
+//! It is strongly recommended to use only a single instance of this class.
+//! An IndiClient is initialized for each connection (including the one to the
+//! local indiserver) and it must be shared by all device clients relying on
+//! that connection.
 //! \author Bogdan Marinov
-//! \todo Put all remote INDI connections here? They can emit a signal when connected/client initialized.=> connect to the control panel. Also, some kind of object instantiating TelescopeClientIndi's when a client defines a slewable device (the plugin itself?)
+//! \todo Handle remote connection errors.
+//! \todo Decide whether to close remote connections normally or with abort().
 class IndiServices : public QObject
 {
 	Q_OBJECT
@@ -76,17 +80,40 @@ public:
 	
 	IndiClient* getCommonClient();
 	
+	//! Try connecting to another instance of indiserver over a TCP connection.
+	//! \param id the identifier will be re-used for the client created for this
+	//! connection.
+	//! \param host host name, may be an IP address.
+	//! \param port TCP port number.
+	void openConnection(const QString& id, const QString& host, quint16 port);
+	
+	//! 
+	void closeConnection(const QString& id);
+	
 signals:
+	//! Emitted when the client linked to the common indiserver process has
+	//! been initialized.
 	void commonClientConnected(IndiClient* client);
+	//!
+	void clientConnected(IndiClient* client);
 	
 public slots:
 	
 	
 private slots:
+	//! Called when a TCP connection has been established to the local server.
 	void initCommonClient();
+	//! Create an IndiClient for the TCP connection with the given ID.
+	//! Called when a TCP connection has been established.
+	//! Emits clientConnected().
+	void initClient(const QString& id);
 	
+	//! \todo Make this handle all connection errors, not only the local one.
 	void handleConnectionError(QAbstractSocket::SocketError error);
 	void handleProcessError(QProcess::ProcessError error);
+	
+	//! Called when one of the sockets disconnects.
+	void destroySocket();
 	
 private:
 	//! Common process instance of indiserver.
@@ -100,6 +127,11 @@ private:
 	
 	//!
 	IndiClient* commonClient;
+	
+	//! 
+	QHash<QString,QTcpSocket*> sockets;
+	//! 
+	QSignalMapper* connectedMapper;
 };
 
 #endif // INDISERVICES_HPP

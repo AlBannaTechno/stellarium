@@ -39,6 +39,7 @@
 //! \todo Device snooping!
 //! \todo Split the Indi.hpp file. (Partially DONE.)
 //! \todo Use shared pointers.
+//! \todo Handle aboutToClose() and parsing errors.
 /*! Blueprint for device snooping if necessary on the client side:
 Tree hashes (or maps?):
   reportpropertyto: if contains device/property, report to value

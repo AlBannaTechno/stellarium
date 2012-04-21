@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <QDir>
 #include <QFile>
 #include <QProcess>
+#include <QSignalMapper>
 #include <QStandardItemModel>
 #include <QXmlStreamReader>
 
@@ -43,6 +44,10 @@ IndiServices::IndiServices(QObject *parent) :
     commonClient(0)
 {
 	serverSocket = new QTcpSocket(this);
+	
+	connectedMapper = new QSignalMapper(this);
+	connect(connectedMapper, SIGNAL(mapped(QString)),
+	        this, SLOT(initClient(QString)));
 }
 
 IndiServices::~IndiServices()
@@ -51,6 +56,8 @@ IndiServices::~IndiServices()
 	stopServer();
 	
 	// TODO: Destroy server?
+	
+	// TODO: Close all sockets?
 }
 
 QStandardItemModel* IndiServices::loadDriverDescriptions()
@@ -332,12 +339,69 @@ IndiClient* IndiServices::getCommonClient()
 	return commonClient;
 }
 
+
+void IndiServices::openConnection(const QString& id,
+                                  const QString& host,
+                                  quint16 port)
+{
+	if (id.isEmpty() || host.isEmpty())
+		return;
+	
+	if (sockets.contains(id))
+	{
+		qWarning() << "IndiServices: Error! There's already a connection"
+		           << "with this ID:" << id;
+		return;
+	}
+	
+	QTcpSocket* newSocket = new QTcpSocket(this);
+	sockets.insert(id, newSocket);
+	connectedMapper->setMapping(newSocket, id);
+	connect(newSocket, SIGNAL(connected()),
+	        connectedMapper, SLOT(map()));
+	connect(newSocket, SIGNAL(disconnected()),
+	        this, SLOT(destroySocket()));
+	
+	newSocket->connectToHost(host, port);
+}
+
+void IndiServices::closeConnection(const QString& id)
+{
+	if (!sockets.contains(id))
+	{
+		qWarning() << "IndiServices: Error: No connection with this ID"
+		           << "to close:" << id;
+		return;
+	}
+	
+	QTcpSocket* socket = sockets.take(id);
+	if (socket)
+	{
+		disconnect(socket, SIGNAL(connected()), connectedMapper, SLOT(map()));
+		// TODO: Or should I use abort()? (discards the data to be written)
+		socket->disconnectFromHost();
+	}
+}
+
 void IndiServices::initCommonClient()
 {
 	if (!commonClient)
 	{
 		commonClient = new IndiClient("common", serverSocket);
 		emit commonClientConnected(commonClient);
+	}
+}
+
+void IndiServices::initClient(const QString& id)
+{
+	if (id.isEmpty())
+		return;
+	
+	QTcpSocket* socket = sockets.value(id, 0);
+	if (socket)
+	{
+		IndiClient* newClient = new IndiClient(id, socket);
+		emit clientConnected(newClient);
 	}
 }
 
@@ -355,4 +419,9 @@ void IndiServices::handleProcessError(QProcess::ProcessError error)
 	Q_UNUSED(error);
 	
 	qDebug() << serverProcess->errorString();
+}
+
+void IndiServices::destroySocket()
+{
+	sender()->deleteLater();
 }
