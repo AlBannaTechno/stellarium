@@ -35,6 +35,7 @@
 //! This class used to be called TelescopeDummy, but it had to be renamed
 //! in order to resolve a compiler/linker conflict with the identically named
 //! TelescopeDummy class in Stellarium's main code.
+//! \ingroup telescope-markers
 class TelescopeClientDummy : public TelescopeClient
 {
 	Q_OBJECT

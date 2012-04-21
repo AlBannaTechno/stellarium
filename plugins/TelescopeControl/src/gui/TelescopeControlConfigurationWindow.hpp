@@ -99,6 +99,7 @@ private slots:
 	void configureConnection(const QModelIndex&);
 	
 	//! Updates the connection states (connected/disconnected) in the list.
+	//! (Only if the window is currently visible.)
 	void updateConnectionStates();
 
 private:

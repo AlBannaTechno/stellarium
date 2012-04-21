@@ -65,13 +65,12 @@ using namespace TelescopeControlGlobals;
 
 typedef QSharedPointer<TelescopeClient> TelescopeClientP;
 
-//! This class manages the controlling of one or more telescopes by one
-//! instance of the Stellarium program. "Controlling a telescope"
-//! means receiving position information from the telescope
-//! and sending GOTO commands to the telescope.
-//! No esoteric features like motor focus, electric heating and such.
-//! The actual controlling of a telescope is left to the implementation
-//! of the abstract base class TelescopeClient.
+//! Main class of the Device Control plug-in.
+//! It manages a number of device connections and a number of StelObject-s
+//! representing the pointing directions of telescope-like devices (all of the
+//! latter are of classes inheriting TelescopeClient.) Typically, there is
+//! one-to-one relationship between connections and pointers. The exception is
+//! the case of INDI wire connections that can control multiple pointers.
 class TelescopeControl : public StelObjectModule
 {
 	Q_OBJECT
@@ -103,7 +102,8 @@ public:
 	//! @param j2000Pos the direction in equatorial J2000 frame
 	void telescopeGoto(const QString& id, const Vec3d &j2000Pos);
 	
-	//! Safe access to the loaded list of telescope models
+	//! The loaded list of device models supported natively by the plug-in.
+	//! (Built-in drivers, as compared to using ASCOM or INDI.)
 	const QHash<QString, DeviceModel>& getDeviceModels();
 	//! \todo Add description
 	QStandardItemModel *getIndiDeviceModels();
@@ -124,7 +124,7 @@ public:
 	//! Adds a new device connection with the specified properties.
 	//! Connection ID is taken from the "name" property.
 	//! Call saveTelescopes() to write the modified configuration to disc.
-	//! Call startConnection() to start this telescope.
+	//! Call startConnection() to start this connection.
 	//! \todo Add description of the properties format.
 	//! \todo Return ID instead of bool?
 	bool addConnection(const QVariantMap& properties);
@@ -230,10 +230,10 @@ private slots:
 	void treatAsTelescope(const QString& id);
 
 private:
-	//! Draw a nice animated pointer around the object if it's selected
+	//! Draw an animated pointer around the selected object (if any).
 	void drawPointer(const StelProjectorP& prj, const StelCore* core, StelPainter& sPainter);
 
-	//! Perform the communication with the telescope servers
+	//! Called in a loop for communication in Stellarium's protocol over TCP/IP.
 	void communicate();
 
 	//! Returns the path to the "modules/TelescopeControl" directory.
@@ -284,15 +284,13 @@ private:
 	
 	//! Stores internally all the information from the connections file.
 	QVariantMap connectionsProperties;
-	//! All initialized objects representing current connections.
+	//! All initialized objects representing active connections.
 	QHash<QString, TelescopeClientP> connections;
-	//! All initialized objects that actually represent a steerable device.
-	//! A "steerable device" is any device that can send and/or accept
+	//! All initialized objects representing a pointing device.
+	//! A "pointing device" is any device that can send and/or accept
 	//! coordinates. #telescopes should be a subset of #connections.
+	//! \todo Fix the connections/telescopes dichotomy.
 	QHash<QString, TelescopeClientP> telescopes;
-
-
-	QStringList telescopeServers;
 
 	QHash<QString, DeviceModel> deviceModels;
 	//! \todo Temporary.
@@ -333,7 +331,7 @@ private:
 	//! Returns true if the client has been stopped successfully or doesn't exist.
 	bool stopClient(const QString& id);
 
-	//! Loads the list of supported telescope models.
+	//! Loads the list of natively supported telescope models.
 	void loadDeviceModels();
 	//! If the INDI library is installed, loads the list of available INDI
 	//! drivers

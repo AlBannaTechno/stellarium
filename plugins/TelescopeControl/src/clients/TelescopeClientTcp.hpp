@@ -39,6 +39,7 @@
 //! the "Stellarium telescope control protocol" over TCP/IP.
 //! The "Stellarium telescope control protocol" is specified in a seperate
 //! document along with the telescope server software.
+//! \ingroup telescope-markers
 class TelescopeClientTcp : public TelescopeClient
 {
 	Q_OBJECT

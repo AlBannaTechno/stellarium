@@ -42,6 +42,10 @@ enum Equinox {
 	EquinoxJNow
 };
 
+//! \defgroup telescope-markers Telescope marker classes
+//! StelObject classes that describe telescope reticles. Also act as
+//! connection clients.
+
 //! An abstract base class that should never be used directly, only inherited.
 //! Describes a telescope object as a Stellarium object that can be displayed
 //! as a reticle in the position where the connected telescope is currently
@@ -49,6 +53,7 @@ enum Equinox {
 //! This class used to be called Telescope, but it has been renamed
 //! to TelescopeClient in order to resolve a compiler/linker conflict
 //! with the identically named Telescope class in Stellarium's main code.
+//! \ingroup telescope-markers
 //! \todo Split off in a TelescopeControl namespace?
 class TelescopeClient : public QObject, public StelObject
 {

@@ -30,6 +30,7 @@
 
 class IndiServices;
 
+//! \ingroup telescope-markers
 //! Base class for telescope clients that use the INDI protocol.
 //! The INDI protocol is an XML-like, platform-independent interface for
 //! communication between (astronomical) device drivers and clients.

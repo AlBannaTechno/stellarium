@@ -35,8 +35,6 @@ class QStandardItemModel;
 //! Maintains a common instance of indiserver and a common IndiClient for all
 //! drivers running on this computer.
 //! \author Bogdan Marinov
-//! \todo Migrate all relevant functions from IndiClient.
-//! \todo Add a common QTcpSocket for the indiserver instance.
 //! \todo Put all remote INDI connections here? They can emit a signal when connected/client initialized.=> connect to the control panel. Also, some kind of object instantiating TelescopeClientIndi's when a client defines a slewable device (the plugin itself?)
 class IndiServices : public QObject
 {

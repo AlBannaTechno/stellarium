@@ -161,7 +161,6 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	setAboutText();
 	
 	//Everything must be initialized by now, start the updateTimer
-	//TODO: Find if it's possible to run it only when the dialog is visible
 	QTimer* updateTimer = new QTimer(this);
 	connect(updateTimer, SIGNAL(timeout()),
 	        this, SLOT(updateConnectionStates()));
