@@ -30,16 +30,9 @@
 #include <QVariant>
 #include <QVarLengthArray>
 
+#if QT_VERSION<0x040800
 #include <GLee.h>
-
-#ifdef WIN32
-	#include <GL/gl.h>
-#elif defined(__APPLE__) || defined(__APPLE_CC__)
-	#include <OpenGL/gl.h>
-#else
-	#include <GL/gl.h>
 #endif
-
 
 #include "StelPainter.hpp"
 #include <QtOpenGL>
@@ -1716,16 +1709,7 @@ void StelPainter::sSphere(float radius, float oneMinusOblateness, int slices, in
 	drawFromArray(Triangles, indiceArr.size(), 0, true, indiceArr.constData());
 }
 
-//! drawing method for sphere when normal map is going to be used - eg in planet rendering
-//! the method is similar to the sSphere but it calculates tangent vectors for each point as well
-//! @param ellipsoid radius (float)
-//! @param 1 - oblateness (float)
-//! @param number of slices (float)
-//! @param number of stacks (float)
-//! @param pointer to the solar system (SolarSystem*)
-//! @param orientation: inside or not (int)
-//! @param flip texture or not (int)
-Vec3f cross(Vec3f a, Vec3f b) {
+Vec3f StelPainter::cross(Vec3f a, Vec3f b) {
 	return Vec3f(a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]);
 }
 
@@ -1805,107 +1789,109 @@ void StelPainter::nmSphere(float radius, float oneMinusOblateness, int slices, i
 	static QVector<Vec3f> tArr1, tArr2;
 	tArr1.resize(0);
 	tArr2.resize(0);
-//	for (i = 0,cos_sin_rho_p = cos_sin_rho; i < stacks; ++i,cos_sin_rho_p+=2)
- //   {
-			Vec3f up = Vec3f(0.0, 0.0, 1.0);
-			cos_sin_rho_p = cos_sin_rho + stacks;
+	Vec3f up = Vec3f(0.0, 0.0, 1.0);
+	cos_sin_rho_p = cos_sin_rho + stacks;
 
-			for (j = 0,cos_sin_theta_p = cos_sin_theta; j<= slices;++j,cos_sin_theta_p+=2)
-			{
-				Vec3f vector, normal, tangent;
+	for (j = 0,cos_sin_theta_p = cos_sin_theta; j<= slices;++j,cos_sin_theta_p+=2)
+	{
+		Vec3f vector, normal, tangent;
 
-/* FIRST POINT */
-				x = -cos_sin_theta_p[1] * cos_sin_rho_p[1];
-				y = cos_sin_theta_p[0] * cos_sin_rho_p[1];
-				z = nsign * cos_sin_rho_p[0];
+		/* FIRST POINT */
+		x = -cos_sin_theta_p[1] * cos_sin_rho_p[1];
+		y = cos_sin_theta_p[0] * cos_sin_rho_p[1];
+		z = nsign * cos_sin_rho_p[0];
 
-				vector = Vec3f(x * radius, y * radius, z * oneMinusOblateness * radius);
-				normal = Vec3f(x * oneMinusOblateness, y * oneMinusOblateness, z);
-				normal.normalize();
+		vector = Vec3f(x * radius, y * radius, z * oneMinusOblateness * radius);
+		normal = Vec3f(x * oneMinusOblateness, y * oneMinusOblateness, z);
+		normal.normalize();
 
-				tangent = cross(up, normal);
-				tangent.normalize();
+		tangent = cross(up, normal);
+		tangent.normalize();
 
-				tArr1 << tangent;
+		tArr1 << tangent;
 
-/* SECOND POINT */
-				x = -cos_sin_theta_p[1] * cos_sin_rho_p[3];
-				y = cos_sin_theta_p[0] * cos_sin_rho_p[3];
-				z = nsign * cos_sin_rho_p[2];
+		/* SECOND POINT */
+		x = -cos_sin_theta_p[1] * cos_sin_rho_p[3];
+		y = cos_sin_theta_p[0] * cos_sin_rho_p[3];
+		z = nsign * cos_sin_rho_p[2];
 
-				vector = Vec3f(x * radius, y * radius, z * oneMinusOblateness * radius);
-				normal = Vec3f(x * oneMinusOblateness, y * oneMinusOblateness, z);
-				normal.normalize();
+		vector = Vec3f(x * radius, y * radius, z * oneMinusOblateness * radius);
+		normal = Vec3f(x * oneMinusOblateness, y * oneMinusOblateness, z);
+		normal.normalize();
 
-				tangent = cross(up, normal);
-				tangent.normalize();
+		tangent = cross(up, normal);
+		tangent.normalize();
 
-				tArr2 << tangent;
-			}
-	//	}
-//	}
+		tArr2 << tangent;
+	}
 
 	for (i = 0,cos_sin_rho_p = cos_sin_rho; i < stacks; ++i,cos_sin_rho_p+=2)
 	{
-			s = !flipTexture ? 0.f : 1.f;
-			for (j = 0,cos_sin_theta_p = cos_sin_theta; j<= slices;++j,cos_sin_theta_p+=2)
+		s = !flipTexture ? 0.f : 1.f;
+		for (j = 0,cos_sin_theta_p = cos_sin_theta; j<= slices;++j,cos_sin_theta_p+=2)
+		{
+			Vec3f vector, normal, tangent, nextv, prevv;
+
+			x = -cos_sin_theta_p[1] * cos_sin_rho_p[1];
+			y = cos_sin_theta_p[0] * cos_sin_rho_p[1];
+			z = nsign * cos_sin_rho_p[0];
+
+			if (isLightOn)
 			{
-					Vec3f vector, normal, tangent, nextv, prevv;
-
-					x = -cos_sin_theta_p[1] * cos_sin_rho_p[1];
-					y = cos_sin_theta_p[0] * cos_sin_rho_p[1];
-					z = nsign * cos_sin_rho_p[0];
-
-					if (isLightOn)
-					{
-							c = nsign * (lightPos3[0]*x*oneMinusOblateness + lightPos3[1]*y*oneMinusOblateness + lightPos3[2]*z);
-							if (c<0) {c=0;}
-							colorArr << c*diffuseLight[0] + ambientLight[0] << c*diffuseLight[1] + ambientLight[1] << c*diffuseLight[2] + ambientLight[2];
-					}
-
-					vector = Vec3f(x * radius, y * radius, z * oneMinusOblateness * radius);
-					normal = Vec3f(x * oneMinusOblateness, y * oneMinusOblateness, z);
-					normal.normalize();
-
-					texCoordArr << s << t;
-					vertexArr << vector[0] << vector[1] << vector[2];
-					normalArr << normal[0] << normal[1] << normal[2];
-
-					Vec3f tang = tArr1[j];
-					tangentArr << tang[0] << tang[1] << tang[2];
-
-					x = -cos_sin_theta_p[1] * cos_sin_rho_p[3];
-					y = cos_sin_theta_p[0] * cos_sin_rho_p[3];
-					z = nsign * cos_sin_rho_p[2];
-
-					if (isLightOn)
-					{
-							c = nsign * (lightPos3[0]*x*oneMinusOblateness + lightPos3[1]*y*oneMinusOblateness + lightPos3[2]*z);
-							if (c<0) {c=0;}
-							colorArr << c*diffuseLight[0] + ambientLight[0] << c*diffuseLight[1] + ambientLight[1] << c*diffuseLight[2] + ambientLight[2];
-					}
-
-					vector = Vec3f(x * radius, y * radius, z * oneMinusOblateness * radius);
-					normal = Vec3f(x * oneMinusOblateness, y * oneMinusOblateness, z);
-					normal.normalize();
-
-					texCoordArr << s << t - dt;
-					vertexArr << vector[0] << vector[1] << vector[2];
-					normalArr << normal[0] << normal[1] << normal[2];
-
-					tang = tArr2[j];
-					tangentArr << tang[0] << tang[1] << tang[2];
-
-					s += ds;
+				c = nsign * (lightPos3[0]*x*oneMinusOblateness + lightPos3[1]*y*oneMinusOblateness + lightPos3[2]*z);
+				if (c<0)
+				{
+					c=0;
+				}
+				colorArr << c*diffuseLight[0] + ambientLight[0] << c*diffuseLight[1] + ambientLight[1] << c*diffuseLight[2] + ambientLight[2];
 			}
 
-			unsigned int offset = i*(slices+1)*2;
-			for (j = 2;j<slices*2+2;j+=2)
+			vector = Vec3f(x * radius, y * radius, z * oneMinusOblateness * radius);
+			normal = Vec3f(x * oneMinusOblateness, y * oneMinusOblateness, z);
+			normal.normalize();
+
+			texCoordArr << s << t;
+			vertexArr << vector[0] << vector[1] << vector[2];
+			normalArr << normal[0] << normal[1] << normal[2];
+
+			Vec3f tang = tArr1[j];
+			tangentArr << tang[0] << tang[1] << tang[2];
+
+			x = -cos_sin_theta_p[1] * cos_sin_rho_p[3];
+			y = cos_sin_theta_p[0] * cos_sin_rho_p[3];
+			z = nsign * cos_sin_rho_p[2];
+
+			if (isLightOn)
 			{
-					indiceArr << offset+j-2 << offset+j-1 << offset+j;
-					indiceArr << offset+j << offset+j-1 << offset+j+1;
+				c = nsign * (lightPos3[0]*x*oneMinusOblateness + lightPos3[1]*y*oneMinusOblateness + lightPos3[2]*z);
+				if (c<0)
+				{
+					c=0;
+				}
+				colorArr << c*diffuseLight[0] + ambientLight[0] << c*diffuseLight[1] + ambientLight[1] << c*diffuseLight[2] + ambientLight[2];
 			}
-			t -= dt;
+
+			vector = Vec3f(x * radius, y * radius, z * oneMinusOblateness * radius);
+			normal = Vec3f(x * oneMinusOblateness, y * oneMinusOblateness, z);
+			normal.normalize();
+
+			texCoordArr << s << t - dt;
+			vertexArr << vector[0] << vector[1] << vector[2];
+			normalArr << normal[0] << normal[1] << normal[2];
+
+			tang = tArr2[j];
+			tangentArr << tang[0] << tang[1] << tang[2];
+
+			s += ds;
+		}
+
+		unsigned int offset = i*(slices+1)*2;
+		for (j = 2;j<slices*2+2;j+=2)
+		{
+			indiceArr << offset+j-2 << offset+j-1 << offset+j;
+			indiceArr << offset+j << offset+j-1 << offset+j+1;
+		}
+		t -= dt;
 	}
 
 	// Draw the array now
@@ -1928,7 +1914,6 @@ void StelPainter::nmSphere(float radius, float oneMinusOblateness, int slices, i
 		glNormalPointer(normalArray.type, 0, normalArray.pointer);
 
 		//vertex attributes projected and tangent array
-
 		int pVecLocation = ssm->nMapShader->attributeLocation("pvec");
 		glEnableVertexAttribArray(pVecLocation);
 		glVertexAttribPointer(pVecLocation, projectedVertexArray.size, projectedVertexArray.type, 0, 0, projectedVertexArray.pointer);
@@ -1937,7 +1922,7 @@ void StelPainter::nmSphere(float radius, float oneMinusOblateness, int slices, i
 		glEnableVertexAttribArray(tangentLocation);
 		glVertexAttribPointer(tangentLocation, 3, GL_FLOAT, 0, 0, tangentArr.constData());
 
-//uniform light position
+		//uniform light position
 		int lposLocation = ssm->nMapShader->uniformLocation("lpos");
 		ssm->nMapShader->setUniform(lposLocation, lightPos3[0], lightPos3[1], lightPos3[2]);
 
@@ -1947,7 +1932,7 @@ void StelPainter::nmSphere(float radius, float oneMinusOblateness, int slices, i
 		int diffuseLocation = ssm->nMapShader->uniformLocation("diffuse");
 		ssm->nMapShader->setUniform(diffuseLocation, diffuseLight[0], diffuseLight[1], diffuseLight[2], diffuseLight[3]);
 
-//drawing
+		//drawing
 		glDrawElements(GL_TRIANGLES, indiceArr.size(), GL_UNSIGNED_INT, indiceArr.constData());
 
 		glDisableClientState(GL_NORMAL_ARRAY);
@@ -2082,10 +2067,7 @@ void StelPainter::setShadeModel(ShadeModel m)
 
 void StelPainter::enableTexture2d(bool b, int texunit)
 {
-#ifndef USE_OPENGL_ES2
-	if(GLEE_ARB_multitexture)
-#endif
-		glActiveTexture(GL_TEXTURE0 + texunit);
+	glActiveTexture(GL_TEXTURE0 + texunit);
 
 #ifndef STELPAINTER_GL2
 	if (b)

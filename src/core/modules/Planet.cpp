@@ -30,7 +30,9 @@
 #include <QVarLengthArray>
 #include <QDateTime>
 
+#if QT_VERSION<0x040800
 #include <GLee.h>
+#endif
 #include "StelShader.hpp"
 
 #include "StelApp.hpp"

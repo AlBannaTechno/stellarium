@@ -332,8 +332,8 @@ public:
 	// tangent
 	void setTangentPointer(int type, const void* pointer)
 	{
-        tangentArray.size = 3; tangentArray.type = type; tangentArray.pointer = pointer;
-    }
+		tangentArray.size = 3; tangentArray.type = type; tangentArray.pointer = pointer;
+	}
 
 	//! use instead of glEnableClient
 	void enableClientStates(bool vertex, bool texture=false, bool color=false, bool normal=false);
@@ -357,6 +357,17 @@ public:
 	//! Draws the primitives defined in the StelVertexArray.
 	//! @param checkDiscontinuity will check and suppress discontinuities if necessary.
 	void drawStelVertexArray(const StelVertexArray& arr, bool checkDiscontinuity=true);
+
+	//! drawing method for sphere when normal map is going to be used - eg in planet rendering
+	//! the method is similar to the sSphere but it calculates tangent vectors for each point as well
+	//! @param ellipsoid radius (float)
+	//! @param 1 - oblateness (float)
+	//! @param number of slices (float)
+	//! @param number of stacks (float)
+	//! @param pointer to the solar system (SolarSystem*)
+	//! @param orientation: inside or not (int)
+	//! @param flip texture or not (int)
+	Vec3f cross(Vec3f a, Vec3f b);
 
 private:
 

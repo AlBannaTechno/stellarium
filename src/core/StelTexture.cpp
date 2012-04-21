@@ -26,7 +26,9 @@
 #include <QVariant>
 #include <QVarLengthArray>
 
+#if QT_VERSION<0x040800
 #include <GLee.h>
+#endif
 
 #include <cstdlib>
 #include "StelTextureMgr.hpp"
@@ -173,10 +175,7 @@ bool StelTexture::bind(int texunit)
 	if (id != 0)
 	{
 		// The texture is already fully loaded, just bind and return true;
-#ifndef USE_OPENGL_ES2
-		if(GLEE_ARB_multitexture)
-#endif
-			glActiveTexture(GL_TEXTURE0 + texunit);
+		glActiveTexture(GL_TEXTURE0 + texunit);
 
 		glBindTexture(GL_TEXTURE_2D, id);
 		return true;
