@@ -39,6 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 IndiServices::IndiServices(QObject *parent) :
     QObject(parent),
+    deviceDescriptions(0),
     serverProcess(0),
     serverSocket(0),
     commonClient(0)
@@ -60,7 +61,7 @@ IndiServices::~IndiServices()
 	// TODO: Close all sockets?
 }
 
-QStandardItemModel* IndiServices::loadDriverDescriptions()
+QStandardItemModel* IndiServices::loadDriverDescriptionFiles()
 {
 	QStandardItemModel* model = new QStandardItemModel();
 	QStandardItem* parent = model->invisibleRootItem();
@@ -185,6 +186,23 @@ QStandardItemModel* IndiServices::loadDriverDescriptions()
 
 	model->setHorizontalHeaderLabels(QStringList() << "Device" << "Driver");
 	return model;
+}
+
+void IndiServices::loadDriverDescriptions()
+{
+	if (deviceDescriptions)
+	{
+		// Already loaded
+		return;
+	}
+	
+	deviceDescriptions = loadDriverDescriptionFiles();
+	deviceDescriptions->setParent(this); // Make sure it is deleted on time?
+}
+
+QStandardItemModel* IndiServices::getDriverDescriptions()
+{
+	return deviceDescriptions;
 }
 
 bool IndiServices::startServer()

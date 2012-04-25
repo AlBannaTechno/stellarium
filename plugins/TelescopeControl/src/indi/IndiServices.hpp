@@ -47,7 +47,7 @@ public:
 	explicit IndiServices(QObject *parent = 0);
 	~IndiServices();
 	
-	//! Loads driver info from the INDI driver description directory.
+	//! Loads driver info from the files in the driver description directory.
 	//! Parses all *.xml files in the directory. The result is aggregated in
 	//! a tree-table model, where the first column contains the name of the
 	//! device groups (e.g. "Telescopes"). Their children are tables, where
@@ -55,7 +55,10 @@ public:
 	//! the driver label ("LX200 Autostar") with the name of the driver
 	//! executable ("indi_lx200autostar") in the field.
 	//! \todo Setting the path to the directory (for Windows, etc.)
-	static QStandardItemModel* loadDriverDescriptions();
+	static QStandardItemModel* loadDriverDescriptionFiles();
+	
+	void loadDriverDescriptions();
+	QStandardItemModel* getDriverDescriptions();
 	
 	
 	//! Tells indiserver to start the driver.
@@ -123,6 +126,9 @@ private slots:
 	void destroySocket();
 	
 private:
+	//! \todo Temporary.
+	QStandardItemModel* deviceDescriptions;
+	
 	//! Common process instance of indiserver.
 	QProcess* serverProcess;
 	

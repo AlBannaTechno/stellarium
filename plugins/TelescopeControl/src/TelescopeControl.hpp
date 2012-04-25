@@ -106,7 +106,7 @@ public:
 	//! (Built-in drivers, as compared to using ASCOM or INDI.)
 	const QHash<QString, DeviceModel>& getDeviceModels();
 	//! \todo Add description
-	QStandardItemModel *getIndiDeviceModels();
+	QStandardItemModel* getIndiDeviceModels();
 	
 	//! Loads the module's configuration from the configuration file.
 	void loadConfiguration();
@@ -303,8 +303,6 @@ private:
 	QHash<QString, TelescopeClientP> indiDevices;
 
 	QHash<QString, DeviceModel> deviceModels;
-	//! \todo Temporary.
-	QStandardItemModel* indiDeviceModels;
 
 	IndiServices* indiService;
 	
@@ -341,9 +339,6 @@ private:
 
 	//! Loads the list of natively supported telescope models.
 	void loadDeviceModels();
-	//! If the INDI library is installed, loads the list of available INDI
-	//! drivers
-	void loadIndiDeviceModels();
 	
 	//! Copies the default device_models.json to the given destination
 	//! \returns true if the file has been copied successfully

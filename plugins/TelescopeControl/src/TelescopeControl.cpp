@@ -157,7 +157,7 @@ void TelescopeControl::init()
 #endif
 		
 		//Load the device models
-		loadIndiDeviceModels();
+		indiService->loadDriverDescriptions();
 		loadDeviceModels();
 		if(deviceModels.isEmpty())
 		{
@@ -966,14 +966,15 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 			}
 			
 			bool modelFound = false;
-			for (int i = 0; i < indiDeviceModels->rowCount(); i++)
+			QStandardItemModel const* descriptions = indiService->getDriverDescriptions();
+			for (int i = 0; i < descriptions->rowCount(); i++)
 			{
-				QModelIndex index = indiDeviceModels->index(i, 0);
-				int rows = indiDeviceModels->rowCount(index);
+				QModelIndex index = descriptions->index(i, 0);
+				int rows = descriptions->rowCount(index);
 				for (int j = 0; j < rows; j++)
 				{
-					QModelIndex deviceIndex = indiDeviceModels->index(j, 0, index);
-					QModelIndex driverIndex = indiDeviceModels->index(j, 1, index);
+					QModelIndex deviceIndex = descriptions->index(j, 0, index);
+					QModelIndex driverIndex = descriptions->index(j, 1, index);
 					if (deviceIndex.data() == deviceModel &&
 					    driverIndex.data(Qt::UserRole) == driver)
 					{
@@ -1571,11 +1572,6 @@ void TelescopeControl::loadDeviceModels()
 	}
 }
 
-void TelescopeControl::loadIndiDeviceModels()
-{
-	indiDeviceModels = IndiServices::loadDriverDescriptions();
-}
-
 const QHash<QString, DeviceModel>& TelescopeControl::getDeviceModels()
 {
 	return deviceModels;
@@ -1583,7 +1579,10 @@ const QHash<QString, DeviceModel>& TelescopeControl::getDeviceModels()
 
 QStandardItemModel* TelescopeControl::getIndiDeviceModels()
 {
-	return indiDeviceModels;
+	if (indiService)
+		return indiService->getDriverDescriptions();
+	else
+		return 0;
 }
 
 QStringList TelescopeControl::listConnectedTelescopeNames()
