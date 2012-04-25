@@ -223,9 +223,11 @@ void TelescopeControl::init()
 		configurationWindow = new TelescopeControlConfigurationWindow();
 		slewWindow = new SlewWindow();
 		controlPanelWindow = new DeviceControlPanel();
-		foreach (IndiClient* indiClient, indiClients)
+		QHashIterator<QString,IndiClient*> i = indiService->getClientIterator();
+		while (i.hasNext())
 		{
-			controlPanelWindow->addIndiClient(indiClient);
+			i.next();
+			controlPanelWindow->addIndiClient(i.value());
 		}
 		connect(indiService, SIGNAL(commonClientConnected(IndiClient*)),
 		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
@@ -503,8 +505,6 @@ void TelescopeControl::watchIndiClient(IndiClient* client)
 {
 	if (client)
 	{
-		QString id = client->getId();
-		indiClients.insert(id, client);
 		connect (client, SIGNAL(deviceNameDefined(QString,QString)),
 		         this, SLOT(handleDeviceDefinition(QString,QString)));
 	}
@@ -513,7 +513,7 @@ void TelescopeControl::watchIndiClient(IndiClient* client)
 void TelescopeControl::handleDeviceDefinition(const QString& clientId,
                                               const QString& deviceId)
 {
-	IndiClient* client = indiClients.value(clientId, 0);
+	IndiClient* client = indiService->getClient(clientId);
 	if (client)
 	{
 		//QString name = clientId + "/" + deviceId;
@@ -524,7 +524,7 @@ void TelescopeControl::handleDeviceDefinition(const QString& clientId,
 		
 		// TODO: Add stuff like saved FOV circles?
 		
-		TelescopeClientP tp(ti);		
+		TelescopeClientP tp(ti);
 		indiDevices.insert(name, tp);
 		// TODO: This won't work very well with treatAsTelescope()... !!!
 		
@@ -538,7 +538,7 @@ void TelescopeControl::treatAsTelescope(const QString& id)
 	if (id.isEmpty())
 		return;
 	
-	TelescopeClientP client = indiDevices.value(id);
+	TelescopeClientP client = indiDevices.take(id);
 	if (!client.isNull() && !telescopes.contains(id))
 	{
 		telescopes.insert(id, client);
@@ -1328,9 +1328,9 @@ bool TelescopeControl::startClient(const QString& id,
 		
 		QString indiDevice = properties.value("indiDevice").toString();
 		QString indiConnection = properties.value("indiConnection").toString();
-		if (indiClients.contains(indiConnection))
+		IndiClient* indiClient = indiService->getClient(indiConnection);
+		if (indiClient)
 		{
-			IndiClient* indiClient = indiClients[indiConnection];
 			newTelescope = TelescopeClientIndi::telescopeClient(name,
 			                                                    indiDevice,
 			                                                    indiClient,
@@ -1339,7 +1339,7 @@ bool TelescopeControl::startClient(const QString& id,
 		else
 		{
 			//TODO: Better warning.
-			qDebug() << "No such connection exists.";
+			qDebug() << "No such connection exists:" << indiConnection;
 			return false;
 		}
 	}
@@ -1414,6 +1414,11 @@ bool TelescopeControl::stopClient(const QString& id)
 		{
 			// TODO: Close connection to remote INDI server
 			// TODO: Delete all sub-connection clients
+			
+			controlPanelWindow->removeIndiClient(id);
+			
+			indiService->closeConnection(id);
+			// TODO: What to do with the bloody client object?
 		}
 		else
 		{
@@ -1423,42 +1428,19 @@ bool TelescopeControl::stopClient(const QString& id)
 				QString name = properties.value("name").toString();
 				QString driver = properties.value("driverId").toString();
 				indiService->stopDriver(driver, name);
+				// TODO: Remove the device from the control panel?
 				// TODO: Anything else? Disconnecting slots?
 			}
 		}
 	}
-	
-	// TODO: Remove "connections".
-	if(!connections.contains(id))
+	else if(!connections.contains(id)) // WHY???
 		return true;
-
-	//If this is one of the INDI clients that provide a connection...
-	// TODO: Remove!
-	IndiClient* indiClient = indiClients.take(id);
-	if (indiClient)
-	{
-		//Remove the sub-clients (all will be in "telescopes")
-		QHashIterator<QString, TelescopeClientP> i(telescopes);
-		while (i.hasNext())
-		{
-			i.next();
-			TelescopeClient* tc = i.value().data();
-			TelescopeClientIndi* tci = dynamic_cast<TelescopeClientIndi*>(tc);
-			if (tci)
-			{
-				if (tci->getIndiClient() == indiClient)
-				{
-					stopClient(i.key());
-				}
-			}
-		}
-		controlPanelWindow->removeIndiClient(id);
-	}
 
 	//If a telescope is selected, deselect it first.
 	//(Otherwise trying to delete a selected telescope client causes Stellarium to crash.)
 	unselectTelescopes();
 	connections.remove(id);
+	// When dealing with INDI telescope clients, this should remove all of them.
 	telescopes.remove(id);
 
 	//This is not needed by every client

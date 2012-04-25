@@ -305,8 +305,6 @@ private:
 	QHash<QString, DeviceModel> deviceModels;
 	//! \todo Temporary.
 	QStandardItemModel* indiDeviceModels;
-	//! \todo Move to IndiClient or TelescopeClientIndi?
-	QHash<QString, IndiClient*> indiClients;
 
 	IndiServices* indiService;
 	

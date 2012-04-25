@@ -29,7 +29,7 @@ class IndiClient;
 class QSignalMapper;
 class QStandardItemModel;
 
-//! Provides various functions related to using libindi.
+//! Provides various functions related to using the INDI library (libindi).
 //! This includes loading the list of installed drivers, managing network
 //! connections and maintaining a common instance of indiserver in a separate
 //! process, including sending commands to start and stop named device drivers.
@@ -78,7 +78,14 @@ public:
 	//! \todo Disconnect/destroy the socket, server, etc.
 	bool stopServer();
 	
+	//! Get the common client connected to the local instance of indiserver.
+	//! \returns 0 (null pointer) if the common client is not initialized.
 	IndiClient* getCommonClient();
+	//! Get the client parsing the connection with that ID.
+	//! \returns 0 if there is no such client.
+	IndiClient* getClient(const QString& id);
+	//!
+	QHashIterator<QString,IndiClient*> getClientIterator();
 	
 	//! Try connecting to another instance of indiserver over a TCP connection.
 	//! \param id the identifier will be re-used for the client created for this
@@ -125,8 +132,11 @@ private:
 	//! TCP connection to the server.
 	QTcpSocket* serverSocket;
 	
-	//!
+	//! 
 	IndiClient* commonClient;
+	
+	//! Everything except the common client.
+	QHash<QString, IndiClient*> socketClients;
 	
 	//! 
 	QHash<QString,QTcpSocket*> sockets;

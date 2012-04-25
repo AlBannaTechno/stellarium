@@ -339,6 +339,16 @@ IndiClient* IndiServices::getCommonClient()
 	return commonClient;
 }
 
+IndiClient* IndiServices::getClient(const QString& id)
+{
+	return socketClients.value(id, 0);
+}
+
+QHashIterator<QString, IndiClient *> IndiServices::getClientIterator()
+{
+	return QHashIterator<QString,IndiClient*>(socketClients);
+}
+
 
 void IndiServices::openConnection(const QString& id,
                                   const QString& host,
