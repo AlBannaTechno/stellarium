@@ -371,6 +371,7 @@ void ConfigurationDialog::saveCurrentViewOptions()
 	conf->setValue("viewing/use_luminance_adaptation", skyd->getFlagLuminanceAdaptation());
 	conf->setValue("astro/flag_planets", ssmgr->getFlagPlanets());
 	conf->setValue("astro/flag_planets_hints", ssmgr->getFlagHints());
+	conf->setValue("astro/flag_planets_orbits", ssmgr->getFlagOrbits());
 	conf->setValue("astro/flag_planets_improve_render", ssmgr->getFlagImprovePlanetRender());
 	conf->setValue("astro/flag_light_travel_time", ssmgr->getFlagLightTravelTime());
 	conf->setValue("viewing/flag_moon_scaled", ssmgr->getFlagMoonScale());
