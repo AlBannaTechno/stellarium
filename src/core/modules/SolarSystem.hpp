@@ -169,6 +169,11 @@ public slots:
 	//! Get the current value of the flag which determines if Earth's moon is scaled or not.
 	bool getFlagMoonScale(void) const {return flagMoonScale;}
 
+	//! Set flag which determines if the relief and clouds for planets and moons displayed or not.
+	void setFlagImprovePlanetRender(bool b);
+	//! Get the current value of the flag which determines if the relief and clouds for planets and moons displayed or not.
+	bool getFlagImprovePlanetRender(void) const {return flagImprovePlanetRender;}
+
 	//! Set the display scaling factor for Earth's moon.
 	void setMoonScale(float f);
 	//! Get the display scaling factor for Earth's oon.
@@ -278,6 +283,8 @@ private:
 	// Moon scale value
 	bool flagMoonScale;
 	float moonScale;
+
+	bool flagImprovePlanetRender;
 
 	QFont planetNameFont;
 

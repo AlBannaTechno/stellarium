@@ -126,6 +126,7 @@ void SolarSystem::init()
 	setFlagLabels(conf->value("astro/flag_planets_labels", true).toBool());
 	setLabelsAmount(conf->value("astro/labels_amount", 3.).toFloat());
 	setFlagOrbits(conf->value("astro/flag_planets_orbits").toBool());
+	setFlagImprovePlanetRender(conf->value("astro/flag_planets_improve_render").toBool());
 	setFlagLightTravelTime(conf->value("astro/flag_light_travel_time", false).toBool());
 
 	recreateTrails();
@@ -147,14 +148,13 @@ void SolarSystem::init()
 	nMapShader = new StelShader;
 
 	//using stellarium find path functions thank you alexwolf for noticing and corrections :-)
-    QStringList lst =  QStringList(StelFileMgr::findFileInAllPaths("data/shaders/",
-          (StelFileMgr::Flags)(StelFileMgr::Directory)));
+	QStringList lst =  QStringList(StelFileMgr::findFileInAllPaths("data/shaders/", (StelFileMgr::Flags)(StelFileMgr::Directory)));
 	QByteArray vshader = (QString(lst.first()) + "nmap.v.glsl").toLocal8Bit();
 	QByteArray fshader = (QString(lst.first()) + "nmap.f.glsl").toLocal8Bit();
 
 	if (!(nMapShader->load(vshader.data(), fshader.data())))
 	{
-			qWarning() << "Could not load shader files";
+		qWarning() << "Could not load shader files";
 	        nMapShader = 0;
 	}
 }
@@ -1111,6 +1111,11 @@ void SolarSystem::setFlagTrails(bool b)
 	trailFader = b;
 	if (b)
 		allTrails->reset();
+}
+
+void SolarSystem::setFlagImprovePlanetRender(bool b)
+{
+	flagImprovePlanetRender = b;
 }
 
 bool SolarSystem::getFlagTrails() const

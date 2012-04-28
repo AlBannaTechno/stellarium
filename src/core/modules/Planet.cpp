@@ -1113,126 +1113,126 @@ static unsigned int createPermTexture()
 
 void Planet::drawNMapSphere(StelPainter* painter, float screenSz)
 {
-    if (texMap)
-    {
-        if (!texMap->bind())
-        {
-            return;
-        }
-        painter->enableTexture2d(true);
-    }
-    glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
+	if (texMap)
+	{
+		if (!texMap->bind())
+		{
+			return;
+		}
+		painter->enableTexture2d(true);
+	}
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
 
-    // Draw the spheroid itself
-    // Adapt the number of facets according with the size of the sphere for optimization
-    int nb_facet = (int)(screenSz * 40/50);	// 40 facets for 1024 pixels diameter on screen
-    if (nb_facet<10) nb_facet = 10;
-    if (nb_facet>40) nb_facet = 40;
-    painter->setShadeModel(StelPainter::ShadeModelSmooth);
-    // Rotate and add an extra quarter rotation so that the planet texture map
-    // fits to the observers position. No idea why this is necessary,
-    // perhaps some openGl strangeness, or confusing sin/cos.
+	// Draw the spheroid itself
+	// Adapt the number of facets according with the size of the sphere for optimization
+	int nb_facet = (int)(screenSz * 40/50);	// 40 facets for 1024 pixels diameter on screen
+	if (nb_facet<10) nb_facet = 10;
+	if (nb_facet>40) nb_facet = 40;
+	painter->setShadeModel(StelPainter::ShadeModelSmooth);
+	// Rotate and add an extra quarter rotation so that the planet texture map
+	// fits to the observers position. No idea why this is necessary,
+	// perhaps some openGl strangeness, or confusing sin/cos.
 
-    //the following lines are compatible to opengl es but have not been tested in an opengl es machine
-#ifndef USE_OPENGL_ES2
+	//the following lines are compatible to opengl es but have not been tested in an opengl es machine
+	#ifndef USE_OPENGL_ES2
 	SolarSystem* ssm = GETSTELMODULE(SolarSystem);
-    if (ssm->nMapShader != 0)
-    {
-			if (normalMap)
-			{
-				if (!normalMap->bind(1))
-				{
-					painter->sSphere(radius*sphereScale, oneMinusOblateness, nb_facet, nb_facet);
-				}
-				else
-				{
-					painter->enableTexture2d(true, 1);
-
-					if (!permMap) {
-				        permMap = createPermTexture();
-					}
-
-		    glActiveTexture(GL_TEXTURE2);
-                    glEnable(GL_TEXTURE_2D);
-                    glBindTexture(GL_TEXTURE_2D, permMap);
-
-					if (!(cloudColor && cloudDensity && cloudSharpness && cloudScale && cloudVel)) {
-					        cloudColor = Vec3f(0.0, 0.0, 0.0);
-					        cloudVel = Vec3f(0.0, 0.5, 0.5);
-					        cloudDensity = 0;
-					        cloudSharpness = 0;
-					        cloudScale = 1;
-					}
-
-					int location = -1;
-
-			        location = ssm->nMapShader->uniformLocation("ccolor");
-			        ssm->nMapShader->setUniform(location, cloudColor[0], cloudColor[1], cloudColor[2]);
-
-					location = ssm->nMapShader->uniformLocation("cdensity");
-			        ssm->nMapShader->setUniform(location, cloudDensity);
-
-					location = ssm->nMapShader->uniformLocation("cscale");
-			        ssm->nMapShader->setUniform(location, cloudScale);
-
-					location = ssm->nMapShader->uniformLocation("csharp");
-			        ssm->nMapShader->setUniform(location, cloudSharpness);
-
-					ssm->nMapShader->use();
-
-					location = ssm->nMapShader->uniformLocation("tex");
-					ssm->nMapShader->setUniform(location, 0);
-
-					location = ssm->nMapShader->uniformLocation("nmap");
-					ssm->nMapShader->setUniform(location, 1);
-
-			        location = ssm->nMapShader->uniformLocation("permap");
-			        ssm->nMapShader->setUniform(location, 2);
-
-			        float pixw = 1.0 / 256.0;
-			        location = ssm->nMapShader->uniformLocation("pixw");
-			        ssm->nMapShader->setUniform(location, pixw);
-
-
-			        float halfpixw = 0.5 / 256.0;
-					location = ssm->nMapShader->uniformLocation("halfpixw");
-					ssm->nMapShader->setUniform(location, halfpixw);
-
-					location = ssm->nMapShader->uniformLocation("cvel");
-					ssm->nMapShader->setUniform(location, cloudVel[0], cloudVel[1], cloudVel[2]);
-
-					QTime dat;
-					float t = (float) ((float)dat.msecsTo(QTime::currentTime()) / 1000.0);
-
-					location = ssm->nMapShader->uniformLocation("t");
-					ssm->nMapShader->setUniform(location, t);
-
-					painter->nmSphere(radius*sphereScale, oneMinusOblateness, nb_facet, nb_facet, ssm);
-
-//					useShader(0);
-					glActiveTexture(GL_TEXTURE2);
-					glDisable(GL_TEXTURE_2D);
-					painter->enableTexture2d(false, 1);
-				}
-			}
-			else
+	if (ssm->nMapShader != 0 && ssm->getFlagImprovePlanetRender())
+	{
+		if (normalMap)
+		{
+			if (!normalMap->bind(1))
 			{
 				painter->sSphere(radius*sphereScale, oneMinusOblateness, nb_facet, nb_facet);
 			}
+			else
+			{
+				painter->enableTexture2d(true, 1);
+
+				if (!permMap) {
+					permMap = createPermTexture();
+				}
+
+				glActiveTexture(GL_TEXTURE2);
+				glEnable(GL_TEXTURE_2D);
+				glBindTexture(GL_TEXTURE_2D, permMap);
+
+				if (!(cloudColor && cloudDensity && cloudSharpness && cloudScale && cloudVel)) {
+					cloudColor = Vec3f(0.0, 0.0, 0.0);
+					cloudVel = Vec3f(0.0, 0.5, 0.5);
+					cloudDensity = 0;
+					cloudSharpness = 0;
+					cloudScale = 1;
+				}
+
+				int location = -1;
+
+				location = ssm->nMapShader->uniformLocation("ccolor");
+				ssm->nMapShader->setUniform(location, cloudColor[0], cloudColor[1], cloudColor[2]);
+
+				location = ssm->nMapShader->uniformLocation("cdensity");
+				ssm->nMapShader->setUniform(location, cloudDensity);
+
+				location = ssm->nMapShader->uniformLocation("cscale");
+				ssm->nMapShader->setUniform(location, cloudScale);
+
+				location = ssm->nMapShader->uniformLocation("csharp");
+				ssm->nMapShader->setUniform(location, cloudSharpness);
+
+				ssm->nMapShader->use();
+
+				location = ssm->nMapShader->uniformLocation("tex");
+				ssm->nMapShader->setUniform(location, 0);
+
+				location = ssm->nMapShader->uniformLocation("nmap");
+				ssm->nMapShader->setUniform(location, 1);
+
+				location = ssm->nMapShader->uniformLocation("permap");
+				ssm->nMapShader->setUniform(location, 2);
+
+				float pixw = 1.0 / 256.0;
+				location = ssm->nMapShader->uniformLocation("pixw");
+				ssm->nMapShader->setUniform(location, pixw);
+
+
+				float halfpixw = 0.5 / 256.0;
+				location = ssm->nMapShader->uniformLocation("halfpixw");
+				ssm->nMapShader->setUniform(location, halfpixw);
+
+				location = ssm->nMapShader->uniformLocation("cvel");
+				ssm->nMapShader->setUniform(location, cloudVel[0], cloudVel[1], cloudVel[2]);
+
+				QTime dat;
+				float t = (float) ((float)dat.msecsTo(QTime::currentTime()) / 1000.0);
+
+				location = ssm->nMapShader->uniformLocation("t");
+				ssm->nMapShader->setUniform(location, t);
+
+				painter->nmSphere(radius*sphereScale, oneMinusOblateness, nb_facet, nb_facet, ssm);
+
+//				useShader(0);
+				glActiveTexture(GL_TEXTURE2);
+				glDisable(GL_TEXTURE_2D);
+				painter->enableTexture2d(false, 1);
+			}
+		}
+		else
+		{
+			painter->sSphere(radius*sphereScale, oneMinusOblateness, nb_facet, nb_facet);
+		}
 	}
 	else
 	{
 		painter->sSphere(radius*sphereScale, oneMinusOblateness, nb_facet, nb_facet);
 	}
-#else
+	#else
 	painter->sSphere(radius*sphereScale, oneMinusOblateness, nb_facet, nb_facet);
-#endif
+	#endif
 
-    painter->setShadeModel(StelPainter::ShadeModelFlat);
-    glDisable(GL_CULL_FACE);
+	painter->setShadeModel(StelPainter::ShadeModelFlat);
+	glDisable(GL_CULL_FACE);
 
-    if (texMap) {
+	if (texMap) {
 		painter->enableTexture2d(false, 0);
 	}
 }

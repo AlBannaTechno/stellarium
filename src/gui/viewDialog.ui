@@ -640,6 +640,16 @@
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QCheckBox" name="planetImproveRenderCheckBox">
+               <property name="toolTip">
+                <string>Show relief and clouds for terrestrial planets and moons</string>
+               </property>
+               <property name="text">
+                <string>Show relief and clouds</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </item>

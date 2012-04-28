@@ -145,6 +145,9 @@ void ViewDialog::createDialogContent()
 	ui->planetLightSpeedCheckBox->setChecked(ssmgr->getFlagLightTravelTime());
 	connect(ui->planetLightSpeedCheckBox, SIGNAL(toggled(bool)), ssmgr, SLOT(setFlagLightTravelTime(bool)));
 
+	ui->planetImproveRenderCheckBox->setChecked(ssmgr->getFlagImprovePlanetRender());
+	connect(ui->planetImproveRenderCheckBox, SIGNAL(toggled(bool)), ssmgr, SLOT(setFlagImprovePlanetRender(bool)));
+
 	// Shooting stars section
 	MeteorMgr* mmgr = GETSTELMODULE(MeteorMgr);
 	Q_ASSERT(mmgr);
