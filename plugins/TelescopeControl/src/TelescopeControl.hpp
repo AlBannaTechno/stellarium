@@ -59,12 +59,18 @@ class SlewWindow;
 class DeviceControlPanel;
 class IndiClient;
 class IndiServices;
+
+using namespace TelescopeControlGlobals;
+
+//! \defgroup plugin-devicecontrol Device Control plug-in
+//! A plug-in for controlling telescopes, mounts and other astronomcial devices.
+//! \{
+
 namespace devicecontrol
 {
 	class ConfigurationWindow;
 }
 using namespace devicecontrol;
-using namespace TelescopeControlGlobals;
 
 typedef QSharedPointer<TelescopeClient> TelescopeClientP;
 
@@ -74,7 +80,7 @@ typedef QSharedPointer<TelescopeClient> TelescopeClientP;
 //! latter are of classes inheriting TelescopeClient.) Typically, there is
 //! one-to-one relationship between connections and pointers. The exception is
 //! the case of INDI wire connections that can control multiple pointers.
-//! Non-pointable devices are commanded solely through controlPanelWindow.
+//! Non-pointable devices are commanded solely through DeviceControlPanel.
 class TelescopeControl : public StelObjectModule
 {
 	Q_OBJECT
@@ -379,5 +385,7 @@ public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
 };
+
+//! \}
 
 #endif /*_TELESCOPE_CONTROL_HPP_*/
