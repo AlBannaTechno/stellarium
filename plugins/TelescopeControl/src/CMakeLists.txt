@@ -30,8 +30,8 @@ SET(TelescopeControl_SRCS
   clients/TelescopeClientIndiPointer.cpp
   gui/SlewWindow.hpp
   gui/SlewWindow.cpp
-  gui/TelescopeControlConfigurationWindow.hpp
-  gui/TelescopeControlConfigurationWindow.cpp
+  gui/ConfigurationWindow.hpp
+  gui/ConfigurationWindow.cpp
   gui/TelescopePropertiesWindow.hpp
   gui/TelescopePropertiesWindow.cpp
   gui/DeviceControlPanel.hpp
@@ -94,7 +94,7 @@ ENDIF(WIN32)
 # Add here all the .ui files
 SET(TelescopeControl_UIS
   gui/slewWindow.ui
-  gui/telescopeControlConfigurationWindow.ui
+  gui/configurationWindow.ui
   gui/telescopePropertiesWindow.ui
   gui/deviceControlPanel.ui)
 
@@ -116,7 +116,7 @@ SET(TelescopeControl_MOC_HDRS
   clients/TelescopeClientIndi.hpp
   clients/TelescopeClientIndiPointer.hpp
   gui/TelescopePropertiesWindow.hpp
-  gui/TelescopeControlConfigurationWindow.hpp
+  gui/ConfigurationWindow.hpp
   gui/DeviceControlPanel.hpp
   gui/SlewWindow.hpp
   gui/IndiDeviceWidget.hpp

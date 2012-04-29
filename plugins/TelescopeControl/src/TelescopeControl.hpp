@@ -55,22 +55,26 @@ class StelObject;
 class StelPainter;
 class StelProjector;
 class TelescopeClient;
-class TelescopeControlConfigurationWindow;
 class SlewWindow;
 class DeviceControlPanel;
 class IndiClient;
 class IndiServices;
-
+namespace devicecontrol
+{
+	class ConfigurationWindow;
+}
+using namespace devicecontrol;
 using namespace TelescopeControlGlobals;
 
 typedef QSharedPointer<TelescopeClient> TelescopeClientP;
 
-//! Main class of the Device Control plug-in.
+//! Main class of the %Device Control plug-in.
 //! It manages a number of device connections and a number of StelObject-s
 //! representing the pointing directions of telescope-like devices (all of the
 //! latter are of classes inheriting TelescopeClient.) Typically, there is
 //! one-to-one relationship between connections and pointers. The exception is
 //! the case of INDI wire connections that can control multiple pointers.
+//! Non-pointable devices are commanded solely through controlPanelWindow.
 class TelescopeControl : public StelObjectModule
 {
 	Q_OBJECT
@@ -79,21 +83,23 @@ public:
 	TelescopeControl();
 	virtual ~TelescopeControl();
 	
-	///////////////////////////////////////////////////////////////////////////
-	// Methods defined in the StelModule class
+	//! \name Inherited from StelModule
+	//! \{
 	virtual void init();
 	virtual void deinit();
 	virtual void update(double deltaTime);
 	virtual void draw(StelCore * core);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
+	virtual bool configureGui(bool show = true);
+	//! \}
 	
-	///////////////////////////////////////////////////////////////////////////
-	// Methods defined in the StelObjectModule class
+	//! \name Inherited from StelObjectModule
+	//! \{
 	virtual QList<StelObjectP> searchAround(const Vec3d& v, double limitFov, const StelCore* core) const;
 	virtual StelObjectP searchByNameI18n(const QString& nameI18n) const;
 	virtual StelObjectP searchByName(const QString& name) const;
 	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5) const;
-	virtual bool configureGui(bool show = true);
+	//! \}
 	
 	///////////////////////////////////////////////////////////////////////////
 	// Methods specific to TelescopeControl
@@ -278,12 +284,15 @@ private:
 	//! Font used to draw telescope text labels
 	QFont labelFont;
 	
-	//Toolbar button to toggle the Slew window
+	//! \name Toolbar buttons
+	//! \{
 	QPixmap* pixmapHover;
 	QPixmap* pixmapOnIcon;
 	QPixmap* pixmapOffIcon;
 	StelButton* slewWindowButton;
+	//! Toolbar button to toggle controlPanelWindow.
 	StelButton* controlPanelButton;
+	//! \}
 	
 	//! Telescope reticle texture
 	StelTextureSP reticleTexture;
@@ -317,10 +326,12 @@ private:
 	QHash<QString, QFile*> telescopeServerLogFiles;
 	QHash<QString, QTextStream*> telescopeServerLogStreams;
 	
-	//GUI
-	TelescopeControlConfigurationWindow* configurationWindow;
+	//! \name Configuration and control windows
+	//! \{
+	ConfigurationWindow* configurationWindow;
 	SlewWindow* slewWindow;
 	DeviceControlPanel* controlPanelWindow;
+	//! \}
 	
 	//! Checks if the argument is a TCP port number in IANA's allowed range.
 	bool isValidTcpPort(uint port);

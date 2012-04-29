@@ -28,8 +28,8 @@
 #include "StelTranslator.hpp"
 #include "TelescopeControl.hpp"
 #include "TelescopePropertiesWindow.hpp"
-#include "TelescopeControlConfigurationWindow.hpp"
-#include "ui_telescopeControlConfigurationWindow.h"
+#include "ConfigurationWindow.hpp"
+#include "ui_configurationWindow.h"
 #include "StelGui.hpp"
 
 #include <QDebug>
@@ -43,8 +43,9 @@
 
 using namespace TelescopeControlGlobals;
 
+namespace devicecontrol {
 
-TelescopeControlConfigurationWindow::TelescopeControlConfigurationWindow()
+ConfigurationWindow::ConfigurationWindow()
 {
 	ui = new Ui_widgetTelescopeControlConfiguration;
 	
@@ -55,14 +56,14 @@ TelescopeControlConfigurationWindow::TelescopeControlConfigurationWindow()
 	connectionCount = 0;
 }
 
-TelescopeControlConfigurationWindow::~TelescopeControlConfigurationWindow()
+ConfigurationWindow::~ConfigurationWindow()
 {	
 	delete ui;
 	
 	delete connectionListModel;
 }
 
-void TelescopeControlConfigurationWindow::languageChanged()
+void ConfigurationWindow::languageChanged()
 {
 	if (dialog)
 	{
@@ -84,7 +85,7 @@ void TelescopeControlConfigurationWindow::languageChanged()
 }
 
 // Initialize the dialog widgets and connect the signals/slots
-void TelescopeControlConfigurationWindow::createDialogContent()
+void ConfigurationWindow::createDialogContent()
 {
 	ui->setupUi(dialog);
 	
@@ -167,7 +168,7 @@ void TelescopeControlConfigurationWindow::createDialogContent()
 	updateTimer->start(200);
 }
 
-void TelescopeControlConfigurationWindow::setAboutText()
+void ConfigurationWindow::setAboutText()
 {
 	//TODO: Expand
 	QString aboutPage = "<html><head></head><body>";
@@ -219,7 +220,7 @@ void TelescopeControlConfigurationWindow::setAboutText()
 	ui->textBrowserHelp->setHtml(helpPage);
 }
 
-void TelescopeControlConfigurationWindow::setHeaderNames()
+void ConfigurationWindow::setHeaderNames()
 {
 	QStringList headerStrings;
 	// TRANSLATORS: Symbol for "number"
@@ -233,7 +234,7 @@ void TelescopeControlConfigurationWindow::setHeaderNames()
 	connectionListModel->setHorizontalHeaderLabels(headerStrings);
 }
 
-void TelescopeControlConfigurationWindow::updateWarningTexts()
+void ConfigurationWindow::updateWarningTexts()
 {
 	QString text;
 	if (connectionCount > 0)
@@ -263,7 +264,7 @@ void TelescopeControlConfigurationWindow::updateWarningTexts()
 	ui->labelWarning->setText(text);
 }
 
-void TelescopeControlConfigurationWindow::populateConnectionList()
+void ConfigurationWindow::populateConnectionList()
 {
 	//Remember the previously selected connection, if any
 	int selectedRow = 0;
@@ -402,7 +403,7 @@ void TelescopeControlConfigurationWindow::populateConnectionList()
 
 }
 
-void TelescopeControlConfigurationWindow::selectConnection(const QModelIndex & index)
+void ConfigurationWindow::selectConnection(const QModelIndex & index)
 {
 	int row = index.row();
 	QModelIndex nameIndex = connectionListModel->index(row, ColumnName);
@@ -413,7 +414,7 @@ void TelescopeControlConfigurationWindow::selectConnection(const QModelIndex & i
 	ui->pushButtonRemove->setEnabled(true);
 }
 
-void TelescopeControlConfigurationWindow::configureConnection(const QModelIndex & index)
+void ConfigurationWindow::configureConnection(const QModelIndex & index)
 {
 	configuredConnectionIsNew = false;
 	
@@ -435,7 +436,7 @@ void TelescopeControlConfigurationWindow::configureConnection(const QModelIndex 
 	propertiesWindow.prepareForExistingConfiguration(configuredId);
 }
 
-void TelescopeControlConfigurationWindow::toggleSelectedConnection()
+void ConfigurationWindow::toggleSelectedConnection()
 {
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
@@ -452,13 +453,13 @@ void TelescopeControlConfigurationWindow::toggleSelectedConnection()
 	updateConnectionStates();
 }
 
-void TelescopeControlConfigurationWindow::configureSelectedConnection()
+void ConfigurationWindow::configureSelectedConnection()
 {
 	if(ui->telescopeTreeView->currentIndex().isValid())
 		configureConnection(ui->telescopeTreeView->currentIndex());
 }
 
-void TelescopeControlConfigurationWindow::createNewStellariumConnection()
+void ConfigurationWindow::createNewStellariumConnection()
 {
 	configuredConnectionIsNew = true;
 	configuredId = createDefaultId();
@@ -469,7 +470,7 @@ void TelescopeControlConfigurationWindow::createNewStellariumConnection()
 	propertiesWindow.prepareNewStellariumConfiguration(configuredId);
 }
 
-void TelescopeControlConfigurationWindow::createNewIndiConnection()
+void ConfigurationWindow::createNewIndiConnection()
 {
 	configuredConnectionIsNew = true;
 	configuredId = createDefaultId();
@@ -480,7 +481,7 @@ void TelescopeControlConfigurationWindow::createNewIndiConnection()
 	propertiesWindow.prepareNewIndiConfiguration(configuredId);
 }
 
-void TelescopeControlConfigurationWindow::createNewVirtualConnection()
+void ConfigurationWindow::createNewVirtualConnection()
 {
 	configuredConnectionIsNew = true;
 	configuredId = createDefaultId();
@@ -492,7 +493,7 @@ void TelescopeControlConfigurationWindow::createNewVirtualConnection()
 }
 
 #ifdef Q_OS_WIN32
-void TelescopeControlConfigurationWindow::createNewAscomConnection()
+void ConfigurationWindow::createNewAscomConnection()
 {
 	configuredConnectionIsNew = true;
 	configuredId = createDefaultId();
@@ -504,7 +505,7 @@ void TelescopeControlConfigurationWindow::createNewAscomConnection()
 }
 #endif
 
-void TelescopeControlConfigurationWindow::removeSelectedConnection()
+void ConfigurationWindow::removeSelectedConnection()
 {
 	if(!ui->telescopeTreeView->currentIndex().isValid())
 		return;
@@ -534,7 +535,7 @@ void TelescopeControlConfigurationWindow::removeSelectedConnection()
 	populateConnectionList();
 }
 
-void TelescopeControlConfigurationWindow::saveChanges(QString name)
+void ConfigurationWindow::saveChanges(QString name)
 {
 	Q_UNUSED(name);
 	//Save the changes to file
@@ -547,7 +548,7 @@ void TelescopeControlConfigurationWindow::saveChanges(QString name)
 	setVisible(true);//Brings the current window to the foreground
 }
 
-void TelescopeControlConfigurationWindow::discardChanges()
+void ConfigurationWindow::discardChanges()
 {
 	propertiesWindow.setVisible(false);
 	setVisible(true);//Brings the current window to the foreground
@@ -558,7 +559,7 @@ void TelescopeControlConfigurationWindow::discardChanges()
 	configuredConnectionIsNew = false;
 }
 
-void TelescopeControlConfigurationWindow::updateConnectionStates()
+void ConfigurationWindow::updateConnectionStates()
 {
 	if (connectionCount == 0)
 		return;
@@ -588,7 +589,7 @@ void TelescopeControlConfigurationWindow::updateConnectionStates()
 	}
 }
 
-void TelescopeControlConfigurationWindow::updateStatusButton(const QString& id)
+void ConfigurationWindow::updateStatusButton(const QString& id)
 {
 	if(deviceManager->isClientConnected(id))
 	{
@@ -604,7 +605,7 @@ void TelescopeControlConfigurationWindow::updateStatusButton(const QString& id)
 	}
 }
 
-QString TelescopeControlConfigurationWindow::createDefaultId()
+QString ConfigurationWindow::createDefaultId()
 {
 	QStringList existingIds = deviceManager->listAllConnectionNames();
 	QString id;
@@ -617,7 +618,7 @@ QString TelescopeControlConfigurationWindow::createDefaultId()
 	return id;
 }
 
-void TelescopeControlConfigurationWindow::updateStyle()
+void ConfigurationWindow::updateStyle()
 {
 	if (dialog)
 	{
@@ -628,7 +629,7 @@ void TelescopeControlConfigurationWindow::updateStyle()
 		ui->textBrowserHelp->document()->setDefaultStyleSheet(style);
 	}
 }
-QString TelescopeControlConfigurationWindow::getStatusString(const QString& id)
+QString ConfigurationWindow::getStatusString(const QString& id)
 {
 	if (deviceManager->isClientConnected(id))
 	{
@@ -642,4 +643,6 @@ QString TelescopeControlConfigurationWindow::getStatusString(const QString& id)
 	{
 		return q_("Disconnected");
 	}
+}
+
 }

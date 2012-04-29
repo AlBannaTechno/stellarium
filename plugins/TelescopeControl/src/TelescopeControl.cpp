@@ -35,7 +35,7 @@
 #ifdef Q_OS_WIN32
 #include "TelescopeClientAscom.hpp"
 #endif
-#include "TelescopeControlConfigurationWindow.hpp"
+#include "ConfigurationWindow.hpp"
 #include "DeviceControlPanel.hpp"
 #include "SlewWindow.hpp"
 #include "LogFile.hpp"
@@ -70,9 +70,9 @@
 #include <QAxObject>
 #endif
 
-#include <QXmlStreamReader>
-
 #include <QDebug>
+
+using namespace devicecontrol;
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -220,7 +220,7 @@ void TelescopeControl::init()
 		        this, SLOT(slewTelescopeToViewDirection(int)));
 	
 		//Create and initialize dialog windows
-		configurationWindow = new TelescopeControlConfigurationWindow();
+		configurationWindow = new ConfigurationWindow();
 		slewWindow = new SlewWindow();
 		controlPanelWindow = new DeviceControlPanel();
 		QHashIterator<QString,IndiClient*> i = indiService->getClientIterator();

@@ -37,14 +37,17 @@ class Ui_widgetTelescopeControlConfiguration;
 class TelescopePropertiesWindow;
 class TelescopeControl;
 
+namespace devicecontrol
+{
+
 //! The configuration window of the TelescopeControl plug-in.
 //! \author Bogdan Marinov
-class TelescopeControlConfigurationWindow : public StelDialog
+class ConfigurationWindow : public StelDialog
 {
 	Q_OBJECT
 public:
-	TelescopeControlConfigurationWindow();
-	virtual ~TelescopeControlConfigurationWindow();
+	ConfigurationWindow();
+	virtual ~ConfigurationWindow();
 	void updateStyle();
 
 public slots:
@@ -125,5 +128,7 @@ private:
 	QString configuredId;
 	bool configuredConnectionIsNew;
 };
+
+}
 
 #endif // _TELESCOPE_CONTROL_CONFIGURATION_WINDOW_
