@@ -38,8 +38,12 @@ class QStandardItemModel;
 //! local indiserver) and it must be shared by all device clients relying on
 //! that connection.
 //! \author Bogdan Marinov
+//! \todo Close the server process on stopping all drivers?
+//! \todo Keep track of TCP ports to prevent conflicts?
+//! \todo Handle server process closing.
 //! \todo Handle remote connection errors.
 //! \todo Decide whether to close remote connections normally or with abort().
+//! \todo Manage the list of connected clients - remove clients on disconnect.
 class IndiServices : public QObject
 {
 	Q_OBJECT

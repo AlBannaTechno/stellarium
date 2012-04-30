@@ -165,7 +165,7 @@ public:
 	//! Checks if there's an initialized TelescopeClient object.
 	bool doesClientExist(const QString& id);
 	//! Checks if the TelescopeClient object is connected.
-	bool isClientConnected(const QString& id);
+	bool isConnectionConnected(const QString& id);
 
 	//! Returns a list of the currently connected #telescopes.
 	QStringList listConnectedTelescopeNames();

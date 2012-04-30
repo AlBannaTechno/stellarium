@@ -43,6 +43,7 @@ enum Equinox {
 };
 
 //! \defgroup telescope-markers Telescope marker classes
+//! \ingroup plugin-devicecontrol
 //! StelObject classes that describe telescope reticles. Also act as
 //! connection clients.
 
@@ -60,12 +61,12 @@ class TelescopeClient : public QObject, public StelObject
 {
 	Q_OBJECT
 public:
-	virtual ~TelescopeClient(void) {}
+	virtual ~TelescopeClient() {}
 	
 	// Method inherited from StelObject
-	QString getEnglishName(void) const {return name;}
-	QString getNameI18n(void) const {return nameI18n;}
-	Vec3f getInfoColor(void) const
+	QString getEnglishName() const {return name;}
+	QString getNameI18n() const {return nameI18n;}
+	Vec3f getInfoColor() const
 	{
 		return StelApp::getInstance().getVisionModeNight() ? Vec3f(0.8, 0.2, 0.2) : Vec3f(1, 1, 1);
 	}
@@ -90,7 +91,10 @@ public:
 	//! There can be multiple indicators for a TelescopeClient.
 	//! \param fov circle diameter in angular degrees.
 	void addFovCircle(double fov) {if (fov>=0.0) fovCircles.push_back(fov);}
+	//! 
 	const QList<double>& getFovCircles() const {return fovCircles;}
+	//! Clears the list of FOV indicators.
+	void resetFovCircles() { fovCircles.clear(); }
 	
 	virtual bool prepareCommunication() {return false;}
 	virtual void performCommunication() {}

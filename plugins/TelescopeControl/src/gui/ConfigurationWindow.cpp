@@ -446,7 +446,7 @@ void ConfigurationWindow::toggleSelectedConnection()
 	const QModelIndex& index = connectionListModel->index(row, ColumnName);
 	QString selectedId = connectionListModel->data(index).toString();
 	
-	if(deviceManager->isClientConnected(selectedId))
+	if(deviceManager->isConnectionConnected(selectedId))
 		deviceManager->stopConnection(selectedId);
 	else
 		deviceManager->startConnection(selectedId);
@@ -591,7 +591,7 @@ void ConfigurationWindow::updateConnectionStates()
 
 void ConfigurationWindow::updateStatusButton(const QString& id)
 {
-	if(deviceManager->isClientConnected(id))
+	if(deviceManager->isConnectionConnected(id))
 	{
 		ui->pushButtonChangeStatus->setText(q_("Disconnect"));
 		ui->pushButtonChangeStatus->setToolTip(q_("Disconnect from the selected telescope"));
@@ -631,7 +631,7 @@ void ConfigurationWindow::updateStyle()
 }
 QString ConfigurationWindow::getStatusString(const QString& id)
 {
-	if (deviceManager->isClientConnected(id))
+	if (deviceManager->isConnectionConnected(id))
 	{
 		return q_("Connected");
 	}

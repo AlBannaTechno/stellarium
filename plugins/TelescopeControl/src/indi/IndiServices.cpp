@@ -429,6 +429,7 @@ void IndiServices::initClient(const QString& id)
 	if (socket)
 	{
 		IndiClient* newClient = new IndiClient(id, socket);
+		socketClients.insert(id, newClient);
 		emit clientConnected(newClient);
 	}
 }

@@ -626,12 +626,18 @@ bool TelescopeControl::doesClientExist(const QString& id)
 	return (connections.contains(id));
 }
 
-bool TelescopeControl::isClientConnected(const QString& id)
+bool TelescopeControl::isConnectionConnected(const QString& id)
 {
-	if(connections.contains(id))
-		return connections.value(id)->isConnected();
+	TelescopeClientP t = connections.value(id);
+	if (t.isNull())
+	{
+		if (indiService->getClient(id))
+			return true;
+		else
+			return false;
+	}
 	else
-		return false;
+		return t->isConnected();
 }
 
 
