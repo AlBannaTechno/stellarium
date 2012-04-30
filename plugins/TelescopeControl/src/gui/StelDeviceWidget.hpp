@@ -1,7 +1,7 @@
 /*
  * Stellarium Telescope Control Plug-in
  * 
- * Copyright (C) 2010-2011 Bogdan Marinov (this file)
+ * Copyright (C) 2010-2012 Bogdan Marinov (this file)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,37 +24,28 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QWidget>
 #include "StelStyle.hpp"
 
-#include "StelDialog.hpp"
-
-class Ui_widgetSlew;
+class Ui_StelDeviceWidget;
 class TelescopeControl;
 
-class SlewWindow : public StelDialog
+//! Control panel tab representing a TelescopeClient object.
+//! \ingroup plugin-devicecontrol
+class StelDeviceWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	SlewWindow();
-	virtual ~SlewWindow();
+	StelDeviceWidget(const QString& id,
+	                 QWidget* parent = 0);
+	virtual ~StelDeviceWidget();
 
 public slots:
 	void languageChanged();
 	
-protected:
-	//! Initialize the dialog widgets and connect the signals/slots
-	virtual void createDialogContent();
-	Ui_widgetSlew* ui;
-	
 private slots:
-	//! shows the configuration dialog of the plug-in
-	void showConfiguration();
-
 	//! reads the fields and slews a telescope
 	void slew();
-
-	void addTelescope(const QString& id);
-	void removeTelescope(const QString& id);
 
 	//! sets the format of the input fields to Hours-Minutes-Seconds.
 	//! Sets the right ascension field to HMS and the declination field to DMS.
@@ -74,12 +65,13 @@ private slots:
 	void setFormatDecimal(bool set);
 
 private:
-	TelescopeControl* telescopeManager;
-
-	QStringList connectedTelescopes;
-
-	void updateTelescopeList();
-	void updateTelescopeControls();
+	//! Pointer to the main plug-in class.
+	TelescopeControl* deviceManager;
+	
+	//! Identifier of the controlled client.
+	QString clientId;
+	
+	Ui_StelDeviceWidget* ui;
 };
 
 #endif // _SLEW_WINDOW_

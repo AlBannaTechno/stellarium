@@ -30,6 +30,7 @@
 
 #include "IndiClient.hpp"
 #include "IndiDeviceWidget.hpp"
+#include "StelDeviceWidget.hpp"
 
 DeviceControlPanel::DeviceControlPanel()
 {
@@ -181,7 +182,7 @@ void DeviceControlPanel::removeIndiClient(const QString& clientName)
 	           this, SLOT(logMessage(QString,QDateTime,QString)));
 
 	//Remove controls
-	QHashIterator<DeviceId,IndiDeviceWidget*> i(deviceWidgets);
+	QHashIterator<DeviceId,IndiDeviceWidget*> i(indiDeviceWidgets);
 	while (i.hasNext())
 	{
 		i.next();
@@ -190,8 +191,47 @@ void DeviceControlPanel::removeIndiClient(const QString& clientName)
 			IndiDeviceWidget* deviceWidget = i.value();
 			int index = deviceTabWidget->indexOf(deviceWidget);
 			deviceTabWidget->removeTab(index);
-			deviceWidgets.remove(i.key());
+			indiDeviceWidgets.remove(i.key());
 			delete deviceWidget;
+		}
+	}
+}
+
+void DeviceControlPanel::addStelDevice(const QString& id)
+{
+	//qDebug() << "DeviceControlPanel::addStelDevice:" << id;
+	if (id.isEmpty())
+		return;
+	
+	Q_ASSERT(deviceTabWidget);
+	
+	// Show the window if it hasn't been initialized.
+	// TODO: Decide if this is the appropriate behaviour
+	// and if this is the right point to show it.
+	if (!visible())
+	{
+		setVisible(true);
+		emit visibleChanged(true);//StelDialog doesn't do this
+	}
+	
+	StelDeviceWidget* deviceWidget = new StelDeviceWidget(id, deviceTabWidget);
+	// TODO: Use the proper display name instead of the ID?
+	deviceTabWidget->addTab(deviceWidget, id);
+}
+
+void DeviceControlPanel::removeStelDevice(const QString& id)
+{
+	if (id.isEmpty() || !deviceTabWidget)
+		return;
+	
+	for (int i = 0; i < deviceTabWidget->count(); i++)
+	{
+		if (deviceTabWidget->tabText(i) == id)
+		{
+			QWidget* widget = deviceTabWidget->widget(i);
+			deviceTabWidget->removeTab(i);
+			delete widget;
+			break;
 		}
 	}
 }
@@ -226,7 +266,7 @@ void DeviceControlPanel::addIndiDevice(const QString& clientId,
 	
 	//Add a new device widget/tab
 	IndiDeviceWidget* deviceWidget = new IndiDeviceWidget(device);
-	deviceWidgets.insert(deviceId, deviceWidget);
+	indiDeviceWidgets.insert(deviceId, deviceWidget);
 	deviceTypes.insert(deviceId, IndiDevice);
 	deviceTabWidget->addTab(deviceWidget, deviceName);
 	
@@ -238,14 +278,15 @@ void DeviceControlPanel::removeIndiDevice(const QString& clientId,
                                           const QString& deviceName)
 {
 	DeviceId deviceId(clientId, deviceName);
-	if (deviceWidgets.contains(deviceId))
+	if (indiDeviceWidgets.contains(deviceId))
 	{
-		IndiDeviceWidget* deviceWidget = deviceWidgets[deviceId];
+		IndiDeviceWidget* deviceWidget = indiDeviceWidgets[deviceId];
 		//if (deviceWidget->isEmpty())
 		{
 			int index = deviceTabWidget->indexOf(deviceWidget);
 			deviceTabWidget->removeTab(index);
-			deviceWidgets.remove(deviceId);
+			indiDeviceWidgets.remove(deviceId);
+			deviceTypes.remove(deviceId);
 			delete deviceWidget;
 		}
 	}

@@ -37,7 +37,6 @@
 #endif
 #include "ConfigurationWindow.hpp"
 #include "DeviceControlPanel.hpp"
-#include "SlewWindow.hpp"
 #include "LogFile.hpp"
 #include "IndiServices.hpp"
 
@@ -103,7 +102,6 @@ Q_EXPORT_PLUGIN2(TelescopeControl, TelescopeControlStelPluginInterface)
 TelescopeControl::TelescopeControl() :
     indiService(0),
     configurationWindow(0),
-    slewWindow(0),
     controlPanelWindow(0)
 {
 	setObjectName("TelescopeControl");
@@ -164,17 +162,21 @@ void TelescopeControl::init()
 			qWarning() << "TelescopeControl: No device model descriptions have been loaded. Stellarium will not be able to control a telescope on its own, but it is still possible to do it through an external application or to connect to a remote host.";
 		}
 		
-		//Unload Stellarium's internal telescope control module
-		//(not necessary since revision 6308; remains as an example)
-		//StelApp::getInstance().getModuleMgr().unloadModule("TelescopeMgr", false);
-		/*If the alsoDelete parameter is set to true, Stellarium crashes with a
-		  segmentation fault when an object is selected. TODO: Find out why.
-		  unloadModule() didn't work prior to revision 5058: the module unloaded
-		  normally, but Stellarium crashed later with a segmentation fault,
-		  because LandscapeMgr::getCallOrder() depended on the module's
-		  existence to return a value.*/
+		// Create the control panel before loading the connections to avoid
+		// having to populate it manually later.
+		controlPanelWindow = new DeviceControlPanel();
+		connect(indiService, SIGNAL(commonClientConnected(IndiClient*)),
+		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
+		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
+		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
+		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
+		        this, SLOT(watchIndiClient(IndiClient*)));
+		connect(this, SIGNAL(clientConnected(const QString&)),
+		        controlPanelWindow, SLOT(addStelDevice(const QString&)));
+		connect(this, SIGNAL(clientDisconnected(const QString&)),
+		        controlPanelWindow, SLOT(removeStelDevice(const QString&)));
 		
-		//Load and start all telescope clients
+		// Load and start all telescope clients
 		loadConnections();
 		
 		//Load OpenGL textures
@@ -219,52 +221,22 @@ void TelescopeControl::init()
 		connect(&gotoDirectionShortcutMapper, SIGNAL(mapped(int)),
 		        this, SLOT(slewTelescopeToViewDirection(int)));
 	
-		//Create and initialize dialog windows
+		// Create and initialize dialog windows
 		configurationWindow = new ConfigurationWindow();
-		slewWindow = new SlewWindow();
-		controlPanelWindow = new DeviceControlPanel();
-		QHashIterator<QString,IndiClient*> i = indiService->getClientIterator();
-		while (i.hasNext())
-		{
-			i.next();
-			controlPanelWindow->addIndiClient(i.value());
-		}
-		connect(indiService, SIGNAL(commonClientConnected(IndiClient*)),
-		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
-		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
-		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
-		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
-		        this, SLOT(watchIndiClient(IndiClient*)));
-		
-		//TODO: Think of a better keyboard shortcut
-		QAction* slewWindowAction = gui->addGuiActions(
-			"actionShow_Slew_Window",
-			N_("Move a telescope to a given set of coordinates"),
-			"Ctrl+0", group, true, false);
-		connect(slewWindowAction, SIGNAL(toggled(bool)),
-		        slewWindow, SLOT(setVisible(bool)));
-		connect(slewWindow, SIGNAL(visibleChanged(bool)),
-		        slewWindowAction, SLOT(setChecked(bool)));
 		
 		//Create toolbar button
-		pixmapHover =   new QPixmap(":/graphicGui/glow32x32.png");
-		pixmapOnIcon =  new QPixmap(":/telescopeControl/button_Slew_Dialog_on.png");
-		pixmapOffIcon = new QPixmap(":/telescopeControl/button_Slew_Dialog_off.png");
-		slewWindowButton = new StelButton(NULL,
-		                                  *pixmapOnIcon,
-		                                  *pixmapOffIcon,
-		                                  *pixmapHover,
-		                                  slewWindowAction);
-		gui->getButtonBar()->addButton(slewWindowButton, "065-pluginsGroup");
-
 		QAction* controlPanelAction = gui->addGuiActions(
 		                                  "actionShow_Control_Panel",
 		                                  "Device Control Panel",
-		                                  "", group, true, false);
+		                                  "Ctrl+0", group, true, false);
+		controlPanelAction->setChecked(controlPanelWindow->visible());
 		connect(controlPanelAction, SIGNAL(toggled(bool)),
 		        controlPanelWindow, SLOT(setVisible(bool)));
 		connect(controlPanelWindow, SIGNAL(visibleChanged(bool)),
 		        controlPanelAction, SLOT(setChecked(bool)));
+		pixmapHover =   new QPixmap(":/graphicGui/glow32x32.png");
+		pixmapOnIcon =  new QPixmap(":/telescopeControl/button_Slew_Dialog_on.png");
+		pixmapOffIcon = new QPixmap(":/telescopeControl/button_Slew_Dialog_off.png");
 		controlPanelButton = new StelButton(NULL,
 		                                    *pixmapOnIcon,
 		                                    *pixmapOffIcon,
@@ -292,10 +264,6 @@ void TelescopeControl::deinit()
 	if (configurationWindow)
 	{
 		delete configurationWindow;
-	}
-	if (slewWindow)
-	{
-		delete slewWindow;
 	}
 	//Destroy all clients first in order to avoid displaying a TCP error
 	removeAllConnections();
@@ -1146,7 +1114,6 @@ bool TelescopeControl::startConnection(const QString& id)
 	}
 	if (startClient(id, properties))
 	{
-		emit clientConnected(id);
 		return true;
 	}
 	else if (!isRemote)
@@ -1383,7 +1350,10 @@ bool TelescopeControl::startClient(const QString& id,
 		if (interfaceType != "INDI Pointer")
 			connections.insert(id, newTelescopeP);
 		if (interfaceType != "INDI")//Only TCP connections?
+		{
 			telescopes.insert(id, newTelescopeP);
+			emit clientConnected(id);
+		}
 		else
 			indiDevices.insert(id, newTelescopeP);
 

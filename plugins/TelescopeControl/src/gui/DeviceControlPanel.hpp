@@ -35,12 +35,18 @@
 class Ui_deviceControlPanelWidget;
 class IndiClient;
 class IndiDeviceWidget;
+class StelDeviceWidget;
 class QPlainTextEdit;
 class QSplitter;
 class QTabWidget;
 
 //! A control panel window used in the TelescopeControl plug-in.
 //! \author Bogdan Marinov
+//! \todo Split the INDI code as a separate class/widget, to be re-used in a
+//! stand-alone telescope server.
+//! \todo Add a message when no devices are active.
+//! \todo Add a button to open the plug-in configuration.
+//! \todo Add buttons for clearing and saving(?) the log.
 class DeviceControlPanel : public StelDialog
 {
 	Q_OBJECT
@@ -57,7 +63,11 @@ public slots:
 	//! Removes the client and all associated tabs (devices and properties).
 	void removeIndiClient(const QString& clientName);
 	
+	void addStelDevice(const QString& id);
+	void removeStelDevice(const QString& id);
+	
 	//! 
+	//! \todo Remove the BLOB enabling code!
 	void addIndiDevice(const QString& clientId, const DeviceP& device);
 	//! 
 	void removeIndiDevice(const QString& clientId, const QString& deviceName);
@@ -81,9 +91,10 @@ private:
 	//! All INDI clients connected to this control panel.
 	QHash<QString, IndiClient*> indiClients;
 	//! A device (widget) is identified by its name and the name of the client.
+	//! \todo Move to the device class header?
 	typedef QPair<QString,QString> DeviceId;
 	//! All device widgets displayed in this control panel.
-	QHash<DeviceId, IndiDeviceWidget*> deviceWidgets;
+	QHash<DeviceId, IndiDeviceWidget*> indiDeviceWidgets;
 	
 	//! \todo This should probably go in a parent class for all widgets.
 	enum DeviceType {StelDevice, IndiDevice, AscomDevice};

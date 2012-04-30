@@ -55,7 +55,6 @@ class StelObject;
 class StelPainter;
 class StelProjector;
 class TelescopeClient;
-class SlewWindow;
 class DeviceControlPanel;
 class IndiClient;
 class IndiServices;
@@ -290,12 +289,11 @@ private:
 	//! Font used to draw telescope text labels
 	QFont labelFont;
 	
-	//! \name Toolbar buttons
+	//! \name Toolbar button.
 	//! \{
 	QPixmap* pixmapHover;
 	QPixmap* pixmapOnIcon;
 	QPixmap* pixmapOffIcon;
-	StelButton* slewWindowButton;
 	//! Toolbar button to toggle controlPanelWindow.
 	StelButton* controlPanelButton;
 	//! \}
@@ -332,12 +330,10 @@ private:
 	QHash<QString, QFile*> telescopeServerLogFiles;
 	QHash<QString, QTextStream*> telescopeServerLogStreams;
 	
-	//! \name Configuration and control windows
-	//! \{
+	//! Plug-in configuration window: connection management, etc.
 	ConfigurationWindow* configurationWindow;
-	SlewWindow* slewWindow;
+	//! Device control panel window.
 	DeviceControlPanel* controlPanelWindow;
-	//! \}
 	
 	//! Checks if the argument is a TCP port number in IANA's allowed range.
 	bool isValidTcpPort(uint port);

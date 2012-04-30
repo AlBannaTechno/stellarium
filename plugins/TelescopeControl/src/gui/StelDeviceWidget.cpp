@@ -1,7 +1,7 @@
 /*
  * Stellarium Telescope Control Plug-in
  * 
- * Copyright (C) 2010-2011 Bogdan Marinov (this file)
+ * Copyright (C) 2010-2012 Bogdan Marinov (this file)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,41 +28,28 @@
 #include "StelUtils.hpp"
 #include "VecMath.hpp"
 #include "TelescopeControl.hpp"
-#include "SlewWindow.hpp"
-#include "ui_slewWindow.h"
+#include "StelDeviceWidget.hpp"
+#include "ui_StelDeviceWidget.h"
 
 #include <QDebug>
 
 using namespace TelescopeControlGlobals;
 
-
-SlewWindow::SlewWindow()
+StelDeviceWidget::StelDeviceWidget(const QString& id,
+                                   QWidget *parent) :
+    QWidget(parent),
+    clientId(id)
 {
-	ui = new Ui_widgetSlew;
+	//Q_ASSERT(plugin);
+	//deviceManager = plugin;
+	deviceManager = GETSTELMODULE(TelescopeControl);
 	
-	//TODO: Fix this - it's in the same plugin
-	telescopeManager = GETSTELMODULE(TelescopeControl);
-}
-
-SlewWindow::~SlewWindow()
-{	
-	delete ui;
-}
-
-void SlewWindow::languageChanged()
-{
-	if (dialog)
-		ui->retranslateUi(dialog);
-}
-
-void SlewWindow::createDialogContent()
-{
-	ui->setupUi(dialog);
+	ui = new Ui_StelDeviceWidget;
+	ui->setupUi(this);
 	
-	//Inherited connect
+	// TODO: Check if this is really necessary.
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
-	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
-
+	
 	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)),
 	        this, SLOT(setFormatHMS(bool)));
 	connect(ui->radioButtonDMS, SIGNAL(toggled(bool)),
@@ -71,53 +58,59 @@ void SlewWindow::createDialogContent()
 	        this, SLOT(setFormatDecimal(bool)));
 
 	connect(ui->pushButtonSlew, SIGNAL(pressed()), this, SLOT(slew()));
-	connect(ui->pushButtonConfigure, SIGNAL(pressed()),
-	        this, SLOT(showConfiguration()));
-
-	connect(telescopeManager, SIGNAL(clientConnected(const QString&)),
-	        this, SLOT(addTelescope(const QString&)));
-	connect(telescopeManager, SIGNAL(clientDisconnected(const QString&)),
-	        this, SLOT(removeTelescope(const QString&)));
-
+	
 	//Coordinates are in HMS by default:
 	ui->radioButtonHMS->setChecked(true);
-
-	updateTelescopeList();
 }
 
-void SlewWindow::showConfiguration()
+StelDeviceWidget::~StelDeviceWidget()
+{
+	delete ui;
+	ui = 0;
+}
+
+void StelDeviceWidget::languageChanged()
+{
+	if (ui)
+		ui->retranslateUi(this);
+}
+
+/*
+void StelDeviceWidget::showConfiguration()
 {
 	//Hack to work around having no direct way to do display the window
-	telescopeManager->configureGui(true);
+	deviceManager->configureGui(true);
 }
+*/
 
-void SlewWindow::setFormatHMS(bool set)
+void StelDeviceWidget::setFormatHMS(bool set)
 {
 	if (!set) return;
 	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::HMSLetters);
 	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DMSLetters);
 }
 
-void SlewWindow::setFormatDMS(bool set)
+void StelDeviceWidget::setFormatDMS(bool set)
 {
 	if (!set) return;
 	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::DMSLetters);
 	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DMSLetters);
 }
 
-void SlewWindow::setFormatDecimal(bool set)
+void StelDeviceWidget::setFormatDecimal(bool set)
 {
 	if (!set) return;
 	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::DecimalDeg);
 	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DecimalDeg);
 }
 
-void SlewWindow::updateTelescopeList()
+/*
+void StellariumDeviceWidget::updateTelescopeList()
 {
 	connectedTelescopes.clear();
 	ui->comboBoxTelescope->clear();
 
-	QStringList telescopes = telescopeManager->listConnectedTelescopeNames();
+	QStringList telescopes = deviceManager->listConnectedTelescopeNames();
 	if (!telescopes.isEmpty())
 	{
 		connectedTelescopes = telescopes;
@@ -127,7 +120,7 @@ void SlewWindow::updateTelescopeList()
 	updateTelescopeControls();
 }
 
-void SlewWindow::updateTelescopeControls()
+void StellariumDeviceWidget::updateTelescopeControls()
 {
 	bool connectedTelescopeAvailable = !connectedTelescopes.isEmpty();
 	ui->groupBoxSlew->setVisible(connectedTelescopeAvailable);
@@ -136,7 +129,7 @@ void SlewWindow::updateTelescopeControls()
 		ui->comboBoxTelescope->setCurrentIndex(0);
 }
 
-void SlewWindow::addTelescope(const QString& name)
+void StellariumDeviceWidget::addTelescope(const QString& name)
 {
 	if (name.isEmpty())
 		return;
@@ -149,7 +142,7 @@ void SlewWindow::addTelescope(const QString& name)
 	updateTelescopeControls();
 }
 
-void SlewWindow::removeTelescope(const QString& name)
+void StellariumDeviceWidget::removeTelescope(const QString& name)
 {
 	if (name.isEmpty())
 		return;
@@ -170,17 +163,18 @@ void SlewWindow::removeTelescope(const QString& name)
 
 	updateTelescopeControls();
 }
+*/
 
-void SlewWindow::slew()
+void StelDeviceWidget::slew()
 {
+	if (clientId.isEmpty())
+		return;
+	
 	double radiansRA = ui->spinBoxRA->valueRadians();
 	double radiansDec = ui->spinBoxDec->valueRadians();
-	QString id = ui->comboBoxTelescope->currentText();
-	if (id.isEmpty())
-		return;
 
 	Vec3d targetPosition;
 	StelUtils::spheToRect(radiansRA, radiansDec, targetPosition);
 
-	telescopeManager->telescopeGoto(id, targetPosition);
+	deviceManager->telescopeGoto(clientId, targetPosition);
 }
