@@ -164,7 +164,7 @@ void TelescopeControl::init()
 		
 		// Create the control panel before loading the connections to avoid
 		// having to populate it manually later.
-		controlPanelWindow = new DeviceControlPanel();
+		controlPanelWindow = new DeviceControlPanel(this);
 		connect(indiService, SIGNAL(commonClientConnected(IndiClient*)),
 		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
 		connect(indiService, SIGNAL(clientConnected(IndiClient*)),

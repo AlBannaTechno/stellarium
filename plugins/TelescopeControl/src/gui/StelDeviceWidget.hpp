@@ -36,7 +36,8 @@ class StelDeviceWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	StelDeviceWidget(const QString& id,
+	StelDeviceWidget(TelescopeControl* plugin,
+	                 const QString& id,
 	                 QWidget* parent = 0);
 	virtual ~StelDeviceWidget();
 

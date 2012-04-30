@@ -36,6 +36,7 @@ class Ui_deviceControlPanelWidget;
 class IndiClient;
 class IndiDeviceWidget;
 class StelDeviceWidget;
+class TelescopeControl;
 class QPlainTextEdit;
 class QSplitter;
 class QTabWidget;
@@ -44,14 +45,11 @@ class QTabWidget;
 //! \author Bogdan Marinov
 //! \todo Split the INDI code as a separate class/widget, to be re-used in a
 //! stand-alone telescope server.
-//! \todo Add a message when no devices are active.
-//! \todo Add a button to open the plug-in configuration.
-//! \todo Add buttons for clearing and saving(?) the log.
 class DeviceControlPanel : public StelDialog
 {
 	Q_OBJECT
 public:
-	DeviceControlPanel();
+	DeviceControlPanel(TelescopeControl* plugin);
 	virtual ~DeviceControlPanel();
 	void languageChanged();
 	void updateStyle();
@@ -84,6 +82,13 @@ protected:
 	Ui_deviceControlPanelWidget* ui;
 	
 private:
+	//! Show the device tabs if necessary (i.e. if there is > 1 device defined).
+	void showDeviceTabs();
+	//! Hide the device tabs and show a message if there are no devices.
+	void hideDeviceTabs();
+	
+	TelescopeControl* deviceManager;
+	
 	QSplitter* splitter;
 	QTabWidget* deviceTabWidget;
 	QPlainTextEdit* logWidget;
@@ -105,6 +110,12 @@ private:
 private slots:
 	//! Collapses the window to its title bar.
 	void collapseWindow(bool collapse);
+	
+	//! Opens the plug-in's configuration window.
+	void openConfiguration();
+	
+	//! Clear the log.
+	void clearLog();
 };
 
 #endif //_DEVICE_CONTROL_PANEL_HPP_

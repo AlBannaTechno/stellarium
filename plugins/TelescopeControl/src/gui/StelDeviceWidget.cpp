@@ -18,11 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
-#include "Dialog.hpp"
 #include "AngleSpinBox.hpp"
 #include "StelApp.hpp"
-#include "StelCore.hpp"
-#include "StelModuleMgr.hpp"
 #include "StelLocaleMgr.hpp"
 #include "StelStyle.hpp"
 #include "StelUtils.hpp"
@@ -35,20 +32,20 @@
 
 using namespace TelescopeControlGlobals;
 
-StelDeviceWidget::StelDeviceWidget(const QString& id,
-                                   QWidget *parent) :
+StelDeviceWidget::StelDeviceWidget(TelescopeControl *plugin,
+                                   const QString &id, QWidget *parent) :
     QWidget(parent),
     clientId(id)
 {
-	//Q_ASSERT(plugin);
-	//deviceManager = plugin;
-	deviceManager = GETSTELMODULE(TelescopeControl);
+	Q_ASSERT(plugin);
+	deviceManager = plugin;
 	
 	ui = new Ui_StelDeviceWidget;
 	ui->setupUi(this);
 	
 	// TODO: Check if this is really necessary.
-	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
+	        this, SLOT(languageChanged()));
 	
 	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)),
 	        this, SLOT(setFormatHMS(bool)));

@@ -28,13 +28,18 @@
 #include "StelApp.hpp"
 #include "StelGui.hpp"
 
+#include "TelescopeControl.hpp"
 #include "IndiClient.hpp"
 #include "IndiDeviceWidget.hpp"
 #include "StelDeviceWidget.hpp"
 
-DeviceControlPanel::DeviceControlPanel()
+DeviceControlPanel::DeviceControlPanel(TelescopeControl *plugin) :
+    deviceManager(0)
 {
+	Q_ASSERT(plugin);
+	
 	ui = new Ui_deviceControlPanelWidget;
+	deviceManager = plugin;
 }
 
 DeviceControlPanel::~DeviceControlPanel()
@@ -56,10 +61,11 @@ void DeviceControlPanel::createDialogContent()
 	// TODO: Better default size
 	dialog->resize(560, 420);
 	
-	// Connect the Close button
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
+	        this, SLOT(languageChanged()));
 	
-	//Initialize the style
+	// Initialize the style
 	updateStyle();
 
 	splitter = new QSplitter(dialog);
@@ -78,12 +84,18 @@ void DeviceControlPanel::createDialogContent()
 	splitter->setCollapsible(1, true);
 
 	//ui->verticalLayout->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
-	ui->verticalLayout->addWidget(splitter);
+	//ui->verticalLayout->insertWidget(1, splitter);
+	ui->stackedWidget->addWidget(splitter);
 	splitter->show();
 	
 	collapsed = false;
 	connect(ui->foldWindowButton, SIGNAL(clicked(bool)),
 	        this, SLOT(collapseWindow(bool)));
+	
+	connect(ui->buttonConfiguration, SIGNAL(clicked()),
+	        this, SLOT(openConfiguration()));
+	connect(ui->buttonClearLog, SIGNAL(clicked()),
+	        this, SLOT(clearLog()));
 	
 	//TEST
 	/*
@@ -109,7 +121,8 @@ void DeviceControlPanel::collapseWindow(bool collapse)
 {
 	if (collapse && !collapsed)
 	{
-		splitter->setVisible(false);
+		ui->stackedWidget->setVisible(false);
+		ui->frameButtons->setVisible(false);
 		// Force re-calculation of the layout-controlled dialog->minimumSize()
 		ui->verticalLayout->activate();
 		QSize size = dialog->size();
@@ -120,9 +133,12 @@ void DeviceControlPanel::collapseWindow(bool collapse)
 	else if (collapsed && !collapse)
 	{
 		QSize size = dialog->size();
-		size.setHeight(ui->TitleBar->height() + splitter->height());
+		size.setHeight(ui->TitleBar->height() + 
+		               ui->stackedWidget->height() +
+		               ui->frameButtons->height());
 		dialog->resize(size);
-		splitter->setVisible(true);
+		ui->stackedWidget->setVisible(true);
+		ui->frameButtons->setVisible(true);
 		collapsed = false;
 	}
 }
@@ -214,9 +230,12 @@ void DeviceControlPanel::addStelDevice(const QString& id)
 		emit visibleChanged(true);//StelDialog doesn't do this
 	}
 	
-	StelDeviceWidget* deviceWidget = new StelDeviceWidget(id, deviceTabWidget);
+	StelDeviceWidget* deviceWidget = new StelDeviceWidget(deviceManager,
+	                                                      id, deviceTabWidget);
 	// TODO: Use the proper display name instead of the ID?
 	deviceTabWidget->addTab(deviceWidget, id);
+	
+	showDeviceTabs();
 }
 
 void DeviceControlPanel::removeStelDevice(const QString& id)
@@ -231,6 +250,8 @@ void DeviceControlPanel::removeStelDevice(const QString& id)
 			QWidget* widget = deviceTabWidget->widget(i);
 			deviceTabWidget->removeTab(i);
 			delete widget;
+			
+			hideDeviceTabs();
 			break;
 		}
 	}
@@ -270,6 +291,8 @@ void DeviceControlPanel::addIndiDevice(const QString& clientId,
 	deviceTypes.insert(deviceId, IndiDevice);
 	deviceTabWidget->addTab(deviceWidget, deviceName);
 	
+	showDeviceTabs();
+	
 	// TODO: Individual control for accepting BLOBs
 	indiClients[clientId]->writeEnableBlob(AlsoSendBlobs, deviceName);
 }
@@ -288,6 +311,8 @@ void DeviceControlPanel::removeIndiDevice(const QString& clientId,
 			indiDeviceWidgets.remove(deviceId);
 			deviceTypes.remove(deviceId);
 			delete deviceWidget;
+			
+			hideDeviceTabs();
 		}
 	}
 }
@@ -318,4 +343,26 @@ void DeviceControlPanel::logMessage(const QString& device,
 void DeviceControlPanel::logMessage(const QString& message)
 {
 	logWidget->appendPlainText(message);
+}
+
+void DeviceControlPanel::showDeviceTabs()
+{
+	if (ui->stackedWidget->currentWidget() == ui->pageMessage)
+		ui->stackedWidget->setCurrentWidget(splitter);
+}
+
+void DeviceControlPanel::hideDeviceTabs()
+{
+	if (deviceTabWidget->count() < 1)
+		ui->stackedWidget->setCurrentWidget(ui->pageMessage);
+}
+
+void DeviceControlPanel::openConfiguration()
+{
+	deviceManager->configureGui(true);
+}
+
+void DeviceControlPanel::clearLog()
+{
+	logWidget->clear();
 }
