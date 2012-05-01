@@ -283,7 +283,28 @@ void IndiClient::parseStreamData()
 			}
 			else if (tag == T_DEL_PROPERTY)
 			{
-				//TODO
+				QXmlStreamAttributes attributes = xmlReader.attributes();
+				QString deviceName = attributes.value(TagAttributes::DEVICE).toString();
+				DeviceP device = devices.value(deviceName);
+				if (device)
+				{
+					QString propName = attributes.value(TagAttributes::NAME).toString();
+					if (propName.isEmpty())
+					{
+						// Remove the whole device.
+						device->removeAllProperties();
+						devices.remove(deviceName);
+						device.clear();
+						emit deviceRemoved(clientId, deviceName);
+					}
+					else
+						device->removeProperty(propName);
+					
+					QDateTime timestamp = TagAttributes::readTimestampAttribute(attributes);
+					QString message = attributes.value(TagAttributes::MESSAGE).toString();
+					if (!message.isEmpty())
+						emit messageReceived(deviceName, timestamp, message);
+				}
 			}
 			else if (tag == T_GET_PROPERTIES)
 			{

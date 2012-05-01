@@ -50,9 +50,8 @@ bool Device::addProperty(const PropertyP& property)
 
 void Device::removeProperty(const QString& propertyName)
 {
-	if (properties.contains(propertyName))
+	if (properties.remove(propertyName) > 0)
 	{
-		properties.remove(propertyName);
 		emit propertyRemoved(propertyName);
 	}
 }

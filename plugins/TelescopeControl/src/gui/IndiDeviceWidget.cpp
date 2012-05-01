@@ -146,14 +146,16 @@ void IndiDeviceWidget::addProperty(const PropertyP& property)
 
 void IndiDeviceWidget::removeProperty(const QString& propertyName)
 {
-	if (propertyWidgets.contains(propertyName))
+	IndiPropertyWidget* widget = propertyWidgets.take(propertyName);
+	if (widget)
 	{
-		IndiPropertyWidget* widget = propertyWidgets.take(propertyName);
 		QString group = widget->getGroup();
-		if (groupWidgets.contains(group))
+		IndiGroupWidget* groupWidget = groupWidgets.value(group, 0);
+		if (groupWidget)
 		{
-			IndiGroupWidget* groupWidget = groupWidgets[group];
 			groupWidget->removePropertyWidget(widget);
+			//TODO: Disconnect connected signals
+			delete widget;
 			if (groupWidget->propertyWidgetsCount() == 0)
 			{
 				groupWidgets.remove(group);
@@ -162,8 +164,6 @@ void IndiDeviceWidget::removeProperty(const QString& propertyName)
 				delete groupWidget;
 			}
 		}
-		//TODO: Disconnect connected signals
-		delete widget;
 	}
 }
 
