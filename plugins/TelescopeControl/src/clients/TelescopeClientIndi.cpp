@@ -91,6 +91,11 @@ void TelescopeClientIndi::performCommunication()
 	//
 }
 
+bool TelescopeClientIndi::hasKnownPosition() const
+{
+	return interpolatedPosition.isKnown();
+}
+
 void TelescopeClientIndi::initialize()
 {
 //	isConnectionConnected = false;
@@ -128,6 +133,8 @@ void TelescopeClientIndi::attachClient(IndiClient* client)
 	else
 	{
 		handleDeviceDefinition(indiClient->getId(), device);
+		connect(indiClient, SIGNAL(deviceRemoved(QString,QString)),
+		        this, SLOT(handleDeviceRemoval(QString,QString)));
 	}
 	// TODO: Connect error handling slot?
 	// TODO: Extract device name?
@@ -203,7 +210,8 @@ void TelescopeClientIndi::telescopeGoto(const Vec3d &j2000Coordinates)
 void TelescopeClientIndi::handleDeviceDefinition(const QString& client,
                                                  const DeviceP& newDevice)
 {
-	Q_UNUSED(client)
+	if (client != indiClient->getId())
+		return;
 	
 	if (device.isNull() && newDevice && newDevice->getName() == deviceName)
 	{
@@ -211,9 +219,29 @@ void TelescopeClientIndi::handleDeviceDefinition(const QString& client,
 		
 		connect(device.data(), SIGNAL(propertyDefined(PropertyP)),
 		        this, SLOT(handlePropertyDefinition(PropertyP)));
+		connect(device.data(), SIGNAL(propertyRemoved(QString)),
+		        this, SLOT(handlePropertyRemoval(QString)));
+		
+		connect(indiClient, SIGNAL(deviceRemoved(QString,QString)),
+		        this, SLOT(handleDeviceRemoval(QString,QString)));
 		
 		qDebug() << "Device connected:" << deviceName;
 	}
+}
+
+void TelescopeClientIndi::handleDeviceRemoval(const QString& client,
+                                              const QString& devName)
+{
+	if (!indiClient || !device)
+		return;
+	
+	if (client != indiClient->getId() ||
+	    devName != device->getName())
+		return;
+	
+	// TODO: Something else?
+	device.clear();
+	qDebug() << "Device disconnected:" << deviceName;
 }
 
 void TelescopeClientIndi::handlePropertyDefinition(const PropertyP& property)
@@ -264,6 +292,30 @@ void TelescopeClientIndi::handlePropertyDefinition(const PropertyP& property)
 			connect(connectionProp.data(), SIGNAL(newValuesReceived()),
 			        this, SLOT(handleConnectionEstablished()));
 		}
+	}
+}
+
+void TelescopeClientIndi::handlePropertyRemoval(const QString& propertyName)
+{
+	if (posProp && propertyName == posProp->getName())
+	{
+		disconnect(posProp.data(), SIGNAL(newValuesReceived()),
+		        this, SLOT(updatePositionFromProperty()));
+		posProp.clear();
+		interpolatedPosition.reset();
+		emit coordinatesUndefined(name);
+	}
+	else if (requestedPosProp && propertyName == requestedPosProp->getName())
+	{
+		requestedPosProp.clear();
+		isDefinedJ2000CoordinateRequest = false;
+		isDefinedJNowCoordinateRequest = false;
+	}
+	else if (connectionProp && propertyName == connectionProp->getName())
+	{
+		disconnect(connectionProp.data(), SIGNAL(newValuesReceived()),
+		           this, SLOT(handleConnectionEstablished()));
+		isConnectionConnected = false;
 	}
 }
 

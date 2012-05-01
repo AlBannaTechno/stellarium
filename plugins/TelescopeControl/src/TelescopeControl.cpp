@@ -497,22 +497,36 @@ void TelescopeControl::handleDeviceDefinition(const QString& clientId,
 		// TODO: This won't work very well with treatAsTelescope()... !!!
 		
 		connect(ti, SIGNAL(coordinatesDefined(QString)),
-		        this, SLOT(treatAsTelescope(QString)));
+		        this, SLOT(addIndiTelescope(QString)));
+		connect(ti, SIGNAL(coordinatesUndefined(QString)),
+		        this, SLOT(removeIndiTelescope(QString)));
 	}
 }
 
-void TelescopeControl::treatAsTelescope(const QString& id)
+void TelescopeControl::addIndiTelescope(const QString& id)
 {
 	if (id.isEmpty())
 		return;
 	
 	TelescopeClientP client = indiDevices.take(id);
-	if (!client.isNull() && !telescopes.contains(id))
+	if (client && !telescopes.contains(id))
 	{
 		telescopes.insert(id, client);
 		
 		//disconnect(client.data(), SIGNAL(coordinatesDefined(QString)),
 		//           this, SLOT(treatAsTelescope(QString));
+	}
+}
+
+void TelescopeControl::removeIndiTelescope(const QString& id)
+{
+	if (id.isEmpty())
+		return;
+	
+	if (telescopes.contains(id))
+	{
+		unselectTelescopes();
+		telescopes.remove(id);
 	}
 }
 
@@ -1293,7 +1307,7 @@ bool TelescopeControl::startClient(const QString& id,
 		if (tempP && tempP->isInitialized())
 		{
 			connect(tempP, SIGNAL(coordinatesDefined(QString)),
-			        this, SLOT(treatAsTelescope(QString)));
+			        this, SLOT(addIndiTelescope(QString)));
 		}
 	}
 	else if (interfaceType == "INDI Pointer")

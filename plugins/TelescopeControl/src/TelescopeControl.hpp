@@ -246,7 +246,9 @@ private slots:
 	//! Called when an INDI connection declares itself to be a pointing device.
 	//! \todo Ugly hack. Find a more elegant way.
 	//! \todo Also, use a signal mapper?
-	void treatAsTelescope(const QString& id);
+	void addIndiTelescope(const QString& id);
+	//!
+	void removeIndiTelescope(const QString& id);
 
 private:
 	//! Draw an animated pointer around the selected object (if any).

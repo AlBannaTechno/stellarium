@@ -63,7 +63,7 @@ public:
 	                    IndiClient* client = 0);
 	
 	//! Creates a TelescopeClientIndiPointer.
-	//! \obsolete
+	//! \deprecated
 	static TelescopeClientIndi* telescopeClient(const QString& name,
 	                                            const QString& deviceId,
 	                                            IndiClient* client, Equinox eq);
@@ -92,16 +92,21 @@ signals:
 	//! \todo Better name?
 	//! \todo Remove the parameter and use a signal mapper in TelescopeControl
 	//! to separate the internal client name from the client ID in the hash?
-	void coordinatesDefined(const QString& clientId);
+	void coordinatesDefined(const QString& name);
+	void coordinatesUndefined(const QString& name);
 
 protected slots:
 	//! If the device matches the wanted one, connect to it and wait for properties.
 	//! \todo Deal with this on management level? A client is useless without a device.
 	void handleDeviceDefinition(const QString& client, const DeviceP& newDevice);
+	//! 
+	void handleDeviceRemoval(const QString& client, const QString& devName);
 	//! If the property is a useful standard property, connect to it.
 	//! \todo Save a pointer to the property.
 	//! \todo Connect each type of property to the appropriate handling function.
 	void handlePropertyDefinition(const PropertyP& property);
+	//! 
+	void handlePropertyRemoval(const QString& propertyName);
 	//! 
 	void updatePositionFromProperty();
 	//! 
@@ -112,10 +117,7 @@ protected:
 	virtual bool prepareCommunication();
 	virtual void performCommunication();
 	InterpolatedPosition interpolatedPosition;
-	virtual bool hasKnownPosition(void) const
-	{
-		return interpolatedPosition.isKnown();
-	}
+	virtual bool hasKnownPosition() const;
 
 	IndiClient* indiClient;
 	bool waitingForClient;
