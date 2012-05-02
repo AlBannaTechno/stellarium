@@ -231,7 +231,12 @@ bool IndiServices::startServer()
 	serverProcess = new QProcess();
 	// Redirect stdout/stderr to Stellarium's
 	// TODO: Redirect to Stellarium's log or somewhere else.
-	serverProcess->setProcessChannelMode(QProcess::ForwardedChannels);
+	// serverProcess->setProcessChannelMode(QProcess::ForwardedChannels);
+	// TODO: Add an option?
+	connect(serverProcess, SIGNAL(readyReadStandardError()),
+	        this, SLOT(readServerErrorStream()));
+	connect(serverProcess, SIGNAL(error(QProcess::ProcessError)),
+	        this, SLOT(handleProcessError(QProcess::ProcessError)));
 	serverProcess->start("indiserver", arguments);
 	// TODO: Replace the wait with a slot?
 	if (serverProcess->waitForStarted(3000))
@@ -448,6 +453,18 @@ void IndiServices::handleProcessError(QProcess::ProcessError error)
 	Q_UNUSED(error);
 	
 	qDebug() << serverProcess->errorString();
+}
+
+void IndiServices::readServerErrorStream()
+{
+	Q_ASSERT(serverProcess);
+	
+	serverProcess->setReadChannel(QProcess::StandardError);
+	while (serverProcess->readLine(buffer, BUFFER_SIZE) > 0)
+	{
+		QString message(buffer);
+		emit commonServerLog(message);
+	}
 }
 
 void IndiServices::destroySocket()

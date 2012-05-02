@@ -169,6 +169,8 @@ void TelescopeControl::init()
 		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
 		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
 		        controlPanelWindow, SLOT(addIndiClient(IndiClient*)));
+		connect(indiService, SIGNAL(commonServerLog(QString)),
+		        controlPanelWindow, SLOT(logServerMessage(QString)));
 		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
 		        this, SLOT(watchIndiClient(IndiClient*)));
 		connect(this, SIGNAL(clientConnected(const QString&)),

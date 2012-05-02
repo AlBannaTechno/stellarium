@@ -111,6 +111,9 @@ signals:
 	//!
 	void clientConnected(IndiClient* client);
 	
+	//!
+	void commonServerLog(const QString& logMessage);
+	
 public slots:
 	
 	
@@ -124,13 +127,17 @@ private slots:
 	
 	//! \todo Make this handle all connection errors, not only the local one.
 	void handleConnectionError(QAbstractSocket::SocketError error);
+	//! 
 	void handleProcessError(QProcess::ProcessError error);
+	
+	//! Read the common server's stderr.
+	void readServerErrorStream();
 	
 	//! Called when one of the sockets disconnects.
 	void destroySocket();
 	
 private:
-	//! \todo Temporary.
+	//! 
 	QStandardItemModel* deviceDescriptions;
 	
 	//! Common process instance of indiserver.
@@ -152,6 +159,9 @@ private:
 	QHash<QString,QTcpSocket*> sockets;
 	//! 
 	QSignalMapper* connectedMapper;
+	
+	static const int BUFFER_SIZE = 255;
+	char buffer[BUFFER_SIZE];
 };
 
 #endif // INDISERVICES_HPP

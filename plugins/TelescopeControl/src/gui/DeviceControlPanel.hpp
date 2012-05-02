@@ -70,11 +70,15 @@ public slots:
 	//! 
 	void removeIndiDevice(const QString& clientId, const QString& deviceName);
 	
+	//! Adds the appropriately formatted message to the log box.
 	void logMessage(const QString& deviceName,
 	                const QDateTime& timestamp,
 	                const QString& message);
 	//! Adds directly this string to the log.
 	void logMessage(const QString& message);
+	//! Adds a message from the local indiserver to the log box.
+	//! Also outputs it to Stellarium's log.
+	void logServerMessage(const QString& message);
 	
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
@@ -89,8 +93,11 @@ private:
 	
 	TelescopeControl* deviceManager;
 	
+	//! Splitter separating the devices tab widget from the log viewer.
 	QSplitter* splitter;
+	//! Tabs for devices.
 	QTabWidget* deviceTabWidget;
+	//! Log area for INDI messages and INDI server output.
 	QPlainTextEdit* logWidget;
 
 	//! All INDI clients connected to this control panel.

@@ -79,7 +79,9 @@ void DeviceControlPanel::createDialogContent()
 	//Log widget
 	logWidget = new QPlainTextEdit(dialog);
 	logWidget->setReadOnly(true);
-	logWidget->setMaximumBlockCount(100);//Can display 100 lines/paragraphs maximum
+	// Display 100 lines/paragraphs maximum
+	logWidget->setMaximumBlockCount(100);
+	logWidget->setCenterOnScroll(true);
 	splitter->addWidget(logWidget);
 	splitter->setCollapsible(1, true);
 
@@ -343,6 +345,17 @@ void DeviceControlPanel::logMessage(const QString& device,
 void DeviceControlPanel::logMessage(const QString& message)
 {
 	logWidget->appendPlainText(message);
+}
+
+void DeviceControlPanel::logServerMessage(const QString& message)
+{
+	if (message.isEmpty())
+		return;
+	
+	qDebug() << "indiserver:" << message;
+	
+	QString html = QString("<font color=\"red\">[indiserver]</font> %1").arg(message);
+	logWidget->appendHtml(html);
 }
 
 void DeviceControlPanel::showDeviceTabs()
