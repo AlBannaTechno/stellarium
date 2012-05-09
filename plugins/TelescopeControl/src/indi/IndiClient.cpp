@@ -60,6 +60,8 @@ IndiClient::IndiClient(const QString& newClientId,
 
 	connect(ioDevice, SIGNAL(readyRead()),
 	        this, SLOT(parseStreamData()));
+	connect(ioDevice, SIGNAL(aboutToClose()),
+	        this, SLOT(close()));
 
 	//Make the parser think it's parsing parts of a large document
 	//(otherwise it thinks that the first tag in the message is the root one)
@@ -92,6 +94,8 @@ IndiClient::~IndiClient()
 	{
 		disconnect(ioDevice, SIGNAL(readyRead()),
 		           this, SLOT(parseStreamData()));
+		disconnect(ioDevice, SIGNAL(aboutToClose()),
+		           this, SLOT(close()));
 	}
 	
 	// Clean the temp objects
@@ -982,4 +986,22 @@ void IndiClient::sendData(const QByteArray& indiText)
 		           << "can't write to device. Skipping:"
 		           << indiText;
 	}
+}
+
+void IndiClient::close()
+{
+	// Parse whatever data is left in the screen.
+	if (ioDevice->isReadable() && ioDevice->bytesAvailable() > 0)
+		parseStreamData();
+	
+	QHash<QString, DeviceP>::iterator d = devices.begin();
+	while (d != devices.end())
+	{
+		emit deviceRemoved(clientId, d.value()->getName());
+		d.value()->removeAllProperties();
+		//d.value().clear();
+		d = devices.erase(d);
+	}
+	
+	emit aboutToClose();
 }

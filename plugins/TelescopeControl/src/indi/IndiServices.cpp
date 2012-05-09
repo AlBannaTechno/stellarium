@@ -259,6 +259,7 @@ bool IndiServices::stopServer()
 		return true;
 	}
 	
+	qDebug() << "Stopping indiserver...";
 	// Disconnect the TCP connection.
 	if (serverSocket)
 	{
@@ -267,6 +268,7 @@ bool IndiServices::stopServer()
 		           this,
 		           SLOT(handleConnectionError(QAbstractSocket::SocketError)));
 		serverSocket->disconnectFromHost();
+		serverSocket->close();
 		serverSocket->deleteLater();
 		serverSocket = 0;
 	}
@@ -421,6 +423,8 @@ void IndiServices::initCommonClient()
 	if (!commonClient)
 	{
 		commonClient = new IndiClient("common", serverSocket);
+		connect(serverSocket, SIGNAL(disconnected()),
+		        commonClient, SLOT(close()));
 		emit commonClientConnected(commonClient);
 	}
 }
@@ -453,6 +457,14 @@ void IndiServices::handleProcessError(QProcess::ProcessError error)
 	Q_UNUSED(error);
 	
 	qDebug() << serverProcess->errorString();
+	
+	if (serverSocket)
+	{
+		serverSocket->disconnectFromHost();
+		serverSocket->close();
+		serverSocket->deleteLater();
+		serverSocket = 0;
+	}
 }
 
 void IndiServices::readServerErrorStream()

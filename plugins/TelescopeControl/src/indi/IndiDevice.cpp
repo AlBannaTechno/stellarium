@@ -66,7 +66,7 @@ void Device::removeAllProperties()
 	{
 		emit propertyRemoved(i.value()->getName());
 		i.value().clear();
-		properties.erase(i);
+		i = properties.erase(i);
 	}
 }
 

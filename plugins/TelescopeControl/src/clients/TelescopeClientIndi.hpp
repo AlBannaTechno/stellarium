@@ -111,6 +111,8 @@ protected slots:
 	void updatePositionFromProperty();
 	//! 
 	void handleConnectionEstablished();
+	//!
+	void handleClientFailure();
 
 protected:
 	TelescopeClientIndi(const QString& name, Equinox eq);

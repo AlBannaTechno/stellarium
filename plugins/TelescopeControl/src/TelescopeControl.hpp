@@ -249,6 +249,9 @@ private slots:
 	void addIndiTelescope(const QString& id);
 	//!
 	void removeIndiTelescope(const QString& id);
+	
+	//! Returns true if the client has been stopped successfully or doesn't exist.
+	bool stopClient(const QString& id);	
 
 private:
 	//! Draw an animated pointer around the selected object (if any).
@@ -344,13 +347,12 @@ private:
 
 	QSignalMapper gotoSelectedShortcutMapper;
 	QSignalMapper gotoDirectionShortcutMapper;
+	//! Signal mapper handling "client" disconnections.
+	QSignalMapper disconnectMapper;
 
 	//! Creates a client object belonging to a subclass of TelescopeClient.
 	//! Used internally by loadTelescopes() and startConnection().
 	bool startClient(const QString& id, const QVariantMap& properties);
-
-	//! Returns true if the client has been stopped successfully or doesn't exist.
-	bool stopClient(const QString& id);
 
 	//! Loads the list of natively supported telescope models.
 	void loadDeviceModels();

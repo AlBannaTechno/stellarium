@@ -178,6 +178,10 @@ void TelescopeControl::init()
 		connect(this, SIGNAL(clientDisconnected(const QString&)),
 		        controlPanelWindow, SLOT(removeStelDevice(const QString&)));
 		
+		// If a client's connection is lost, remove it.
+		connect(&disconnectMapper, SIGNAL(mapped(QString)),
+		        this, SLOT(stopClient(QString)));
+		
 		// Load and start all telescope clients
 		loadConnections();
 		
@@ -1151,7 +1155,41 @@ bool TelescopeControl::stopConnection(const QString& id)
 	//Validation
 	if(id.isEmpty())
 		return true;
-
+	
+	qDebug() << id;
+	// TODO: This may need to go to stopConnection().
+	const QVariantMap& properties = connectionsProperties.value(id).toMap();
+	if (properties.isEmpty())
+		return true;
+	
+	if (properties.value("interface").toString() == "INDI")
+	{
+		if (properties.value("isRemoteConnection").toBool())
+		{
+			// TODO: Close connection to remote INDI server
+			// TODO: Delete all sub-connection clients
+			
+			controlPanelWindow->removeIndiClient(id);
+			
+			indiService->closeConnection(id);
+			// TODO: What to do with the bloody client object?
+		}
+		else
+		{
+			// Connection to a local INDI server
+			if (indiService && connections.contains(id))
+			{
+				QString name = properties.value("name").toString();
+				QString driver = properties.value("driverId").toString();
+				indiService->stopDriver(driver, name);
+				// TODO: Remove the device from the control panel?
+				// TODO: Anything else? Disconnecting slots?
+			}
+		}
+	}
+	
+	connections.remove(id);
+	
 	return stopClient(id);
 }
 
@@ -1378,6 +1416,10 @@ bool TelescopeControl::startClient(const QString& id,
 		}
 		else
 			indiDevices.insert(id, newTelescopeP);
+		
+		connect(newTelescope, SIGNAL(connectionLost()),
+		        &disconnectMapper, SLOT(map()));
+		disconnectMapper.setMapping(newTelescope, id);
 
 		return true;
 	}
@@ -1396,43 +1438,9 @@ bool TelescopeControl::stopClient(const QString& id)
 	if (id.isEmpty())
 		return true;
 	
-	// TODO: This may need to go to stopConnection().
-	const QVariantMap& properties = connectionsProperties.value(id).toMap();
-	if (properties.isEmpty())
-		return true;
-	
-	if (properties.value("interface").toString() == "INDI")
-	{
-		if (properties.value("isRemoteConnection").toBool())
-		{
-			// TODO: Close connection to remote INDI server
-			// TODO: Delete all sub-connection clients
-			
-			controlPanelWindow->removeIndiClient(id);
-			
-			indiService->closeConnection(id);
-			// TODO: What to do with the bloody client object?
-		}
-		else
-		{
-			// Connection to a local INDI server
-			if (indiService && connections.contains(id))
-			{
-				QString name = properties.value("name").toString();
-				QString driver = properties.value("driverId").toString();
-				indiService->stopDriver(driver, name);
-				// TODO: Remove the device from the control panel?
-				// TODO: Anything else? Disconnecting slots?
-			}
-		}
-	}
-	else if(!connections.contains(id)) // WHY???
-		return true;
-
 	//If a telescope is selected, deselect it first.
 	//(Otherwise trying to delete a selected telescope client causes Stellarium to crash.)
 	unselectTelescopes();
-	connections.remove(id);
 	// When dealing with INDI telescope clients, this should remove all of them.
 	telescopes.remove(id);
 

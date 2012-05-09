@@ -98,6 +98,12 @@ public:
 	
 	virtual bool prepareCommunication() {return false;}
 	virtual void performCommunication() {}
+	
+signals:
+	//! 
+	void connectionEstablished();
+	//! 
+	void connectionLost();
 
 protected:
 	TelescopeClient(const QString &name);

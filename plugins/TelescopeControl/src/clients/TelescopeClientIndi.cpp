@@ -138,13 +138,15 @@ void TelescopeClientIndi::attachClient(IndiClient* client)
 	}
 	// TODO: Connect error handling slot?
 	// TODO: Extract device name?
+	connect(indiClient, SIGNAL(aboutToClose()),
+	        this, SLOT(handleClientFailure()));
 }
 
 Vec3d TelescopeClientIndi::getJ2000EquatorialPos(const StelCore *core) const
 {
 	Q_UNUSED(core);
 	//TODO: see what to do about time_delay
-	const qint64 now = getNow() - 500000;// - time_delay;
+	const qint64 now = getNow() - 1500000;// - time_delay;
 	return interpolatedPosition.get(now);
 }
 
@@ -335,7 +337,7 @@ void TelescopeClientIndi::updatePositionFromProperty()
 	
 	//Get the coordinates and convert them to a vector
 	//TODO: Get serverTime from the property timestamp
-	const qint64 serverTime = getNow();
+	const qint64 serverTime = posProp->getTimestampInMilliseconds()*1000;
 	const double raHours = posProp->getElement("RA")->getValue();
 	const double decDegrees = posProp->getElement("DEC")->getValue();
 	const double raRadians = raHours * (M_PI / 12);
@@ -364,6 +366,11 @@ void TelescopeClientIndi::handleConnectionEstablished()
 		telescopeGoto(queuedGotoJ2000Pos);
 		hasQueuedGoto = false;
 	}
+}
+
+void TelescopeClientIndi::handleClientFailure()
+{
+	emit connectionLost();
 }
 
 TelescopeClientIndi* TelescopeClientIndi::telescopeClient

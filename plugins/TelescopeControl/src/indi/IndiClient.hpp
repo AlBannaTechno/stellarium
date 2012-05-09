@@ -32,13 +32,17 @@
 #include "IndiProperty.hpp"
 #include "IndiDevice.hpp"
 
+//! @defgroup indi INDI
+//! Support for the Instrument Neutral Distributed Interface (INDI) protocol.
+
 //! Class implementing a client for the INDI wire protocol.
 //! Properties are stored internally. Qt signals are emitted when a property
 //! is changed or defined.
 //! A single instance of IndiClient represents one connection.
+//! \ingroup indi
 //! \todo Device snooping!
 //! \todo Split the Indi.hpp file. (Partially DONE.)
-//! \todo Use shared pointers.
+//! \todo Use shared pointers. (Fully DONE?)
 //! \todo Handle aboutToClose() and parsing errors.
 /*! Blueprint for device snooping if necessary on the client side:
 Tree hashes (or maps?):
@@ -110,6 +114,9 @@ public slots:
 	
 	//!
 	void sendData(const QByteArray& indiText);
+	
+	//! Finalizes the work of the client.
+	void close();
 
 signals:
 	//! Emitted when a new device has been defined.
@@ -129,6 +136,10 @@ signals:
 	//! precision. If higher precision is necessary, an IndiTimestamp class may
 	//! be necessary.
 	void messageReceived(const QString& deviceName, const QDateTime& timestamp, const QString& message);
+	
+	//! Emitted when the client is closing.
+	//! E.g. when an error interrupts the INDI stream.
+	void aboutToClose();
 
 private slots:
 	void parseStreamData();
@@ -187,6 +198,9 @@ private:
 	bool definitionInProgress;
 	//! 
 	void resetParserState();
+	
+	//!
+	void removeDevice(const QString& deviceName);
 	
 	//! Read a property vector definition and create one at currentProperty.
 	//! No validation - make sure that currentProperty is null, etc.
