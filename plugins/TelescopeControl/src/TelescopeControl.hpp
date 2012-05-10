@@ -349,6 +349,8 @@ private:
 	QSignalMapper gotoDirectionShortcutMapper;
 	//! Signal mapper handling "client" disconnections.
 	QSignalMapper disconnectMapper;
+	QSignalMapper coordsDefinedMapper;
+	QSignalMapper coordsUndefinedMapper;
 
 	//! Creates a client object belonging to a subclass of TelescopeClient.
 	//! Used internally by loadTelescopes() and startConnection().

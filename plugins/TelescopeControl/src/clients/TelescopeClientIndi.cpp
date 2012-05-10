@@ -269,7 +269,7 @@ void TelescopeClientIndi::handlePropertyDefinition(const PropertyP& property)
 			updatePositionFromProperty();
 			connect(np.data(), SIGNAL(newValuesReceived()),
 			        this, SLOT(updatePositionFromProperty()));
-			emit coordinatesDefined(name);
+			emit coordinatesDefined();
 		}
 		else if (np->getName() == IndiClient::SP_J2000_COORDINATES_REQUEST)
 		{
@@ -305,7 +305,7 @@ void TelescopeClientIndi::handlePropertyRemoval(const QString& propertyName)
 		        this, SLOT(updatePositionFromProperty()));
 		posProp.clear();
 		interpolatedPosition.reset();
-		emit coordinatesUndefined(name);
+		emit coordinatesUndefined();
 	}
 	else if (requestedPosProp && propertyName == requestedPosProp->getName())
 	{

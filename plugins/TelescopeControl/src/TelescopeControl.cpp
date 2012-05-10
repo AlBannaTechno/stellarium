@@ -181,6 +181,10 @@ void TelescopeControl::init()
 		// If a client's connection is lost, remove it.
 		connect(&disconnectMapper, SIGNAL(mapped(QString)),
 		        this, SLOT(stopClient(QString)));
+		connect(&coordsDefinedMapper, SIGNAL(mapped(QString)),
+		        this, SLOT(addIndiTelescope(QString)));
+		connect(&coordsUndefinedMapper, SIGNAL(mapped(QString)),
+		        this, SLOT(removeIndiTelescope(QString)));
 		
 		// Load and start all telescope clients
 		loadConnections();
@@ -491,7 +495,8 @@ void TelescopeControl::handleDeviceDefinition(const QString& clientId,
 	if (client)
 	{
 		//QString name = clientId + "/" + deviceId;
-		QString name = clientId;
+		QString name = QString("%1 (%2)").arg(deviceId, clientId);
+		QString id = clientId % "|" % deviceId;
 		TelescopeClientIndi* ti = new TelescopeClientIndi(name,
 		                                                  deviceId,
 		                                                  client);
@@ -499,13 +504,15 @@ void TelescopeControl::handleDeviceDefinition(const QString& clientId,
 		// TODO: Add stuff like saved FOV circles?
 		
 		TelescopeClientP tp(ti);
-		indiDevices.insert(name, tp);
+		indiDevices.insert(id, tp);
 		// TODO: This won't work very well with treatAsTelescope()... !!!
 		
-		connect(ti, SIGNAL(coordinatesDefined(QString)),
-		        this, SLOT(addIndiTelescope(QString)));
-		connect(ti, SIGNAL(coordinatesUndefined(QString)),
-		        this, SLOT(removeIndiTelescope(QString)));
+		connect(ti, SIGNAL(coordinatesDefined()),
+		        &coordsDefinedMapper, SLOT(map()));
+		connect(ti, SIGNAL(coordinatesUndefined()),
+		        &coordsUndefinedMapper, SLOT(map()));
+		coordsDefinedMapper.setMapping(ti, id);
+		coordsUndefinedMapper.setMapping(ti, id);
 	}
 }
 

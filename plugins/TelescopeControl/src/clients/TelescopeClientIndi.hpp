@@ -92,8 +92,8 @@ signals:
 	//! \todo Better name?
 	//! \todo Remove the parameter and use a signal mapper in TelescopeControl
 	//! to separate the internal client name from the client ID in the hash?
-	void coordinatesDefined(const QString& name);
-	void coordinatesUndefined(const QString& name);
+	void coordinatesDefined();
+	void coordinatesUndefined();
 
 protected slots:
 	//! If the device matches the wanted one, connect to it and wait for properties.
