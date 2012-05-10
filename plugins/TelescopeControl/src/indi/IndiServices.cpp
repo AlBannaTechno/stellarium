@@ -416,6 +416,12 @@ void IndiServices::closeConnection(const QString& id)
 		// TODO: Or should I use abort()? (discards the data to be written)
 		socket->disconnectFromHost();
 	}
+	
+	IndiClient* client = socketClients.take(id);
+	if (client)
+	{
+		delete client;
+	}
 }
 
 void IndiServices::initCommonClient()

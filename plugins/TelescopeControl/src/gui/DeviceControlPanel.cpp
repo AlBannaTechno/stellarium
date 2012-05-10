@@ -162,7 +162,8 @@ void DeviceControlPanel::addIndiClient(IndiClient* client)
 	QString clientName = client->getId();
 	if (indiClients.contains(clientName))
 	{
-		//TODO
+		qDebug() << "DeviceControlPanel::addIndiClient(): There's already"
+		         << clientName;
 		return;
 	}
 	else
@@ -186,10 +187,9 @@ void DeviceControlPanel::addIndiClient(IndiClient* client)
 
 void DeviceControlPanel::removeIndiClient(const QString& clientName)
 {
-	if (!indiClients.contains(clientName))
+	IndiClient* client = indiClients.value(clientName, 0);
+	if (!client)
 		return;
-
-	IndiClient* client = indiClients[clientName];
 
 	//Disconnect
 	disconnect(client, SIGNAL(deviceDefined(QString,DeviceP)),
@@ -198,6 +198,8 @@ void DeviceControlPanel::removeIndiClient(const QString& clientName)
 	           this, SLOT(removeIndiDevice(QString,QString)));
 	disconnect(client, SIGNAL(messageReceived(QString,QDateTime,QString)),
 	           this, SLOT(logMessage(QString,QDateTime,QString)));
+	
+	indiClients.remove(clientName);
 
 	//Remove controls
 	QHashIterator<DeviceId,IndiDeviceWidget*> i(indiDeviceWidgets);
@@ -217,7 +219,7 @@ void DeviceControlPanel::removeIndiClient(const QString& clientName)
 
 void DeviceControlPanel::addStelDevice(const QString& id)
 {
-	//qDebug() << "DeviceControlPanel::addStelDevice:" << id;
+	qDebug() << "DeviceControlPanel::addStelDevice:" << id;
 	if (id.isEmpty())
 		return;
 	
