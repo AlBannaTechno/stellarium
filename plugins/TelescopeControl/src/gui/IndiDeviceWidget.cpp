@@ -19,8 +19,8 @@
 
 #include "IndiDeviceWidget.hpp"
 
-#include <QTabWidget>
-#include <QVBoxLayout>
+//#include <QTabWidget>
+//#include <QVBoxLayout>
 
 #include "IndiDevice.hpp"
 #include "IndiTextPropertyWidget.hpp"
@@ -30,7 +30,7 @@
 #include "IndiBlobPropertyWidget.hpp"
 
 IndiDeviceWidget::IndiDeviceWidget(const DeviceP& newDevice, QWidget* parent)
-	: QWidget(parent)
+	: QTabWidget(parent)
 {
 	if (newDevice.isNull())
 		return;
@@ -38,16 +38,16 @@ IndiDeviceWidget::IndiDeviceWidget(const DeviceP& newDevice, QWidget* parent)
 	device = newDevice;
 	deviceName = newDevice->getName();
 	
-	groupsTabWidget = new QTabWidget();
-	groupsTabWidget->setSizePolicy(QSizePolicy::Expanding,
-	                               QSizePolicy::Expanding);
-
-	QVBoxLayout* layout = new QVBoxLayout();
-	layout->setContentsMargins(0, 0, 0, 0);
-	layout->setSpacing(0);
-	layout->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
-	layout->addWidget(groupsTabWidget);
-	this->setLayout(layout);
+	//groupsTabWidget = new QTabWidget(this);
+	this->setSizePolicy(QSizePolicy::Expanding,
+	                    QSizePolicy::Expanding);
+	
+	//QVBoxLayout* layout = new QVBoxLayout(this);
+	//layout->setContentsMargins(0, 0, 0, 0);
+	//layout->setSpacing(0);
+	//layout->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+	//layout->addWidget(groupsTabWidget);
+	//this->setLayout(layout);
 	
 	connect(device.data(), SIGNAL(propertyDefined(const PropertyP&)),
 	        this, SLOT(addProperty(const PropertyP&)));
@@ -138,7 +138,7 @@ void IndiDeviceWidget::addProperty(const PropertyP& property)
 	if (!groupWidgets.contains(group))
 	{
 		IndiGroupWidget* widget = new IndiGroupWidget();
-		groupsTabWidget->addTab(widget, group);
+		this->addTab(widget, group);
 		groupWidgets.insert(group, widget);
 	}
 	groupWidgets[group]->addPropertyWidget(propertyWidget);
@@ -159,8 +159,8 @@ void IndiDeviceWidget::removeProperty(const QString& propertyName)
 			if (groupWidget->propertyWidgetsCount() == 0)
 			{
 				groupWidgets.remove(group);
-				int index = groupsTabWidget->indexOf(groupWidget);
-				groupsTabWidget->removeTab(index);
+				int index = this->indexOf(groupWidget);
+				this->removeTab(index);
 				delete groupWidget;
 			}
 		}

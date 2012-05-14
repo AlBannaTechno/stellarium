@@ -24,7 +24,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariant>
-#include <QWidget>
+#include <QTabWidget>
 
 #include "IndiDevice.hpp"
 #include "IndiProperty.hpp"
@@ -32,13 +32,11 @@
 //Control panel GUI elements:
 #include "IndiGroupWidget.hpp"
 
-class QTabWidget;
-
 //! A representation of all available controls for a specific device.
 //! A tab in the DeviceControlPanel window. Contains sub-tabs for the functional
 //! groups. If no groups are specified, an artificial "Main" group/tab is used.
 //! \author Bogdan Marinov
-class IndiDeviceWidget : public QWidget
+class IndiDeviceWidget : public QTabWidget
 {
 	Q_OBJECT
 
@@ -64,7 +62,7 @@ private:
 	DeviceP device;
 	
 	//! Contains a tab for each property group defined for the device.
-	QTabWidget* groupsTabWidget;
+	// QTabWidget* groupsTabWidget; //TODO: Move the description if the change sticks.
 	//! Groups are rendered as tabs inside the device tab.
 	QHash<QString, IndiGroupWidget*> groupWidgets;
 	//! Property widgets are handled on this level.

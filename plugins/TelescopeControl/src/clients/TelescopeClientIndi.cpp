@@ -109,6 +109,11 @@ IndiClient* TelescopeClientIndi::getIndiClient() const
 	return indiClient;
 }
 
+QString TelescopeClientIndi::getIndiDeviceId() const
+{
+	return deviceName;
+}
+
 void TelescopeClientIndi::attachClient(IndiClient* client)
 {
 	if(indiClient)

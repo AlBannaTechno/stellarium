@@ -521,10 +521,16 @@ void TelescopeControl::addIndiTelescope(const QString& id)
 	if (id.isEmpty())
 		return;
 	
-	TelescopeClientP client = indiDevices.take(id);
-	if (client && !telescopes.contains(id))
+	TelescopeClientP scope = indiDevices.take(id);
+	if (scope && !telescopes.contains(id))
 	{
-		telescopes.insert(id, client);
+		telescopes.insert(id, scope);
+		
+		TelescopeClientIndi* iClient = dynamic_cast<TelescopeClientIndi*>(scope.data());
+		if (iClient && controlPanelWindow)
+		{
+			controlPanelWindow->addExtraWidgets(iClient);
+		}
 		
 		//disconnect(client.data(), SIGNAL(coordinatesDefined(QString)),
 		//           this, SLOT(treatAsTelescope(QString));
@@ -536,10 +542,16 @@ void TelescopeControl::removeIndiTelescope(const QString& id)
 	if (id.isEmpty())
 		return;
 	
-	if (telescopes.contains(id))
+	TelescopeClientP scope = telescopes.take(id);
+	if (scope)
 	{
 		unselectTelescopes();
-		telescopes.remove(id);
+		
+		TelescopeClientIndi* iClient = dynamic_cast<TelescopeClientIndi*>(scope.data());
+		if (iClient && controlPanelWindow)
+		{
+			controlPanelWindow->removeExtraWidgets(iClient);
+		}
 	}
 }
 

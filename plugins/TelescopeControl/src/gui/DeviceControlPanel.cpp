@@ -32,6 +32,8 @@
 #include "IndiClient.hpp"
 #include "IndiDeviceWidget.hpp"
 #include "StelDeviceWidget.hpp"
+#include "FovCirclesWidget.hpp"
+#include "TelescopeClientIndi.hpp"
 
 DeviceControlPanel::DeviceControlPanel(TelescopeControl *plugin) :
     deviceManager(0)
@@ -305,18 +307,51 @@ void DeviceControlPanel::removeIndiDevice(const QString& clientId,
                                           const QString& deviceName)
 {
 	DeviceId deviceId(clientId, deviceName);
-	if (indiDeviceWidgets.contains(deviceId))
+	IndiDeviceWidget* deviceWidget = indiDeviceWidgets.value(deviceId, 0);
+	if (deviceWidget)
 	{
-		IndiDeviceWidget* deviceWidget = indiDeviceWidgets[deviceId];
-		//if (deviceWidget->isEmpty())
+		int index = deviceTabWidget->indexOf(deviceWidget);
+		deviceTabWidget->removeTab(index);
+		indiDeviceWidgets.remove(deviceId);
+		deviceTypes.remove(deviceId);
+		delete deviceWidget;
+		
+		hideDeviceTabs();
+	}
+}
+
+void DeviceControlPanel::addExtraWidgets(TelescopeClientIndi* telescope)
+{
+	// TODO: The whole mechanism is terribly hackish.
+	QString indiClientId = telescope->getIndiClient()->getId();
+	QString indiDeviceName = telescope->getIndiDeviceId();
+	DeviceId deviceId(indiClientId, indiDeviceName);
+	IndiDeviceWidget* deviceWidget = indiDeviceWidgets.value(deviceId, 0);
+	if (deviceWidget)
+	{
+		QWidget* stelTab = new QWidget(deviceWidget);
+		deviceWidget->insertTab(0, stelTab, "Stellarium");
+		QVBoxLayout* layout = new QVBoxLayout(stelTab);
+		layout->setContentsMargins(0, 0, 0, 0);
+		layout->setSpacing(0);
+		FovCirclesWidget* fcWidget = new FovCirclesWidget(telescope, stelTab);
+		layout->addWidget(fcWidget);
+	}
+}
+
+void DeviceControlPanel::removeExtraWidgets(TelescopeClientIndi* telescope)
+{
+	QString indiClientId = telescope->getIndiClient()->getId();
+	QString indiDeviceName = telescope->getIndiDeviceId();
+	DeviceId deviceId(indiClientId, indiDeviceName);
+	IndiDeviceWidget* deviceWidget = indiDeviceWidgets.value(deviceId, 0);
+	if (deviceWidget)
+	{
+		if (deviceWidget->tabText(0) == "Stellarium")
 		{
-			int index = deviceTabWidget->indexOf(deviceWidget);
-			deviceTabWidget->removeTab(index);
-			indiDeviceWidgets.remove(deviceId);
-			deviceTypes.remove(deviceId);
-			delete deviceWidget;
-			
-			hideDeviceTabs();
+			QWidget* stelTab = deviceWidget->widget(0);
+			deviceWidget->removeTab(0);
+			delete stelTab;
 		}
 	}
 }

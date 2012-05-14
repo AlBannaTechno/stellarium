@@ -37,6 +37,7 @@ class IndiClient;
 class IndiDeviceWidget;
 class StelDeviceWidget;
 class TelescopeControl;
+class TelescopeClientIndi;
 class QPlainTextEdit;
 class QSplitter;
 class QTabWidget;
@@ -69,6 +70,10 @@ public slots:
 	void addIndiDevice(const QString& clientId, const DeviceP& device);
 	//! 
 	void removeIndiDevice(const QString& clientId, const QString& deviceName);
+	
+	//! Adds some extra widgets (e.g. for FOV circles) to an INDI device tab.
+	void addExtraWidgets(TelescopeClientIndi* telescope);
+	void removeExtraWidgets(TelescopeClientIndi* telescope);
 	
 	//! Adds the appropriately formatted message to the log box.
 	void logMessage(const QString& deviceName,

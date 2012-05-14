@@ -81,6 +81,7 @@ public:
 	void telescopeGoto(const Vec3d &j2000Pos);
 
 	IndiClient* getIndiClient() const;
+	QString getIndiDeviceId() const;
 
 public slots:
 	//! \todo Use this for all kinds of INDI telescope clients?
