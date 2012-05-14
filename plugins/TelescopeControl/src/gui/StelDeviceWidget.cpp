@@ -25,6 +25,8 @@
 #include "StelUtils.hpp"
 #include "VecMath.hpp"
 #include "TelescopeControl.hpp"
+#include "FovCirclesWidget.hpp"
+
 #include "StelDeviceWidget.hpp"
 #include "ui_StelDeviceWidget.h"
 
@@ -58,6 +60,12 @@ StelDeviceWidget::StelDeviceWidget(TelescopeControl *plugin,
 	
 	//Coordinates are in HMS by default:
 	ui->radioButtonHMS->setChecked(true);
+	
+	TelescopeClientP telescope = deviceManager->getTelescope(id);
+	FovCirclesWidget* fcWidget = new FovCirclesWidget(telescope.data(), this);
+	ui->verticalLayout->addWidget(fcWidget);
+	connect (fcWidget, SIGNAL(fovCirclesChanged()),
+	         deviceManager, SLOT(saveConnections()));
 }
 
 StelDeviceWidget::~StelDeviceWidget()

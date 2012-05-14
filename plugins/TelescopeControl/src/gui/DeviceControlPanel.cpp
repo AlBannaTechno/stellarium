@@ -336,6 +336,9 @@ void DeviceControlPanel::addExtraWidgets(TelescopeClientIndi* telescope)
 		layout->setSpacing(0);
 		FovCirclesWidget* fcWidget = new FovCirclesWidget(telescope, stelTab);
 		layout->addWidget(fcWidget);
+		
+		connect (fcWidget, SIGNAL(fovCirclesChanged()),
+		         deviceManager, SLOT(saveConnections()));
 	}
 }
 

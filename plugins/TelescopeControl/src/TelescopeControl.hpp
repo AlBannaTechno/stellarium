@@ -124,12 +124,6 @@ public:
 	//! Saves the module's configuration to the configuration file.
 	void saveConfiguration();
 	
-	//! Saves to \b connections.json the parameters of the active connections.
-	void saveConnections();
-	//! Loads \b connections.json and intializes connections from the data.
-	//! If there are already any initialized telescope clients, they are removed.
-	void loadConnections();
-	
 	//These are public, but not slots, because they don't use sufficient validation.
 	//TODO: Is the above note still valid?
 	//! Adds a new device connection with the specified properties.
@@ -177,6 +171,10 @@ public:
 	int getFreeTcpPort();
 	
 	bool getFlagUseTelescopeServerLogs () {return useTelescopeServerLogs;}
+	
+	//! Returns a pointer to the telescope with the given ID.
+	//! (Only if there is such an object in #telescopes.)
+	TelescopeClientP getTelescope(const QString& id);
 
 #ifdef Q_OS_WIN32
 	//! \returns true if the ASCOM platform has been detected.
@@ -184,6 +182,12 @@ public:
 #endif
 
 public slots:
+	//! Saves to \b connections.json the parameters of the active connections.
+	void saveConnections();
+	//! Loads \b connections.json and intializes connections from the data.
+	//! If there are already any initialized telescope clients, they are removed.
+	void loadConnections();
+	
 	//! Set display flag for telescope reticles
 	void setFlagTelescopeReticles(bool b) {reticleFader = b;}
 	//! Get display flag for telescope reticles

@@ -53,7 +53,6 @@ TelescopePropertiesWindow::TelescopePropertiesWindow()
 	clientNameValidator = new QRegExpValidator (QRegExp("[^:\"]+"), this);
 	//TODO: Write a proper host/IP regexp?
 	hostNameValidator = new QRegExpValidator (QRegExp("[a-zA-Z0-9\\-\\.]+"), this);
-	circleListValidator = new QRegExpValidator (QRegExp("[0-9,\\.\\s]+"), this);
 	#ifdef Q_OS_WIN32
 	serialPortValidator = new QRegExpValidator (QRegExp("COM[0-9]+"), this);
 	#else
@@ -67,7 +66,6 @@ TelescopePropertiesWindow::~TelescopePropertiesWindow()
 	
 	delete clientNameValidator;
 	delete hostNameValidator;
-	delete circleListValidator;
 	delete serialPortValidator;
 }
 
@@ -112,7 +110,6 @@ void TelescopePropertiesWindow::createDialogContent()
 	//Setting validators
 	ui->lineEditName->setValidator(clientNameValidator);
 	ui->lineEditHostName->setValidator(hostNameValidator);
-	ui->lineEditFovCircleSizes->setValidator(circleListValidator);
 	ui->lineEditSerialPort->setValidator(serialPortValidator);
 }
 
@@ -132,8 +129,7 @@ void TelescopePropertiesWindow::prepareNewStellariumConfiguration(const QString&
 	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 	ui->radioButtonJ2000->setChecked(true);
 	ui->checkBoxConnectAtStartup->setChecked(false);
-	ui->groupBoxFovCircles->setChecked(false);
-	ui->lineEditFovCircleSizes->clear();
+	fovCircleList.clear();
 	populateShortcutNumberList();
 
 	showConnectionTab(true);
@@ -157,8 +153,7 @@ void TelescopePropertiesWindow::prepareNewIndiConfiguration(const QString& id)
 	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 	ui->radioButtonJ2000->setChecked(true);
 	ui->checkBoxConnectAtStartup->setChecked(false);
-	ui->groupBoxFovCircles->setChecked(false);
-	ui->lineEditFovCircleSizes->clear();
+	fovCircleList.clear();
 	populateShortcutNumberList();
 
 	showConnectionTab(true);
@@ -182,8 +177,7 @@ void TelescopePropertiesWindow::prepareNewVirtualConfiguration(const QString& id
 
 	ui->lineEditName->setText(configuredId);
 	ui->checkBoxConnectAtStartup->setChecked(true);
-	ui->groupBoxFovCircles->setChecked(false);
-	ui->lineEditFovCircleSizes->clear();
+	fovCircleList.clear();
 	populateShortcutNumberList();
 
 	ui->stackedWidget->setCurrentWidget(ui->pageProperties);
@@ -258,18 +252,8 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& i
 	bool connectAtStartup = properties.value("connectsAtStartup", false).toBool();
 	ui->checkBoxConnectAtStartup->setChecked(connectAtStartup);
 
-	QStringList circleList = properties.value("fovCircles").toStringList();
-	if(!circleList.isEmpty())
-	{
-		ui->groupBoxFovCircles->setChecked(true);
-		ui->lineEditFovCircleSizes->setText(circleList.join(", "));
-	}
-	else
-	{
-		ui->groupBoxFovCircles->setChecked(false);
-		ui->lineEditFovCircleSizes->clear();
-	}
-
+	fovCircleList = properties.value("fovCircles").toList();
+	
 	populateShortcutNumberList();
 	int shortcutNumber = properties.value("shortcutNumber").toInt();
 	QString shortcutNumberString = QString::number(shortcutNumber);
@@ -519,28 +503,9 @@ void TelescopePropertiesWindow::saveChanges()
 
 	bool connectAtStartup = ui->checkBoxConnectAtStartup->isChecked();
 	newTelescopeProperties.insert("connectsAtStartup", connectAtStartup);
-
-	//Circles
-	QString rawCirclesString = ui->lineEditFovCircleSizes->text().trimmed();
-	QStringList rawFovCircles;
-	if(ui->groupBoxFovCircles->isChecked() && !(rawCirclesString.isEmpty()))
-	{
-		rawFovCircles = rawCirclesString.simplified().remove(' ').split(',', QString::SkipEmptyParts);
-		rawFovCircles.removeDuplicates();
-		rawFovCircles.sort();
-		
-		QVariantList fovCircles;
-		for(int i = 0; i < rawFovCircles.size(); i++)
-		{
-			if(i >= MAX_CIRCLE_COUNT)
-				break;
-			double circle = rawFovCircles.at(i).toDouble();
-			if(circle > 0.0)
-				fovCircles.append(circle);
-		}
-		if (!fovCircles.isEmpty())
-			newTelescopeProperties.insert("fovCircles", fovCircles);
-	}
+	
+	if (!fovCircleList.isEmpty())
+		newTelescopeProperties.insert("fovCircles", fovCircleList);
 
 	int index = ui->comboBoxShortcutNumber->currentIndex();
 	int shortcutNumber = ui->comboBoxShortcutNumber->itemData(index).toInt();

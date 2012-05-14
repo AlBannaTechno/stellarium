@@ -339,38 +339,6 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBoxFovCircles">
-             <property name="title">
-              <string>Add field of view indicators (circles)</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayoutUserInterface">
-              <property name="margin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QLabel" name="labelFovCircles">
-                <property name="text">
-                 <string>Circle size(s) in angular degrees:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="lineEditFovCircleSizes">
-                <property name="toolTip">
-                 <string>Up to ten decimal values in degrees of arc, separated with commas</string>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
             <spacer name="verticalSpacerGeneral">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -932,8 +900,6 @@ Increase this value if the reticle is skipping.</string>
   <tabstop>lineEditName</tabstop>
   <tabstop>checkBoxConnectAtStartup</tabstop>
   <tabstop>comboBoxShortcutNumber</tabstop>
-  <tabstop>groupBoxFovCircles</tabstop>
-  <tabstop>lineEditFovCircleSizes</tabstop>
   <tabstop>doubleSpinBoxDelay</tabstop>
   <tabstop>radioButtonJ2000</tabstop>
   <tabstop>radioButtonJNow</tabstop>

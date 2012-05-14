@@ -501,6 +501,28 @@ void TelescopeControl::handleDeviceDefinition(const QString& clientId,
 		                                                  deviceId,
 		                                                  client);
 		
+		QVariantMap properties = connectionsProperties.value(clientId).toMap();
+		if (!properties.isEmpty())
+		{
+			QVariantMap devices = properties.value("devices").toMap();
+			QVariantMap device = devices.value(deviceId).toMap();
+			if (device.isEmpty())
+			{
+				device.insert("name", deviceId);
+			}
+			else
+			{
+				QVariantList fovCircles = device.value("fovCircles").toList();
+				foreach(QVariant fov, fovCircles)
+				{
+					ti->addFovCircle(fov.toDouble());
+				}
+			}
+			devices.insert(deviceId, device);
+			properties.insert("devices", devices);
+		}
+		connectionsProperties.insert(clientId, properties);
+		
 		// TODO: Add stuff like saved FOV circles?
 		
 		TelescopeClientP tp(ti);
@@ -749,6 +771,56 @@ void TelescopeControl::saveConfiguration()
 
 void TelescopeControl::saveConnections()
 {
+	QMutableMapIterator<QString, QVariant> node(connectionsProperties);
+	while(node.hasNext())
+	{
+		node.next();
+		QString key = node.key();
+		QVariantMap properties = node.value().toMap();
+		QString interfaceType = properties.value("interface").toString();
+		bool isRemote = properties.value("isRemoteConnection", false).toBool();
+		if (interfaceType == "INDI" && isRemote)
+		{
+			QVariantMap subDevices = properties.value("devices").toMap();
+			QMutableMapIterator<QString, QVariant> sd(subDevices);
+			while(sd.hasNext())
+			{
+				sd.next();
+				QVariantMap sdProperties = sd.value().toMap();
+				QString id = key % "|" % sd.key();
+				TelescopeClientP t = telescopes.value(id);
+				if (t)
+				{
+					QList<double> fovCircles = t->getFovCircles();
+					QVariantList fovCirclesV;
+					foreach(double fov, fovCircles)
+					{
+						fovCirclesV.append(fov);
+					}
+					sdProperties.insert("fovCircles", fovCirclesV);
+				}
+				//qDebug() << sdProperties;
+				sd.value() = sdProperties;
+			}
+			properties.insert("devices", subDevices);
+		}
+		else
+		{
+			TelescopeClientP t = telescopes.value(key);
+			if (t)
+			{
+				QList<double> fovCircles = t->getFovCircles();
+				QVariantList fovCirclesV;
+				foreach(double fov, fovCircles)
+				{
+					fovCirclesV.append(fov);
+				}
+				properties.insert("fovCircles", fovCirclesV);
+			}
+		}
+		node.value() = properties;
+	}
+	
 	try
 	{
 		//Open/create the JSON file
@@ -966,7 +1038,12 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 	}
 	else if (interfaceType == "INDI")
 	{
-		if (!isRemote)
+		if (isRemote)
+		{
+			QVariant devices = properties.value("devices");
+			newProperties.insert("devices", devices);
+		}
+		else
 		{
 			//TODO: Better check
 			// TODO: Remove driver field?
@@ -1255,6 +1332,11 @@ int TelescopeControl::getFreeTcpPort()
 bool TelescopeControl::isValidDelay(int delay)
 {
 	return (delay > 0 && delay <= MICROSECONDS_FROM_SECONDS(10));
+}
+
+TelescopeClientP TelescopeControl::getTelescope(const QString& id)
+{
+	return telescopes.value(id, TelescopeClientP());
 }
 
 

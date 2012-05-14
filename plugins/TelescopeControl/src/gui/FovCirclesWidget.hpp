@@ -43,6 +43,7 @@ public:
 	void applyFovCircleSizes();
 	
 signals:
+	void fovCirclesChanged();
 	
 public slots:
 	void readLineEdit();

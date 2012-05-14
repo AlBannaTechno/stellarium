@@ -110,11 +110,12 @@ void FovCirclesWidget::applyFovCircleSizes()
 		if (ok && fov > 0.009)
 			device->addFovCircle(fov);
 	}
+	emit fovCirclesChanged();
 }
 
 void FovCirclesWidget::readLineEdit()
 {
-	qDebug() << "FovCirclesWidget::applyFovCircleSizes()";
+	//qDebug() << "FovCirclesWidget::applyFovCircleSizes()";
 	QString string = lineEditCircleList->text().trimmed();
 	QRegExp separator("\\s*,\\s*");
 	QStringList tempList = string.split(separator, QString::SkipEmptyParts);
@@ -122,7 +123,7 @@ void FovCirclesWidget::readLineEdit()
 	if (tempSet != fovCircleSizes)
 	{
 		fovCircleSizes = tempSet;
-		qDebug() << fovCircleSizes;
+		//qDebug() << fovCircleSizes;
 		
 		applyFovCircleSizes();
 	}
@@ -134,6 +135,7 @@ void FovCirclesWidget::clearFovCircleSizes()
 	device->resetFovCircles();
 	lineEditCircleList->clear();
 	fovCircleSizes.clear();
+	emit fovCirclesChanged();
 }
 
 void FovCirclesWidget::addTelradCircles()

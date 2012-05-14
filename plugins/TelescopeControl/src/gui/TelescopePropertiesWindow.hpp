@@ -25,6 +25,7 @@
 #include <QHash>
 #include <QIntValidator>
 #include <QStringList>
+#include <QVariantList>
 #ifdef Q_OS_WIN32
 #include <QAxObject>
 #endif
@@ -94,10 +95,10 @@ signals:
 	
 private:
 	QStringList deviceModelNames;
+	QVariantList fovCircleList;
 	
 	QRegExpValidator* clientNameValidator;
 	QRegExpValidator* hostNameValidator;
-	QRegExpValidator* circleListValidator;
 	QRegExpValidator* serialPortValidator;
 	
 	QString configuredId;
