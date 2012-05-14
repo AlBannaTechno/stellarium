@@ -1353,8 +1353,12 @@ bool TelescopeControl::startClient(const QString& id,
 		}
 		if (tempP && tempP->isInitialized())
 		{
-			connect(tempP, SIGNAL(coordinatesDefined(QString)),
-			        this, SLOT(addIndiTelescope(QString)));
+			coordsDefinedMapper.setMapping(tempP, id);
+			connect(tempP, SIGNAL(coordinatesDefined()),
+			        &coordsDefinedMapper, SLOT(map()));
+			coordsUndefinedMapper.setMapping(tempP, id);
+			connect(tempP, SIGNAL(coordinatesUndefined()),
+			        &coordsUndefinedMapper, SLOT(map()));
 		}
 	}
 	else if (interfaceType == "INDI Pointer")
