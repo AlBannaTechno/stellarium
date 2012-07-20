@@ -52,10 +52,10 @@ class DeviceControlPanel : public StelDialog
 public:
 	DeviceControlPanel(TelescopeControl* plugin);
 	virtual ~DeviceControlPanel();
-	void languageChanged();
 	void updateStyle();
 
 public slots:
+	virtual void retranslate();
 	//! \param clientName must be unique among client names.
 	//! \param client must point to a valid client.
 	void addIndiClient(IndiClient* client);

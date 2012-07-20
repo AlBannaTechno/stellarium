@@ -38,10 +38,14 @@ class BottomStelBar;
 class InfoPanel : public QGraphicsTextItem
 {
 	public:
+		//! Reads "gui/selected_object_info", etc from the configuration file.
+		//! @todo Bad idea to read from the configuration file in a constructor? --BM
 		InfoPanel(QGraphicsItem* parent);
 		void setInfoTextFilters(const StelObject::InfoStringGroup& aflags) {infoTextFilters=aflags;}
 		const StelObject::InfoStringGroup& getInfoTextFilters(void) const {return infoTextFilters;}
 		void setTextFromObjects(const QList<StelObjectP>&);
+		const QString getSelectedText(void);
+
 	private:
 		StelObject::InfoStringGroup infoTextFilters;
 };

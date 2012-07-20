@@ -63,7 +63,7 @@ ConfigurationWindow::~ConfigurationWindow()
 	delete connectionListModel;
 }
 
-void ConfigurationWindow::languageChanged()
+void ConfigurationWindow::retranslate()
 {
 	if (dialog)
 	{
@@ -90,7 +90,7 @@ void ConfigurationWindow::createDialogContent()
 	ui->setupUi(dialog);
 	
 	//Inherited connect
-	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 	
 	//Connect: sender, signal, receiver, method

@@ -49,7 +49,7 @@ DeviceControlPanel::~DeviceControlPanel()
 	delete ui;
 }
 
-void DeviceControlPanel::languageChanged()
+void DeviceControlPanel::retranslate()
 {
 	if (dialog)
 		ui->retranslateUi(dialog);

@@ -147,7 +147,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tabConnections">
       <property name="sizePolicy">
@@ -659,7 +659,7 @@
      </widget>
      <widget class="QWidget" name="tabAbout">
       <attribute name="title">
-       <string>About</string>
+       <string>About plugin</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>

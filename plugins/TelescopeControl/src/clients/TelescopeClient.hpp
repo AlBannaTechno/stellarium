@@ -110,7 +110,7 @@ protected:
 	QString nameI18n;
 	const QString name;
 private:
-	float getSelectPriority(const StelCore*) const {return -10.f;}
+	float getSelectPriority(const StelCore* core) const {Q_UNUSED(core); return -10.f;}
 private:
 	//! List of FOV values: circle diameter in angular degrees.
 	QList<double> fovCircles;

@@ -3,6 +3,7 @@
  * Copyright (C) 2006 Fabien Chereau
  * Copyright (C) 2010 Bogdan Marinov (add/remove landscapes feature)
  * Copyright (C) 2011 Alexander Wolf
+ * Copyright (C) 2012 Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -120,6 +121,8 @@ void Cardinals::draw(const StelCore* core, double latitude) const
 	Vec3f xy;
 
 	float shift = sPainter.getFontMetrics().width(sNorth)/2;
+	if (core->getProjection(StelCore::FrameJ2000)->getMaskType() == StelProjector::MaskDisk)
+		shift = 0;
 
 	// N for North
 	pos.set(-1.f, 0.f, 0.f);
@@ -276,7 +279,7 @@ void LandscapeMgr::init()
 	setCurrentLandscapeID(defaultLandscapeID);
 	setFlagLandscape(conf->value("landscape/flag_landscape", conf->value("landscape/flag_ground", true).toBool()).toBool());
 	setFlagFog(conf->value("landscape/flag_fog",true).toBool());
-	setFlagAtmosphere(conf->value("landscape/flag_atmosphere").toBool());
+	setFlagAtmosphere(conf->value("landscape/flag_atmosphere", true).toBool());
 	setAtmosphereFadeDuration(conf->value("landscape/atmosphere_fade_duration",0.5).toFloat());
 	setAtmosphereLightPollutionLuminance(conf->value("viewing/light_pollution_luminance",0.0).toFloat());
 	cardinalsPoints = new Cardinals();
@@ -344,8 +347,8 @@ bool LandscapeMgr::setCurrentLandscapeID(const QString& id)
 
 		if (landscape->getDefaultFogSetting() >-1)
 		  {
-		    setFlagFog((bool) landscape->getDefaultFogSetting());
-		    landscape->setFlagShowFog((bool) landscape->getDefaultFogSetting());
+			setFlagFog((bool) landscape->getDefaultFogSetting());
+			landscape->setFlagShowFog((bool) landscape->getDefaultFogSetting());
 		  }
 		if (landscape->getDefaultBortleIndex() > 0)
 		  {
@@ -411,9 +414,12 @@ void LandscapeMgr::updateI18n()
 	if (cardinalsPoints) cardinalsPoints->updateI18n();
 }
 
-void LandscapeMgr::setFlagLandscape(bool b)
+void LandscapeMgr::setFlagLandscape(const bool displayed)
 {
-	landscape->setFlagShow(b);
+	if(landscape->getFlagShow() != displayed) {
+		landscape->setFlagShow(displayed);
+		emit landscapeDisplayedChanged(displayed);
+	}
 }
 
 bool LandscapeMgr::getFlagLandscape() const
@@ -421,9 +427,12 @@ bool LandscapeMgr::getFlagLandscape() const
 	return landscape->getFlagShow();
 }
 
-void LandscapeMgr::setFlagFog(bool b)
+void LandscapeMgr::setFlagFog(const bool displayed)
 {
-	landscape->setFlagShowFog(b);
+	if (landscape->getFlagShowFog() != displayed) {
+		landscape->setFlagShowFog(displayed);
+		emit fogDisplayedChanged(displayed);
+	}
 }
 
 bool LandscapeMgr::getFlagFog() const
@@ -503,9 +512,12 @@ QString LandscapeMgr::getCurrentLandscapeHtmlDescription() const
 }
 
 //! Set flag for displaying Cardinals Points
-void LandscapeMgr::setFlagCardinalsPoints(bool b)
+void LandscapeMgr::setFlagCardinalsPoints(const bool displayed)
 {
-	cardinalsPoints->setFlagShow(b);
+	if (cardinalsPoints->getFlagShow() != displayed) {
+		cardinalsPoints->setFlagShow(displayed);
+		emit cardinalsPointsDisplayedChanged(displayed);
+	}
 }
 
 //! Get flag for displaying Cardinals Points
@@ -529,10 +541,13 @@ Vec3f LandscapeMgr::getColorCardinalPoints() const
 ///////////////////////////////////////////////////////////////////////////////////////
 // Atmosphere
 //! Set flag for displaying Atmosphere
-void LandscapeMgr::setFlagAtmosphere(bool b)
+void LandscapeMgr::setFlagAtmosphere(const bool displayed)
 {
-	atmosphere->setFlagShow(b);
-	StelApp::getInstance().getCore()->getSkyDrawer()->setFlagHasAtmosphere(b);
+	if (atmosphere->getFlagShow() != displayed) {
+		atmosphere->setFlagShow(displayed);
+		StelApp::getInstance().getCore()->getSkyDrawer()->setFlagHasAtmosphere(displayed);
+		emit atmosphereDisplayedChanged(displayed);
+	}
 }
 
 //! Get flag for displaying Atmosphere

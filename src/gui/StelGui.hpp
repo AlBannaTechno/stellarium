@@ -1,17 +1,17 @@
 /*
  * Stellarium
  * Copyright (C) 2008 Fabien Chereau
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
@@ -22,15 +22,6 @@
 
 #include "StelModule.hpp"
 #include "StelObject.hpp"
-#include "LocationDialog.hpp"
-#include "ViewDialog.hpp"
-#include "HelpDialog.hpp"
-#include "DateTimeDialog.hpp"
-#include "SearchDialog.hpp"
-#include "ConfigurationDialog.hpp"
-#ifdef ENABLE_SCRIPT_CONSOLE
-#include "ScriptConsole.hpp"
-#endif
 #include "StelGuiBase.hpp"
 #include "StelStyle.hpp"
 
@@ -42,6 +33,15 @@ class QTimeLine;
 class StelButton;
 class BottomStelBar;
 class InfoPanel;
+class ConfigurationDialog;
+class DateTimeDialog;
+class HelpDialog;
+class LocationDialog;
+class SearchDialog;
+class ViewDialog;
+#ifdef ENABLE_SCRIPT_CONSOLE
+class ScriptConsole;
+#endif
 
 //! @class StelGui
 //! Main class for the GUI based on QGraphicView.
@@ -93,7 +93,7 @@ public:
 	bool initComplete(void) const;
 
 #ifdef ENABLE_SCRIPT_CONSOLE
-	ScriptConsole* getScriptConsole() {return &scriptConsole;}
+	ScriptConsole* getScriptConsole() {return scriptConsole;}
 #endif
 
 	//! Used to force a refreshing of the GUI elements such as the button bars.
@@ -109,11 +109,12 @@ public:
 	virtual const StelObject::InfoStringGroup& getInfoTextFilters() const;
 	
 	virtual QAction* addGuiActions(const QString& actionName,
-								   const QString& text,
-								   const QString& shortCut,
-								   const QString& helpGroup,
-								   bool checkable=true,
-								   bool autoRepeat=false);
+									 const QString& text,
+									 const QString& shortCut,
+									 const QString& helpGroup,
+									 bool checkable=true,
+									 bool autoRepeat=false,
+									 bool global = false);
 	
 public slots:
 	//! Define whether the buttons toggling image flip should be visible
@@ -126,16 +127,16 @@ public slots:
 	bool getAutoHideHorizontalButtonBar() const;
 	//! Set the auto-hide status of the horizontal toolbar.
 	//! When set to true, the horizontal toolbar will auto-hide itself, only
-	//! making an appearance when the mouse is nearby.  When false, it will 
+	//! making an appearance when the mouse is nearby.  When false, it will
 	//! remain on screen.
-	//! @param b to hide or not to hide	
+	//! @param b to hide or not to hide
 	void setAutoHideHorizontalButtonBar(bool b);
 	
 	//! Get the auto-hide status of the vertical toolbar.
 	bool getAutoHideVerticalButtonBar() const;
 	//! Set the auto-hide status of the vertical toolbar.
 	//! When set to true, the vertical toolbar will auto-hide itself, only
-	//! making an appearance when the mouse is nearby.  When false, it will 
+	//! making an appearance when the mouse is nearby.  When false, it will
 	//! remain on screen.
 	//! @param b to hide or not to hide
 	void setAutoHideVerticalButtonBar(bool b);
@@ -146,6 +147,9 @@ public slots:
 	void increaseScriptSpeed();
 	void decreaseScriptSpeed();
 	void setRealScriptSpeed();
+	void stopScript();
+	void pauseScript();
+	void resumeScript();
 	#endif
 
 	//! Hide or show the GUI.  Public so it can be called from scripts.
@@ -160,11 +164,34 @@ private slots:
 	//! Load color scheme from the given ini file and section name
 	void setStelStyle(const QString& section);
 	void quit();
+	void home();
 	void updateI18n();
-	
+	//! Process changes from the ConstellationMgr
+	void artDisplayedUpdated(const bool displayed);
+	void boundariesDisplayedUpdated(const bool displayed);
+	void linesDisplayedUpdated(const bool displayed);
+	void namesDisplayedUpdated(const bool displayed);
+	//! Process changes from the GridLinesMgr
+	void azimuthalGridDisplayedUpdated(const bool displayed);
+	void equatorGridDisplayedUpdated(const bool displayed);
+	void equatorJ2000GridDisplayedUpdated(const bool displayed);
+	void eclipticJ2000GridDisplayedUpdated(const bool displayed);
+	void galacticGridDisplayedUpdated(const bool displayed);
+	void equatorLineDisplayedUpdated(const bool displayed);
+	void eclipticLineDisplayedUpdated(const bool displayed);
+	void meridianLineDisplayedUpdated(const bool displayed);
+	void horizonLineDisplayedUpdated(const bool displayed);
+	void galacticPlaneLineDisplayedUpdated(const bool displayed);
+	//! Process changes from the LandscapeMgr
+	void atmosphereDisplayedUpdated(const bool displayed);
+	void cardinalsPointsDisplayedUpdated(const bool displayed);
+	void fogDisplayedUpdated(const bool displayed);
+	void landscapeDisplayedUpdated(const bool displayed);
+	void copySelectedObjectInfo(void);
+
 private:
 	QGraphicsWidget* topLevelGraphicsWidget;
-			
+
 	class SkyGui* skyGui;
 	
 	StelButton* buttonTimeRewind;
@@ -174,14 +201,14 @@ private:
 	
 	StelButton* buttonGotoSelectedObject;
 	
-	LocationDialog locationDialog;
-	HelpDialog helpDialog;
-	DateTimeDialog dateTimeDialog;
-	SearchDialog searchDialog;
-	ViewDialog viewDialog;
+	LocationDialog* locationDialog;
+	HelpDialog* helpDialog;
+	DateTimeDialog* dateTimeDialog;
+	SearchDialog* searchDialog;
+	ViewDialog* viewDialog;
 	ConfigurationDialog* configurationDialog;
 #ifdef ENABLE_SCRIPT_CONSOLE
-	ScriptConsole scriptConsole;
+	ScriptConsole* scriptConsole;
 #endif
 
 	bool flagShowFlipButtons;
@@ -198,6 +225,15 @@ private:
 
 	// Currently used StelStyle
 	StelStyle currentStelStyle;
+
+	// This method is used by init() to initialize the ConstellationMgr instance.
+	void initConstellationMgr();
+
+	// This method is used by init() to initialize the GridLineMgr instance.
+	void initGrindLineMgr();
+
+	// This method is used by init() to initialize the LandscapeMgr instance.
+	void initLandscapeMgr();
 };
 
 //! Allow to load the GUI as a static plugin

@@ -69,7 +69,7 @@ TelescopePropertiesWindow::~TelescopePropertiesWindow()
 	delete serialPortValidator;
 }
 
-void TelescopePropertiesWindow::languageChanged()
+void TelescopePropertiesWindow::retranslate()
 {
 	if (dialog)
 		ui->retranslateUi(dialog);
@@ -81,7 +81,7 @@ void TelescopePropertiesWindow::createDialogContent()
 	ui->setupUi(dialog);
 	
 	//Inherited connect
-	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()),this, SLOT(discardChanges()));
 	connect(dialog, SIGNAL(rejected()), this, SLOT(discardChanges()));
 	
@@ -209,8 +209,8 @@ void TelescopePropertiesWindow::prepareNewAscomConfiguration(const QString& id)
 	ui->doubleSpinBoxDelay->setValue(SECONDS_FROM_MICROSECONDS(DEFAULT_DELAY));
 	ui->radioButtonJ2000->setChecked(true);
 	ui->checkBoxConnectAtStartup->setChecked(false);
-	ui->groupBoxFovCircles->setChecked(false);
-	ui->lineEditFovCircleSizes->clear();
+	//ui->groupBoxFovCircles->setChecked(false);
+	//ui->lineEditFovCircleSizes->clear();
 	populateShortcutNumberList();
 
 	ui->lineEditAscomControlId->clear();

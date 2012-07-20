@@ -47,7 +47,7 @@ StelDeviceWidget::StelDeviceWidget(TelescopeControl *plugin,
 	
 	// TODO: Check if this is really necessary.
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
-	        this, SLOT(languageChanged()));
+	        this, SLOT(retranslate()));
 	
 	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)),
 	        this, SLOT(setFormatHMS(bool)));
@@ -74,7 +74,7 @@ StelDeviceWidget::~StelDeviceWidget()
 	ui = 0;
 }
 
-void StelDeviceWidget::languageChanged()
+void StelDeviceWidget::retranslate()
 {
 	if (ui)
 		ui->retranslateUi(this);

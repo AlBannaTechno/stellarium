@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-12-16 15:05+0700\n"
-"PO-Revision-Date: 2012-02-08 12:47+0000\n"
-"Last-Translator: Jose A. Macas D. <josedurazo92@gmail.com>\n"
+"POT-Creation-Date: 2012-07-02 13:42+0700\n"
+"PO-Revision-Date: 2012-07-03 05:59+0000\n"
+"Last-Translator: José A. Macas Durazo <josedurazo92@gmail.com>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2012-02-09 05:23+0000\n"
-"X-Generator: Launchpad (build 14763)\n"
+"X-Launchpad-Export-Date: 2012-07-04 04:38+0000\n"
+"X-Generator: Launchpad (build 15544)\n"
 "X-Poedit-Country: SPAIN\n"
 "X-Poedit-Language: Spanish\n"
 
@@ -779,7 +779,7 @@ msgstr "Las doncellas"
 
 #: skycultures/arabic/star_names.fab:55
 msgid "The tow juror"
-msgstr ""
+msgstr "El Jurado de remolque"
 
 #: skycultures/arabic/star_names.fab:56
 msgid "The pulled-in paw"
@@ -811,11 +811,11 @@ msgstr "La cabeza posterior de los gemelos"
 
 #: skycultures/arabic/star_names.fab:64
 msgid "Suhayl hadar"
-msgstr ""
+msgstr "Suhayl hadar"
 
 #: skycultures/arabic/star_names.fab:65
 msgid "Sworn Suhayl"
-msgstr ""
+msgstr "Real Suhayl (Regor)"
 
 #: skycultures/arabic/star_names.fab:66
 msgid "One of the antelopes"
@@ -972,7 +972,7 @@ msgstr "El lanzador de lanzas"
 
 #: skycultures/arabic/star_names.fab:104
 msgid "One of Al-ghofer's"
-msgstr ""
+msgstr "Uno de Al-ghofer"
 
 #: skycultures/arabic/star_names.fab:105
 msgid "The shepherd"
@@ -1156,7 +1156,7 @@ msgstr "La rodilla del arquero"
 
 #: skycultures/arabic/star_names.fab:150
 msgid "The hen-bill"
-msgstr ""
+msgstr "El pico del cisne"
 
 #: skycultures/arabic/star_names.fab:151
 msgid "The arrow"
@@ -2318,8 +2318,8 @@ msgid "Groom"
 msgstr "Mozo"
 
 #: skycultures/korean/constellation_names.eng.fab:77
-msgid "Office for Chariot"
-msgstr "Office for chariot"
+msgid "Charioteer"
+msgstr "Auriga"
 
 #: skycultures/korean/constellation_names.eng.fab:78
 msgid "Human"
@@ -2358,8 +2358,8 @@ msgid "Detached Palace"
 msgstr "Palacio independiente"
 
 #: skycultures/korean/constellation_names.eng.fab:88
-msgid "Ofice for Construction"
-msgstr "Oficina para construcción"
+msgid "Official for Materials Supply"
+msgstr "Oficial para el Suministro de Materiales"
 
 #: skycultures/korean/constellation_names.eng.fab:89
 msgid "Lightening"
@@ -2559,8 +2559,8 @@ msgid "General of Border"
 msgstr "General del borde"
 
 #: skycultures/korean/constellation_names.eng.fab:142
-msgid "Cerficate of Sky"
-msgstr "Certificado de cielo"
+msgid "Celebration of Sky"
+msgstr "Celebración del Cielo"
 
 #: skycultures/korean/constellation_names.eng.fab:143
 msgid "Flag of Emperor"
@@ -4984,3 +4984,12 @@ msgstr "Errai"
 
 #~ msgid "Schrine of Sky"
 #~ msgstr "Santuario del cielo"
+
+#~ msgid "Ofice for Construction"
+#~ msgstr "Oficina para construcción"
+
+#~ msgid "Office for Chariot"
+#~ msgstr "Office for chariot"
+
+#~ msgid "Cerficate of Sky"
+#~ msgstr "Certificado de cielo"

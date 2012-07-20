@@ -42,7 +42,7 @@ public:
 	virtual ~StelDeviceWidget();
 
 public slots:
-	void languageChanged();
+	void retranslate();
 	
 private slots:
 	//! reads the fields and slews a telescope
