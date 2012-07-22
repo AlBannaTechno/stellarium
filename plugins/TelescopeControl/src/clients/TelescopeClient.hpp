@@ -116,4 +116,6 @@ private:
 	QList<double> fovCircles;
 };
 
+typedef QSharedPointer<TelescopeClient> TelescopeClientP;
+
 #endif // _TELESCOPE_CLIENT_HPP_

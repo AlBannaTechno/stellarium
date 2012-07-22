@@ -65,7 +65,7 @@ void DeviceControlPanel::createDialogContent()
 	
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
-	        this, SLOT(languageChanged()));
+	        this, SLOT(retranslate()));
 	
 	// Initialize the style
 	updateStyle();

@@ -35,6 +35,7 @@
 #include "StelProjectorType.hpp"
 #include "StelTextureTypes.hpp"
 #include "TelescopeControlGlobals.hpp"
+#include "TelescopeClient.hpp"
 #include "VecMath.hpp"
 
 #include <QFile>
@@ -54,7 +55,6 @@ class QStandardItemModel;
 class StelObject;
 class StelPainter;
 class StelProjector;
-class TelescopeClient;
 class DeviceControlPanel;
 class IndiClient;
 class IndiServices;
@@ -70,8 +70,6 @@ namespace devicecontrol
 	class ConfigurationWindow;
 }
 using namespace devicecontrol;
-
-typedef QSharedPointer<TelescopeClient> TelescopeClientP;
 
 //! Main class of the %Device Control plug-in.
 //! It manages a number of device connections and a number of StelObject-s
