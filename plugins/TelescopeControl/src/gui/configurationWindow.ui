@@ -146,9 +146,6 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="currentIndex">
-      <number>3</number>
-     </property>
      <widget class="QWidget" name="tabConnections">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -697,8 +694,6 @@
   <tabstop>textBrowserHelp</tabstop>
   <tabstop>textBrowserAbout</tabstop>
  </tabstops>
- <resources>
-  <include location="../../../../data/gui/guiRes.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
