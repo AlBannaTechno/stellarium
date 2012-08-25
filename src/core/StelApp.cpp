@@ -44,6 +44,7 @@
 #include "StelJsonParser.hpp"
 #include "StelSkyLayerMgr.hpp"
 #include "StelAudioMgr.hpp"
+#include "StelVideoMgr.hpp"
 #include "StelGuiBase.hpp"
 #include "StelPainter.hpp"
 
@@ -127,6 +128,7 @@ StelApp::~StelApp()
 	delete skyCultureMgr; skyCultureMgr=NULL;
 	delete localeMgr; localeMgr=NULL;
 	delete audioMgr; audioMgr=NULL;
+	delete videoMgr; videoMgr=NULL;
 	delete stelObjectMgr; stelObjectMgr=NULL; // Delete the module by hand afterward
 	delete textureMgr; textureMgr=NULL;
 	delete planetLocationMgr; planetLocationMgr=NULL;
@@ -291,6 +293,9 @@ void StelApp::init(QSettings* conf)
 
 	// Init audio manager
 	audioMgr = new StelAudioMgr();
+
+	// Init video manager
+	videoMgr = new StelVideoMgr();
 
 	// Constellations
 	ConstellationMgr* asterisms = new ConstellationMgr(hip_stars);
