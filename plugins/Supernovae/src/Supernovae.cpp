@@ -17,7 +17,6 @@
  */
 
 #include "StelProjector.hpp"
-#include "StelPainter.hpp"
 #include "StelApp.hpp"
 #include "StelCore.hpp"
 #include "StelGui.hpp"
@@ -25,7 +24,6 @@
 #include "StelLocaleMgr.hpp"
 #include "StelModuleMgr.hpp"
 #include "StelObjectMgr.hpp"
-#include "StelTextureMgr.hpp"
 #include "StelJsonParser.hpp"
 #include "StelFileMgr.hpp"
 #include "StelUtils.hpp"
@@ -33,6 +31,8 @@
 #include "LabelMgr.hpp"
 #include "Supernova.hpp"
 #include "Supernovae.hpp"
+#include "renderer/StelRenderer.hpp"
+#include "renderer/StelTextureNew.hpp"
 #include "SupernovaeDialog.hpp"
 
 #include <QNetworkAccessManager>
@@ -41,14 +41,15 @@
 #include <QAction>
 #include <QProgressBar>
 #include <QDebug>
-#include <QFileInfo>
 #include <QFile>
+#include <QFileInfo>
 #include <QTimer>
-#include <QVariantMap>
-#include <QVariant>
 #include <QList>
+#include <QSettings>
 #include <QSharedPointer>
 #include <QStringList>
+#include <QVariant>
+#include <QVariantMap>
 
 #define CATALOG_FORMAT_VERSION 1 /* Version of format of catalog */
 
@@ -81,7 +82,8 @@ Q_EXPORT_PLUGIN2(Supernovae, SupernovaeStelPluginInterface)
  Constructor
 */
 Supernovae::Supernovae()
-	: progressBar(NULL)
+	: texPointer(NULL)
+	, progressBar(NULL)
 {
 	setObjectName("Supernovae");
 	configDialog = new SupernovaeDialog();
@@ -99,7 +101,10 @@ Supernovae::~Supernovae()
 
 void Supernovae::deinit()
 {
-	texPointer.clear();
+	if(NULL != texPointer)
+	{
+		delete texPointer;
+	}
 }
 
 /*
@@ -133,17 +138,11 @@ void Supernovae::init()
 		readSettingsFromConfig();
 
 		sneJsonPath = StelFileMgr::findFile("modules/Supernovae", (StelFileMgr::Flags)(StelFileMgr::Directory|StelFileMgr::Writable)) + "/supernovae.json";
-
-		texPointer = StelApp::getInstance().getTextureManager().createTexture("textures/pointeur2.png");
-
 		// key bindings and other actions
-		// TRANSLATORS: Title of a group of key bindings in the Help window
-		QString groupName = N_("Plugin Key Bindings");
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-		gui->addGuiActions("actionShow_Supernovae_ConfigDialog", N_("Historical Supernovae configuration window"), "", groupName, true);
 
-		connect(gui->getGuiActions("actionShow_Supernovae_ConfigDialog"), SIGNAL(toggled(bool)), configDialog, SLOT(setVisible(bool)));
-		connect(configDialog, SIGNAL(visibleChanged(bool)), gui->getGuiActions("actionShow_Supernovae_ConfigDialog"), SLOT(setChecked(bool)));
+		connect(gui->getGuiAction("actionShow_Supernovae_ConfigDialog"), SIGNAL(toggled(bool)), configDialog, SLOT(setVisible(bool)));
+		connect(configDialog, SIGNAL(visibleChanged(bool)), gui->getGuiAction("actionShow_Supernovae_ConfigDialog"), SLOT(setChecked(bool)));
 	}
 	catch (std::runtime_error &e)
 	{
@@ -192,27 +191,27 @@ void Supernovae::init()
 /*
  Draw our module. This should print name of first SNe in the main window
 */
-void Supernovae::draw(StelCore* core)
+void Supernovae::draw(StelCore* core, StelRenderer* renderer)
 {
 	StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
-	StelPainter painter(prj);
-	painter.setFont(font);
+	renderer->setFont(font);
 	
 	foreach (const SupernovaP& sn, snstar)
 	{
 		if (sn && sn->initialized)
-			sn->draw(core, painter);
+		{
+			sn->draw(core, renderer, prj);
+		}
 	}
 
 	if (GETSTELMODULE(StelObjectMgr)->getFlagSelectedObjectPointer())
-		drawPointer(core, painter);
-
+	{
+		drawPointer(core, renderer, prj);
+	}
 }
 
-void Supernovae::drawPointer(StelCore* core, StelPainter& painter)
+void Supernovae::drawPointer(StelCore* core, StelRenderer* renderer, StelProjectorP projector)
 {
-	const StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
-
 	const QList<StelObjectP> newSelected = GETSTELMODULE(StelObjectMgr)->getSelectedObject("Supernova");
 	if (!newSelected.empty())
 	{
@@ -221,16 +220,21 @@ void Supernovae::drawPointer(StelCore* core, StelPainter& painter)
 
 		Vec3d screenpos;
 		// Compute 2D pos and return if outside screen
-		if (!painter.getProjector()->project(pos, screenpos))
+		if (!projector->project(pos, screenpos))
+		{
 			return;
+		}
 
 		const Vec3f& c(obj->getInfoColor());
-		painter.setColor(c[0],c[1],c[2]);
+		renderer->setGlobalColor(c[0],c[1],c[2]);
+		if(NULL == texPointer)
+		{
+			texPointer = renderer->createTexture("textures/pointeur2.png");
+		}
 		texPointer->bind();
-		painter.enableTexture2d(true);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
-		painter.drawSprite2dMode(screenpos[0], screenpos[1], 13.f, StelApp::getInstance().getTotalRunTime()*40.);
+		renderer->setBlendMode(BlendMode_Alpha);
+		renderer->drawTexturedRect(screenpos[0] - 13.0f, screenpos[1] - 13.0f, 26.0f, 26.0f,
+		                           StelApp::getInstance().getTotalRunTime() * 40.0f);
 	}
 }
 
@@ -302,6 +306,26 @@ QStringList Supernovae::listMatchingObjectsI18n(const QString& objPrefix, int ma
 	result.sort();
 	if (result.size()>maxNbItem) result.erase(result.begin()+maxNbItem, result.end());
 
+	return result;
+}
+
+QStringList Supernovae::listAllObjects(bool inEnglish) const
+{
+	QStringList result;
+	if (inEnglish)
+	{
+		foreach (const SupernovaP& sn, snstar)
+		{
+			result << sn->getEnglishName();
+		}
+	}
+	else
+	{
+		foreach (const SupernovaP& sn, snstar)
+		{
+			result << sn->getNameI18n();
+		}
+	}
 	return result;
 }
 
@@ -403,11 +427,14 @@ QVariantMap Supernovae::loadSNeMap(QString path)
 void Supernovae::setSNeMap(const QVariantMap& map)
 {
 	snstar.clear();
+	snlist.clear();
 	QVariantMap sneMap = map.value("supernova").toMap();
 	foreach(QString sneKey, sneMap.keys())
 	{
 		QVariantMap sneData = sneMap.value(sneKey).toMap();
 		sneData["designation"] = QString("SN %1").arg(sneKey);
+
+		snlist.insert(sneData.value("designation").toString(), sneData.value("peakJD").toDouble());
 
 		SupernovaP sn(new Supernova(sneData));
 		if (sn->initialized)
@@ -453,7 +480,7 @@ bool Supernovae::configureGui(bool show)
 	if (show)
 	{
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-		gui->getGuiActions("actionShow_Supernovae_ConfigDialog")->setChecked(true);
+		gui->getGuiAction("actionShow_Supernovae_ConfigDialog")->setChecked(true);
 	}
 
 	return true;
@@ -471,7 +498,7 @@ void Supernovae::restoreDefaultConfigIni(void)
 {
 	conf->beginGroup("Supernovae");
 
-	// delete all existing Pulsars settings...
+	// delete all existing Supernovae settings...
 	conf->remove("");
 
 	conf->setValue("updates_enabled", true);
@@ -494,7 +521,7 @@ void Supernovae::readSettingsFromConfig(void)
 
 void Supernovae::saveSettingsToConfig(void)
 {
-	conf->beginGroup("Pulsars");
+	conf->beginGroup("Supernovae");
 
 	conf->setValue("url", updateUrl);
 	conf->setValue("update_frequency_days", updateFrequencyDays);
@@ -604,4 +631,20 @@ void Supernovae::messageTimeout(void)
 	{
 		GETSTELMODULE(LabelMgr)->deleteLabel(i);
 	}
+}
+
+QString Supernovae::getSupernovaeList()
+{
+	QString smonth[] = {q_("January"), q_("February"), q_("March"), q_("April"), q_("May"), q_("June"), q_("July"), q_("August"), q_("September"), q_("October"), q_("November"), q_("December")};
+	QStringList out;
+	int year, month, day;
+	QList<double> vals = snlist.values();
+	qSort(vals);
+	foreach(double val, vals)
+	{
+		StelUtils::getDateFromJulianDay(val, &year, &month, &day);
+		out << QString("%1 (%2 %3)").arg(snlist.key(val)).arg(day).arg(smonth[month-1]);
+	}
+
+	return out.join(", ");
 }

@@ -39,6 +39,7 @@ class HelpDialog;
 class LocationDialog;
 class SearchDialog;
 class ViewDialog;
+class ShortcutsDialog;
 #ifdef ENABLE_SCRIPT_CONSOLE
 class ScriptConsole;
 #endif
@@ -107,15 +108,9 @@ public:
 	
 	virtual void setInfoTextFilters(const StelObject::InfoStringGroup& aflags);
 	virtual const StelObject::InfoStringGroup& getInfoTextFilters() const;
-	
-	virtual QAction* addGuiActions(const QString& actionName,
-									 const QString& text,
-									 const QString& shortCut,
-									 const QString& helpGroup,
-									 bool checkable=true,
-									 bool autoRepeat=false,
-									 bool global = false);
-	
+
+	virtual QAction* getGuiAction(const QString& actionName);
+
 public slots:
 	//! Define whether the buttons toggling image flip should be visible
 	void setFlagShowFlipButtons(bool b);
@@ -141,7 +136,7 @@ public slots:
 	//! @param b to hide or not to hide
 	void setAutoHideVerticalButtonBar(bool b);
 
-	#ifndef DISABLE_SCRIPTING
+#ifndef DISABLE_SCRIPTING
 	//! change keys when a script is running / not running
 	void setScriptKeys(bool b);
 	void increaseScriptSpeed();
@@ -150,21 +145,20 @@ public slots:
 	void stopScript();
 	void pauseScript();
 	void resumeScript();
-	#endif
+#endif
 
 	//! Hide or show the GUI.  Public so it can be called from scripts.
-	void setGuiVisible(bool);
+	void setGuiVisible(bool);	
 
 private slots:
 	void reloadStyle();
-	#ifndef DISABLE_SCRIPTING
+#ifndef DISABLE_SCRIPTING
 	void scriptStarted();
 	void scriptStopped();
-	#endif
+#endif
 	//! Load color scheme from the given ini file and section name
 	void setStelStyle(const QString& section);
-	void quit();
-	void home();
+	void quit();	
 	void updateI18n();
 	//! Process changes from the ConstellationMgr
 	void artDisplayedUpdated(const bool displayed);
@@ -206,6 +200,7 @@ private:
 	DateTimeDialog* dateTimeDialog;
 	SearchDialog* searchDialog;
 	ViewDialog* viewDialog;
+	ShortcutsDialog* shortcutsDialog;
 	ConfigurationDialog* configurationDialog;
 #ifdef ENABLE_SCRIPT_CONSOLE
 	ScriptConsole* scriptConsole;
@@ -239,8 +234,8 @@ private:
 //! Allow to load the GUI as a static plugin
 class StelStandardGuiPluginInterface : public QObject, public StelGuiPluginInterface
 {
-	Q_OBJECT
-	Q_INTERFACES(StelGuiPluginInterface)
+	Q_OBJECT;
+	Q_INTERFACES(StelGuiPluginInterface);
 public:
 	virtual class StelGuiBase* getStelGuiBase() const;
 };

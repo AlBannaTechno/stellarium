@@ -548,6 +548,9 @@ public slots:
 	//! @param langCode two letter language code, e.g. "en", or "de".
 	void setSkyLanguage(QString langCode);
 
+	//! Go to defaults position and direction of view
+	void goHome();
+
 	//! For use in setDate and waitFor
 	//! For parameter descriptions see setDate().
 	//! @returns Julian day.
@@ -591,6 +594,7 @@ signals:
 	void requestSetSkyCulture(QString id);
 	void requestSetDiskViewport(bool b);
 	void requestExit();
+	void requestSetHomePosition();
 };
 
 #endif // _STELMAINSCRIPTAPI_HPP_

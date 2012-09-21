@@ -27,23 +27,22 @@
 #include <QDateTime>
 
 #include "StelObject.hpp"
-#include "StelTextureTypes.hpp"
-#include "StelPainter.hpp"
+#include "StelProjectorType.hpp"
 #include "StelFader.hpp"
 
 typedef struct
 {
 	QString planetName;	//! Exoplanet name
-	QString mass;		//! Exoplanet mass (Mjup)
-	QString radius;		//! Exoplanet radius (Rjup)
-	QString period;		//! Exoplanet period (days)
-	QString semiAxis;	//! Exoplanet orbit semi-major axis (AU)
-	QString eccentricity;	//! Exoplanet orbit eccentricity
-	QString inclination;	//! Exoplanet orbit inclination
-	QString angleDistance;	//! Exoplanet angle distance
+	float mass;		//! Exoplanet mass (Mjup)
+	float radius;		//! Exoplanet radius (Rjup)
+	float period;		//! Exoplanet period (days)
+	float semiAxis;	//! Exoplanet orbit semi-major axis (AU)
+	float eccentricity;	//! Exoplanet orbit eccentricity
+	float inclination;	//! Exoplanet orbit inclination
+	float angleDistance;	//! Exoplanet angle distance
+	int discovered;		//! Exoplanet discovered year
 } exoplanetData;
 
-class StelPainter;
 
 //! @class Exoplanet
 //! A exoplanet object represents one pulsar on the sky.
@@ -100,10 +99,8 @@ private:
 
 	Vec3d XYZ;                         // holds J2000 position	
 
-	static StelTextureSP hintTexture;
-	static StelTextureSP markerTexture;
-
-	void draw(StelCore* core, StelPainter& painter);
+	void draw(StelCore* core, class StelRenderer* renderer, StelProjectorP projector, 
+	          class StelTextureNew* markerTexture);
 
 	//! Variables for description of properties of exoplanets
 	QString designation;			//! The designation of the host star

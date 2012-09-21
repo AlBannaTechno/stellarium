@@ -33,7 +33,6 @@
 #include "StelJsonParser.hpp"
 #include "StelObjectModule.hpp"
 #include "StelProjectorType.hpp"
-#include "StelTextureTypes.hpp"
 #include "TelescopeControlGlobals.hpp"
 #include "TelescopeClient.hpp"
 #include "VecMath.hpp"
@@ -53,7 +52,6 @@ class QTextStream;
 class QStandardItemModel;
 
 class StelObject;
-class StelPainter;
 class StelProjector;
 class DeviceControlPanel;
 class IndiClient;
@@ -91,7 +89,7 @@ public:
 	virtual void init();
 	virtual void deinit();
 	virtual void update(double deltaTime);
-	virtual void draw(StelCore * core);
+	virtual void draw(StelCore * core, class StelRenderer* renderer);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 	virtual bool configureGui(bool show = true);
 	//! \}
@@ -102,7 +100,10 @@ public:
 	virtual StelObjectP searchByNameI18n(const QString& nameI18n) const;
 	virtual StelObjectP searchByName(const QString& name) const;
 	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5) const;
-	//! \}
+	// empty as its not celestial objects
+	virtual QStringList listAllObjects(bool inEnglish) const { Q_UNUSED(inEnglish) return QStringList(); }
+	virtual QString getName() const { return "Telescope Control"; }
+//! \}
 	
 	///////////////////////////////////////////////////////////////////////////
 	// Methods specific to TelescopeControl
@@ -257,7 +258,7 @@ private slots:
 
 private:
 	//! Draw an animated pointer around the selected object (if any).
-	void drawPointer(const StelProjectorP& prj, const StelCore* core, StelPainter& sPainter);
+	void drawPointer(const StelProjectorP& prj, const StelCore* core, class StelRenderer* renderer);
 
 	//! Called in a loop for communication in Stellarium's protocol over TCP/IP.
 	void communicate();
@@ -306,9 +307,9 @@ private:
 	//! \}
 	
 	//! Telescope reticle texture
-	StelTextureSP reticleTexture;
+	class StelTextureNew* reticleTexture;
 	//! Telescope selection marker texture
-	StelTextureSP selectionTexture;
+	class StelTextureNew* selectionTexture;
 	
 	//! Stores internally all the information from the connections file.
 	QVariantMap connectionsProperties;

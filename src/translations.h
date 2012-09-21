@@ -129,8 +129,12 @@ class Translations
 		N_("Eros");
 		// TRANSLATORS: Asteroid (624) Hektor
 		N_("Hektor");
+		// TRANSLATORS: Asteroid (20000) Varuna
+		N_("Varuna");
+		// TRANSLATORS: Asteroid (136472) Makemake
+		N_("Makemake");
 		
-		// TRANSLATORS: Name of supernova SN 1572A
+		// TRANSLATORS: Name of supernova SN 1572A and script name
 		N_("Tycho's Supernova");
 		// TRANSLATORS: Name of supernova SN 1604A
 		N_("Kepler's Supernova");
@@ -190,15 +194,51 @@ class Translations
 		N_("Startup Script");
 		// TRANSLATORS: Name of script
 		N_("Zodiac");
+		// TRANSLATORS: Name of script
+		N_("Mercury Triple Sunrise and Sunset");
+		// TRANSLATORS: Name of script
+		N_("Double eclipse from Deimos in 2017");
+		// TRANSLATORS: Name of script
+		N_("Double eclipse from Deimos in 2031");
+		// TRANSLATORS: Name of script
+		N_("Eclipse from Olympus Mons Jan 10 2068");
+		// TRANSLATORS: Name of script
+		N_("Occultation of Earth and Jupiter 2048");
+		// TRANSLATORS: Name of script
+		N_("A Quintuple eclipse from Deimos 2027");
+		// TRANSLATORS: Name of script
+		N_("Solar System Screensaver");
+		// TRANSLATORS: Name of script
+		N_("Constellations Tour");
+		// TRANSLATORS: Name of script
+		N_("Sun from different planets");
+		// TRANSLATORS: Name of script
+		N_("Earth best views from other bodies");
+		// TRANSLATORS: Name of script
+		N_("Transit of Venus");
+		// TRANSLATORS: Name of script
+		N_("Analemma");
 
 		// Scripts description
 		N_("Look around each installed landscape.");
 		N_("Script to demonstrate a partial lunar eclipse.");
-                N_("Script to demonstrate a total lunar eclipse.");
-                N_("A slow, infinite tour of the sky, looking at random objects.");
+		N_("Script to demonstrate a total lunar eclipse.");
+		N_("A slow, infinite tour of the sky, looking at random objects.");
 		N_("Script to demonstrate a total solar eclipse which has happened in 2009 (location=Rangpur, Bangladesh).");
 		N_("Script which runs automatically at startup");
 		N_("This script displays the constellations of the Zodiac. That means the constellations which lie along the line which the Sun traces across the celestial sphere over the course of a year.");
+		N_("Due to the quirks in Mercury's orbit and rotation at certain spots the sun will rise & set 3 different times in one Mercury day.");
+		N_("Just before Mars eclipses the sun, Phobos pops out from behind and eclipses it first. Takes place between Scorpio and Sagittarius on April 26, 2017.");
+		N_("Just before Mars eclipses the sun, Phobos pops out from behind and eclipses it first. Takes place between Taurus and Gemini on July 23, 2031.");
+		N_("Phobos Eclipses the sun as seen from Olympus Mons Jan 10, 2068.");
+		N_("Phobos occultations of Earth are common, as are occultations of Jupiter. But Occultations of both on the same day are very rare. Here's one that takes place 1/23/2048. In real speed.");		N_("Phobos races ahead of Mars and eclipses the sun, passes thru it and then retrogrades back towards the sun and just partially eclipses it (only seen in the SH) again, then Mars totally eclipses the sun and Phobos, and then as Phobos emerges from the sun it passes through Mars' shadow and dims.");
+		N_("Screensaver of various happenings in the Solar System. 171 events in all!");
+		N_("A tour via western constellations.");
+		N_("Look at Sun from big planets of Solar system and Pluto.");
+		N_("Earth best views from other Solar system bodies in the 21st Century.");
+		N_("Transit of Venus as seen from Sydney Australia 6th June 2012.");
+		N_("This script shows the analemma - the path of the Sun across the sky during the year.");
+		N_("Flash of supernova which was observed by Tycho Brahe in 1572 year. For demos need enable plugin for supernovae.");
 
 		// List of countries
 		N_("Andorra");
@@ -442,6 +482,122 @@ class Translations
 		N_("South Africa");
 		N_("Zambia");
 		N_("Zimbabwe");
+
+		// shortcuts descriptions
+		N_("Date and Time");
+		N_("Add 1 sidereal day");
+		N_("Add 1 sidereal month");
+		N_("Add 1 sidereal week");
+		N_("Add 1 sidereal year");
+		N_("Add 1 solar day");
+		N_("Add 1 solar hour");
+		N_("Add 1 solar week");
+		N_("Slow down the script execution rate");
+		N_("Decrease time speed");
+		N_("Decrease time speed (a little)");
+		N_("Speed up the script execution rate");
+		N_("Increase time speed");
+		N_("Increase time speed (a little)");
+		N_("Pause script execution");
+		N_("Resume script execution");
+		N_("Set time to now");
+		N_("Set the normal script execution rate");
+		N_("Set normal time rate");
+		N_("Set time rate to zero");
+		N_("Stop script execution");
+		N_("Subtract 1 sidereal day");
+		N_("Subtract 1 sidereal month");
+		N_("Subtract 1 sidereal week");
+		N_("Subtract 1 sidereal year");
+		N_("Subtract 1 solar day");
+		N_("Subtract 1 solar hour");
+		N_("Subtract 1 solar week");
+		N_("Display Options");
+		N_("Flip scene horizontally");
+		N_("Full-screen mode");
+		N_("Atmosphere");
+		N_("Azimuthal grid");
+		N_("Cardinal points");
+		N_("Constellation art");
+		N_("Constellation boundaries");
+		N_("Constellation labels");
+		N_("Constellation lines");
+		N_("Nebulas background images");
+		N_("Ecliptic J2000 grid");
+		N_("Ecliptic line");
+		N_("Equator line");
+		N_("Equatorial grid");
+		N_("Equatorial J2000 grid");
+		N_("Fog");
+		N_("Galactic grid");
+		N_("Galactic plane");
+		N_("Ground");
+		N_("Horizon line");
+		N_("Meridian line");
+		N_("Nebulas");
+		N_("Night mode");
+		N_("Planet labels");
+		N_("Planet orbits");
+		N_("Planet trails");
+		N_("Stars");
+		N_("Stars labels");
+		N_("Flip scene vertically");
+		N_("Miscellaneous");
+		N_("Auto hide horizontal button bar");
+		N_("Auto hide vertical button bar");
+		N_("Go to home");
+		N_("Quit");
+		N_("Copy selected object information to clipboard");
+		N_("Save screenshot");
+		N_("Switch between equatorial and azimuthal mount");
+		N_("Toggle visibility of GUI");
+		N_("Movement and Selection");
+		N_("Center on selected object");
+		N_("Set home planet to selected planet");
+		N_("Track object");
+		N_("Zoom in on selected object");
+		N_("Zoom out");
+		N_("Angle Measure Plugin");
+		N_("Angle measure");
+		N_("Compass Marks Plugin");
+		N_("Compass marks");
+		N_("Exoplanets Plugin");
+		N_("Show exoplanets");
+		N_("Exoplanets configuration window");
+		N_("Observability analysis Plugin");
+		N_("Observability");
+		N_("Observability configuration window");
+		N_("Oculars Plugin");
+		N_("Oculars plugin configuration");
+		N_("Ocular view");
+		N_("Show crosshairs");
+		N_("Oculars popup menu");
+		N_("Image sensor frame");
+		N_("Telrad sight");
+		N_("Pulsars Plugin");
+		N_("Pulsars configuration window");
+		N_("Quasars Plugin");
+		N_("Quasars configuration window");
+		N_("Satellites Plugin");
+		N_("Satellites configuration window");
+		N_("Satellite hints");
+		N_("Satellite labels");
+		N_("Historical Supernovae Plugin");
+		N_("Historical Supernovae configuration window");
+		N_("Telescope Control Plugin");
+		N_("Move a telescope to a given set of coordinates");
+		N_("Scripts");
+		N_("Run landscapes script from file");
+		N_("Show and zoom Moon");
+		N_("Windows");
+		N_("Configuration window");
+		N_("Date/time window");
+		N_("Help window");
+		N_("Location window");
+		N_("Script console window");
+		N_("Search window");
+		N_("Shortcuts window");
+		N_("Sky and viewing options window");
 
 	}
 };

@@ -22,14 +22,13 @@
 #include "StelObjectModule.hpp"
 #include "StelObject.hpp"
 #include "StelFader.hpp"
-#include "StelTextureTypes.hpp"
-#include "StelPainter.hpp"
 #include "Supernova.hpp"
 #include <QFont>
 #include <QVariantMap>
 #include <QDateTime>
 #include <QList>
 #include <QSharedPointer>
+#include <QHash>
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -37,8 +36,6 @@ class QProgressBar;
 class QSettings;
 class QTimer;
 class SupernovaeDialog;
-
-class StelPainter;
 
 typedef QSharedPointer<Supernova> SupernovaP;
 
@@ -65,8 +62,8 @@ public:
 	virtual void init();
 	virtual void deinit();
 	virtual void update(double) {;}
-	virtual void draw(StelCore* core);
-	virtual void drawPointer(StelCore* core, StelPainter& painter);
+	virtual void draw(StelCore* core, class StelRenderer* renderer);
+	virtual void drawPointer(StelCore* core, class StelRenderer* renderer, StelProjectorP projector);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 
 	///////////////////////////////////////////////////////////////////////////
@@ -91,6 +88,8 @@ public:
 	//! @param maxNbItem the maximum number of returned object names
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
 	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5) const;
+	virtual QStringList listAllObjects(bool inEnglish) const;
+	virtual QString getName() const { return "Historical Supernovae"; }
 
 	//! get a supernova object by identifier
 	SupernovaP getByID(const QString& id);
@@ -130,6 +129,9 @@ public:
 
 	//! Get the current updateState
 	UpdateState getUpdateState(void) {return updateState;}
+
+	//! get list of supernovae
+	QString getSupernovaeList();
 
 signals:
 	//! @param state the new update state.
@@ -177,8 +179,9 @@ private:
 
 	QString sneJsonPath;
 
-	StelTextureSP texPointer;
+	class StelTextureNew* texPointer;
 	QList<SupernovaP> snstar;
+	QHash<QString, double> snlist;
 
 	// variables and functions for the updater
 	UpdateState updateState;

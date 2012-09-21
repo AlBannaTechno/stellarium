@@ -17,7 +17,6 @@
  */
 
 #include "StelProjector.hpp"
-#include "StelPainter.hpp"
 #include "StelApp.hpp"
 #include "StelCore.hpp"
 #include "StelGui.hpp"
@@ -25,11 +24,12 @@
 #include "StelLocaleMgr.hpp"
 #include "StelModuleMgr.hpp"
 #include "StelObjectMgr.hpp"
-#include "StelTextureMgr.hpp"
 #include "StelJsonParser.hpp"
 #include "StelFileMgr.hpp"
 #include "StelUtils.hpp"
 #include "StelTranslator.hpp"
+#include "renderer/StelRenderer.hpp"
+#include "renderer/StelTextureNew.hpp"
 #include "LabelMgr.hpp"
 #include "Exoplanets.hpp"
 #include "Exoplanet.hpp"
@@ -47,6 +47,7 @@
 #include <QVariantMap>
 #include <QVariant>
 #include <QList>
+#include <QSettings>
 #include <QSharedPointer>
 #include <QStringList>
 #include <QPixmap>
@@ -82,7 +83,14 @@ Q_EXPORT_PLUGIN2(Exoplanets, ExoplanetsStelPluginInterface)
  Constructor
 */
 Exoplanets::Exoplanets()
-	: flagShowExoplanets(false), OnIcon(NULL), OffIcon(NULL), GlowIcon(NULL), toolbarButton(NULL), progressBar(NULL)
+	: texPointer(NULL)
+	, markerTexture(NULL)
+	, flagShowExoplanets(false)
+	, OnIcon(NULL)
+	, OffIcon(NULL)
+	, GlowIcon(NULL)
+	, toolbarButton(NULL)
+	, progressBar(NULL)
 {
 	setObjectName("Exoplanets");
 	exoplanetsConfigDialog = new ExoplanetsDialog();
@@ -108,8 +116,9 @@ Exoplanets::~Exoplanets()
 void Exoplanets::deinit()
 {
 	ep.clear();
-	Exoplanet::markerTexture.clear();
-	texPointer.clear();
+	if(NULL != texPointer)    {delete texPointer;}
+	if(NULL != markerTexture) {delete markerTexture;}
+	texPointer = markerTexture = NULL;
 }
 
 void Exoplanets::update(double) //deltaTime
@@ -149,27 +158,20 @@ void Exoplanets::init()
 
 		jsonCatalogPath = StelFileMgr::findFile("modules/Exoplanets", (StelFileMgr::Flags)(StelFileMgr::Directory|StelFileMgr::Writable)) + "/exoplanets.json";
 
-		texPointer = StelApp::getInstance().getTextureManager().createTexture("textures/pointeur2.png");
-		Exoplanet::markerTexture = StelApp::getInstance().getTextureManager().createTexture(":/Exoplanets/exoplanet.png");
-
 		// key bindings and other actions
-		// TRANSLATORS: Title of a group of key bindings in the Help window
-		QString groupName = N_("Plugin Key Bindings");
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 
 		GlowIcon = new QPixmap(":/graphicsGui/glow32x32.png");
 		OnIcon = new QPixmap(":/Exoplanets/btExoplanets-on.png");
 		OffIcon = new QPixmap(":/Exoplanets/btExoplanets-off.png");
 
-		gui->addGuiActions("actionShow_Exoplanets_ConfigDialog", N_("Exoplanets configuration window"), "", groupName, true, false);
-		gui->addGuiActions("actionShow_Exoplanets", N_("Show exoplanets"), "Ctrl+Alt+E", groupName, true, false);
-		gui->getGuiActions("actionShow_Exoplanets")->setChecked(flagShowExoplanets);
-		toolbarButton = new StelButton(NULL, *OnIcon, *OffIcon, *GlowIcon, gui->getGuiActions("actionShow_Exoplanets"));
+		gui->getGuiAction("actionShow_Exoplanets")->setChecked(flagShowExoplanets);
+		toolbarButton = new StelButton(NULL, *OnIcon, *OffIcon, *GlowIcon, gui->getGuiAction("actionShow_Exoplanets"));
 		gui->getButtonBar()->addButton(toolbarButton, "065-pluginsGroup");
 
-		connect(gui->getGuiActions("actionShow_Exoplanets_ConfigDialog"), SIGNAL(toggled(bool)), exoplanetsConfigDialog, SLOT(setVisible(bool)));
-		connect(exoplanetsConfigDialog, SIGNAL(visibleChanged(bool)), gui->getGuiActions("actionShow_Exoplanets_ConfigDialog"), SLOT(setChecked(bool)));
-		connect(gui->getGuiActions("actionShow_Exoplanets"), SIGNAL(toggled(bool)), this, SLOT(setFlagShowExoplanets(bool)));
+		connect(gui->getGuiAction("actionShow_Exoplanets_ConfigDialog"), SIGNAL(toggled(bool)), exoplanetsConfigDialog, SLOT(setVisible(bool)));
+		connect(exoplanetsConfigDialog, SIGNAL(visibleChanged(bool)), gui->getGuiAction("actionShow_Exoplanets_ConfigDialog"), SLOT(setChecked(bool)));
+		connect(gui->getGuiAction("actionShow_Exoplanets"), SIGNAL(toggled(bool)), this, SLOT(setFlagShowExoplanets(bool)));
 	}
 	catch (std::runtime_error &e)
 	{
@@ -218,27 +220,33 @@ void Exoplanets::init()
 /*
  Draw our module. This should print name of first PSR in the main window
 */
-void Exoplanets::draw(StelCore* core)
+void Exoplanets::draw(StelCore* core, StelRenderer* renderer)
 {
 	if (!flagShowExoplanets)
 		return;
 
 	StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
-	StelPainter painter(prj);
-	painter.setFont(font);
+	renderer->setFont(font);
+
+	if(NULL == texPointer)
+	{
+		Q_ASSERT_X(NULL == markerTexture, Q_FUNC_INFO, "Textures need to be created simultaneously");
+		texPointer    = renderer->createTexture("textures/pointeur2.png");
+		markerTexture = renderer->createTexture(":/Exoplanets/exoplanet.png");
+	}
 	
 	foreach (const ExoplanetP& eps, ep)
 	{
 		if (eps && eps->initialized)
-			eps->draw(core, painter);
+			eps->draw(core, renderer, prj, markerTexture);
 	}
 
 	if (GETSTELMODULE(StelObjectMgr)->getFlagSelectedObjectPointer())
-		drawPointer(core, painter);
+		drawPointer(core, renderer, prj);
 
 }
 
-void Exoplanets::drawPointer(StelCore* core, StelPainter& painter)
+void Exoplanets::drawPointer(StelCore* core, StelRenderer* renderer, StelProjectorP projector)
 {
 	const StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
 
@@ -250,16 +258,15 @@ void Exoplanets::drawPointer(StelCore* core, StelPainter& painter)
 
 		Vec3d screenpos;
 		// Compute 2D pos and return if outside screen
-		if (!painter.getProjector()->project(pos, screenpos))
+		if (!projector->project(pos, screenpos))
 			return;
 
 		const Vec3f& c(obj->getInfoColor());
-		painter.setColor(c[0],c[1],c[2]);
+		renderer->setGlobalColor(c[0],c[1],c[2]);
 		texPointer->bind();
-		painter.enableTexture2d(true);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
-		painter.drawSprite2dMode(screenpos[0], screenpos[1], 13.f, StelApp::getInstance().getTotalRunTime()*40.);
+		renderer->setBlendMode(BlendMode_Alpha);
+		renderer->drawTexturedRect(screenpos[0] - 13.0f, screenpos[1] - 13.0f, 26.0f, 
+		                           26.0f, StelApp::getInstance().getTotalRunTime() * 40.0f);
 	}
 }
 
@@ -340,6 +347,26 @@ QStringList Exoplanets::listMatchingObjectsI18n(const QString& objPrefix, int ma
 	result.sort();
 	if (result.size()>maxNbItem) result.erase(result.begin()+maxNbItem, result.end());
 
+		return result;
+}
+
+QStringList Exoplanets::listAllObjects(bool inEnglish) const
+{
+	QStringList result;
+	if (inEnglish)
+	{
+		foreach (const ExoplanetP& planet, ep)
+		{
+			result << planet->getEnglishName();
+		}
+	}
+	else
+	{
+		foreach (const ExoplanetP& planet, ep)
+		{
+			result << planet->getNameI18n();
+		}
+	}
 	return result;
 }
 
@@ -491,7 +518,7 @@ bool Exoplanets::configureGui(bool show)
 	if (show)
 	{
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-		gui->getGuiActions("actionShow_Exoplanets_ConfigDialog")->setChecked(true);
+		gui->getGuiAction("actionShow_Exoplanets_ConfigDialog")->setChecked(true);
 	}
 
 	return true;

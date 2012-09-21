@@ -1,5 +1,12 @@
-0.7.2 [2012-07- in progress]
+0.7.3
+Use editable keybindings
+
+0.7.2 [2012-07-26]
 Added "Mark all" and "Mark none" buttons to the satellites import window.
+Added a search/filter feature to the main satellites list.
+Fixed duplicate name confusion on double-clicking a satellite in the list.
+Implemented satellite NORAD number search in Stellarium's main search.
+Support night vision mode
 
 0.7.1 [2012-01-08]
 Added basic GUI for adding satellites from TLE lists.

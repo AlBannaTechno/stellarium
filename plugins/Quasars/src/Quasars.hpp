@@ -21,8 +21,6 @@
 
 #include "StelObjectModule.hpp"
 #include "StelObject.hpp"
-#include "StelTextureTypes.hpp"
-#include "StelPainter.hpp"
 #include "Quasar.hpp"
 #include <QFont>
 #include <QVariantMap>
@@ -30,7 +28,6 @@
 #include <QList>
 #include <QSharedPointer>
 
-class StelPainter;
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -64,8 +61,8 @@ public:
 	virtual void init();
 	virtual void deinit();
 	virtual void update(double) {;}
-	virtual void draw(StelCore* core);
-	virtual void drawPointer(StelCore* core, StelPainter& painter);
+	virtual void draw(StelCore* core, class StelRenderer* renderer);
+	virtual void drawPointer(StelCore* core, class StelRenderer* renderer, StelProjectorP projector);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 
 	///////////////////////////////////////////////////////////////////////////
@@ -90,6 +87,9 @@ public:
 	//! @param maxNbItem the maximum number of returned object names
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
 	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5) const;
+
+	virtual QStringList listAllObjects(bool inEnglish) const;
+	virtual QString getName() const { return "Quasars"; }
 
 	//! get a Quasar object by identifier
 	QuasarP getByID(const QString& id);
@@ -179,7 +179,8 @@ private:
 
 	QString catalogJsonPath;
 
-	StelTextureSP texPointer;
+	class StelTextureNew* texPointer;
+	class StelTextureNew* markerTexture;
 	QList<QuasarP> QSO;
 
 	// variables and functions for the updater
