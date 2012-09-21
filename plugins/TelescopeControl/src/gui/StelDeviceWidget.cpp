@@ -21,6 +21,8 @@
 #include "AngleSpinBox.hpp"
 #include "StelApp.hpp"
 #include "StelLocaleMgr.hpp"
+#include "StelModuleMgr.hpp"
+#include "StelObjectMgr.hpp"
 #include "StelStyle.hpp"
 #include "StelUtils.hpp"
 #include "VecMath.hpp"
@@ -185,14 +187,15 @@ void StelDeviceWidget::slew()
 	deviceManager->telescopeGoto(clientId, targetPosition);
 }
 
-void SlewDialog::getCurrentObjectInfo(){
-    const QList<StelObjectP>& selected = GETSTELMODULE(StelObjectMgr)->getSelectedObject();
-    if (!selected.isEmpty()) {
-        double dec_j2000 = 0;
-        double ra_j2000 = 0;
-        StelUtils::rectToSphe(&ra_j2000,&dec_j2000,selected[0]->getJ2000EquatorialPos(StelApp::getInstance().getCore()));
-        ui->spinBoxRA->setRadians(ra_j2000);
-        ui->spinBoxDec->setRadians(dec_j2000);
-    }
+void StelDeviceWidget::getCurrentObjectInfo()
+{
+	const QList<StelObjectP>& selected = GETSTELMODULE(StelObjectMgr)->getSelectedObject();
+	if (!selected.isEmpty())
+	{
+		double dec_j2000 = 0;
+		double ra_j2000 = 0;
+		StelUtils::rectToSphe(&ra_j2000,&dec_j2000,selected[0]->getJ2000EquatorialPos(StelApp::getInstance().getCore()));
+		ui->spinBoxRA->setRadians(ra_j2000);
+		ui->spinBoxDec->setRadians(dec_j2000);
+	}
 }
-

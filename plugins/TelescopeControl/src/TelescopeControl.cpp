@@ -102,14 +102,14 @@ Q_EXPORT_PLUGIN2(TelescopeControl, TelescopeControlStelPluginInterface)
 ////////////////////////////////////////////////////////////////////////////////
 // Constructor and destructor
 TelescopeControl::TelescopeControl() :
-	: pixmapHover(NULL)
-	, pixmapOnIcon(NULL)
-	, pixmapOffIcon(NULL)
-	, reticleTexture(NULL)
-	, selectionTexture(NULL),
-	 indiService(0),
-    configurationWindow(0),
-    controlPanelWindow(0)
+	pixmapHover(0),
+	pixmapOnIcon(0),
+	pixmapOffIcon(0),
+	reticleTexture(0),
+	selectionTexture(0),
+	indiService(0),
+	configurationWindow(0),
+	controlPanelWindow(0)
 {
 	setObjectName("TelescopeControl");
 
@@ -156,9 +156,9 @@ void TelescopeControl::init()
 			StelFileMgr::mkDir(moduleDirectoryPath);
 
 #ifdef Q_OS_WIN32
-	//This should be done before loading the device models and before
-	//initializing the windows, as they rely on canUseAscom()
-	ascomPlatformIsInstalled = checkIfAscomIsInstalled();
+		//This should be done before loading the device models and before
+		//initializing the windows, as they rely on canUseAscom()
+		ascomPlatformIsInstalled = checkIfAscomIsInstalled();
 #endif
 		
 		//Load the device models
@@ -196,7 +196,6 @@ void TelescopeControl::init()
 		// Load and start all telescope clients
 		loadConnections();
 		
-		selectionTexture = textureMgr.createTexture("textures/pointeur2.png");
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 		StelShortcutMgr* shMgr = StelApp::getInstance().getStelShortcutManager();
 
@@ -210,10 +209,10 @@ void TelescopeControl::init()
 			QString name = QString("actionMove_Telescope_To_Selection_%1").arg(i);
 			QString description = q_("Move telescope #%1 to selected object").arg(i);
 			QString shortcut = QString("Ctrl+%1").arg(i);
-			QAction* action = gui->addGuiActions(name,
-			                                     description,
-			                                     shortcut,
-			                                     group, false, false);
+			QAction* action = shMgr->addGuiAction(name, true,
+			                                       description,
+			                                      shortcut, QString(),
+			                                       group, false, false);
 			connect(action, SIGNAL(triggered()),
 			        &gotoSelectedShortcutMapper, SLOT(map()));
 			gotoSelectedShortcutMapper.setMapping(action, i);
@@ -222,11 +221,11 @@ void TelescopeControl::init()
 			name = QString("actionSlew_Telescope_To_Direction_%1").arg(i);
 			description = q_("Move telescope #%1 to the point currently in the center of the screen").arg(i);
 			shortcut = QString("Alt+%1").arg(i);
-			action = gui->addGuiActions(name,
+			action = shMgr->addGuiAction(name, true,
 			                            description,
-			                            shortcut,
+			                             shortcut, QString(),
 			                            group, false, false);
-			connect(gui->getGuiActions(name), SIGNAL(triggered()),
+			connect(action, SIGNAL(triggered()),
 			        &gotoDirectionShortcutMapper, SLOT(map()));
 			gotoDirectionShortcutMapper.setMapping(action, i);
 		}
@@ -239,10 +238,14 @@ void TelescopeControl::init()
 		configurationWindow = new ConfigurationWindow();
 		
 		//Create toolbar button
-		QAction* controlPanelAction = gui->addGuiActions(
-		                                  "actionShow_Control_Panel",
-		                                  "Device Control Panel",
-		                                  "Ctrl+0", group, true, false);
+		QAction* controlPanelAction =
+		        shMgr->addGuiAction(
+		            "actionShow_Control_Panel",
+		            true,
+		            "Device Control Panel",
+		            "Ctrl+0",
+		            QString(),
+		            group, true, false);
 		controlPanelAction->setChecked(controlPanelWindow->visible());
 		connect(controlPanelAction, SIGNAL(toggled(bool)),
 		        controlPanelWindow, SLOT(setVisible(bool)));
@@ -287,17 +290,34 @@ void TelescopeControl::deinit()
 		indiService->stopServer();
 	}
 
-	if(NULL != reticleTexture)   {delete reticleTexture;}
-	if(NULL != selectionTexture) {delete selectionTexture;}
-	if(NULL != telescopeDialog)  {delete telescopeDialog;}
-	if(NULL != slewDialog)       {delete slewDialog;}
-	if(NULL != pixmapHover)      {delete pixmapHover;}
-	if(NULL != pixmapOnIcon)     {delete pixmapOnIcon;}
-	if(NULL != pixmapOffIcon)    {delete pixmapOffIcon;}
-	reticleTexture = selectionTexture = NULL;
-	telescopeDialog = NULL;
-	slewDialog = NULL;
-	pixmapHover = pixmapOnIcon = pixmapOffIcon;
+	if (reticleTexture)
+	{
+		delete reticleTexture;
+		reticleTexture = 0;
+	}
+	if (selectionTexture)
+	{
+		delete selectionTexture;
+		selectionTexture = 0;
+	}
+	if (configurationWindow)
+	{
+		// TODO: Check if something else is not necessary.
+		delete configurationWindow;
+		configurationWindow = 0;
+	}
+	if (controlPanelWindow)
+	{
+		delete controlPanelWindow;
+		controlPanelWindow = 0;
+	}
+	if (pixmapHover)
+		delete pixmapHover;
+	if (pixmapOnIcon)
+		delete pixmapOnIcon;
+	if (pixmapOffIcon)
+		delete pixmapOffIcon;
+	pixmapHover = pixmapOnIcon = pixmapOffIcon = 0;
 
 	//TODO: Decide if it should be saved on change
 	//Save the configuration on exit
@@ -324,7 +344,7 @@ void TelescopeControl::draw(StelCore* core, StelRenderer* renderer)
 		selectionTexture = renderer->createTexture("textures/pointeur2.png");
 		
 	}
-	foreach (const TelescopeClientP& telescope, telescopeClients)
+	foreach (const TelescopeClientP& telescope, telescopes)
 	{
 		if (telescope->isConnected() && telescope->hasKnownPosition())
 		{
@@ -529,7 +549,7 @@ void TelescopeControl::handleDeviceDefinition(const QString& clientId,
 	{
 		//QString name = clientId + "/" + deviceId;
 		QString name = QString("%1 (%2)").arg(deviceId, clientId);
-		QString id = clientId % "|" % deviceId;
+		QString id = clientId + "|" + deviceId;
 		TelescopeClientIndi* ti = new TelescopeClientIndi(name,
 		                                                  deviceId,
 		                                                  client);
@@ -819,7 +839,7 @@ void TelescopeControl::saveConnections()
 			{
 				sd.next();
 				QVariantMap sdProperties = sd.value().toMap();
-				QString id = key % "|" % sd.key();
+				QString id = key + "|" + sd.key();
 				TelescopeClientP t = telescopes.value(id);
 				if (t)
 				{

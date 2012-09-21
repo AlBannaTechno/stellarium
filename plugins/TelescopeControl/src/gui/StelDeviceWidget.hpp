@@ -66,8 +66,8 @@ private slots:
 	//! The parameter is necessary for signal/slot compatibility (QRadioButton).
 	//! If "set" is "false", this method does nothing.
 	void setFormatDecimal(bool set);
-        //! Sets the input fields to current info
-        void getCurrentObjectInfo();
+	//! Sets the input fields to current info
+	void getCurrentObjectInfo();
 
 private:
 	//! Pointer to the main plug-in class.
