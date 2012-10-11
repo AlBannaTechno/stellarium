@@ -277,11 +277,6 @@ void TelescopeControl::init()
 
 void TelescopeControl::deinit()
 {
-	//Close the interface
-	if (configurationWindow)
-	{
-		delete configurationWindow;
-	}
 	//Destroy all clients first in order to avoid displaying a TCP error
 	removeAllConnections();
 	
