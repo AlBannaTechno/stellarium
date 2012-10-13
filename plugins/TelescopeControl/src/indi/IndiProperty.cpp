@@ -414,8 +414,8 @@ TextProperty::~TextProperty()
 
 void TextProperty::addElement(Element* element)
 {
-	TextElement* newElement = 0;
-	if (newElement = dynamic_cast<TextElement*>(element))
+	TextElement* newElement = dynamic_cast<TextElement*>(element);
+	if (newElement)
 		elements.insert(newElement->getName(), newElement);
 }
 
@@ -465,8 +465,8 @@ NumberProperty::~NumberProperty()
 
 void NumberProperty::addElement(Element* element)
 {
-	NumberElement* newElement = 0;
-	if (newElement = dynamic_cast<NumberElement*>(element))
+	NumberElement* newElement = dynamic_cast<NumberElement*>(element);
+	if (newElement)
 		elements.insert(newElement->getName(), newElement);
 }
 
@@ -524,8 +524,8 @@ SwitchRule SwitchProperty::getSwitchRule() const
 
 void SwitchProperty::addElement(Element* element)
 {
-	SwitchElement* newElement = 0;
-	if (newElement = dynamic_cast<SwitchElement*>(element))
+	SwitchElement* newElement = dynamic_cast<SwitchElement*>(element);
+	if (newElement)
 		elements.insert(newElement->getName(), newElement);
 }
 
@@ -598,8 +598,8 @@ LightProperty::~LightProperty()
 
 void LightProperty::addElement(Element* element)
 {
-	LightElement* newElement = 0;
-	if (newElement = dynamic_cast<LightElement*>(element))
+	LightElement* newElement = dynamic_cast<LightElement*>(element);
+	if (newElement)
 		elements.insert(newElement->getName(), newElement);
 }
 
@@ -644,8 +644,8 @@ BlobProperty::~BlobProperty()
 
 void BlobProperty::addElement(Element *element)
 {
-	BlobElement* newElement = 0;
-	if (newElement = dynamic_cast<BlobElement*>(element))
+	BlobElement* newElement = dynamic_cast<BlobElement*>(element);
+	if (newElement)
 		elements.insert(newElement->getName(), newElement);
 }
 
