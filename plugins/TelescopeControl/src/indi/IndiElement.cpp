@@ -282,9 +282,12 @@ bool NumberElement::setValue(const QString& stringValue)
 	//but that doesn't work very well, too.
 	if (step > 0.0)
 	{
+		/*
 		double remainder = fmod((newValue - minValue), step);
 		if (qFuzzyCompare(remainder+1, 0.0+1))
 			return false;
+		*/
+		//qDebug() << "Ignoring step verification for NumberElement" << name;
 	}
 
 	value = newValue;

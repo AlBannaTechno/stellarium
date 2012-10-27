@@ -63,7 +63,8 @@ IndiNumberPropertyWidget::IndiNumberPropertyWidget(const NumberPropertyP& proper
 			column++;
 			QLineEdit* lineEdit = new QLineEdit();
 			lineEdit->setAlignment(Qt::AlignRight);
-			lineEdit->setText(element->getFormattedValue());//Only for init!
+			// Only for initialization!
+			lineEdit->setText(element->getFormattedValue().trimmed());
 			inputWidgets.insert(elementName, lineEdit);
 			gridLayout->addWidget(lineEdit, row, column, 1, 1);
 
