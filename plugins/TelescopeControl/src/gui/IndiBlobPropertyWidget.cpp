@@ -21,14 +21,22 @@
 #include <QDesktopServices>
 #include <QFile>
 #include <QDebug>
+#include <QDir>
+#include <QLineEdit>
 
 IndiBlobPropertyWidget::IndiBlobPropertyWidget(const BlobPropertyP& property,
                                                const QString& title,
                                                QWidget* parent)
 	: IndiPropertyWidget(property, title, parent),
-	property(property)
+	property(property),
+    lineEditFilePath(0)
 {
 	Q_ASSERT(property);
+	
+	// TODO: One path display per BLOB element, in case of a vector of BLOBs.
+	lineEditFilePath = new QLineEdit();
+	lineEditFilePath->setReadOnly(true);
+	mainLayout->addWidget(lineEditFilePath);
 }
 
 void IndiBlobPropertyWidget::updateFromProperty()
@@ -44,25 +52,61 @@ void IndiBlobPropertyWidget::updateFromProperty()
 	//encounter vectors of multiple BLOBs.
 	//TODO: Remember format/fileaname extension so you don't have to
 	//generate them every time.
-	QString timestamp = property->getTimestamp().toString(Qt::ISODate);
+	
+	// The timestamp should not contain characters forbidden for file names!
+	QString timestamp = property->getTimestamp().toString("YYYY-MM-DDT-HHmmss");
 	QStringList elementNames = property->getElementNames();
 	foreach (const QString& elementName, elementNames)
 	{
 		BlobElement* element = property->getElement(elementName);
 		if (element->getSize() == 0)
 			continue;
-		//TODO: Temporary
-		QString desktopPath = QDesktopServices::storageLocation(QDesktopServices::DesktopLocation);
+		
+		// TODO: Better code for saving BLOBs (split to different places, etc).
+		// TODO: Button for opening directory.
+		// TODO: Button for opening FITS viewer. (QDesktopServices::openUrl()?)
+		
+		// Ensure we have a writable directory.
+		// (Tricky on Windows because of permissions.) 
+		QString dirPath = QDesktopServices::storageLocation(QDesktopServices::PicturesLocation);
+		QDir dir(dirPath);
+		if (!dir.exists())
+		{
+			qWarning() << "Unable to save BLOB:"
+			           << "no access to home directory";
+			return;
+		}
+		dirPath += "/Stellarium BLOBs/";
+		if (!dir.mkpath(dirPath))
+		{
+			qWarning() << "Unable to save BLOB:"
+			           << "failed to create"
+			           << QDir::toNativeSeparators(dirPath);
+			return;
+		}
+		dir.setPath(dirPath);
+		// File name
 		QString name = element->getName();
-		QString format =  element->getFormat();
-		QString filename = QString("%1/blob_%2.%3%4")
-		                   .arg(desktopPath, name, timestamp, format);
-		QFile blobFile(filename);
+		QString format =  element->getFormat(); //TODO: Chop .z
+		QString filename = QString("%1_%2%3").arg(name, timestamp, format);
+		QString path = dir.absoluteFilePath(filename);
+		QFile blobFile(path);
 		if (blobFile.open(QFile::WriteOnly))
 		{
 			if (blobFile.write(element->getValue()) > 0)
-				qWarning() << "BLOB saved:" << filename;
+			{
+				qWarning() << "BLOB saved:" << path;
+				lineEditFilePath->setText(path);
+			}
+			else
+				qWarning() << "Unable to save BLOB: write failed:"
+				           << path;
 			blobFile.close();
+		}
+		else
+		{
+			qWarning() << "Unable to save BLOB: failed to open"
+			           << path << "for writing.";
 		}
 	}
 }

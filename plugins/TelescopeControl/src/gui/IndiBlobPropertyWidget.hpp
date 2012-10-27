@@ -26,6 +26,8 @@
 
 #include "IndiProperty.hpp"
 
+class QLineEdit;
+
 class IndiBlobPropertyWidget : public IndiPropertyWidget
 {
 	Q_OBJECT
@@ -42,6 +44,8 @@ public slots:
 
 private:
 	BlobPropertyP property;
+	//! For displaying file paths
+	QLineEdit* lineEditFilePath;
 };
 
 #endif//_INDI_BLOG_PROPERTY_WIDGET_HPP_
