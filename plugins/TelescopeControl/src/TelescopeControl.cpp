@@ -282,7 +282,8 @@ void TelescopeControl::deinit()
 	
 	if (indiService)
 	{
-		indiService->stopServer();
+		delete indiService;
+		indiService = 0;
 	}
 
 	if (reticleTexture)
