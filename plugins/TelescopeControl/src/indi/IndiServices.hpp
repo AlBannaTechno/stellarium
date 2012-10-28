@@ -30,20 +30,43 @@ class QSignalMapper;
 class QStandardItemModel;
 
 //! Provides various functions related to using the INDI library (libindi).
-//! This includes loading the list of installed drivers, managing network
-//! connections and maintaining a common instance of indiserver in a separate
-//! process, including sending commands to start and stop named device drivers.
-//! It is strongly recommended to use only a single instance of this class.
-//! An IndiClient is initialized for each connection (including the one to the
-//! local indiserver) and it must be shared by all device clients relying on
-//! that connection.
-//! \author Bogdan Marinov
-//! \todo Close the server process on stopping all drivers?
-//! \todo Keep track of TCP ports to prevent conflicts?
-//! \todo Handle server process closing.
-//! \todo Handle remote connection errors.
-//! \todo Decide whether to close remote connections normally or with abort().
-//! \todo Manage the list of connected clients - remove clients on disconnect.
+/** Services include:
+  *  - loading a list of the available XML descriptions of INDI drivers;
+  *  - receiving INDI streams over network connections;
+  *  - an instance of \c indiserver in a separate process that can run drivers;
+  *  - dynamically starting/stopping drivers via that instance.
+  *
+  * It is strongly recommended to use only a single instance of this class.
+  *
+  * To load the device description files, use loadDriverDescriptions()
+  * or the static loadDriverDescriptionFiles(). In the first case,
+  * use getDriverDescriptions() to access the stored descriptions.
+  *
+  * To establish a network connection, use openConnection(). If it connects,
+  * a new IndiClient instance will be created for that connection and
+  * clientConnected() will be emitted. Use closeConnection() to close a
+  * connection.
+  *
+  * Local drivers are managed by a single common instance of \c indiserver per
+  * IndiServices object, with a single common IndiClient connected to it.
+  * The server process is launched with startServer(). When connection to the
+  * server is established, commonClientConnected() is emitted with a pointer
+  * to the common client and you can then use startDriver() and stopDriver()
+  * to launch and stop driver sub-processes. Output on the server's \c stderr
+  * is read line by line and emitted as messages with commonServerLog().
+  *
+  * The IndiClient that is initialized for each connection (including the one
+  * to the local indiserver) must be shared by all device clients
+  * relying on that connection.
+  * @author Bogdan Marinov
+  * @ingroup indi
+  * @todo Close the server process on stopping all drivers?
+  * @todo Keep track of TCP ports to prevent conflicts?
+  * @todo Handle server process closing.
+  * @todo Handle remote connection errors.
+  * @todo Decide whether to close remote connections normally or with abort().
+  * @todo Manage the list of connected clients - remove clients on disconnect.
+  */
 class IndiServices : public QObject
 {
 	Q_OBJECT
@@ -52,16 +75,20 @@ public:
 	~IndiServices();
 	
 	//! Loads driver info from the files in the driver description directory.
-	//! Parses all *.xml files in the directory. The result is aggregated in
-	//! a tree-table model, where the first column contains the name of the
-	//! device groups (e.g. "Telescopes"). Their children are tables, where
-	//! column 0 is the device model name (e.g. "ETX125") and column 1 displays
-	//! the driver label ("LX200 Autostar") with the name of the driver
-	//! executable ("indi_lx200autostar") in the field.
-	//! \todo Setting the path to the directory (for Windows, etc.)
-	static QStandardItemModel* loadDriverDescriptionFiles();
+	/** Parses all *.xml files in the directory. The result is aggregated in
+	  * a tree-table model, where the first column contains the name of the
+	  * device groups (e.g. "Telescopes"). Their children are tables, where
+	  * column 0 is the device model name (e.g. "ETX125") and column 1 displays
+	  * the driver label ("LX200 Autostar") with the name of the driver
+	  * executable ("indi_lx200autostar") in the field.
+	  * @param dirPath path to the directory from which to read the files.
+	  */
+	static QStandardItemModel*
+	loadDriverDescriptionFiles(const QString& dirPath);
 	
+	//! Loads the available driver descriptions and stores the result.
 	void loadDriverDescriptions();
+	//! Access to the stored driver descriptions.
 	QStandardItemModel* getDriverDescriptions();
 	
 	
@@ -70,7 +97,6 @@ public:
 	bool startDriver (const QString& driverName, const QString& deviceName);
 	
 	//! Tells indiserver to stop a driver.
-	//! \todo Stop the server after the last driver is stopped?
 	void stopDriver (const QString& driverName, const QString& deviceName);
 	
 	//! Starts an instance of indiserver if it's not already running.
@@ -91,7 +117,7 @@ public:
 	//! Get the client parsing the connection with that ID.
 	//! \returns 0 if there is no such client.
 	IndiClient* getClient(const QString& id);
-	//!
+	//! @todo Is this necessary?
 	QHashIterator<QString,IndiClient*> getClientIterator();
 	
 	//! Try connecting to another instance of indiserver over a TCP connection.
@@ -137,7 +163,7 @@ private slots:
 	void destroySocket();
 	
 private:
-	//! 
+	//! Model with device descriptions as read from drivers.xml, etc.
 	QStandardItemModel* deviceDescriptions;
 	
 	//! Common process instance of indiserver.
@@ -149,15 +175,15 @@ private:
 	//! TCP connection to the server.
 	QTcpSocket* serverSocket;
 	
-	//! 
+	//! Client connected to the common instance of indiserver.
 	IndiClient* commonClient;
 	
 	//! Everything except the common client.
 	QHash<QString, IndiClient*> socketClients;
 	
-	//! 
+	//! Network sockets used for clients.
 	QHash<QString,QTcpSocket*> sockets;
-	//! 
+	//! Used to call initClient() when a network connection is established.
 	QSignalMapper* connectedMapper;
 	
 	static const int BUFFER_SIZE = 255;

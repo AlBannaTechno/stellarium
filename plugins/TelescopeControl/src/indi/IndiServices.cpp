@@ -56,23 +56,30 @@ IndiServices::~IndiServices()
 	// TODO: Close socket?
 	stopServer();
 	
-	// TODO: Destroy server?
-	
 	// TODO: Close all sockets?
 }
 
-QStandardItemModel* IndiServices::loadDriverDescriptionFiles()
+QStandardItemModel*
+IndiServices::loadDriverDescriptionFiles(const QString& dirPath)
 {
 	QStandardItemModel* model = new QStandardItemModel();
 	QStandardItem* parent = model->invisibleRootItem();
 	QStandardItem* currentGroup = 0, *currentDevice = 0;
 
-	//TODO: It should allow the file path to be set somewhere
-	QDir indiDriversDir("/usr/share/indi/");
-	indiDriversDir.setNameFilters(QStringList("*.xml"));
-	indiDriversDir.setFilter(QDir::Files | QDir::Readable);
-	QFileInfoList fileList = indiDriversDir.entryInfoList();
+	model->setHorizontalHeaderLabels(QStringList() << "Device" << "Driver");
+
+	QDir descriptionsDir(dirPath);
+	if (!descriptionsDir.exists())
+	{
+		qWarning() << "Can't load INDI driver descriptions:"
+		           << "no such directory:" << dirPath;
+		return model;
+	}
+	descriptionsDir.setNameFilters(QStringList("*.xml"));
+	descriptionsDir.setFilter(QDir::Files | QDir::Readable);
+	QFileInfoList fileList = descriptionsDir.entryInfoList();
 	
+	// TODO: Split to functions?
 	foreach (const QFileInfo& fi, fileList)
 	{
 		QFile indiDriversXmlFile(fi.absoluteFilePath());
@@ -131,7 +138,8 @@ QStandardItemModel* IndiServices::loadDriverDescriptionFiles()
 						}
 						else
 						{
-							qDebug() << "Error parsing" << fi.absoluteFilePath();
+							qDebug() << "Error parsing"
+									 << fi.absoluteFilePath();
 							break;
 						}
 					}
@@ -140,8 +148,6 @@ QStandardItemModel* IndiServices::loadDriverDescriptionFiles()
 						if (currentDevice)
 						{
 							QString driverName = attr.value("name").toString();
-							
-							// TODO: Separate driver name from driver exe
 							QString driverFile = localXmlReader.readElementText().trimmed();
 							if (driverFile.isEmpty())
 							{
@@ -153,15 +159,13 @@ QStandardItemModel* IndiServices::loadDriverDescriptionFiles()
 								driverName = driverFile;
 							
 							QStandardItem* driver = new QStandardItem(driverName);
-							// TODO: This is because of selections in the combo box. Find a better way!s
-							driver->setSelectable(false);
+							driver->setEditable(false);
 							driver->setData(driverFile, Qt::UserRole);
 							driver->setToolTip(driverFile);
 							// TODO: Find if it exists?
 							int row = currentGroup->rowCount() - 1;
 							currentGroup->setChild(row, 1, driver);
 						}
-						// TODO
 					}
 				}
 				else if (localXmlReader.isEndElement())
@@ -184,7 +188,6 @@ QStandardItemModel* IndiServices::loadDriverDescriptionFiles()
 		}
 	}
 
-	model->setHorizontalHeaderLabels(QStringList() << "Device" << "Driver");
 	return model;
 }
 
@@ -196,7 +199,8 @@ void IndiServices::loadDriverDescriptions()
 		return;
 	}
 	
-	deviceDescriptions = loadDriverDescriptionFiles();
+	// TODO: Remove hardcoded path
+	deviceDescriptions = loadDriverDescriptionFiles("/usr/share/indi/");
 	deviceDescriptions->setParent(this); // Make sure it is deleted on time?
 }
 
@@ -237,6 +241,8 @@ bool IndiServices::startServer()
 	        this, SLOT(readServerErrorStream()));
 	connect(serverProcess, SIGNAL(error(QProcess::ProcessError)),
 	        this, SLOT(handleProcessError(QProcess::ProcessError)));
+	connect(serverProcess, SIGNAL(finished(int, QProcess::ExitStatus)),
+	        this, SLOT());
 	serverProcess->start("indiserver", arguments);
 	// TODO: Replace the wait with a slot?
 	if (serverProcess->waitForStarted(3000))
@@ -273,22 +279,24 @@ bool IndiServices::stopServer()
 		serverSocket = 0;
 	}
 	
+	qDebug() << "Attempting to terminate server...";
+	disconnect(serverProcess, SIGNAL(error(QProcess::ProcessError)),
+	           this, SLOT(handleProcessError(QProcess::ProcessError)));
+	serverProcess->close();
 	serverProcess->terminate();
-	if (serverProcess->waitForFinished())
-	{
-		serverProcess->deleteLater();
-		serverProcess = 0;
-		
-#ifndef _WIN32
-		if (!commandPipePath.isEmpty())
-			remove(commandPipePath.toAscii());
-#endif
-		
-		return true;
-	}
+	serverProcess->waitForFinished();
 	
-	return false;
-}
+	qDebug() << "Exit code:" << serverProcess->exitCode();
+	serverProcess->deleteLater();
+	serverProcess = 0;
+	
+#ifndef _WIN32
+	if (!commandPipePath.isEmpty())
+		remove(commandPipePath.toAscii());
+#endif
+	
+	return true;
+	}
 
 bool IndiServices::startDriver(const QString& driverName,
                                const QString& deviceName)
@@ -346,6 +354,7 @@ void IndiServices::stopDriver(const QString& driverName,
 		return;
 	}
 	
+	qDebug() << "Attempting to stop" << driverName << deviceName;
 	QFile pipe(commandPipePath);
 	if(pipe.open(QFile::WriteOnly))
 	{
@@ -355,7 +364,7 @@ void IndiServices::stopDriver(const QString& driverName,
 	}
 	else
 	{
-		qDebug() << pipe.errorString();
+		qDebug() << "stopDriver(): Pipe error:" << pipe.errorString();
 	}
 }
 
@@ -451,7 +460,7 @@ void IndiServices::initClient(const QString& id)
 
 void IndiServices::handleConnectionError(QAbstractSocket::SocketError error)
 {
-	//TODO
+	// TODO: Handle connection errors for the local indiserver instance
 	Q_UNUSED(error);
 	
 	qDebug() << serverSocket->errorString();
@@ -459,10 +468,8 @@ void IndiServices::handleConnectionError(QAbstractSocket::SocketError error)
 
 void IndiServices::handleProcessError(QProcess::ProcessError error)
 {
-	//TODO
-	Q_UNUSED(error);
 	
-	qDebug() << serverProcess->errorString();
+	qDebug() << "Process error:" << serverProcess->errorString();
 	
 	if (serverSocket)
 	{
@@ -470,6 +477,12 @@ void IndiServices::handleProcessError(QProcess::ProcessError error)
 		serverSocket->close();
 		serverSocket->deleteLater();
 		serverSocket = 0;
+	}
+	
+	if (error == QProcess::Crashed)
+	{
+		delete serverProcess;
+		serverProcess = 0;
 	}
 }
 
