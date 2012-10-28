@@ -24,6 +24,8 @@
  */
 
 #include "TelescopeClientTcp.hpp"
+#include "StelApp.hpp"
+#include "StelCore.hpp"
 
 TelescopeClientTcp::TelescopeClientTcp(const QString& name, const QString& params, Equinox eq) :
 		TelescopeClient(name),

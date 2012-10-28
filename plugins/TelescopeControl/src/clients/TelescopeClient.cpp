@@ -31,6 +31,7 @@
 #ifdef Q_OS_WIN32
 #include "TelescopeClientAscom.hpp"
 #endif
+#include "StelApp.hpp"
 #include "StelUtils.hpp"
 #include "StelTranslator.hpp"
 #include "StelCore.hpp"
@@ -53,6 +54,12 @@ TelescopeClient::TelescopeClient(const QString &name) : name(name)
 	nameI18n = name;
 }
 
+Vec3f TelescopeClient::getInfoColor() const
+{
+	bool nightMode = StelApp::getInstance().getVisionModeNight();
+	return nightMode ? Vec3f(0.8, 0.2, 0.2) : Vec3f(1, 1, 1);
+}
+
 QString TelescopeClient::getInfoString(const StelCore* core, const InfoStringGroup& flags) const
 {
 	QString str;
@@ -69,10 +76,6 @@ QString TelescopeClient::getInfoString(const StelCore* core, const InfoStringGro
 	return str;
 }
 
-//! returns the current system time in microseconds since the Epoch
-//! Prior to revision 6308, it was necessary to put put this method in an
-//! #ifdef block, as duplicate function definition caused errors during static
-//! linking.
 qint64 getNow(void)
 {
 // At the moment this can't be done in a platform-independent way with Qt

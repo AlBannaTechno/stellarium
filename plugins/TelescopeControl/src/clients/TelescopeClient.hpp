@@ -30,12 +30,15 @@
 #include <QString>
 #include <QObject>
 
-#include "StelApp.hpp"
-#include "StelCore.hpp"
 #include "StelObject.hpp"
-#include "InterpolatedPosition.hpp"
 
+//! returns the current system time in microseconds since the Epoch.
+//! Prior to revision 6308, it was necessary to put put this method in an
+//! #ifdef block, as duplicate function definition caused errors during static
+//! linking.
 qint64 getNow(void);
+
+class StelCore;
 
 enum Equinox {
 	EquinoxJ2000,
@@ -66,10 +69,7 @@ public:
 	// Method inherited from StelObject
 	QString getEnglishName() const {return name;}
 	QString getNameI18n() const {return nameI18n;}
-	Vec3f getInfoColor() const
-	{
-		return StelApp::getInstance().getVisionModeNight() ? Vec3f(0.8, 0.2, 0.2) : Vec3f(1, 1, 1);
-	}
+	Vec3f getInfoColor() const;
 	//! TelescopeClient supports the following InfoStringGroup flags:
 	//! - Name
 	//! - RaDecJ2000
@@ -91,7 +91,7 @@ public:
 	//! There can be multiple indicators for a TelescopeClient.
 	//! \param fov circle diameter in angular degrees.
 	void addFovCircle(double fov) {if (fov>=0.0) fovCircles.push_back(fov);}
-	//! 
+	//!  Get a list of FOV indicators.
 	const QList<double>& getFovCircles() const {return fovCircles;}
 	//! Clears the list of FOV indicators.
 	void resetFovCircles() { fovCircles.clear(); }

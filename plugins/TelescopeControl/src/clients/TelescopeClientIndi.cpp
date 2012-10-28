@@ -23,6 +23,8 @@
 #include "TelescopeClientIndiPointer.hpp"
 
 #include <cmath>
+#include "StelApp.hpp"
+#include "StelCore.hpp"
 #include "StelUtils.hpp"
 
 TelescopeClientIndi::TelescopeClientIndi(const QString& newName,
