@@ -452,8 +452,8 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 		StelUtils::rectToSphe(&ra_equ,&dec_equ,getEquinoxEquatorialPos(core));
 		StelUtils::ctRadec2Ecl(ra_equ, dec_equ, ecl, &lambda, &beta);
 		if (lambda<0) lambda+=2.0*M_PI;
-		oss << q_("Ecliptic Geocentric (of date): %1/%2").arg(StelUtils::radToDmsStr(lambda, true), StelUtils::radToDmsStr(beta, true)) << "<br>";
-		oss << q_("Obliquity (of date): %1").arg(StelUtils::radToDmsStr(ecl, true)) << "<br>";
+		oss << q_("Ecliptic Topocentric (of date): %1/%2").arg(StelUtils::radToDmsStr(lambda, true), StelUtils::radToDmsStr(beta, true)) << "<br>";
+		oss << q_("Obliquity (of date, for Earth): %1").arg(StelUtils::radToDmsStr(ecl, true)) << "<br>";
 	}
 
 	if (flags&Distance)
@@ -509,17 +509,11 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 
 	if ((flags&Extra2) && (englishName.compare("Sun")!=0))
 	{
-		const Vec3d& observerHelioPos = core->getObserverHeliocentricEclipticPos();
-		const double observerRq = observerHelioPos.lengthSquared();
-		const Vec3d& planetHelioPos = getHeliocentricEclipticPos();
-		const double planetRq = planetHelioPos.lengthSquared();
-		const double observerPlanetRq = (observerHelioPos - planetHelioPos).lengthSquared();
-		const double cos_chi = (observerPlanetRq + planetRq - observerRq)/(2.0*sqrt(observerPlanetRq*planetRq));
-		float planetPhase = 0.5f * std::abs(1.f + cos_chi);
-		oss << QString(q_("Phase Angle: %1")).arg(StelUtils::radToDmsStr(getPhase(core->getObserverHeliocentricEclipticPos()))) << "<br>";
-		oss << QString(q_("Elongation: %1")).arg(StelUtils::radToDmsStr(getElongation(core->getObserverHeliocentricEclipticPos()))) << "<br>";
-		oss << QString(q_("Phase: %1")).arg(planetPhase, 0, 'f', 2) << "<br>";
-		oss << QString(q_("Illuminated: %1%")).arg(planetPhase * 100, 0, 'f', 1) << "<br>";		
+		const Vec3d& observerHelioPos = core->getObserverHeliocentricEclipticPos();		
+		oss << QString(q_("Phase Angle: %1")).arg(StelUtils::radToDmsStr(getPhaseAngle(observerHelioPos))) << "<br>";
+		oss << QString(q_("Elongation: %1")).arg(StelUtils::radToDmsStr(getElongation(observerHelioPos))) << "<br>";
+		oss << QString(q_("Phase: %1")).arg(getPhase(observerHelioPos), 0, 'f', 2) << "<br>";
+		oss << QString(q_("Illuminated: %1%")).arg(getPhase(observerHelioPos) * 100, 0, 'f', 1) << "<br>";
 	}
 
 	postProcessInfoString(str, flags);
@@ -804,7 +798,14 @@ double Planet::getSiderealTime(double jd) const
 	double wholeRotations = floor(rotations);
 	double remainder = rotations - wholeRotations;
 
-	return remainder * 360. + re.offset;
+	if (englishName=="Jupiter")
+	{
+		// use semi-empirical coefficient for GRS drift
+		// TODO: need improved
+		return remainder * 360. + re.offset - 0.2483 * std::abs(StelApp::getInstance().getCore()->getJDay() - 2456172);
+	}
+	else
+		return remainder * 360. + re.offset;
 }
 
 // Get the Planet position in the parent Planet ecliptic coordinate in AU
@@ -888,7 +889,7 @@ double Planet::computeDistance(const Vec3d& obsHelioPos)
 }
 
 // Get the phase angle (radians) for an observer at pos obsPos in heliocentric coordinates (dist in AU)
-double Planet::getPhase(const Vec3d& obsPos) const
+double Planet::getPhaseAngle(const Vec3d& obsPos) const
 {
 	const double observerRq = obsPos.lengthSquared();
 	const Vec3d& planetHelioPos = getHeliocentricEclipticPos();
@@ -896,6 +897,17 @@ double Planet::getPhase(const Vec3d& obsPos) const
 	const double observerPlanetRq = (obsPos - planetHelioPos).lengthSquared();
 	//return std::acos(observerPlanetRq + planetRq - observerRq)/(2.0*sqrt(observerPlanetRq*planetRq));
 	return std::acos((observerPlanetRq + planetRq - observerRq)/(2.0*sqrt(observerPlanetRq*planetRq)));
+}
+
+// Get the planet phase for an observer at pos obsPos in heliocentric coordinates (in AU)
+float Planet::getPhase(const Vec3d& obsPos) const
+{
+	const double observerRq = obsPos.lengthSquared();
+	const Vec3d& planetHelioPos = getHeliocentricEclipticPos();
+	const double planetRq = planetHelioPos.lengthSquared();
+	const double observerPlanetRq = (obsPos - planetHelioPos).lengthSquared();
+	const double cos_chi = (observerPlanetRq + planetRq - observerRq)/(2.0*sqrt(observerPlanetRq*planetRq));
+	return 0.5f * std::abs(1.f + cos_chi);
 }
 
 // Get the elongation angle (radians) for an observer at pos obsPos in heliocentric coordinates (dist in AU)
