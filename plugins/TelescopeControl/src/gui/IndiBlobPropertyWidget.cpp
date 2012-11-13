@@ -54,7 +54,7 @@ void IndiBlobPropertyWidget::updateFromProperty()
 	//generate them every time.
 	
 	// The timestamp should not contain characters forbidden for file names!
-	QString timestamp = property->getTimestamp().toString("YYYY-MM-DDT-HHmmss");
+	QString timestamp = property->getTimestamp().toString("yyyy-MM-ddThhmmss");
 	QStringList elementNames = property->getElementNames();
 	foreach (const QString& elementName, elementNames)
 	{
@@ -86,7 +86,7 @@ void IndiBlobPropertyWidget::updateFromProperty()
 		}
 		dir.setPath(dirPath);
 		// File name
-		QString name = element->getName();
+		QString name = element->getName(); //TODO: Remove illegal filename chars
 		QString format =  element->getFormat(); //TODO: Chop .z
 		QString filename = QString("%1_%2%3").arg(name, timestamp, format);
 		QString path = dir.absoluteFilePath(filename);
