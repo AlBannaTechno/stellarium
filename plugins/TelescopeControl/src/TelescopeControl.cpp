@@ -49,10 +49,10 @@
 #include "StelLocaleMgr.hpp"
 #include "StelModuleMgr.hpp"
 #include "StelMovementMgr.hpp"
-#include "StelShortcutMgr.hpp"
 #include "StelObject.hpp"
 #include "StelObjectMgr.hpp"
 #include "StelProjector.hpp"
+#include "StelShortcutMgr.hpp"
 #include "StelStyle.hpp"
 #include "renderer/StelGeometryBuilder.hpp"
 #include "renderer/StelRenderer.hpp"
@@ -109,7 +109,10 @@ TelescopeControl::TelescopeControl() :
 	selectionTexture(0),
 	indiService(0),
 	configurationWindow(0),
-	controlPanelWindow(0)
+	controlPanelWindow(0),
+	actionGroupId("PluginTelescopeControl"),
+	moveToSelectedActionId("actionMove_Telescope_To_Selection_%1"),
+	moveToCenterActionId("actionSlew_Telescope_To_Direction_%1")
 {
 	setObjectName("TelescopeControl");
 
@@ -202,29 +205,24 @@ void TelescopeControl::init()
 		//Create telescope key bindings
 		/* QAction-s with these key bindings existed in Stellarium prior to
 			revision 6311. Any future backports should account for that. */
-		QString group = "PluginTelescopeControl";
 		for (int i = MIN_SLOT_NUMBER; i <= MAX_SLOT_NUMBER; i++)
 		{
 			// "Slew to object" commands
-			QString name = QString("actionMove_Telescope_To_Selection_%1").arg(i);
-			QString description = q_("Move telescope #%1 to selected object").arg(i);
+			QString name = moveToSelectedActionId.arg(i);
 			QString shortcut = QString("Ctrl+%1").arg(i);
-			QAction* action = shMgr->addGuiAction(name, true,
-			                                       description,
-			                                      shortcut, QString(),
-			                                       group, false, false);
+			QAction* action = shMgr->addGuiAction(name, true, "",
+			                                      shortcut, "", actionGroupId,
+			                                      false);
 			connect(action, SIGNAL(triggered()),
 			        &gotoSelectedShortcutMapper, SLOT(map()));
 			gotoSelectedShortcutMapper.setMapping(action, i);
 
 			// "Slew to the center of the screen" commands
-			name = QString("actionSlew_Telescope_To_Direction_%1").arg(i);
-			description = q_("Move telescope #%1 to the point currently in the center of the screen").arg(i);
+			name = moveToCenterActionId.arg(i);
 			shortcut = QString("Alt+%1").arg(i);
-			action = shMgr->addGuiAction(name, true,
-			                            description,
-			                             shortcut, QString(),
-			                            group, false, false);
+			action = shMgr->addGuiAction(name, true, "",
+			                             shortcut, "", actionGroupId,
+			                             false, false);
 			connect(action, SIGNAL(triggered()),
 			        &gotoDirectionShortcutMapper, SLOT(map()));
 			gotoDirectionShortcutMapper.setMapping(action, i);
@@ -233,6 +231,11 @@ void TelescopeControl::init()
 		        this, SLOT(slewTelescopeToSelectedObject(int)));
 		connect(&gotoDirectionShortcutMapper, SIGNAL(mapped(int)),
 		        this, SLOT(slewTelescopeToViewDirection(int)));
+		        
+		// Also updates descriptions if the actions have been loaded from file
+		translateActionDescriptions();
+		connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
+		        this, SLOT(translateActionDescriptions()));
 	
 		// Create and initialize dialog windows
 		configurationWindow = new ConfigurationWindow();
@@ -245,7 +248,7 @@ void TelescopeControl::init()
 		            "Device Control Panel",
 		            "Ctrl+0",
 		            QString(),
-		            group, true, false);
+		            actionGroupId, true, false);
 		controlPanelAction->setChecked(controlPanelWindow->visible());
 		connect(controlPanelAction, SIGNAL(toggled(bool)),
 		        controlPanelWindow, SLOT(setVisible(bool)));
@@ -1811,6 +1814,24 @@ void TelescopeControl::setCurrentLog(const QString& id)
 		log_file = telescopeServerLogStreams.value(id);
 }
 
+void TelescopeControl::translateActionDescriptions()
+{
+	StelShortcutMgr* shMgr = StelApp::getInstance().getStelShortcutManager();
+	if (!shMgr)
+		return;
+	
+	for (int i = MIN_SLOT_NUMBER; i <= MAX_SLOT_NUMBER; i++)
+	{
+		QString name = moveToSelectedActionId.arg(i);
+		QString description = q_("Move telescope #%1 to selected object")
+		                      .arg(i);
+		shMgr->setShortcutText(name, actionGroupId, description);
+		
+		name = moveToCenterActionId.arg(i);
+		description = q_("Move telescope #%1 to the point currently in the center of the screen").arg(i);
+		shMgr->setShortcutText(name, actionGroupId, description);
+	}
+}
 #ifdef Q_OS_WIN32
 bool TelescopeControl::checkIfAscomIsInstalled()
 {

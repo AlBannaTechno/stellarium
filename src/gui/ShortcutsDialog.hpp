@@ -20,57 +20,38 @@
 #ifndef SHORTCUTSDIALOG_HPP
 #define SHORTCUTSDIALOG_HPP
 
+#include <QKeySequence>
+#include <QModelIndex>
+#include <QSortFilterProxyModel>
+
 #include "StelDialog.hpp"
 
-#include <QLineEdit>
-
-//! Specialised GUI control for entering keyboard shortcut combinations.
-//! Allows Emacs-style key sequences (for example "Ctrl+E, Ctrl+2",
-//! see the documentation of QKeySequence for details.)
-class ShortcutLineEdit : public QLineEdit
-{
-	Q_OBJECT
-
-public:
-	ShortcutLineEdit(QWidget* parent);
-
-	QKeySequence getKeySequence();
-	bool isEmpty() const
-	{
-		return (m_keyNum <= 0);
-	}
-
-public slots:
-	//! Clear contents and stored keys.
-	void clear();
-	//! Remove the last key from the key sequence.
-	void backspace();
-	void setContents(QKeySequence ks);
-
-signals:
-	//! Needed for enabling/disabling buttons in ShortcutsDialog.
-	void focusChanged(bool focus);
-	void contentsChanged();
-
-protected:
-	void keyPressEvent(QKeyEvent *e);
-	void focusInEvent(QFocusEvent *e);
-	void focusOutEvent(QFocusEvent *e);
-
-private:
-	//! transform modifiers to int.
-	static int getModifiers(Qt::KeyboardModifiers state, const QString &text);
-
-	//! Length of the stored key sequence.
-	int m_keyNum;
-	int m_keys[4]; // QKeySequence allows only 4 keys in single shortcut
-};
 
 class Ui_shortcutsDialogForm;
+class ShortcutLineEdit;
 class StelShortcut;
 class StelShortcutGroup;
 class StelShortcutMgr;
-QT_FORWARD_DECLARE_CLASS(QTreeWidgetItem)
+
+class QStandardItemModel;
+class QStandardItem;
+
+
+//! Custom filter class for filtering tree sub-items.
+//! (The standard QSortFilterProxyModel shows child items only if the
+//! parent item matches the filter.)
+class ShortcutsFilterModel : public QSortFilterProxyModel
+{
+	Q_OBJECT
+	
+public:
+	ShortcutsFilterModel(QObject* parent = 0);
+	
+protected:
+	bool filterAcceptsRow(int source_row,
+	                      const QModelIndex &source_parent) const;
+};
+
 
 class ShortcutsDialog : public StelDialog
 {
@@ -91,18 +72,19 @@ public slots:
 	//! ititialize editors state when current item changed.
 	void initEditors();
 	//! checks whether one QKeySequence is prefix of another.
-	bool prefixMatchKeySequence(QKeySequence ks1, QKeySequence ks2);
-	QList<QTreeWidgetItem*> findCollidingItems(QKeySequence ks);
+	bool prefixMatchKeySequence(const QKeySequence &ks1, const QKeySequence &ks2);
+	//! Compile a list of items that share a prefix with this sequence.
+	QList<QStandardItem*> findCollidingItems(QKeySequence ks);
 	void handleCollisions(ShortcutLineEdit* currentEdit);
 	//! called when editors' state changed.
 	void handleChanges();
 	//! called when apply button clicked.
 	void applyChanges() const;
 	//! called by doubleclick; if click is on editable item, switch to editors
-	void switchToEditors(QTreeWidgetItem* item, int column);
-	//! update shortcut representation in tree correspondingly to its actual contents
-	//! if no shortcutTreeItem specified, search for it in tree, if no items found, create new item
-	void updateShortcutsItem(StelShortcut* shortcut, QTreeWidgetItem* shortcutsTreeItem = NULL);
+	void switchToEditors(const QModelIndex& index);
+	//! update shortcut representation in tree correspondingly to its actual contents.
+	//! if no item is specified, search for it in tree, if no items found, create new item
+	void updateShortcutsItem(StelShortcut* shortcut, QStandardItem* shortcutItem = NULL);
 	void restoreDefaultShortcuts();
 	void updateTreeData();
 
@@ -112,7 +94,7 @@ protected:
 
 private:
 	//! checks whether given item can be changed by editors.
-	static bool itemIsEditable(QTreeWidgetItem *item);
+	static bool itemIsEditable(QStandardItem *item);
 	//! Concatenate the header, key codes and footer to build
 	//! up the help text.
 	//! @todo FIXME: This does nothing? 
@@ -122,18 +104,24 @@ private:
 	//! See http://qt-project.org/faq/answer/how_can_my_stylesheet_account_for_custom_properties
 	void polish();
 
-	QTreeWidgetItem* updateGroup(StelShortcutGroup* group);
+	QStandardItem* updateGroup(StelShortcutGroup* group);
 
 	//! search for first appearence of item with requested data.
-	QTreeWidgetItem* findItemByData(QVariant value, int role, int column = 0);
+	QStandardItem* findItemByData(QVariant value, int role, int column = 0);
 
 	//! pointer to mgr, for not getting it from stelapp every time.
 	StelShortcutMgr* shortcutMgr;
 
 	//! list for storing collisions items, so we can easy restore their colors.
-	QList<QTreeWidgetItem*> collisionItems;
+	QList<QStandardItem*> collisionItems;
 
 	Ui_shortcutsDialogForm *ui;
+	ShortcutsFilterModel* filterModel;
+	QStandardItemModel* mainModel;
+	//! Initialize or reset the main model.
+	void resetModel();
+	//! Set the main model's column lables.
+	void setModelHeader();
 };
 
 #endif // SHORTCUTSDIALOG_HPP

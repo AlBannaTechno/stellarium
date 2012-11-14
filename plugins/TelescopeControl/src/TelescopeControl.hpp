@@ -240,6 +240,8 @@ signals:
 
 private slots:
 	void setStelStyle(const QString& section);
+	//! Set translated keyboard shortcut descriptions.
+	void translateActionDescriptions();
 	
 	//! Watch this INDI client for new device definitions.
 	void watchIndiClient(IndiClient* client);
@@ -374,6 +376,10 @@ private:
 	bool ascomPlatformIsInstalled;
 	bool checkIfAscomIsInstalled();
 #endif
+
+	QString actionGroupId;
+	QString moveToSelectedActionId;
+	QString moveToCenterActionId;
 };
 
 
