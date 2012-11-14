@@ -21,7 +21,10 @@
 #include <cmath>
 
 #include <QAxObject>
+#include <QMetaMethod>
 
+#include "StelApp.hpp"
+#include "StelCore.hpp"
 #include "StelUtils.hpp"
 
 const char* TelescopeClientAscom::P_CONNECTED = "Connected";
@@ -44,7 +47,7 @@ TelescopeClientAscom::TelescopeClientAscom(const QString &name, const QString &p
 		equinox(eq),
 		driver(0)
 {
-	qDebug() << "Creating ASCOM telescope client:" << name << params;
+	qDebug() << "Creating ASCOM telescope client:" << name << params << flush;
 
 	//Get the driver identifier from the parameters string
 	//(for now, it contains only the driver identifier)
@@ -74,8 +77,17 @@ TelescopeClientAscom::TelescopeClientAscom(const QString &name, const QString &p
 	bool connectionAttemptSucceeded = driver->property(P_CONNECTED).toBool();
 	if (!connectionAttemptSucceeded)
 	{
+		qDebug() << "Unable to set Connected for" << name;
 		deleteDriver();
 	}
+	
+	ascomDescription = driver->property("Description").toString();
+	
+	const QMetaObject* metaObject = driver->metaObject();
+	for(int i = 0; i < metaObject->methodCount(); ++i)
+		qDebug() << metaObject->method(i).signature();
+	
+	qDebug() << metaObject->indexOfMethod("Dispose()");
 
 	//If it is parked, see if it can be unparked
 	//TODO: Temporary. The imporved GUI should offer parking/unparking.
@@ -95,14 +107,23 @@ TelescopeClientAscom::TelescopeClientAscom(const QString &name, const QString &p
 	timeToGetPosition = getNow() + POSITION_REFRESH_INTERVAL;
 }
 
-TelescopeClientAscom::~TelescopeClientAscom(void)
+TelescopeClientAscom::~TelescopeClientAscom()
 {
+	qDebug() << "Destructor of" << name;
 	if (driver)
 	{
 		if (!driver->isNull())
+		{
+			qDebug() << "Trying to delete...";
+			qDebug() << flush;
+			//if (driver->property(P_CONNECTED).toBool())
+			//	driver->setProperty(P_CONNECTED, false);
+			driver->dynamicCall("Dispose()");
 			driver->clear();
-		delete driver;
-		driver = 0;
+		}
+		//delete driver;
+		//driver = 0;
+		qDebug() << "Deleted.";
 	}
 }
 
@@ -301,17 +322,16 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 }
 
 void TelescopeClientAscom::handleDriverException(int code,
-												 const QString &source,
-												 const QString &desc,
-												 const QString &help)
+                                                 const QString &source,
+                                                 const QString &desc,
+                                                 const QString &help)
 {
+	Q_UNUSED(help);
 	QString errorMessage = QString("%1: ASCOM driver error:\n"
 	                               "Code: %2\n"
 	                               "Source: %3\n"
 	                               "Description: %4")
-	                               .arg(name)
-	                               .arg(code)
-	                               .arg(desc);
+	                               .arg(name).arg(code).arg(source).arg(desc);
 	qDebug() << errorMessage;
 	deleteDriver();
 	emit ascomError(errorMessage);
@@ -321,8 +341,8 @@ void TelescopeClientAscom::deleteDriver()
 {
 	if (driver)
 	{
-		delete driver;
-		driver = 0;
+		if (!driver->isNull())
+			driver->clear();
 	}
 	return;
 }

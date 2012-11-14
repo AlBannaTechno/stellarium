@@ -37,7 +37,7 @@ class TelescopeClientAscom : public TelescopeClient
 	Q_OBJECT
 public:
 	TelescopeClientAscom(const QString &name, const QString &params, Equinox eq);
-	virtual ~TelescopeClientAscom(void);
+	virtual ~TelescopeClientAscom();
 	bool isConnected(void) const;
 	bool isInitialized(void) const;
 
@@ -82,6 +82,9 @@ private:
 	//! Interval between attempts to read position info, in microseconds.
 	//! Default is half a second.
 	static const qint64 POSITION_REFRESH_INTERVAL = 500000;
+	
+	//! ASCOM driver description extracted from the driver object.
+	QString ascomDescription;
 
 	//ASCOM named properties and functions
 	static const char* P_CONNECTED;
