@@ -197,7 +197,7 @@ void TelescopeControl::init()
 		        this, SLOT(removeIndiTelescope(QString)));
 		
 		// Load and start all telescope clients
-		loadConnections();
+		//loadConnections();
 		
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 		StelShortcutMgr* shMgr = StelApp::getInstance().getStelShortcutManager();
@@ -215,7 +215,6 @@ void TelescopeControl::init()
 			                                      false);
 			connect(action, SIGNAL(triggered()),
 			        &gotoSelectedShortcutMapper, SLOT(map()));
-			gotoSelectedShortcutMapper.setMapping(action, i);
 
 			// "Slew to the center of the screen" commands
 			name = moveToCenterActionId.arg(i);
@@ -225,13 +224,15 @@ void TelescopeControl::init()
 			                             false, false);
 			connect(action, SIGNAL(triggered()),
 			        &gotoDirectionShortcutMapper, SLOT(map()));
-			gotoDirectionShortcutMapper.setMapping(action, i);
 		}
-		connect(&gotoSelectedShortcutMapper, SIGNAL(mapped(int)),
-		        this, SLOT(slewTelescopeToSelectedObject(int)));
-		connect(&gotoDirectionShortcutMapper, SIGNAL(mapped(int)),
-		        this, SLOT(slewTelescopeToViewDirection(int)));
-		        
+		connect(&gotoSelectedShortcutMapper, SIGNAL(mapped(QString)),
+		        this, SLOT(slewTelescopeToSelectedObject(QString)));
+		connect(&gotoDirectionShortcutMapper, SIGNAL(mapped(QString)),
+		        this, SLOT(slewTelescopeToViewDirection(QString)));
+		
+		//FIXME: After changes, move this to the old place before the actions?
+		loadConnections();
+		
 		// Also updates descriptions if the actions have been loaded from file
 		translateActionDescriptions();
 		connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
@@ -507,28 +508,34 @@ void TelescopeControl::setFontSize(int fontSize)
 	labelFont.setPixelSize(fontSize);
 }
 
-void TelescopeControl::slewTelescopeToSelectedObject(int number)
+void TelescopeControl::slewTelescopeToSelectedObject(const QString& id)
 {
+	if (id.isEmpty())
+		return;
+	
 	// Find out the coordinates of the target
 	StelObjectMgr* omgr = GETSTELMODULE(StelObjectMgr);
 	if (omgr->getSelectedObject().isEmpty())
 		return;
 
-	StelObjectP selectObject = omgr->getSelectedObject().at(0);
-	if (!selectObject)  // should never happen
+	StelObjectP targetObject = omgr->getSelectedObject().first();
+	if (!targetObject)  // should never happen
 		return;
 
-	Vec3d objectPosition = selectObject->getJ2000EquatorialPos(StelApp::getInstance().getCore());
+	StelCore* core = StelApp::getInstance().getCore();
+	Vec3d objectPosition = targetObject->getJ2000EquatorialPos(core);
 
-	telescopeGoto(idFromShortcutNumber.value(number), objectPosition);
+	telescopeGoto(id, objectPosition);
 }
 
-void TelescopeControl::slewTelescopeToViewDirection(int number)
+void TelescopeControl::slewTelescopeToViewDirection(const QString& id)
 {
+	if (id.isEmpty())
+		return;
+	
 	// Find out the coordinates of the target
 	Vec3d centerPosition = GETSTELMODULE(StelMovementMgr)->getViewDirectionJ2000();
-
-	telescopeGoto(idFromShortcutNumber.value(number), centerPosition);
+	telescopeGoto(id, centerPosition);
 }
 
 void TelescopeControl::watchIndiClient(IndiClient* client)
@@ -1007,6 +1014,9 @@ void TelescopeControl::loadConnections()
 
 bool TelescopeControl::addConnection(const QVariantMap& properties)
 {
+	StelShortcutMgr* shMgr = StelApp::getInstance().getStelShortcutManager();
+	Q_ASSERT(shMgr);
+	
 	//Name
 	QString name = properties.value("name").toString();
 	if (name.isEmpty())
@@ -1230,7 +1240,19 @@ bool TelescopeControl::addConnection(const QVariantMap& properties)
 	{
 		newProperties.insert("shortcutNumber", shortcutNumber);
 		if (!idFromShortcutNumber.contains(shortcutNumber))
+		{
 			idFromShortcutNumber.insert(shortcutNumber, name);
+			
+			// FIXME: Don't forget to remove the mapping later?
+			QString actionName = moveToSelectedActionId.arg(shortcutNumber);
+			QAction* action = shMgr->getGuiAction(actionName);
+			if (action)
+				gotoSelectedShortcutMapper.setMapping(action, name);
+			actionName = moveToCenterActionId.arg(shortcutNumber);
+			action = shMgr->getGuiAction(actionName);
+			if (action)
+				gotoDirectionShortcutMapper.setMapping(action, name);
+		}
 	}
 	if (isValidTcpPort(tcpPort))
 		usedTcpPorts.append(tcpPort);

@@ -222,12 +222,12 @@ public slots:
 	
 	//! slews a telescope to the selected object.
 	//! For use from the GUI.
-	void slewTelescopeToSelectedObject(int number);
+	void slewTelescopeToSelectedObject(const QString& id);
 
 	//! slews a telescope to the point of the celestial sphere currently
 	//! in the center of the screen.
 	//! For use from the GUI.
-	void slewTelescopeToViewDirection(int number);
+	void slewTelescopeToViewDirection(const QString& id);
 	
 	//! Used in the GUI
 	void setFlagUseTelescopeServerLogs (bool b) {useTelescopeServerLogs = b;}
