@@ -28,6 +28,7 @@
 #include "VecMath.hpp"
 #include "TelescopeControl.hpp"
 #include "FovCirclesWidget.hpp"
+#include "CoordinatesWidget.hpp"
 
 #include "StelDeviceWidget.hpp"
 #include "ui_StelDeviceWidget.h"
@@ -47,26 +48,24 @@ StelDeviceWidget::StelDeviceWidget(TelescopeControl *plugin,
 	ui = new Ui_StelDeviceWidget;
 	ui->setupUi(this);
 	
+	coordsWidget = new CoordinatesWidget(this);
+	ui->verticalLayout->addWidget(coordsWidget);
+	
+	TelescopeClientP telescope = deviceManager->getTelescope(id);
+	fcWidget = new FovCirclesWidget(telescope.data(), this);
+	ui->verticalLayout->addWidget(fcWidget);
+	
 	// TODO: Check if this is really necessary.
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
 	        this, SLOT(retranslate()));
-	
-	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)),
-	        this, SLOT(setFormatHMS(bool)));
-	connect(ui->radioButtonDMS, SIGNAL(toggled(bool)),
-	        this, SLOT(setFormatDMS(bool)));
-	connect(ui->radioButtonDecimal, SIGNAL(toggled(bool)),
-	        this, SLOT(setFormatDecimal(bool)));
 
-	connect(ui->pushButtonSlew, SIGNAL(clicked()), this, SLOT(slew()));
+	connect(coordsWidget->slewButton, SIGNAL(clicked()),
+	        this, SLOT(slew()));
 	
-        connect(ui->pushButtonCurrent,SIGNAL(clicked()),this,SLOT(getCurrentObjectInfo()));
-	//Coordinates are in HMS by default:
-	ui->radioButtonHMS->setChecked(true);
+	// TODO: Make it current telescope coordinates, not current object.
+	connect(coordsWidget->currentButton, SIGNAL(clicked()),
+	        this, SLOT(getCurrentObjectInfo()));
 	
-	TelescopeClientP telescope = deviceManager->getTelescope(id);
-	FovCirclesWidget* fcWidget = new FovCirclesWidget(telescope.data(), this);
-	ui->verticalLayout->addWidget(fcWidget);
 	connect (fcWidget, SIGNAL(fovCirclesChanged()),
 	         deviceManager, SLOT(saveConnections()));
 }
@@ -81,6 +80,9 @@ void StelDeviceWidget::retranslate()
 {
 	if (ui)
 		ui->retranslateUi(this);
+	if (coordsWidget)
+		coordsWidget->retranslate();
+	// TODO: Translate FovCirclesWidget
 }
 
 /*
@@ -90,27 +92,6 @@ void StelDeviceWidget::showConfiguration()
 	deviceManager->configureGui(true);
 }
 */
-
-void StelDeviceWidget::setFormatHMS(bool set)
-{
-	if (!set) return;
-	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::HMSLetters);
-	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DMSLetters);
-}
-
-void StelDeviceWidget::setFormatDMS(bool set)
-{
-	if (!set) return;
-	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::DMSLetters);
-	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DMSLetters);
-}
-
-void StelDeviceWidget::setFormatDecimal(bool set)
-{
-	if (!set) return;
-	ui->spinBoxRA->setDisplayFormat(AngleSpinBox::DecimalDeg);
-	ui->spinBoxDec->setDisplayFormat(AngleSpinBox::DecimalDeg);
-}
 
 /*
 void StellariumDeviceWidget::updateTelescopeList()
@@ -178,8 +159,8 @@ void StelDeviceWidget::slew()
 	if (clientId.isEmpty())
 		return;
 	
-	double radiansRA = ui->spinBoxRA->valueRadians();
-	double radiansDec = ui->spinBoxDec->valueRadians();
+	double radiansRA = coordsWidget->raSpinBox->valueRadians();
+	double radiansDec = coordsWidget->decSpinBox->valueRadians();
 
 	Vec3d targetPosition;
 	StelUtils::spheToRect(radiansRA, radiansDec, targetPosition);
@@ -195,7 +176,7 @@ void StelDeviceWidget::getCurrentObjectInfo()
 		double dec_j2000 = 0;
 		double ra_j2000 = 0;
 		StelUtils::rectToSphe(&ra_j2000,&dec_j2000,selected[0]->getJ2000EquatorialPos(StelApp::getInstance().getCore()));
-		ui->spinBoxRA->setRadians(ra_j2000);
-		ui->spinBoxDec->setRadians(dec_j2000);
+		coordsWidget->raSpinBox->setRadians(ra_j2000);
+		coordsWidget->decSpinBox->setRadians(dec_j2000);
 	}
 }

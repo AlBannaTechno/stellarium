@@ -30,6 +30,8 @@
 class Ui_StelDeviceWidget;
 #include "StelObjectMgr.hpp"
 
+class CoordinatesWidget;
+class FovCirclesWidget;
 class TelescopeControl;
 
 //! Control panel tab representing a TelescopeClient object.
@@ -49,23 +51,6 @@ public slots:
 private slots:
 	//! reads the fields and slews a telescope
 	void slew();
-
-	//! sets the format of the input fields to Hours-Minutes-Seconds.
-	//! Sets the right ascension field to HMS and the declination field to DMS.
-	//! The parameter is necessary for signal/slot compatibility (QRadioButton).
-	//! If "set" is "false", this method does nothing.
-	void setFormatHMS(bool set);
-	//! sets the format of the input fields to Degrees-Minutes-Seconds.
-	//! Sets both the right ascension field and the declination field to DMS.
-	//! The parameter is necessary for signal/slot compatibility (QRadioButton).
-	//! If "set" is "false", this method does nothing.
-	void setFormatDMS(bool set);
-	//! sets the format of the input fields to Decimal degrees.
-	//! Sets both the right ascension field and the declination field
-	//! to decimal degrees.
-	//! The parameter is necessary for signal/slot compatibility (QRadioButton).
-	//! If "set" is "false", this method does nothing.
-	void setFormatDecimal(bool set);
 	//! Sets the input fields to current info
 	void getCurrentObjectInfo();
 
@@ -77,6 +62,8 @@ private:
 	QString clientId;
 	
 	Ui_StelDeviceWidget* ui;
+	FovCirclesWidget* fcWidget;
+	CoordinatesWidget* coordsWidget;
 };
 
 #endif // _SLEW_WINDOW_

@@ -36,6 +36,8 @@ SET(TelescopeControl_SRCS
   gui/DeviceControlPanel.cpp
   gui/StelDeviceWidget.hpp
   gui/StelDeviceWidget.cpp
+  gui/CoordinatesWidget.hpp
+  gui/CoordinatesWidget.cpp
   gui/FovCirclesWidget.hpp
   gui/FovCirclesWidget.cpp
   gui/IndiDeviceWidget.hpp
@@ -121,6 +123,7 @@ SET(TelescopeControl_MOC_HDRS
   gui/ConfigurationWindow.hpp
   gui/DeviceControlPanel.hpp
   gui/StelDeviceWidget.hpp
+  gui/CoordinatesWidget.hpp
   gui/FovCirclesWidget.hpp
   gui/IndiDeviceWidget.hpp
   gui/IndiGroupWidget.hpp
