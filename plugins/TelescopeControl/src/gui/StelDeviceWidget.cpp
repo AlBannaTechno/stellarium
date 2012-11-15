@@ -59,8 +59,12 @@ StelDeviceWidget::StelDeviceWidget(TelescopeControl *plugin,
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
 	        this, SLOT(retranslate()));
 
-	connect(coordsWidget->slewButton, SIGNAL(clicked()),
-	        this, SLOT(slew()));
+	connect(coordsWidget->slewCoordsButton, SIGNAL(clicked()),
+	        this, SLOT(slewToCoords()));
+	connect(coordsWidget->slewCenterButton, SIGNAL(clicked()),
+	        this, SLOT(slewToCenter()));
+	connect(coordsWidget->slewSelectedButton, SIGNAL(clicked()),
+	        this, SLOT(slewToObject()));
 	
 	// TODO: Make it current telescope coordinates, not current object.
 	connect(coordsWidget->currentButton, SIGNAL(clicked()),
@@ -86,76 +90,7 @@ void StelDeviceWidget::retranslate()
 		fcWidget->retranslate();
 }
 
-/*
-void StelDeviceWidget::showConfiguration()
-{
-	//Hack to work around having no direct way to do display the window
-	deviceManager->configureGui(true);
-}
-*/
-
-/*
-void StellariumDeviceWidget::updateTelescopeList()
-{
-	connectedTelescopes.clear();
-	ui->comboBoxTelescope->clear();
-
-	QStringList telescopes = deviceManager->listConnectedTelescopeNames();
-	if (!telescopes.isEmpty())
-	{
-		connectedTelescopes = telescopes;
-		ui->comboBoxTelescope->addItems(telescopes);
-	}
-	
-	updateTelescopeControls();
-}
-
-void StellariumDeviceWidget::updateTelescopeControls()
-{
-	bool connectedTelescopeAvailable = !connectedTelescopes.isEmpty();
-	ui->groupBoxSlew->setVisible(connectedTelescopeAvailable);
-	ui->labelNoTelescopes->setVisible(!connectedTelescopeAvailable);
-	if (connectedTelescopeAvailable)
-		ui->comboBoxTelescope->setCurrentIndex(0);
-}
-
-void StellariumDeviceWidget::addTelescope(const QString& name)
-{
-	if (name.isEmpty())
-		return;
-	if (connectedTelescopes.contains(name))
-		return;
-
-	connectedTelescopes.append(name);
-	ui->comboBoxTelescope->addItem(name);
-
-	updateTelescopeControls();
-}
-
-void StellariumDeviceWidget::removeTelescope(const QString& name)
-{
-	if (name.isEmpty())
-		return;
-
-	connectedTelescopes.removeAll(name);
-
-	int index = ui->comboBoxTelescope->findText(name);
-	if (index != -1)
-	{
-		ui->comboBoxTelescope->removeItem(index);
-	}
-	else
-	{
-		//Something very wrong just happened, so:
-		updateTelescopeList();
-		return;
-	}
-
-	updateTelescopeControls();
-}
-*/
-
-void StelDeviceWidget::slew()
+void StelDeviceWidget::slewToCoords()
 {
 	if (clientId.isEmpty())
 		return;
@@ -167,6 +102,16 @@ void StelDeviceWidget::slew()
 	StelUtils::spheToRect(radiansRA, radiansDec, targetPosition);
 
 	deviceManager->telescopeGoto(clientId, targetPosition);
+}
+
+void StelDeviceWidget::slewToCenter()
+{
+	deviceManager->slewTelescopeToViewDirection(clientId);
+}
+
+void StelDeviceWidget::slewToObject()
+{
+	deviceManager->slewTelescopeToSelectedObject(clientId);
 }
 
 void StelDeviceWidget::getCurrentObjectInfo()

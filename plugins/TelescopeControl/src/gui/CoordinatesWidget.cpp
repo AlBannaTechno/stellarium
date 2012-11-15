@@ -73,11 +73,24 @@ CoordinatesWidget::CoordinatesWidget(QWidget *parent) :
 	layout->addLayout(formatLayout);
 	
 	// Large "slew" button group
-	slewButton = new QPushButton();
-	slewButton->setMinimumSize(QSize(50, 48));
-	buttonLayout = new QGridLayout();
-	buttonLayout->addWidget(slewButton, 0, 0);
-	layout->addLayout(buttonLayout);
+	QSize kingSize(50, 50);
+	slewCoordsButton = new QPushButton();
+	slewCoordsButton->setMinimumSize(kingSize);
+	QGridLayout* bigButtonLayout = new QGridLayout();
+	layout->addLayout(bigButtonLayout);
+	bigButtonLayout->addWidget(slewCoordsButton, 0, 0, 1, 2);
+	//QPushButton* abortButton = new QPushButton();
+	//abortButton->setMinimumSize(kingSize);
+	//bigButtonLayout->addWidget(abortButton, 0, 2, 1, 1);
+	//abortButton->setHidden(true);
+	
+	// Small "slew" buttons
+	slewCenterButton = new QPushButton();
+	slewSelectedButton = new QPushButton();
+	QHBoxLayout* smallButtonLayout = new QHBoxLayout();
+	smallButtonLayout->addWidget(slewCenterButton);
+	smallButtonLayout->addWidget(slewSelectedButton);
+	layout->addLayout(smallButtonLayout);
 	
 	// Init control strings
 	retranslate();
@@ -103,9 +116,12 @@ void CoordinatesWidget::retranslate()
 	decimalButton->setText(q_("D&ecimal"));
 	decimalButton->setToolTip(q_("Decimal degrees"));
 	
-	slewButton->setText(q_("&Slew"));
 	currentButton->setText(q_("&Current"));
 	currentButton->setToolTip(q_("Use the telescope's current coordinates"));
+	
+	slewCoordsButton->setText(q_("&Slew"));
+	slewCenterButton->setText(q_("Slew to the center of the screen"));
+	slewSelectedButton->setText(q_("Slew to the selected object"));
 }
 
 void CoordinatesWidget::setFormat(int buttonId)

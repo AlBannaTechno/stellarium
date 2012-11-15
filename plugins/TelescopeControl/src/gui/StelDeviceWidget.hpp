@@ -49,9 +49,13 @@ public slots:
 	void retranslate();
 	
 private slots:
-	//! reads the fields and slews a telescope
-	void slew();
-	//! Sets the input fields to current info
+	//! Slew the telescope to the manually entered coordinates.
+	void slewToCoords();
+	//! Slew the telescope to the view direction.
+	void slewToCenter();
+	//! Slew the telescope to the selected object.
+	void slewToObject();
+	//! Set the input fields to current info
 	void getCurrentObjectInfo();
 
 private:

@@ -34,6 +34,8 @@ class QVBoxLayout;
 //! A titled box allowing a pair of coordinates to be set.
 //! Some of the members are public to allow them to be connected to slots
 //! in the widgets that use this control.
+//! @todo Decide whether the "slew to selected" and "slew to center" buttons
+//! are a good idea.
 class CoordinatesWidget : public QGroupBox
 {
 	Q_OBJECT
@@ -42,9 +44,10 @@ public:
 	
 	AngleSpinBox* raSpinBox;
 	AngleSpinBox* decSpinBox;
-	QPushButton* slewButton;
+	QPushButton* slewCoordsButton;
 	QPushButton* currentButton;
-	QGridLayout* buttonLayout;
+	QPushButton* slewSelectedButton;
+	QPushButton* slewCenterButton;
 		
 public slots:
 	void retranslate();
