@@ -82,7 +82,8 @@ void StelDeviceWidget::retranslate()
 		ui->retranslateUi(this);
 	if (coordsWidget)
 		coordsWidget->retranslate();
-	// TODO: Translate FovCirclesWidget
+	if (fcWidget)
+		fcWidget->retranslate();
 }
 
 /*

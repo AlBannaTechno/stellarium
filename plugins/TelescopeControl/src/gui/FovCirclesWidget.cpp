@@ -20,6 +20,7 @@
 
 #include "FovCirclesWidget.hpp"
 #include "TelescopeClient.hpp"
+#include "StelTranslator.hpp"
 
 #include <QVBoxLayout>
 #include <QLabel>
@@ -30,35 +31,33 @@
 FovCirclesWidget::FovCirclesWidget(TelescopeClient* devicePtr,
                                    QWidget *parent) :
     QGroupBox(parent),
-    lineEditCircleList(0),
+    circleListLineEdit(0),
     circleListValidator(0)
 {
 	Q_ASSERT(devicePtr);
 	device = devicePtr;
-	
-	setTitle("Field of view circles");
 	
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setAlignment(Qt::AlignLeft|Qt::AlignTop);
 	//setLayout(layout); // Unnecessary?
 	
-	QLabel* label = new QLabel(this); 
+	label = new QLabel(this); 
 	layout->addWidget(label);
 	
 	QRegExp regExp("^\\s*(\\d{1,2}(\\.\\d{1,2})?(\\s*,\\s*|\\s*$))*\\s*$");
 	circleListValidator = new QRegExpValidator (regExp, this);
-	lineEditCircleList = new QLineEdit(this);
-	lineEditCircleList->setValidator(circleListValidator);
-	layout->addWidget(lineEditCircleList);
+	circleListLineEdit = new QLineEdit(this);
+	circleListLineEdit->setValidator(circleListValidator);
+	layout->addWidget(circleListLineEdit);
 	
-	connect(lineEditCircleList, SIGNAL(editingFinished()),
+	connect(circleListLineEdit, SIGNAL(editingFinished()),
 	        this, SLOT(readLineEdit()));
 	
 	QHBoxLayout* buttonLayout = new QHBoxLayout();
 	buttonLayout->setContentsMargins(0, 0, 0, 0);
-	QPushButton* telradButton = new QPushButton(this);
-	QPushButton* clearButton = new QPushButton(this);
+	telradButton = new QPushButton(this);
+	clearButton = new QPushButton(this);
 	buttonLayout->addWidget(telradButton);
 	buttonLayout->addWidget(clearButton);
 	layout->addLayout(buttonLayout);
@@ -68,11 +67,7 @@ FovCirclesWidget::FovCirclesWidget(TelescopeClient* devicePtr,
 	connect(telradButton, SIGNAL(clicked()),
 	        this, SLOT(addTelradCircles()));
 	
-	// TODO: Move to a separate translation function later.
-	label->setText("Circle size(s) in angular degrees:");
-	lineEditCircleList->setToolTip("Up to ten decimal values in degrees of arc, separated with commas");
-	telradButton->setText("Telrad");
-	clearButton->setText("Clear");
+	retranslate();
 	
 	// Initialize FOV values
 	loadFovCircleSizes();
@@ -97,7 +92,7 @@ void FovCirclesWidget::displayFovCircleSizes()
 {
 	QStringList tempList = fovCircleSizes.toList();
 	qSort(tempList);
-	lineEditCircleList->setText(tempList.join(", "));
+	circleListLineEdit->setText(tempList.join(", "));
 }
 
 void FovCirclesWidget::applyFovCircleSizes()
@@ -116,7 +111,7 @@ void FovCirclesWidget::applyFovCircleSizes()
 void FovCirclesWidget::readLineEdit()
 {
 	//qDebug() << "FovCirclesWidget::applyFovCircleSizes()";
-	QString string = lineEditCircleList->text().trimmed();
+	QString string = circleListLineEdit->text().trimmed();
 	QRegExp separator("\\s*,\\s*");
 	QStringList tempList = string.split(separator, QString::SkipEmptyParts);
 	QSet<QString> tempSet = tempList.toSet();
@@ -133,7 +128,7 @@ void FovCirclesWidget::clearFovCircleSizes()
 {
 	//qDebug() << "FovCirclesWidget::clearFovCircleSizes()";
 	device->resetFovCircles();
-	lineEditCircleList->clear();
+	circleListLineEdit->clear();
 	fovCircleSizes.clear();
 	emit fovCirclesChanged();
 }
@@ -146,4 +141,14 @@ void FovCirclesWidget::addTelradCircles()
 	applyFovCircleSizes();
 	loadFovCircleSizes();
 	displayFovCircleSizes();
+}
+
+void FovCirclesWidget::retranslate()
+{
+	setTitle(q_("Field of view circles"));
+	
+	label->setText(q_("Circle size(s) in angular degrees:"));
+	circleListLineEdit->setToolTip(q_("Up to ten decimal values in degrees of arc, separated with commas"));
+	telradButton->setText(q_("Telrad"));
+	clearButton->setText(q_("Clear"));
 }

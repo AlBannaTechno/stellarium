@@ -24,7 +24,9 @@
 #include <QGroupBox>
 #include <QSet>
 
+class QLabel;
 class QLineEdit;
+class QPushButton;
 class QRegExpValidator;
 class TelescopeClient;
 
@@ -49,10 +51,14 @@ public slots:
 	void readLineEdit();
 	void clearFovCircleSizes();
 	void addTelradCircles();
+	void retranslate();
 	
 private:
-	QLineEdit* lineEditCircleList;
+	QLabel* label;
+	QLineEdit* circleListLineEdit;
 	QRegExpValidator* circleListValidator;
+	QPushButton* telradButton;
+	QPushButton* clearButton;
 	
 	TelescopeClient* device;
 	
