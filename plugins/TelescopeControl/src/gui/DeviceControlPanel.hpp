@@ -31,9 +31,13 @@
 
 #include "IndiDevice.hpp"
 #include "IndiProperty.hpp"
+#include "TelescopeClient.hpp"
 
 class Ui_deviceControlPanelWidget;
 class IndiClient;
+#ifdef _WIN32
+class AscomDeviceWidget;
+#endif
 class IndiDeviceWidget;
 class StelDeviceWidget;
 class TelescopeControl;
@@ -62,7 +66,11 @@ public slots:
 	//! Removes the client and all associated tabs (devices and properties).
 	void removeIndiClient(const QString& clientName);
 	
-	void addStelDevice(const QString& id);
+	//! Add a widget for a Stellarium native or ASCOM device.
+	//! @todo It will be a lot of fun when I have to implement support for
+	//! ASCOM devices other than telescopes.
+	void addStelDevice(const QString& id, const TelescopeClientP& device);
+	//! @todo Separate device ID from display name!
 	void removeStelDevice(const QString& id);
 	
 	//! 

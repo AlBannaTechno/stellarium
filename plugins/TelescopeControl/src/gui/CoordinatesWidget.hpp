@@ -45,9 +45,11 @@ public:
 	AngleSpinBox* raSpinBox;
 	AngleSpinBox* decSpinBox;
 	QPushButton* slewCoordsButton;
+	QPushButton* abortButton;
 	QPushButton* currentButton;
 	QPushButton* slewSelectedButton;
 	QPushButton* slewCenterButton;
+	QPushButton* syncButton;
 		
 public slots:
 	void retranslate();

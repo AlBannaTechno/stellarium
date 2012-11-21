@@ -34,6 +34,10 @@
 #include "StelDeviceWidget.hpp"
 #include "FovCirclesWidget.hpp"
 #include "TelescopeClientIndi.hpp"
+#ifdef _WIN32
+#include "AscomDeviceWidget.hpp"
+#include "TelescopeClientAscom.hpp"
+#endif
 
 DeviceControlPanel::DeviceControlPanel(TelescopeControl *plugin) :
     deviceManager(0)
@@ -219,10 +223,11 @@ void DeviceControlPanel::removeIndiClient(const QString& clientName)
 	}
 }
 
-void DeviceControlPanel::addStelDevice(const QString& id)
+void DeviceControlPanel::addStelDevice(const QString& id,
+                                       const TelescopeClientP& device)
 {
 	qDebug() << "DeviceControlPanel::addStelDevice:" << id;
-	if (id.isEmpty())
+	if (id.isEmpty() || device.isNull())
 		return;
 	
 	Q_ASSERT(deviceTabWidget);
@@ -236,8 +241,24 @@ void DeviceControlPanel::addStelDevice(const QString& id)
 		emit visibleChanged(true);//StelDialog doesn't do this
 	}
 	
-	StelDeviceWidget* deviceWidget = new StelDeviceWidget(deviceManager,
-	                                                      id, deviceTabWidget);
+	QWidget* deviceWidget;
+#ifdef _WIN32
+	TelescopeClientAscomP ascom = device.dynamicCast<TelescopeClientAscom>();
+	if (ascom)
+	{
+		deviceWidget = new AscomDeviceWidget(deviceManager,
+		                                     id,
+		                                     ascom,
+		                                     deviceTabWidget);
+	}
+	else
+#endif
+	{
+		deviceWidget = new StelDeviceWidget(deviceManager,
+		                                    id,
+		                                    device,
+		                                    deviceTabWidget);
+	}
 	// TODO: Use the proper display name instead of the ID?
 	deviceTabWidget->addTab(deviceWidget, id);
 	

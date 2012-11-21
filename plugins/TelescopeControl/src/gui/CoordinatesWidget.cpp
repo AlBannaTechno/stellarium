@@ -72,25 +72,26 @@ CoordinatesWidget::CoordinatesWidget(QWidget *parent) :
 	formatLayout->addWidget(decimalButton);
 	layout->addLayout(formatLayout);
 	
-	// Large "slew" button group
+	// "Slew" button group
 	QSize kingSize(50, 50);
 	slewCoordsButton = new QPushButton();
 	slewCoordsButton->setMinimumSize(kingSize);
-	QGridLayout* bigButtonLayout = new QGridLayout();
-	layout->addLayout(bigButtonLayout);
-	bigButtonLayout->addWidget(slewCoordsButton, 0, 0, 1, 2);
-	//QPushButton* abortButton = new QPushButton();
-	//abortButton->setMinimumSize(kingSize);
-	//bigButtonLayout->addWidget(abortButton, 0, 2, 1, 1);
+	QGridLayout* slewButtonLayout = new QGridLayout();
+	layout->addLayout(slewButtonLayout);
+	slewButtonLayout->addWidget(slewCoordsButton, 0, 0, 1, 2);
+	abortButton = new QPushButton();
+	abortButton->setMinimumSize(kingSize);
+	abortButton->setSizePolicy(QSizePolicy::Preferred,
+	                           QSizePolicy::MinimumExpanding);
+	slewButtonLayout->addWidget(abortButton, 0, 2, 2, 1);
 	//abortButton->setHidden(true);
-	
-	// Small "slew" buttons
 	slewCenterButton = new QPushButton();
+	slewButtonLayout->addWidget(slewCenterButton, 1, 0, 1, 1);
 	slewSelectedButton = new QPushButton();
-	QHBoxLayout* smallButtonLayout = new QHBoxLayout();
-	smallButtonLayout->addWidget(slewCenterButton);
-	smallButtonLayout->addWidget(slewSelectedButton);
-	layout->addLayout(smallButtonLayout);
+	slewButtonLayout->addWidget(slewSelectedButton, 1, 1, 1, 1);
+	
+	syncButton = new QPushButton();
+	layout->addWidget(syncButton);
 	
 	// Init control strings
 	retranslate();
@@ -122,6 +123,12 @@ void CoordinatesWidget::retranslate()
 	slewCoordsButton->setText(q_("&Slew"));
 	slewCenterButton->setText(q_("Slew to the center of the screen"));
 	slewSelectedButton->setText(q_("Slew to the selected object"));
+	
+	syncButton->setText(q_("Sync"));
+	syncButton->setToolTip(q_("Set the device's internal coordinates to the given coordinates"));
+	
+	abortButton->setText(q_("Stop"));
+	abortButton->setToolTip(q_("Stop the current movement"));
 }
 
 void CoordinatesWidget::setFormat(int buttonId)

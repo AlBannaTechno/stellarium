@@ -91,8 +91,10 @@ SET(TelescopeControl_SRCS
 IF(WIN32)
   SET(TelescopeControl_SRCS
     ${TelescopeControl_SRCS}
-	clients/TelescopeClientAscom.hpp
-	clients/TelescopeClientAscom.cpp)
+    clients/TelescopeClientAscom.hpp
+    clients/TelescopeClientAscom.cpp
+    gui/AscomDeviceWidget.hpp
+    gui/AscomDeviceWidget.cpp)
 ENDIF(WIN32)
 
 # Add here all the .ui files
@@ -143,7 +145,8 @@ SET(TelescopeControl_MOC_HDRS
 IF(WIN32)
   SET(TelescopeControl_MOC_HDRS
     ${TelescopeControl_MOC_HDRS}
-	clients/TelescopeClientAscom.hpp)
+    clients/TelescopeClientAscom.hpp
+    gui/AscomDeviceWidget.hpp)
 ENDIF(WIN32)
 
 # After this call, TelescopeControl_MOC_SRCS = moc_TelescopeControl.cxx

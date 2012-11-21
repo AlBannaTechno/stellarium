@@ -183,8 +183,10 @@ void TelescopeControl::init()
 		        controlPanelWindow, SLOT(logServerMessage(QString)));
 		connect(indiService, SIGNAL(clientConnected(IndiClient*)),
 		        this, SLOT(watchIndiClient(IndiClient*)));
-		connect(this, SIGNAL(clientConnected(const QString&)),
-		        controlPanelWindow, SLOT(addStelDevice(const QString&)));
+		connect(this,
+		        SIGNAL(clientConnected(QString,TelescopeClientP)),
+		        controlPanelWindow,
+		        SLOT(addStelDevice(QString,TelescopeClientP)));
 		connect(this, SIGNAL(clientDisconnected(const QString&)),
 		        controlPanelWindow, SLOT(removeStelDevice(const QString&)));
 		
@@ -1590,7 +1592,7 @@ bool TelescopeControl::startClient(const QString& id,
 		if (interfaceType != "INDI")//Only TCP connections?
 		{
 			telescopes.insert(id, newTelescopeP);
-			emit clientConnected(id);
+			emit clientConnected(id, newTelescopeP);
 		}
 		else
 			indiDevices.insert(id, newTelescopeP);

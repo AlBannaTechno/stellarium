@@ -234,7 +234,7 @@ public slots:
 
 signals:
 	//! Emitted when a connection has been established.
-	void clientConnected(const QString& id);
+	void clientConnected(const QString& id, const TelescopeClientP& client);
 	//! Emitted when a connection has been closed.
 	void clientDisconnected(const QString& id);
 

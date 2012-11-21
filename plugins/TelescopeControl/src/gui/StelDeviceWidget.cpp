@@ -38,20 +38,26 @@
 using namespace TelescopeControlGlobals;
 
 StelDeviceWidget::StelDeviceWidget(TelescopeControl *plugin,
-                                   const QString &id, QWidget *parent) :
+                                   const QString &id,
+                                   const TelescopeClientP& telescope,
+                                   QWidget *parent) :
     QWidget(parent),
     clientId(id)
 {
 	Q_ASSERT(plugin);
 	deviceManager = plugin;
 	
+	Q_ASSERT(telescope);
+	client = telescope;
+	
 	ui = new Ui_StelDeviceWidget;
 	ui->setupUi(this);
 	
 	coordsWidget = new CoordinatesWidget(this);
 	ui->verticalLayout->addWidget(coordsWidget);
+	coordsWidget->abortButton->setHidden(true);
+	coordsWidget->syncButton->setHidden(true);
 	
-	TelescopeClientP telescope = deviceManager->getTelescope(id);
 	fcWidget = new FovCirclesWidget(telescope.data(), this);
 	ui->verticalLayout->addWidget(fcWidget);
 	
@@ -59,6 +65,8 @@ StelDeviceWidget::StelDeviceWidget(TelescopeControl *plugin,
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
 	        this, SLOT(retranslate()));
 
+	// TODO: Find out if there's a way to reuse this code in
+	// CoordinatesWidget or somewhere else.
 	connect(coordsWidget->slewCoordsButton, SIGNAL(clicked()),
 	        this, SLOT(slewToCoords()));
 	connect(coordsWidget->slewCenterButton, SIGNAL(clicked()),

@@ -25,16 +25,16 @@
 #include <QString>
 #include <QStringList>
 #include <QWidget>
-#include "StelStyle.hpp"
+
+#include "TelescopeClient.hpp"
 
 class Ui_StelDeviceWidget;
-#include "StelObjectMgr.hpp"
 
 class CoordinatesWidget;
 class FovCirclesWidget;
 class TelescopeControl;
 
-//! Control panel tab representing a TelescopeClient object.
+//! Control panel tab representing a device controlled natively by Stellarium.
 //! \ingroup plugin-devicecontrol
 class StelDeviceWidget : public QWidget
 {
@@ -42,6 +42,7 @@ class StelDeviceWidget : public QWidget
 public:
 	StelDeviceWidget(TelescopeControl* plugin,
 	                 const QString& id,
+	                 const TelescopeClientP& telescope,
 	                 QWidget* parent = 0);
 	virtual ~StelDeviceWidget();
 
@@ -64,6 +65,8 @@ private:
 	
 	//! Identifier of the controlled client.
 	QString clientId;
+	
+	TelescopeClientP client;
 	
 	Ui_StelDeviceWidget* ui;
 	FovCirclesWidget* fcWidget;
