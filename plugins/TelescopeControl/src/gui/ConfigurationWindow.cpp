@@ -150,6 +150,11 @@ void ConfigurationWindow::createDialogContent()
 	ui->groupBoxAscom->setVisible(false);
 #endif
 	
+	// FIXME: INDI is hidden for release builds as it is not finished yet.
+#ifdef QT_NO_DEBUG
+	ui->pushButtonNewIndi->setVisible(false);
+#endif
+	
 	populateConnectionList();
 	
 	//Checkboxes
