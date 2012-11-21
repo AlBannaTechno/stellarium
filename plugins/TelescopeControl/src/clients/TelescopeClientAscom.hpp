@@ -29,9 +29,10 @@
 //! Telescope client that uses an ASCOM driver.
 //! The ASCOM platform is a driver interface standard based on Microsoft's
 //! Component Object Model (COM). ASCOM drivers are COM objects, so this class
-//! has to use Qt's AxContainer module. In this class, the selected driver is
+//! has to use Qt's AxContainer module. The selected driver is
 //! loaded by a QAxObject object, and communication with it (the driver) is
 //! possible only via QAxObject::dynamicCall() and similar functions.
+//! \ingroup telescope-markers
 class TelescopeClientAscom : public TelescopeClient
 {
 	Q_OBJECT
@@ -48,6 +49,25 @@ public:
 	bool prepareCommunication();
 	void performCommunication();
 	void telescopeGoto(const Vec3d &j2000Pos);
+	
+	//! @name ASCOM property testing wrappers
+	//@{
+	bool canPark();
+	//! Actually tests asynchronos slewing.
+	bool canSlew();
+	bool canSync();
+	bool canUnpark();
+	//@}
+	
+public slots:
+	//! @name ASCOM command wrappers
+	//@{
+	//! Stop the current movement.
+	void abortMovement();
+	//! Set the driver's coordinates from Stellarium's coodinates.
+	void synch(double ra, double dec);
+	//@}
+	
 
 signals:
 	void ascomError(QString);
@@ -71,6 +91,9 @@ private:
 	QAxObject* driver;
 	//! String identifier of the ASCOM driver object.
 	QString driverId;
+	
+	//! Helper function for testing boolean properties.
+	bool testAbility(const char* name);
 
 	//! Deletes the internal driver object, putting the client into
 	//! a deinitialized state.
@@ -86,7 +109,9 @@ private:
 	//! ASCOM driver description extracted from the driver object.
 	QString ascomDescription;
 
-	//ASCOM named properties and functions
+	//! @name ASCOM named properties
+	//! @todo Is there a point? Most are used only once.
+	//@{
 	static const char* P_CONNECTED;
 	static const char* P_PARKED;
 	static const char* P_TRACKING;
@@ -97,9 +122,15 @@ private:
 	static const char* P_RA;
 	static const char* P_DEC;
 	static const char* P_EQUATORIAL_SYSTEM;
-	static const char* M_UNPARK;
+	//@}
+	
+	//! @name ASCOM named methods
+	//@{
 	static const char* M_SLEW;
-	static const char* M_SLEW_ASYNCHRONOUSLY;
+	static const char* M_UNPARK;
+	//@}
 };
+
+typedef QSharedPointer<TelescopeClientAscom> TelescopeClientAscomP;
 
 #endif //_TELESCOPE_CLIENT_ASCOM_HPP_

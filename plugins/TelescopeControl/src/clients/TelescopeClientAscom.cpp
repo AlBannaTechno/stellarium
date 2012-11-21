@@ -37,10 +37,10 @@ const char* TelescopeClientAscom::P_CAN_UNPARK = "CanUnpark";
 const char* TelescopeClientAscom::P_RA = "RightAscension";
 const char* TelescopeClientAscom::P_DEC = "Declination";
 const char* TelescopeClientAscom::P_EQUATORIAL_SYSTEM = "EquatorialSystem";
+
 const char* TelescopeClientAscom::M_UNPARK = "Unpark()";
 const char* TelescopeClientAscom::M_SLEW = "SlewToCoordinates(double, double)";
-const char* TelescopeClientAscom::M_SLEW_ASYNCHRONOUSLY =
-		"SlewToCoordinatesAsync(double, double)";
+
 
 TelescopeClientAscom::TelescopeClientAscom(const QString &name, const QString &params, Equinox eq):
 		TelescopeClient(name),
@@ -59,49 +59,49 @@ TelescopeClientAscom::TelescopeClientAscom(const QString &name, const QString &p
 	if (driver->isNull())
 		return;
 	connect(driver,
-			SIGNAL(exception (int, QString, QString, QString)),
-			this,
-			SLOT(handleDriverException(int, QString, QString, QString)));
-
-	//Check if the driver supports slewing to an equatorial position
-	bool canSlew = driver->property(P_CAN_SLEW).toBool();
-	if (!canSlew)
-		qWarning() << "Warning!" << name << "can't receive \"go to\" commands. "
-		              "Its current position will be displayed only.";
-	//(Not an error - this covers things like digital setting circles that can
-	// only emit their current position)
-
-	//Try to connect (make sure driver settings are correct, e.g. the serial
-	//port is the right one)
+	        SIGNAL(exception (int, QString, QString, QString)),
+	        this,
+	        SLOT(handleDriverException(int, QString, QString, QString)));
+	
+	// Try to connect
 	driver->setProperty(P_CONNECTED, true);
-	bool connectionAttemptSucceeded = driver->property(P_CONNECTED).toBool();
-	if (!connectionAttemptSucceeded)
+	if (!driver->property(P_CONNECTED).toBool())
 	{
-		qDebug() << "Unable to set Connected for" << name;
+		qDebug() << "ASCOM errror: driver failed to connect for" << name;
 		deleteDriver();
 	}
+
+	//Check if the driver supports slewing to an equatorial position
+	if (!canSlew())
+	{
+		// Not an error - this covers things like digital setting circles
+		// that can only emit their current position
+		qWarning() << "ASCOM warning:"
+		           << name
+		           << "does not accept asynchronos \"go to\" commands.";
+	}
 	
+	// TODO: Unify TelescopeClient description messages.
 	ascomDescription = driver->property("Description").toString();
 	
-	const QMetaObject* metaObject = driver->metaObject();
-	for(int i = 0; i < metaObject->methodCount(); ++i)
-		qDebug() << metaObject->method(i).signature();
-	
-	qDebug() << metaObject->indexOfMethod("Dispose()");
+	// Debug block
+//	const QMetaObject* metaObject = driver->metaObject();
+//	for(int i = 0; i < metaObject->methodCount(); ++i)
+//		qDebug() << metaObject->method(i).signature();
+//	qDebug() << metaObject->indexOfMethod("Dispose()");
 
 	//If it is parked, see if it can be unparked
 	//TODO: Temporary. The imporved GUI should offer parking/unparking.
-	bool isParked = driver->property(P_PARKED).toBool();
-	if (isParked)
-	{
-		bool canUnpark = driver->property(P_CAN_UNPARK).toBool();
-		if (!canUnpark)
-		{
-			qDebug() << "The" << name << "telescope is parked"
-			         << "and the Telescope control plug-in can't unpark it.";
-			deleteDriver();
-		}
-	}
+//	bool isParked = driver->property(P_PARKED).toBool();
+//	if (isParked)
+//	{
+//		if (!canUnpark())
+//		{
+//			qDebug() << "The" << name << "telescope is parked"
+//			         << "and the Telescope control plug-in can't unpark it.";
+//			deleteDriver();
+//		}
+//	}
 
 	//Initialize the countdown
 	timeToGetPosition = getNow() + POSITION_REFRESH_INTERVAL;
@@ -109,21 +109,22 @@ TelescopeClientAscom::TelescopeClientAscom(const QString &name, const QString &p
 
 TelescopeClientAscom::~TelescopeClientAscom()
 {
-	qDebug() << "Destructor of" << name;
+	//qDebug() << "Destructor of" << name;
 	if (driver)
 	{
 		if (!driver->isNull())
 		{
-			qDebug() << "Trying to delete...";
-			qDebug() << flush;
-			//if (driver->property(P_CONNECTED).toBool())
-			//	driver->setProperty(P_CONNECTED, false);
-			driver->dynamicCall("Dispose()");
+			//qDebug() << "Trying to delete...";
+			//qDebug() << flush;
+			if (driver->property(P_CONNECTED).toBool())
+				driver->setProperty(P_CONNECTED, false);
+			// FIXME: Deal with drivers that have not implemented Dispose
+			//driver->dynamicCall("Dispose()");
 			driver->clear();
 		}
 		//delete driver;
 		//driver = 0;
-		qDebug() << "Deleted.";
+		//qDebug() << "Deleted.";
 	}
 }
 
@@ -226,10 +227,7 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 
 	if (!isConnected())
 	{
-		driver->setProperty(P_CONNECTED, true);
-		bool connectionAttemptSucceeded = driver->property(P_CONNECTED).toBool();
-		if (!connectionAttemptSucceeded)
-			return;
+		return;
 	}
 
 	//This returns result of type AscomInterfacesLib::EquatorialCoordinateType,
@@ -249,45 +247,43 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 	*/
 
 	//Parked?
-	bool isParked = driver->property(P_PARKED).toBool();
-	if (isParked)
-	{
-		bool canUnpark = driver->property(P_CAN_UNPARK).toBool();
-		if (canUnpark)
-		{
-			driver->dynamicCall(M_UNPARK);
-		}
-		else
-		{
-			qDebug() << "The" << name << "telescope is parked"
-			         << "and the Telescope control plug-in can't unpark it.";
-			return;
-		}
-	}
+//	bool isParked = driver->property(P_PARKED).toBool();
+//	if (isParked)
+//	{
+//		bool canUnpark = driver->property(P_CAN_UNPARK).toBool();
+//		if (canUnpark)
+//		{
+//			driver->dynamicCall(M_UNPARK);
+//		}
+//		else
+//		{
+//			qDebug() << "The" << name << "telescope is parked"
+//			         << "and the Telescope control plug-in can't unpark it.";
+//			return;
+//		}
+//	}
 
 	//Tracking?
-	bool isTracking = driver->property(P_TRACKING).toBool();
-	if (!isTracking)
-	{
-		bool canTrack = driver->property(P_CAN_TRACK).toBool();
-		if (canTrack)
-		{
-			driver->setProperty(P_TRACKING, true);
-			isTracking = driver->property(P_TRACKING).toBool();
-			if (!isTracking)
-				return;
-		}
-		else
-		{
-			//TODO: Are there any drivers that can slew, but not track?
-			return;
-		}
-	}
+//	bool isTracking = driver->property(P_TRACKING).toBool();
+//	if (!isTracking)
+//	{
+//		bool canTrack = driver->property(P_CAN_TRACK).toBool();
+//		if (canTrack)
+//		{
+//			driver->setProperty(P_TRACKING, true);
+//			isTracking = driver->property(P_TRACKING).toBool();
+//			if (!isTracking)
+//				return;
+//		}
+//		else
+//		{
+//			//TODO: Are there any drivers that can slew, but not track?
+//			return;
+//		}
+//	}
 
 	//Equatorial system
 	Vec3d targetCoordinates = j2000Coordinates;
-	//See the note about equinox detection above:
-	//if (equatorialCoordinateType == 1)//coordinates are in JNow
 	if (equinox == EquinoxJNow)
 	{
 		StelCore* core = StelApp::getInstance().getCore();
@@ -304,11 +300,13 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 	const double decDegrees = decRadians * (180 / M_PI);
 
 	//Send the "go to" command
-	bool canSlewAsynchronously = driver->property(P_CAN_SLEW_ASYNCHRONOUSLY).toBool();
-	if (canSlewAsynchronously)
+	if (canSlew())
 	{
-		driver->dynamicCall(M_SLEW_ASYNCHRONOUSLY, raHours, decDegrees);
+		driver->dynamicCall("SlewToCoordinatesAsync(double, double)",
+		                    raHours,
+		                    decDegrees);
 	}
+	/*
 	else
 	{
 		//Last resort - this block the execution of Stellarium until the
@@ -319,6 +317,39 @@ void TelescopeClientAscom::telescopeGoto(const Vec3d &j2000Coordinates)
 			driver->dynamicCall(M_SLEW, raHours, decDegrees);
 		}
 	}
+	*/
+}
+
+
+bool TelescopeClientAscom::canPark()
+{
+	return testAbility("CanPark");
+}
+
+bool TelescopeClientAscom::canSlew()
+{
+	return testAbility("CanSlewAsync");
+}
+
+bool TelescopeClientAscom::canSync()
+{
+	return testAbility("CanSync");
+}
+
+bool TelescopeClientAscom::canUnpark()
+{
+	return testAbility("CanUnpark");
+}
+
+void TelescopeClientAscom::abortMovement()
+{
+	driver->dynamicCall("AbortSlew()");
+}
+
+void TelescopeClientAscom::synch(double ra, double dec)
+{
+	// TODO: Finish this!
+	driver->dynamicCall("SyncToCoordinates(double,double)", ra, dec);
 }
 
 void TelescopeClientAscom::handleDriverException(int code,
@@ -335,6 +366,12 @@ void TelescopeClientAscom::handleDriverException(int code,
 	qDebug() << errorMessage;
 	deleteDriver();
 	emit ascomError(errorMessage);
+}
+
+bool TelescopeClientAscom::testAbility(const char* name)
+{
+	Q_ASSERT(driver);
+	return driver->property(name).toBool();
 }
 
 void TelescopeClientAscom::deleteDriver()
