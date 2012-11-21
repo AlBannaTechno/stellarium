@@ -419,9 +419,12 @@ void TelescopePropertiesWindow::prepareForExistingConfiguration(const QString& i
 			return;
 		}
 		configuredConnectionInterface = ConnectionAscom;
+		ascomDriverObjectId = driverId;
 
 		showAscomTab(true);
 		showSerialTab(false);
+		showIndiTab(false);
+		showNetworkTab(false);
 
 		ui->lineEditAscomControlId->setText(driverId);
 		return;//Normal exit
@@ -746,9 +749,11 @@ void TelescopePropertiesWindow::showAscomSelector()
 		emit changesDiscarded();
 		return;
 	}
+	connect(&ascomChooser, SIGNAL(exception(int,QString,QString,QString)),
+	        this, SLOT(handleAscomException(int,QString,QString,QString)));
 
 	//TODO: Switch to windowed mode
-	ascomDriverObjectId = ascomChooser.dynamicCall("Choose(const QString&)", ascomDriverObjectId).toString();
+	ascomDriverObjectId = ascomChooser.dynamicCall("Choose(QString)", ascomDriverObjectId).toString();
 	ui->lineEditAscomControlId->setText(ascomDriverObjectId);
 }
 
@@ -763,6 +768,23 @@ void TelescopePropertiesWindow::showAscomDeviceSetup()
 		ascomDriverObjectId.clear();
 		return;
 	}
+	connect(&ascomDriver, SIGNAL(exception(int,QString,QString,QString)),
+	        this, SLOT(handleAscomException(int,QString,QString,QString)));
 	ascomDriver.dynamicCall("SetupDialog()");
+}
+
+void TelescopePropertiesWindow::handleAscomException(int code,
+                                                     const QString &source,
+                                                     const QString &desc,
+                                                     const QString &help)
+{
+	Q_UNUSED(help);
+	QString errorMessage = QString("%1: ASCOM driver error:\n"
+	                               "Code: %2\n"
+	                               "Source: %3\n"
+	                               "Description: %4")
+	                               .arg(configuredId)
+	                               .arg(code).arg(source).arg(desc);
+	qDebug() << errorMessage << flush;
 }
 #endif

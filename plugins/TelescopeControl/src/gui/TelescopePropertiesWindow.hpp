@@ -87,6 +87,10 @@ private slots:
 #ifdef Q_OS_WIN32
 	void showAscomSelector();
 	void showAscomDeviceSetup();
+	void handleAscomException(int code,
+	                          const QString& source,
+	                          const QString& desc,
+	                          const QString& help);
 #endif
 
 signals:
