@@ -239,14 +239,14 @@
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout">
-           <item alignment="Qt::AlignRight">
+           <item>
             <widget class="QLabel" name="label">
              <property name="text">
               <string>Red</string>
              </property>
             </widget>
            </item>
-           <item alignment="Qt::AlignLeft">
+           <item>
             <widget class="QSlider" name="Red">
              <property name="maximumSize">
               <size>
@@ -263,14 +263,14 @@
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item alignment="Qt::AlignRight">
+           <item>
             <widget class="QLabel" name="label_2">
              <property name="text">
               <string>Green</string>
              </property>
             </widget>
            </item>
-           <item alignment="Qt::AlignLeft">
+           <item>
             <widget class="QSlider" name="Green">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -281,14 +281,14 @@
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item alignment="Qt::AlignRight">
+           <item>
             <widget class="QLabel" name="label_3">
              <property name="text">
               <string>Blue</string>
              </property>
             </widget>
            </item>
-           <item alignment="Qt::AlignLeft">
+           <item>
             <widget class="QSlider" name="Blue">
              <property name="maximum">
               <number>99</number>
@@ -302,14 +302,14 @@
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
-           <item alignment="Qt::AlignRight">
+           <item>
             <widget class="QLabel" name="label_4">
              <property name="text">
               <string>Font Size</string>
              </property>
             </widget>
            </item>
-           <item alignment="Qt::AlignLeft">
+           <item>
             <widget class="QSlider" name="fontSize">
              <property name="minimum">
               <number>5</number>
@@ -345,14 +345,14 @@
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
-           <item alignment="Qt::AlignRight">
+           <item>
             <widget class="QLabel" name="AltiText">
              <property name="text">
               <string>0 deg.</string>
              </property>
             </widget>
            </item>
-           <item alignment="Qt::AlignLeft">
+           <item>
             <widget class="QSlider" name="SunAltitude">
              <property name="maximum">
               <number>20</number>
