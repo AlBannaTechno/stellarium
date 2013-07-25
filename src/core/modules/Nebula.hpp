@@ -112,9 +112,7 @@ private:
 	void readNGC(QDataStream& in);
 	void readExtendedNGC(QDataStream& in);
 	bool readNGC(QString& record);
-#if defined(GEN_BIN_CATALOG)
 	void writeExtendedNGC(QDataStream& out);
-#endif
 	void readIdentifiers(const QString& record);
 	void parseRecord(const QString& record, int idx);
 	
@@ -133,8 +131,10 @@ private:
 	float mag;                      // Apparent magnitude
 	float angularSize;              // Angular size in degree
 	Vec3d XYZ;                      // Cartesian equatorial position
-	Vec3d XY;                       // Store temporary 2D position
-	NebulaType nType;
+        Vec3d XYZ2;                      // FIXME: Cartesian equatorial position of direction N
+        Vec3d XY;                       // Store temporary 2D position
+        Vec3d XY2;                       // FIXME: Store temporary 2D position
+        NebulaType nType;
 
 	bool bNGCObject;
 	float BminusV;
@@ -153,6 +153,9 @@ private:
 	float sizeY;				//!< minor axis (arcmin)
 	float PAdeg;				//!< principal angle (range 0..360 degrees)
 	QString hubbleType;			//!< Hubble type for galaxies
+    float redshift;
+    float dist;
+    float distz;
 
 #if defined(GEN_BIN_CATALOG)
 // for creating binary file

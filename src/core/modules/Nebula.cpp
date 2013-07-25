@@ -191,17 +191,21 @@ void Nebula::drawHints(StelPainter& sPainter, float maxMagHints)
 	Vec3f circleColorGx = Vec3f(1.0, 0.0, 0.0);
 	float pixelPerDegree = M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
 
-	switch(nType)
+        // local direction towards N on screen
+        float angleNorth = 180./M_PI * atan2(-XY2[0] + XY[0], XY2[1] - XY[1]);
+
+        switch(nType)
 	{
 		case NebGx:
 			/* draw red ellipse */
 			//qDebug("x=%f y=%f sizeX=%f sizeY=%f", XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60.);
 			sPainter.setColor(circleColorGx[0]*lum*hintsBrightness, circleColorGx[1]*lum*hintsBrightness, circleColorGx[2]*lum*hintsBrightness, 1);
 			sPainter.setShadeModel(StelPainter::ShadeModelFlat);
+
 			if(sizeY < 1e-3)
-				sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60, sizeX*pixelPerDegree/60, PAdeg);
+                                sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60, sizeX*pixelPerDegree/60, PAdeg+angleNorth);
 			else
-				sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60., PAdeg);
+                                sPainter.drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60., PAdeg+angleNorth);
 			break;
 			
 		case NebPNe:
@@ -375,10 +379,11 @@ void Nebula::parseRecord(const QString& record, int idx)
 	ra *= M_PI/12.;     // Convert from hours to rad
 	dec *= M_PI/180.;    // Convert from deg to rad
 #if defined(GEN_BIN_CATALOG)
-	_ra = ra; _dec = dec;
+    _ra = ra; _dec = dec;   // Required for output stream
 #endif
 	// Calc the Cartesian coord with RA and DE
-	StelUtils::spheToRect(ra, dec, XYZ);	
+        StelUtils::spheToRect(ra, dec, XYZ);
+        StelUtils::spheToRect(ra-0.01,dec,XYZ2); // FIXME: used to calculate direction of North
 
 	// Read the blue (photographic) and visual magnitude
 	magB = record.mid(56, 4).toFloat();
@@ -392,8 +397,8 @@ void Nebula::parseRecord(const QString& record, int idx)
 	
 	// TODO: also have surface brightness (rendering option?)
 	
-	sizeX = record.mid(79, 7).toFloat();
-	sizeY = record.mid(87, 7).toFloat();
+    sizeX = record.mid(80, 6).toFloat();
+    sizeY = record.mid(88, 6).toFloat();
 	PAdeg = record.mid(95, 3).toFloat();
 	float size;		// size (arcmin)
 	if (sizeY > 0)
@@ -406,9 +411,14 @@ void Nebula::parseRecord(const QString& record, int idx)
 	// Hubble classification
 	hubbleType = record.mid(98, 14);
 	
+    // Distance estimates
+    redshift = record.mid(112, 8).toFloat();
+    distz = record.mid(121,7).toFloat();
+    dist = record.mid(128,7).toFloat();
+
 	// TODO: PGC/GCGC/ other designations
-	PGC_nb = record.mid(113, 6).toInt();
-	altDesig1 = record.mid(119, 27);
+    PGC_nb = record.mid(138, 7).toInt();
+    altDesig1 = record.mid(145, 27);
 	
 	// Messier number
 	if (altDesig1.contains("M "))
@@ -443,7 +453,7 @@ void Nebula::readNGC(QDataStream& in)
 		NGC_nb = nb;
 	}
 	StelUtils::spheToRect(ra,dec,XYZ);
-	Q_ASSERT(fabs(XYZ.lengthSquared()-1.)<0.000000001);
+        Q_ASSERT(fabs(XYZ.lengthSquared()-1.)<0.000000001);
 	nType = (Nebula::NebulaType)type;
 	pointRegion = SphericalRegionP(new SphericalPoint(getJ2000EquatorialPos(NULL)));
 }
@@ -469,7 +479,10 @@ void Nebula::readExtendedNGC(QDataStream& in)
 		>> sizeY
 		>> PAdeg
 		>> hubbleType
-		>> PGC_nb
+        >> redshift
+        >> distz
+        >> dist
+        >> PGC_nb
 		>> M_nb;
 
 	if (bNGCObject)
@@ -496,7 +509,7 @@ void Nebula::readExtendedNGC(QDataStream& in)
 	pointRegion = SphericalRegionP(new SphericalPoint(getJ2000EquatorialPos(NULL)));
 
 }
-#if defined(GEN_BIN_CATALOG)
+
 void Nebula::writeExtendedNGC(QDataStream& out)
 {
 	out << bNGCObject
@@ -504,8 +517,10 @@ void Nebula::writeExtendedNGC(QDataStream& out)
 		<< bDreyerObject
 		<< ((qint32) nType)
 		<< constellationAbbr
-		<< _ra
+#if defined(GEN_BIN_CATALOG)
+        << _ra
 		<< _dec
+#endif
 		<< magB
 		<< magV
 		<< BminusV
@@ -514,83 +529,12 @@ void Nebula::writeExtendedNGC(QDataStream& out)
 		<< sizeY
 		<< PAdeg
 		<< hubbleType
+        << redshift
+        << distz
+        << dist
 		<< PGC_nb
 		<< M_nb;
 }
-#endif
 
-#if 0
-QFile filess("filess.dat");
-QDataStream out;
-out.setVersion(QDataStream::Qt_4_5);
-bool Nebula::readNGC(char *recordstr)
-{
-	int rahr;
-	float ramin;
-	int dedeg;
-	float demin;
-	int nb;
-
-	sscanf(&recordstr[1],"%d",&nb);
-
-	if (recordstr[0] == 'I')
-	{
-		IC_nb = nb;
-	}
-	else
-	{
-		NGC_nb = nb;
-	}
-
-	sscanf(&recordstr[12],"%d %f",&rahr, &ramin);
-	sscanf(&recordstr[22],"%d %f",&dedeg, &demin);
-	float RaRad = (double)rahr+ramin/60;
-	float DecRad = (float)dedeg+demin/60;
-	if (recordstr[21] == '-') DecRad *= -1.;
-
-	RaRad*=M_PI/12.;     // Convert from hours to rad
-	DecRad*=M_PI/180.;    // Convert from deg to rad
-
-	// Calc the Cartesian coord with RA and DE
-	StelUtils::spheToRect(RaRad,DecRad,XYZ);
-
-	sscanf(&recordstr[47],"%f",&mag);
-	if (mag < 1) mag = 99;
-
-	// Calc the angular size in radian : TODO this should be independant of tex_angular_size
-	float size;
-	sscanf(&recordstr[40],"%f",&size);
-
-	angularSize = size/60;
-	if (angularSize<0)
-		angularSize=0;
-
-	// this is a huge performance drag if called every frame, so cache here
-	if (!strncmp(&recordstr[8],"Gx",2)) { nType = NebGx;}
-	else if (!strncmp(&recordstr[8],"OC",2)) { nType = NebOpenC;}
-	else if (!strncmp(&recordstr[8],"Gb",2)) { nType = NebGlobC;}
-	else if (!strncmp(&recordstr[8],"Nb",2)) { nType = NebN;}
-	else if (!strncmp(&recordstr[8],"Pl",2)) { nType = NebPNe;}
-	else if (!strncmp(&recordstr[8],"  ",2)) { return false;}
-	else if (!strncmp(&recordstr[8]," -",2)) { return false;}
-	else if (!strncmp(&recordstr[8]," *",2)) { return false;}
-	else if (!strncmp(&recordstr[8],"D*",2)) { return false;}
-	else if (!strncmp(&recordstr[7],"***",3)) { return false;}
-	else if (!strncmp(&recordstr[7],"C+N",3)) { nType = NebCn;}
-	else if (!strncmp(&recordstr[8]," ?",2)) { nType = NebUnknown;}
-	else { nType = NebUnknown;}
-
-	if (!filess.isOpen())
-	{
-		filess.open(QIODevice::WriteOnly);
-		out.setDevice(&filess);
-	}
-	out << ((bool)(recordstr[0] == 'I')) << nb << RaRad << DecRad << mag << angularSize << ((unsigned int)nType);
-	if (nb==5369 && recordstr[0] == 'I')
-		filess.close();
-
-	return true;
-}
-#endif
 
 

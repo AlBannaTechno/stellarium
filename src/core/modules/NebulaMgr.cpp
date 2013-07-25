@@ -127,7 +127,8 @@ struct DrawNebulaFuncObject
 		{
 			float refmag_add=0; // value to adjust hints visibility threshold.
 			sPainter->getProjector()->project(n->XYZ,n->XY);
-			n->drawLabel(*sPainter, maxMagLabels-refmag_add);
+                        sPainter->getProjector()->project(n->XYZ2,n->XY2); //FIXME
+                        n->drawLabel(*sPainter, maxMagLabels-refmag_add);
 			n->drawHints(*sPainter, maxMagHints -refmag_add);
 		}
 	}
@@ -238,8 +239,8 @@ void NebulaMgr::loadNebulaSet(const QString& setName)
 {
 	try
 	{
-		loadNGC(StelFileMgr::findFile("nebulae/" + setName + "/ngc2011.dat"));
-		//loadNGCOld(StelFileMgr::findFile("nebulae/" + setName + "/ngc2011steinicke.dat"));
+        loadNGC(StelFileMgr::findFile("nebulae/" + setName + "/ngc2013.dat"));
+        //loadNGCLegacy(StelFileMgr::findFile("nebulae/" + setName + "/NI2013May.csv"));
 		loadNGCNames(StelFileMgr::findFile("nebulae/" + setName + "/ngc2000names.dat"));
 	}
 	catch (std::runtime_error& e)
@@ -315,23 +316,22 @@ NebulaP NebulaMgr::searchIC(unsigned int IC)
 	return NebulaP();
 }
 
-#if 0
-// read from stream
-bool NebulaMgr::loadNGCOld(const QString& catNGC)
+// read from text stream
+// write to QDataStream
+bool NebulaMgr::loadNGCLegacy(const QString& catNGC)
 {
 	QFile in(catNGC);
 	if (!in.open(QIODevice::ReadOnly | QIODevice::Text))
 		return false;
 
-#if defined(GEN_BIN_CATALOG)
-	QFile out("NGC2011.dat");
+    QFile out("ngc2013.dat");
 	if (!out.open(QIODevice::WriteOnly))
 		return false;
 	QDataStream outstream(&out);
 	
-	outstream.setVersion(QDataStream::Qt_4_7);
-#endif
-	int totalRecords=0;
+    outstream.setVersion(QDataStream::Qt_4_8);
+
+    int totalRecords=0;
 	QString record;
 	while (!in.atEnd())
 	{
@@ -367,20 +367,15 @@ bool NebulaMgr::loadNGCOld(const QString& catNGC)
 			nebGrid.insert(qSharedPointerCast<StelRegionObject>(e));
 			if (e->NGC_nb!=0)
 				ngcIndex.insert(e->NGC_nb, e);
-#if defined(GEN_BIN_CATALOG)
 			e->writeExtendedNGC(outstream);
-#endif
 			++readOk;
 		}
 	}
-#if defined(GEN_BIN_CATALOG)
 	out.close();
-#endif
 	in.close();
-	qDebug() << "loadNGCOld(): Loaded" << readOk << "/" << totalRecords << "NGC records";
+    qDebug() << "Loaded" << readOk << "/" << totalRecords << "NGC records in legacy mode";
 	return true;
 }
-#else
 
 bool NebulaMgr::loadNGC(const QString& catNGC)
 {
@@ -388,8 +383,7 @@ bool NebulaMgr::loadNGC(const QString& catNGC)
 	if (!in.open(QIODevice::ReadOnly))
 		return false;
 	QDataStream ins(&in);
-	//ins.setVersion(QDataStream::Qt_4_5);
-	ins.setVersion(QDataStream::Qt_4_7);
+        ins.setVersion(QDataStream::Qt_4_8);
 
 	int totalRecords=0;
 	while (!ins.atEnd())
@@ -407,9 +401,9 @@ bool NebulaMgr::loadNGC(const QString& catNGC)
 	}
 	in.close();
 	qDebug() << "Loaded" << totalRecords << "NGC records";
-	return true;
+    return true;
 }
-#endif
+
 bool NebulaMgr::loadNGCNames(const QString& catNGCNames)
 {
 	qDebug() << "Loading NGC name data ...";
