@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include <cstdlib>
@@ -84,15 +84,7 @@ void StelFileMgr::init()
 		qWarning() << "WARNING: could not locate installation directory";
 	}
 
-#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
-	screenshotDir = getDesktopDir();
-#else
-	screenshotDir = QDir::homePath();
-#endif
-
-#ifdef Q_OS_MAC
-	QCoreApplication::addLibraryPath(QCoreApplication::applicationDirPath());
-#endif
+	screenshotDir = QDesktopServices::storageLocation(QDesktopServices::PicturesLocation);
 }
 
 
@@ -363,16 +355,8 @@ bool StelFileMgr::fileFlagsCheck(const QString& path, const Flags& flags)
 
 QString StelFileMgr::getDesktopDir()
 {
-	QString result;
-#ifdef Q_OS_WIN
-	result = getWin32SpecialDirPath(CSIDL_DESKTOPDIRECTORY);
-#else
-	// TODO: this is not going to work for machines which are non-English...
-	// For Linux and perhaps some BSDs, we can call the external program
-	// "xdg-user-dir DESKTOP" if it exists, but I'm not sure about OSX.
-	result = QFile::decodeName(getenv("HOME"));
-	result += "/Desktop";
-#endif
+	QString result = QDesktopServices::storageLocation(QDesktopServices::DesktopLocation);
+
 	if (!QFileInfo(result).isDir())
 	{
 		throw std::runtime_error("Can't find Desktop directory");

@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
 #ifndef _CONFIGURATIONDIALOG_HPP_
@@ -32,6 +32,7 @@ class QDataStream;
 class QNetworkAccessManager;
 class QListWidgetItem;
 class StelGui;
+class CustomDeltaTEquationDialog;
 
 class ConfigurationDialog : public StelDialog
 {
@@ -43,7 +44,8 @@ public:
 	void styleChanged();
 
 public slots:
-	void languageChanged();
+	void retranslate();
+	void updateIconsColor();
 
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
@@ -53,8 +55,19 @@ protected:
 private:
 	//! Contains the parsed content of the starsConfig.json file
 	QVariantMap nextStarCatalogToDownload;
-	//! Set the content of the "Star catalog updates" box
-	void refreshStarCatalogButton();
+	//! Reset the content of the "Star catalog updates" box.
+	//! Should be called only during initialization or
+	//! after a download is complete.
+	void resetStarCatalogControls();
+	//! Re-translate the contents of the "Star calalogs" box.
+	//! Update the strings according to the state.
+	void updateStarCatalogControlsText();
+	//! True if a star catalog download is in progress.
+	bool isDownloadingStarCatalog;
+	//! Value set by resetStarCatalogControls().
+	int nextStarCatalogToDownloadIndex;
+	//! Value set by resetStarCatalogControls().
+	int starCatalogsCount;
 	//! True when at least one star catalog has been downloaded successfully this session
 	bool hasDownloadedStarCatalog;
 	QNetworkReply* starCatalogDownloadReply;
@@ -62,11 +75,18 @@ private:
 	QProgressBar* progressBar;
 
 private slots:
-	void setNoSelectedInfo(void);
-	void setAllSelectedInfo(void);
-	void setBriefSelectedInfo(void);
-	void languageChanged(const QString& languageCode);
+	void setNoSelectedInfo();
+	void setAllSelectedInfo();
+	void setBriefSelectedInfo();
+	//! Set the selected object info fields from the "Displayed Fields" boxes.
+	//! Called when any of the boxes has been clicked. Sets the
+	//! "selected info" mode to "Custom".
+	void setSelectedInfoFromCheckBoxes();
+	
+	void selectLanguage(const QString& languageCode);
 	void setStartupTimeMode();
+	//! Show/bring to foreground the shortcut editor window.
+	void showShortcutsWindow();
 	void setDiskViewport(bool);
 	void setSphericMirror(bool);
 	void cursorTimeOutChanged();
@@ -101,6 +121,12 @@ private slots:
 	void pluginConfigureCurrentSelection();
 	void loadAtStartupChanged(int);
 
+	void populateDeltaTAlgorithmsList();
+	void setDeltaTAlgorithm(int algorithmID);
+	void setDeltaTAlgorithmDescription();
+	void showCustomDeltaTEquationDialog();
+
+	#ifndef DISABLE_SCRIPTING
 	//! The selection of script in the script list has changed
 	//! Updates the script information panel
 	void scriptSelectionChanged(const QString& s);
@@ -114,14 +140,21 @@ private slots:
 	void aScriptHasStopped();
 
 	void populateScriptsList();
+	#endif
 	void setFixedDateTimeToCurrent();
-
-	void changePage(QListWidgetItem *current, QListWidgetItem *previous);
 
 private:
 	StelGui* gui;
 
+	CustomDeltaTEquationDialog* customDeltaTEquationDialog;
+
 	int savedProjectionType;
+	
+	//! Set the displayed fields checkboxes from the current displayed fields.
+	void updateSelectedInfoCheckBoxes();
+	//! Make sure that no tabs icons are outside of the viewport.
+	//! @todo Limit the width to the width of the screen *available to the window*.
+	void updateTabBarListWidgetWidth();
 };
 
 #endif // _CONFIGURATIONDIALOG_HPP_

@@ -13,24 +13,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 
 #ifndef _STELSKYIMAGETILE_HPP_
 #define _STELSKYIMAGETILE_HPP_
 
-#include "StelTextureTypes.hpp"
-#include "StelSphereGeometry.hpp"
-#include "MultiLevelJsonBase.hpp"
-
 #include <QTimeLine>
+
+#include "MultiLevelJsonBase.hpp"
+#include "StelSphereGeometry.hpp"
 
 //#define DEBUG_STELSKYIMAGE_TILE 1
 
 class QIODevice;
 class StelCore;
-class StelPainter;
 
 //! Contain all the credits for a given server hosting the data
 class ServerCredits
@@ -80,7 +78,7 @@ public:
 	~StelSkyImageTile();
 
 	//! Draw the image on the screen.
-	void draw(StelCore* core, StelPainter& sPainter, float opacity=1.);
+	void draw(StelCore* core, class StelRenderer* renderer, StelProjectorP projector, float opacity=1.);
 
 	//! Return the dataset credits to use in the progress bar
 	DataSetCredits getDataSetCredits() const {return dataSetCredits;}
@@ -128,7 +126,7 @@ protected:
 	QList<SphericalRegionP> skyConvexPolygons;
 
 	//! The texture of the tile
-	StelTextureSP tex;
+	class StelTextureNew* tex;
 
 	//! Minimum resolution of the data of the texture in degree/pixel
 	float minResolution;
@@ -139,11 +137,16 @@ private:
 
 	//! Return the list of tiles which should be drawn.
 	//! @param result a map containing resolution, pointer to the tiles
-	void getTilesToDraw(QMultiMap<double, StelSkyImageTile*>& result, StelCore* core, const SphericalRegionP& viewPortPoly, float limitLuminance, bool recheckIntersect=true);
+	void getTilesToDraw(QMultiMap<double, StelSkyImageTile*>& result, 
+	                    StelCore* core, 
+	                    StelRenderer* renderer,
+	                    const SphericalRegionP& viewPortPoly,
+	                    float limitLuminance, 
+	                    bool recheckIntersect=true);
 
 	//! Draw the image on the screen.
 	//! @return true if the tile was actually displayed
-	bool drawTile(StelCore* core, StelPainter& sPainter);
+	bool drawTile(StelCore* core, StelRenderer* renderer, StelProjectorP projector);
 
 	//! Return the minimum resolution
 	double getMinResolution() const {return minResolution;}

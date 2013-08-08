@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef OCULAR_HPP_
@@ -25,6 +25,7 @@
 #include <QSettings>
 
 class Telescope;
+class Lens;
 
 class Ocular : public QObject
 {
@@ -52,8 +53,8 @@ public:
 	bool isBinoculars() const;
 	void setBinoculars(bool flag);
 
-	double actualFOV(Telescope *telescope) const;
-	double magnification(Telescope *telescope) const;
+	double actualFOV(Telescope *telescope, Lens *lens) const;
+	double magnification(Telescope *telescope, Lens *lens) const;
 	QMap<int, QString> propertyMap();
 
 private:

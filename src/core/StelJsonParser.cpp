@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "StelJsonParser.hpp"
@@ -197,21 +197,17 @@ QByteArray StelJsonParserInstance::readString()
 	{
 		switch (c)
 		{
-			case '\"':
+			case '"':
 				return name;
 			case '\\':
 			{
 				getChar(&c);
-				// 	case '\"': break;
-				// 	case '\\': break;
-				// 	case '/': break;
 				if (c=='b') c='\b';
 				if (c=='f') c='\f';
 				if (c=='n') c='\n';
 				if (c=='r') c='\r';
 				if (c=='t') c='\t';
 				if (c=='u') {qWarning() << "don't support \\uxxxx char"; continue;}
-				break;
 			}
 			default:
 				name+=c;
@@ -344,6 +340,7 @@ void StelJsonParser::write(const QVariant& v, QIODevice* output, int indentLevel
 		case QVariant::ByteArray:
 		{
 			QByteArray s(v.toByteArray());
+			s.replace('\\', "\\\\");
 			s.replace('\"', "\\\"");
 			s.replace('\b', "\\b");
 			s.replace('\n', "\\n");
@@ -356,6 +353,7 @@ void StelJsonParser::write(const QVariant& v, QIODevice* output, int indentLevel
 		case QVariant::String:
 		{
 			QString s(v.toString());
+			s.replace('\\', "\\\\");
 			s.replace('\"', "\\\"");
 			s.replace('\b', "\\b");
 			s.replace('\n', "\\n");

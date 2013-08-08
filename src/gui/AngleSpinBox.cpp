@@ -14,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ *   51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.           *
  ***************************************************************************/
 
 #include "AngleSpinBox.hpp"
@@ -90,28 +90,27 @@ AngleSpinBox::AngleSpinboxSection AngleSpinBox::getCurrentSection() const
 	int cPosMin = str.indexOf(QRegExp("[+-"+q_("N")+q_("S")+q_("E")+q_("W")+"]"), 0);
 	int cPosMax = cPosMin+1;
 	
-	if (cPosMin==0)
-	{
-		// No prefix
-		cPosMax=0;
-	}
-	else if (cusorPos>=cPosMin && cusorPos<cPosMax)
+	if (cusorPos>=cPosMin && cusorPos<cPosMax) {
 		return SectionPrefix;
+	}
 	
 	cPosMin = cPosMax;
 	cPosMax = str.indexOf(QRegExp(QString("[h%1]").arg(QChar(176))), 0)+1;
-	if (cusorPos>=cPosMin && cusorPos<cPosMax)
+	if (cusorPos > cPosMin && cusorPos <= cPosMax) {
 		return SectionDegreesHours;
+	}
 	
 	cPosMin = cPosMax;
 	cPosMax = str.indexOf(QRegExp("[m']"), 0)+1;
-	if (cusorPos>=cPosMin && cusorPos<cPosMax)
+	if (cusorPos > cPosMin && cusorPos <= cPosMax) {
 		return SectionMinutes;
+	}
 	
 	cPosMin = cPosMax;
 	cPosMax = str.indexOf(QRegExp("[s\"]"), 0)+1;
-	if (cusorPos>=cPosMin && cusorPos<cPosMax)
+	if (cusorPos > cPosMin && cusorPos <= cPosMax) {
 		return SectionSeconds;
+	}
 	
 	return SectionNone;
 }
@@ -127,8 +126,7 @@ void AngleSpinBox::stepBy (int steps)
 			radAngle = -radAngle;
 			break;
 		}
-		case SectionDegreesHours:
-		case SectionNone:
+		case SectionDegreesHours:		
 		{
 			if (angleSpinBoxFormat==DMSLetters || angleSpinBoxFormat==DMSSymbols || angleSpinBoxFormat==DecimalDeg)
 				radAngle += M_PI/180.*steps;
@@ -145,6 +143,7 @@ void AngleSpinBox::stepBy (int steps)
 			break;
 		}
 		case SectionSeconds:
+		case SectionNone:
 		{
 			if (angleSpinBoxFormat==DMSLetters || angleSpinBoxFormat==DMSSymbols || angleSpinBoxFormat==DecimalDeg)
 				radAngle += M_PI/180.*steps/3600.;
@@ -204,10 +203,20 @@ double AngleSpinBox::stringToDouble(QString input, QValidator::State* state, Pre
 		sign = -1;
 		input = input.mid(negativePrefix(prefix).length());
 	}
-	else
+	else if (input.startsWith(positivePrefix(prefix), Qt::CaseInsensitive)) 
 	{
 		sign = 1;
 		input = input.mid(positivePrefix(prefix).length());
+	}
+	else if (input.startsWith("-", Qt::CaseInsensitive))
+	{
+		sign = -1;
+		input = input.mid(1);
+	}
+	else if (input.startsWith("+", Qt::CaseInsensitive))
+	{
+		sign = 1;
+		input = input.mid(1);
 	}
 
 	QRegExp dmsRx("^\\s*(\\d+)\\s*[d\\x00b0](\\s*(\\d+(\\.\\d*)?)\\s*[m'](\\s*(\\d+(\\.\\d*)?)\\s*[s\"]\\s*)?)?$", 
@@ -348,7 +357,7 @@ void AngleSpinBox::formatText(void)
 			s = (angle-d)*3600-60*m;
 
 			// we may have seconds as 60 and one less minute...
-			if (s > 60.0 - ::pow(10, -1 * (decimalPlaces+1)))
+			if (s > 60.0 - ::pow(10.0, -1 * (decimalPlaces+1)))
 			{
 				m+=1;
 				s-=60.0;
@@ -362,9 +371,9 @@ void AngleSpinBox::formatText(void)
 			}
 
 			// fix when we have tiny tiny tiny values.
-			if (s < ::pow(10, -1 * (decimalPlaces+1)))
+			if (s < ::pow(10.0, -1 * (decimalPlaces+1)))
 				s= 0.0;
-			else if (s < 0.0 && 0.0 - ::pow(10, -1 * (decimalPlaces+1)))
+			else if (s < 0.0 && 0.0 - ::pow(10.0, -1 * (decimalPlaces+1)))
 				s= 0.0;
 
 			QString signInd = positivePrefix(currentPrefixType);
@@ -394,7 +403,7 @@ void AngleSpinBox::formatText(void)
 			s = (angle-h)*3600.-60.*m;
 
 			// we may have seconds as 60 and one less minute...
-			if (s > 60.0 - ::pow(10, -1 * (decimalPlaces+1)))
+			if (s > 60.0 - ::pow(10.0, -1 * (decimalPlaces+1)))
 			{
 				m+=1;
 				s-=60.0;
@@ -408,9 +417,9 @@ void AngleSpinBox::formatText(void)
 			}
 
 			// fix when we have tiny tiny tiny values.
-			if (s < ::pow(10, -1 * (decimalPlaces+1)))
+			if (s < ::pow(10.0, -1 * (decimalPlaces+1)))
 				s= 0.0;
-			else if (s < 0.0 && 0.0 - ::pow(10, -1 * (decimalPlaces+1)))
+			else if (s < 0.0 && 0.0 - ::pow(10.0, -1 * (decimalPlaces+1)))
 				s= 0.0;
 
 			if (angleSpinBoxFormat == HMSLetters)
@@ -422,15 +431,13 @@ void AngleSpinBox::formatText(void)
 			break;
 		}
 		case DecimalDeg:
-		{
-			bool sign=true;
+		{			
 			double angle = radAngle;
 			QString signInd = positivePrefix(currentPrefixType);
 
 			if (radAngle<0)
 			{
-				angle *= -1;
-				sign = false;
+				angle *= -1;				
 				signInd = negativePrefix(currentPrefixType);
 			}
 

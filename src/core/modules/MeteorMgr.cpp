@@ -14,23 +14,21 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include <functional>
 #include <cstdlib>
 #include <QSettings>
-#include <QtOpenGL>
 
-#include "StelProjector.hpp"
-
+#include "LandscapeMgr.hpp"
+#include "Meteor.hpp"
 #include "MeteorMgr.hpp"
+#include "renderer/StelRenderer.hpp"
 #include "StelApp.hpp"
 #include "StelCore.hpp"
-#include "Meteor.hpp"
-#include "LandscapeMgr.hpp"
 #include "StelModuleMgr.hpp"
-#include "StelPainter.hpp"
+#include "StelProjector.hpp"
 
 MeteorMgr::MeteorMgr(int zhr, int maxv ) : flagShow(true)
 {
@@ -75,6 +73,7 @@ double MeteorMgr::getCallOrder(StelModuleActionName actionName) const
 void MeteorMgr::setZHR(int zhr)
 {
 	ZHR = zhr;
+	emit zhrChanged(zhr);
 }
 
 int MeteorMgr::getZHR()
@@ -89,6 +88,9 @@ void MeteorMgr::setMaxVelocity(int maxv)
 
 void MeteorMgr::update(double deltaTime)
 {
+#ifdef _MSC_BUILD
+	return;
+#endif
 	if (!flagShow)
 		return;
 	
@@ -146,7 +148,7 @@ void MeteorMgr::update(double deltaTime)
 }
 
 
-void MeteorMgr::draw(StelCore* core)
+void MeteorMgr::draw(StelCore* core, StelRenderer* renderer)
 {
 	if (!flagShow)
 		return;
@@ -155,14 +157,11 @@ void MeteorMgr::draw(StelCore* core)
 	if (landmgr->getFlagAtmosphere() && landmgr->getLuminance()>5)
 		return;
 
-	StelPainter sPainter(core->getProjection(StelCore::FrameAltAz));
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-	sPainter.setShadeModel(StelPainter::ShadeModelSmooth);
+	renderer->setBlendMode(BlendMode_Alpha);
 
 	// step through and draw all active meteors
 	for (std::vector<Meteor*>::iterator iter = active.begin(); iter != active.end(); ++iter)
 	{
-		(*iter)->draw(core, sPainter);
+		(*iter)->draw(core, core->getProjection(StelCore::FrameAltAz), renderer);
 	}
 }

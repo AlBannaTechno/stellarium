@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>291</height>
+    <width>440</width>
+    <height>352</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -21,9 +21,6 @@
     <width>400</width>
     <height>0</height>
    </size>
-  </property>
-  <property name="windowTitle">
-   <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -178,32 +175,13 @@
          <property name="margin">
           <number>0</number>
          </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="labelRA">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>&amp;Right Ascension</string>
-           </property>
-           <property name="buddy">
-            <cstring>spinBoxRA</cstring>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="1">
-          <widget class="QLabel" name="labelJ2000_1">
+          <widget class="AngleSpinBox" name="spinBoxRA">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
-           </property>
-           <property name="text">
-            <string>(J2000)</string>
            </property>
           </widget>
          </item>
@@ -216,15 +194,15 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>De&amp;clination</string>
+            <string>De&amp;clination (J2000):</string>
            </property>
            <property name="buddy">
             <cstring>spinBoxDec</cstring>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QLabel" name="labelJ2000_2">
+         <item row="0" column="0">
+          <widget class="QLabel" name="labelRA">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -232,11 +210,14 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>(J2000)</string>
+            <string>&amp;Right Ascension (J2000):</string>
+           </property>
+           <property name="buddy">
+            <cstring>spinBoxRA</cstring>
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
+         <item row="1" column="1">
           <widget class="AngleSpinBox" name="spinBoxDec">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -246,13 +227,10 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
-          <widget class="AngleSpinBox" name="spinBoxRA">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+         <item row="2" column="0" colspan="2">
+          <widget class="QPushButton" name="pushButtonCurrent">
+           <property name="text">
+            <string>&amp;Current object</string>
            </property>
           </widget>
          </item>

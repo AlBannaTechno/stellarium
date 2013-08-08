@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 
@@ -36,7 +36,11 @@
 #include <QGLWidget>
 
 #ifdef BUILD_FOR_MAEMO
+#if QT_VERSION<QT_VERSION_CHECK(5,0,0)
 #include <QtGui/QX11Info>
+#else
+#include <QtWidgets/QX11Info>
+#endif
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #endif
@@ -87,7 +91,9 @@ void StelMainWindow::initTitleI18n()
 
 void StelMainWindow::init(QSettings* conf)
 {
-	resize(conf->value("video/screen_w", 800).toInt(), conf->value("video/screen_h", 600).toInt());
+	int width = conf->value("video/screen_w", 800).toInt();
+	int height = conf->value("video/screen_h", 600).toInt();
+	resize(width, height);
 	if (conf->value("video/fullscreen", true).toBool())
 	{
 		setFullScreen(true);
@@ -95,16 +101,19 @@ void StelMainWindow::init(QSettings* conf)
 	else
 	{
 		setFullScreen(false);
+		int x = conf->value("video/screen_x", 0).toInt();
+		int y = conf->value("video/screen_y", 0).toInt();
+		move(x, y);
 	}
 	show();
-	// Process the event to make the window visible and create the openGL context.
+	// Process the event to make the window visible and create the renderer.
 	QCoreApplication::processEvents();
 	mainGraphicsView->init(conf);
 }
 
 void StelMainWindow::deinit()
 {
-	mainGraphicsView->deinitGL();
+	mainGraphicsView->deinit();
 }
 
 // Alternate fullscreen mode/windowed mode if possible

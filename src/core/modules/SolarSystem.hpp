@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _SOLARSYSTEM_HPP_
@@ -27,7 +27,6 @@
 
 #include <QFont>
 #include "StelObjectModule.hpp"
-#include "StelTextureTypes.hpp"
 #include "Planet.hpp"
 
 class Orbit;
@@ -35,7 +34,6 @@ class StelTranslator;
 class StelObject;
 class StelCore;
 class StelProjector;
-class StelNavigator;
 class QSettings;
 
 typedef QSharedPointer<Planet> PlanetP;
@@ -61,10 +59,11 @@ public:
 	virtual void init();
 
 	//! Draw SolarSystem objects (planets).
-	//! @param core The StelCore object.
+	//! @param core     The StelCore object.
+	//! @param renderer Renderer to use for drawing.
 	//! @return The maximum squared distance in pixels that any SolarSystem object
 	//! has travelled since the last update.
-	virtual void draw(StelCore *core);
+	virtual void draw(StelCore *core, class StelRenderer* renderer);
 
 	//! Update time-varying components.
 	//! This includes planet motion trails.
@@ -102,6 +101,15 @@ public:
 	//! @param maxNbItem the maximum number of returned object names.
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing matches.
 	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5) const;
+	//! Find objects by translated name prefix.
+	//! Find and return the list of at most maxNbItem objects auto-completing
+	//! the passed object English name.
+	//! @param objPrefix the case insensitive first letters of the searched object.
+	//! @param maxNbItem the maximum number of returned object names.
+	//! @return a list of matching object name by order of relevance, or an empty list if nothing matches.
+	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5) const;
+	virtual QStringList listAllObjects(bool inEnglish) const;
+	virtual QString getName() const { return "Solar System"; }
 
 public slots:
 	///////////////////////////////////////////////////////////////////////////
@@ -177,6 +185,32 @@ public slots:
 	//! Translate names. (public so that SolarSystemEditor can call it).
 	void updateI18n();
 
+	//! Get the V magnitude for Solar system bodies from scripts
+	//! @param planetName the case in-sensistive English planet name.
+	//! @param withExtinction the flag for use extinction effect for magnitudes (default not use)
+	//! @return a magnitude
+	float getPlanetVMagnitude(QString planetName, bool withExtinction=false) const;
+
+	//! Get distance to Solar system bodies from scripts
+	//! @param planetName the case in-sensistive English planet name.
+	//! @return a distance (in AU)
+	double getDistanceToPlanet(QString planetName) const;
+
+	//! Get elongation for Solar system bodies from scripts
+	//! @param planetName the case in-sensistive English planet name.
+	//! @return a elongation (in radians)
+	double getElongationForPlanet(QString planetName) const;
+
+	//! Get phase angle for Solar system bodies from scripts
+	//! @param planetName the case in-sensistive English planet name.
+	//! @return a phase angle (in radians)
+	double getPhaseAngleForPlanet(QString planetName) const;
+
+	//! Get phase for Solar system bodies from scripts
+	//! @param planetName the case in-sensistive English planet name.
+	//! @return a phase
+	float getPhaseForPlanet(QString planetName) const;
+
 public:
 	///////////////////////////////////////////////////////////////////////////
 	// Other public methods
@@ -206,6 +240,9 @@ public:
 	//! Reload the planets
 	void reloadPlanets();
 
+	//! Determines relative amount of sun visible from the observer's position.
+	double getEclipseFactor(const StelCore *core) const;
+
 	///////////////////////////////////////////////////////////////////////////////////////
 	// DEPRECATED
 	///////////////////////////////////////////////////////////////////////////////////////
@@ -219,12 +256,11 @@ public:
 	//! @param observerPos Position of the observer in heliocentric ecliptic frame (Required for light travel time computation).
 	//! @param date the date in JDay
 	//! \deprecated ??? In the "deprecated" section, but used in SolarSystem::init()
-	//! and StelNavigator::updateTime()
 	void computePositions(double date, const Vec3d& observerPos = Vec3d(0.));
 
 	//! Get the list of all the bodies of the solar system.
 	//! \deprecated Used in LandscapeMgr::update(), but commented out.
-	const QList<PlanetP>& getAllPlanets() const {return systemPlanets;}
+	const QList<PlanetP>& getAllPlanets() const {return systemPlanets;}	
 
 private slots:
 	//! Called when a new object is selected.
@@ -247,7 +283,10 @@ private:
 	void computeTransMatrices(double date, const Vec3d& observerPos = Vec3d(0.));
 
 	//! Draw a nice animated pointer around the object.
-	void drawPointer(const StelCore* core);
+	//!
+	//! @param core     The StelCore object.
+	//! @param renderer Renderer to draw with.
+	void drawPointer(const StelCore* core, class StelRenderer* renderer);
 
 	//! Load planet data from the Solar System configuration file.
 	//! This function attempts to load every possible instance of the
@@ -259,6 +298,19 @@ private:
 	bool loadPlanets(const QString& filePath);
 
 	void recreateTrails();
+
+	//! Calculates the shadow information for the shadow planet shader.
+	class StelTextureNew* computeShadowInfo(StelRenderer* renderer);
+
+	//! Used by computeShadowInfo to generate shadow info texture before uploading it.
+	QVector<Vec4f> shadowInfoBuffer;
+
+	//! Used by computeShadowInfo to store computed planet model matrices used to generate the 
+	//! shadow info texture.
+	QVector<Mat4d> shadowModelMatricesBuffer;
+
+	//! Used to count how many planets actually need shadow information
+	int shadowPlanetCount;
 
 	PlanetP sun;
 	PlanetP moon;
@@ -291,13 +343,15 @@ private:
 	bool flagLightTravelTime;
 
 	//! The selection pointer texture.
-	StelTextureSP texPointer;
+	class StelTextureNew* texPointer;
 
 	bool flagShow;
 
 	class TrailGroup* allTrails;
 	LinearFader trailFader;
 	Vec3f trailColor;
+
+	Planet::SharedPlanetGraphics sharedPlanetGraphics;
 
 	//////////////////////////////////////////////////////////////////////////////////
 	// DEPRECATED

@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "StelScriptSyntaxHighlighter.hpp"
@@ -24,7 +24,11 @@
 #include "StelModuleMgr.hpp"
 #include "StelUtils.hpp"
 
+#if QT_VERSION<QT_VERSION_CHECK(5,0,0)
 #include <QtGui>
+#else
+#include <QtWidgets>
+#endif
 #include <QString>
 #include <QColor>
 #include <QSettings>
@@ -119,7 +123,7 @@ StelScriptSyntaxHighlighter::StelScriptSyntaxHighlighter(QTextDocument *parent)
 			}
 		}
         }
-	moduleNames << "\\bStelSkyImageMgr\\b" << "\\bStelSkyDrawer\\b" << "\\bcore\\b";
+	moduleNames << "\\bStelSkyLayerMgr\\b" << "\\bStelSkyDrawer\\b" << "\\bcore\\b";
 	foreach(const QString &pattern, moduleNames)
 	{
 		rule.pattern = QRegExp(pattern);

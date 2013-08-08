@@ -14,17 +14,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include <set>
 #include <QSettings>
 #include <QDebug>
 #include <QFontMetrics>
-#include <QtOpenGL>
 
 #include "GridLinesMgr.hpp"
 #include "StelApp.hpp"
+
+#include "renderer/StelCircleArcRenderer.hpp"
+#include "renderer/StelRenderer.hpp"
 
 #include "StelTranslator.hpp"
 #include "StelProjector.hpp"
@@ -33,7 +35,6 @@
 #include "StelLocaleMgr.hpp"
 #include "StelModuleMgr.hpp"
 #include "StelCore.hpp"
-#include "StelPainter.hpp"
 #include "StelSkyDrawer.hpp"
 
 //! @class SkyGrid
@@ -45,14 +46,18 @@ public:
 	// Create and precompute positions of a SkyGrid
 	SkyGrid(StelCore::FrameType frame);
 	virtual ~SkyGrid();
-	void draw(const StelCore* prj) const;
+	//! Draw the grid.
+	//!
+	//! @param core     The StelCore object.
+	//! @param renderer Renderer to draw with.
+	void draw(const StelCore* core, StelRenderer* renderer) const;
 	void setFontSize(double newFontSize);
 	void setColor(const Vec3f& c) {color = c;}
 	const Vec3f& getColor() {return color;}
 	void update(double deltaTime) {fader.update((int)(deltaTime*1000));}
 	void setFadeDuration(float duration) {fader.setDuration((int)(duration*1000.f));}
-	void setFlagshow(bool b){fader = b;}
-	bool getFlagshow(void) const {return fader;}
+	void setDisplayed(const bool displayed){fader = displayed;}
+	bool isDisplayed(void) const {return fader;}
 private:
 	Vec3f color;
 	StelCore::FrameType frameType;
@@ -71,19 +76,26 @@ public:
 		EQUATOR,
 		ECLIPTIC,
 		MERIDIAN,
-		HORIZON
+		HORIZON,
+		GALACTICPLANE
 	};
 	// Create and precompute positions of a SkyGrid
 	SkyLine(SKY_LINE_TYPE _line_type = EQUATOR);
 	virtual ~SkyLine();
-	void draw(StelCore* core) const;
+	//! Draw the line.
+	//!
+	//! @param core     The StelCore object.
+	//! @param renderer Renderer to draw with.
+	void draw(StelCore* core, StelRenderer* renderer) const;
 	void setColor(const Vec3f& c) {color = c;}
 	const Vec3f& getColor() {return color;}
 	void update(double deltaTime) {fader.update((int)(deltaTime*1000));}
 	void setFadeDuration(float duration) {fader.setDuration((int)(duration*1000.f));}
-	void setFlagshow(bool b){fader = b;}
-	bool getFlagshow(void) const {return fader;}
+	void setDisplayed(const bool displayed){fader = displayed;}
+	bool isDisplayed(void) const {return fader;}
 	void setFontSize(double newSize);
+	//! Re-translates the label.
+	void updateLabel();
 private:
 	SKY_LINE_TYPE line_type;
 	Vec3f color;
@@ -142,126 +154,112 @@ static double getClosestResolutionHMS(double pixelPerRad)
 	return 15.;
 }
 
+//! Data passed to viewportEdgeIntersectCallback.
 struct ViewportEdgeIntersectCallbackData
 {
-	ViewportEdgeIntersectCallbackData(StelPainter* p) : sPainter(p) {;}
-	StelPainter* sPainter;
+	//! Construct ViewportEdgeIntersectCallbackData with specified font metrics.
+	ViewportEdgeIntersectCallbackData(const QFontMetrics& metrics) 
+		: fontMetrics(metrics){}
+
+	//! Renderer to draw the label with.
+	StelRenderer* renderer;
+	//! Projector to project 3D coordinates to viewport.
+	StelProjectorP projector;
+	//! Color of label text.
 	Vec4f textColor;
-	QString text;		// Label to display at the intersection of the lines and screen side
-	double raAngle;		// Used for meridians
+	//! Color of the sky line (or grid) being drawn.
+	Vec4f skyLineColor;
+	//! Metrics of the label font (so we know how to offset the label).
+	const QFontMetrics fontMetrics;
+	//! Label text.
+	QString text;
+	double raAngle;// Used for meridians
 	StelCore::FrameType frameType;
 };
 
-// Callback which draws the label of the grid
+//! Callback which draws the label of the grid at the edge of the viewport.
+//!
+//! @param screenPos 2D position of the intersection on the screen.
+//! @param direction Normalized direction of the arc toward the inside of the viewport.
+//! @param userData  ViewportEdgeIntersectCallbackData.
 void viewportEdgeIntersectCallback(const Vec3d& screenPos, const Vec3d& direction, void* userData)
 {
-	ViewportEdgeIntersectCallbackData* d = static_cast<ViewportEdgeIntersectCallbackData*>(userData);
-	Vec3d direc(direction);
-	direc.normalize();
-	const Vec4f tmpColor = d->sPainter->getColor();
-	d->sPainter->setColor(d->textColor[0], d->textColor[1], d->textColor[2], d->textColor[3]);
+	ViewportEdgeIntersectCallbackData* d = 
+		static_cast<ViewportEdgeIntersectCallbackData*>(userData);
+	d->renderer->setGlobalColor(d->textColor);
 
 	QString text;
 	if (d->text.isEmpty())
 	{
-		// We are in the case of meridians, we need to determine which of the 2 labels (3h or 15h to use)
+		// We are in the case of meridians,
+		// we need to determine which of the 2 labels (3h or 15h) to use
 		Vec3d tmpV;
-		d->sPainter->getProjector()->unProject(screenPos, tmpV);
-		double lon, lat;
+		d->projector->unProject(screenPos, tmpV);
+		double lon, lat, raAngle;
 		StelUtils::rectToSphe(&lon, &lat, tmpV);
-		switch (d->frameType)
+
+		const bool altAzOrGalactic = d->frameType == StelCore::FrameAltAz || 
+		                             d->frameType == StelCore::FrameGalactic;
+		raAngle = d->raAngle;
+		if(altAzOrGalactic)
 		{
-			case StelCore::FrameAltAz:
-			{
-				double raAngle = M_PI-d->raAngle;
-				lon = M_PI-lon;
-				if (raAngle<0)
-					raAngle=+2.*M_PI;
-				if (lon<0)
-					lon=+2.*M_PI;
-
-				if (std::fabs(2.*M_PI-lon)<0.01)
-				{
-					// We are at meridian 0
-					lon = 0.;
-				}
-				if (std::fabs(lon-raAngle) < 0.01)
-					text = StelUtils::radToDmsStrAdapt(raAngle);
-				else
-				{
-					const double delta = raAngle<M_PI ? M_PI : -M_PI;
-					if (raAngle==2*M_PI && delta==-M_PI)
-					{
-						text = StelUtils::radToDmsStrAdapt(0);
-					}
-					else
-					{
-						text = StelUtils::radToDmsStrAdapt(raAngle+delta);
-					}
-				}
-				break;
-			}
-			case StelCore::FrameGalactic:
-			{
-				double raAngle = M_PI-d->raAngle;
-				lon = M_PI-lon;
-				if (raAngle<0)
-					raAngle=+2.*M_PI;
-				if (lon<0)
-					lon=+2.*M_PI;
-
-				if (std::fabs(2.*M_PI-lon)<0.01)
-				{
-					// We are at meridian 0
-					lon = 0.;
-				}
-				if (std::fabs(lon-raAngle) < 0.01)
-					text = StelUtils::radToDmsStrAdapt(-raAngle+M_PI);
-				else
-				{
-					const double delta = raAngle<M_PI ? M_PI : -M_PI;
-					text = StelUtils::radToDmsStrAdapt(-raAngle-delta+M_PI);
-				}
-				break;
-			}
-			default:
-			{
-				if (std::fabs(2.*M_PI-lon)<0.01)
-				{
-					// We are at meridian 0
-					lon = 0.;
-				}
-				if (std::fabs(lon-d->raAngle) < 0.01)
-					text = StelUtils::radToHmsStrAdapt(d->raAngle);
-				else
-				{
-					const double delta = d->raAngle<M_PI ? M_PI : -M_PI;
-					text = StelUtils::radToHmsStrAdapt(d->raAngle+delta);
-				}
-			}
+			raAngle = M_PI - raAngle;
+			lon     = M_PI - lon;
+			if (raAngle < 0) {raAngle += 2.0 * M_PI;}
+			if (lon < 0)     {lon     += 2.0 * M_PI;}
 		}
+		if (std::fabs(2.0 * M_PI - lon) < 0.01)
+		{
+			// We are at meridian 0
+			lon = 0.0;
+		}
+		const double delta = raAngle < M_PI ? M_PI : -M_PI;
+		double textAngle;
+		if (std::fabs(lon - raAngle) < 0.01)
+		{
+			textAngle = 
+				(d->frameType == StelCore::FrameGalactic) ? -raAngle + M_PI : raAngle;
+		}
+		else if(d->frameType == StelCore::FrameAltAz)
+		{
+			textAngle = 
+				(std::fabs(raAngle - 2.0 * M_PI) < 0.01) ? 0.0 : raAngle + delta;
+		}
+		else if(d->frameType == StelCore::FrameGalactic)
+		{
+			textAngle = -raAngle - delta + M_PI;
+		}
+		else
+		{
+			textAngle = raAngle + delta;
+		}
+
+		text = altAzOrGalactic ? StelUtils::radToDmsStrAdapt(textAngle)
+		                       : StelUtils::radToHmsStrAdapt(textAngle);
 	}
 	else
-		text = d->text;
-
-	double angleDeg = std::atan2(-direc[1], -direc[0])*180./M_PI;
-	float xshift=6.f;
-	if (angleDeg>90. || angleDeg<-90.)
 	{
-		angleDeg+=180.;
-		xshift=-d->sPainter->getFontMetrics().width(text)-6.f;
+		text = d->text;
 	}
 
-	d->sPainter->drawText(screenPos[0], screenPos[1], text, angleDeg, xshift, 3);
-	d->sPainter->setColor(tmpColor[0], tmpColor[1], tmpColor[2], tmpColor[3]);
-	glDisable(GL_TEXTURE_2D);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	float angleDeg = std::atan2(-direction[1], -direction[0]) * 180.0 / M_PI;
+	float xshift = 6.0f;
+	if (angleDeg > 90.0f || angleDeg < -90.0f)
+	{
+		angleDeg += 180.0f;
+		xshift = -(d->fontMetrics.width(text)) - 6.0f;
+	}
+
+	d->renderer->drawText(TextParams(screenPos[0], screenPos[1], text)
+                         .angleDegrees(angleDeg).shift(xshift, 3));
+	d->renderer->setGlobalColor(d->skyLineColor);
+	d->renderer->setBlendMode(BlendMode_Alpha);
 }
 
 //! Draw the sky grid in the current frame
-void SkyGrid::draw(const StelCore* core) const
+void SkyGrid::draw(const StelCore* core, StelRenderer* renderer) const
 {
-	const StelProjectorP prj = core->getProjection(frameType, frameType!=StelCore::FrameAltAz ? StelCore::RefractionAuto : StelCore::RefractionOff);
+	const StelProjectorP projector = core->getProjection(frameType, frameType!=StelCore::FrameAltAz ? StelCore::RefractionAuto : StelCore::RefractionOff);
 	if (!fader.getInterstate())
 		return;
 
@@ -270,28 +268,28 @@ void SkyGrid::draw(const StelCore* core) const
 	bool northPoleInViewport = false;
 	bool southPoleInViewport = false;
 	Vec3f win;
-	if (prj->project(Vec3f(0,0,1), win) && prj->checkInViewport(win))
+	if (projector->project(Vec3f(0,0,1), win) && projector->checkInViewport(win))
 		northPoleInViewport = true;
-	if (prj->project(Vec3f(0,0,-1), win) && prj->checkInViewport(win))
+	if (projector->project(Vec3f(0,0,-1), win) && projector->checkInViewport(win))
 		southPoleInViewport = true;
 	// Get the longitude and latitude resolution at the center of the viewport
 	Vec3d centerV;
-	prj->unProject(prj->getViewportPosX()+prj->getViewportWidth()/2, prj->getViewportPosY()+prj->getViewportHeight()/2+1, centerV);
+	projector->unProject(projector->getViewportPosX()+projector->getViewportWidth()/2, projector->getViewportPosY()+projector->getViewportHeight()/2+1, centerV);
 	double lon2, lat2;
 	StelUtils::rectToSphe(&lon2, &lat2, centerV);
 
-	const double gridStepParallelRad = M_PI/180.*getClosestResolutionDMS(prj->getPixelPerRadAtCenter());
+	const double gridStepParallelRad = M_PI/180.*getClosestResolutionDMS(projector->getPixelPerRadAtCenter());
 	double gridStepMeridianRad;
 	if (northPoleInViewport || southPoleInViewport)
 		gridStepMeridianRad = (frameType==StelCore::FrameAltAz || frameType==StelCore::FrameGalactic) ? M_PI/180.* 10. : M_PI/180.* 15.;
 	else
 	{
-		const double closetResLon = (frameType==StelCore::FrameAltAz || frameType==StelCore::FrameGalactic) ? getClosestResolutionDMS(prj->getPixelPerRadAtCenter()*std::cos(lat2)) : getClosestResolutionHMS(prj->getPixelPerRadAtCenter()*std::cos(lat2));
+		const double closetResLon = (frameType==StelCore::FrameAltAz || frameType==StelCore::FrameGalactic) ? getClosestResolutionDMS(projector->getPixelPerRadAtCenter()*std::cos(lat2)) : getClosestResolutionHMS(projector->getPixelPerRadAtCenter()*std::cos(lat2));
 		gridStepMeridianRad = M_PI/180.* ((northPoleInViewport || southPoleInViewport) ? 15. : closetResLon);
 	}
 
 	// Get the bounding halfspace
-	const SphericalCap& viewPortSphericalCap = prj->getBoundingCap();
+	const SphericalCap& viewPortSphericalCap = projector->getBoundingCap();
 
 	// Compute the first grid starting point. This point is close to the center of the screen
 	// and lays at the intersection of a meridien and a parallel
@@ -303,11 +301,11 @@ void SkyGrid::draw(const StelCore* core) const
 
 	// Q_ASSERT(viewPortSphericalCap.contains(firstPoint));
 
-	// Initialize a painter and set openGL state
-	StelPainter sPainter(prj);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
-	Vec4f textColor(color[0], color[1], color[2], 0);
+	// Prepare for drawing
+	renderer->setBlendMode(BlendMode_Alpha);
+	Vec4f textColor(color[0], color[1], color[2], 0.0f);
+
+	Vec4f skyGridColor;
 	if (StelApp::getInstance().getVisionModeNight())
 	{
 		// instead of a filter which just zeros G&B, set the red
@@ -315,20 +313,25 @@ void SkyGrid::draw(const StelCore* core) const
 		float red = (color[0] + color[1] + color[2]) / 3.0;
 		textColor[0] = red;
 		textColor[1] = 0.; textColor[2] = 0.;
-		sPainter.setColor(red, 0, 0, fader.getInterstate());
+		skyGridColor = Vec4f(red, 0.0f, 0.0f, fader.getInterstate());
 	}
 	else
 	{
-		sPainter.setColor(color[0],color[1],color[2], fader.getInterstate());
+		skyGridColor = Vec4f(color[0], color[1], color[2], fader.getInterstate());
 	}
+	renderer->setGlobalColor(skyGridColor);
 
-	textColor*=2;
-	textColor[3]=fader.getInterstate();
+	textColor *= 2;
+	textColor[3] = fader.getInterstate();
 
-	sPainter.setFont(font);
-	ViewportEdgeIntersectCallbackData userData(&sPainter);
-	userData.textColor = textColor;
-	userData.frameType = frameType;
+	renderer->setFont(font);
+	ViewportEdgeIntersectCallbackData userData =
+		ViewportEdgeIntersectCallbackData(QFontMetrics(font));
+	userData.renderer     = renderer;
+	userData.projector    = projector;
+	userData.textColor    = textColor;
+	userData.frameType    = frameType;
+	userData.skyLineColor = skyGridColor;
 
 	/////////////////////////////////////////////////
 	// Draw all the meridians (great circles)
@@ -338,6 +341,7 @@ void SkyGrid::draw(const StelCore* core) const
 	Vec3d p1, p2;
 	int maxNbIter = (int)(M_PI/gridStepMeridianRad);
 	int i;
+	StelCircleArcRenderer circleRenderer(renderer, projector);
 	for (i=0; i<maxNbIter; ++i)
 	{
 		StelUtils::rectToSphe(&lon2, &lat2, fpt);
@@ -355,9 +359,12 @@ void SkyGrid::draw(const StelCore* core) const
 				rotFpt.transfo4d(rotLon120);
 				Vec3d rotFpt2=rotFpt;
 				rotFpt2.transfo4d(rotLon120);
-				sPainter.drawGreatCircleArc(fpt, rotFpt, NULL, viewportEdgeIntersectCallback, &userData);
-				sPainter.drawGreatCircleArc(rotFpt, rotFpt2, NULL, viewportEdgeIntersectCallback, &userData);
-				sPainter.drawGreatCircleArc(rotFpt2, fpt, NULL, viewportEdgeIntersectCallback, &userData);
+				circleRenderer.drawGreatCircleArc
+					(fpt, rotFpt, NULL, viewportEdgeIntersectCallback, &userData); 
+				circleRenderer.drawGreatCircleArc
+					(rotFpt, rotFpt2, NULL, viewportEdgeIntersectCallback, &userData); 
+				circleRenderer.drawGreatCircleArc
+					(rotFpt2, fpt, NULL, viewportEdgeIntersectCallback, &userData); 
 				fpt.transfo4d(rotLon);
 				continue;
 			}
@@ -371,8 +378,10 @@ void SkyGrid::draw(const StelCore* core) const
 			middlePoint*=-1.;
 
 		// Draw the arc in 2 sub-arcs to avoid lengths > 180 deg
-		sPainter.drawGreatCircleArc(p1, middlePoint, NULL, viewportEdgeIntersectCallback, &userData);
-		sPainter.drawGreatCircleArc(p2, middlePoint, NULL, viewportEdgeIntersectCallback, &userData);
+		circleRenderer.drawGreatCircleArc
+			(p1, middlePoint, NULL, viewportEdgeIntersectCallback, &userData); 
+		circleRenderer.drawGreatCircleArc
+			(p2, middlePoint, NULL, viewportEdgeIntersectCallback, &userData); 
 
 		fpt.transfo4d(rotLon);
 	}
@@ -397,8 +406,10 @@ void SkyGrid::draw(const StelCore* core) const
 			if (!viewPortSphericalCap.contains(middlePoint))
 				middlePoint*=-1;
 
-			sPainter.drawGreatCircleArc(p1, middlePoint, NULL, viewportEdgeIntersectCallback, &userData);
-			sPainter.drawGreatCircleArc(p2, middlePoint, NULL, viewportEdgeIntersectCallback, &userData);
+			circleRenderer.drawGreatCircleArc
+				(p1, middlePoint, NULL, viewportEdgeIntersectCallback, &userData); 
+			circleRenderer.drawGreatCircleArc
+				(p2, middlePoint, NULL, viewportEdgeIntersectCallback, &userData); 
 
 			fpt.transfo4d(rotLon);
 		}
@@ -420,6 +431,8 @@ void SkyGrid::draw(const StelCore* core) const
 			break;
 
 		const Vec3d rotCenter(0,0,parallelSphericalCap.d);
+		circleRenderer.setRotCenter(rotCenter);
+
 		if (!SphericalCap::intersectionPoints(viewPortSphericalCap, parallelSphericalCap, p1, p2))
 		{
 			if ((viewPortSphericalCap.d<parallelSphericalCap.d && viewPortSphericalCap.contains(parallelSphericalCap.n))
@@ -431,9 +444,13 @@ void SkyGrid::draw(const StelCore* core) const
 				rotFpt.transfo4d(rotLon120);
 				Vec3d rotFpt2=rotFpt;
 				rotFpt2.transfo4d(rotLon120);
-				sPainter.drawSmallCircleArc(fpt, rotFpt, rotCenter, viewportEdgeIntersectCallback, &userData);
-				sPainter.drawSmallCircleArc(rotFpt, rotFpt2, rotCenter, viewportEdgeIntersectCallback, &userData);
-				sPainter.drawSmallCircleArc(rotFpt2, fpt, rotCenter, viewportEdgeIntersectCallback, &userData);
+
+				circleRenderer.drawSmallCircleArc
+					(fpt, rotFpt, viewportEdgeIntersectCallback, &userData);
+				circleRenderer.drawSmallCircleArc
+					(rotFpt, rotFpt2, viewportEdgeIntersectCallback, &userData);
+				circleRenderer.drawSmallCircleArc
+					(rotFpt2, fpt, viewportEdgeIntersectCallback, &userData);
 				fpt.transfo4d(rotLon);
 				continue;
 			}
@@ -453,8 +470,10 @@ void SkyGrid::draw(const StelCore* core) const
 			middlePoint+=rotCenter;
 		}
 
-		sPainter.drawSmallCircleArc(p1, middlePoint, rotCenter, viewportEdgeIntersectCallback, &userData);
-		sPainter.drawSmallCircleArc(p2, middlePoint, rotCenter, viewportEdgeIntersectCallback, &userData);
+		circleRenderer.drawSmallCircleArc
+			(p1, middlePoint, viewportEdgeIntersectCallback, &userData);
+		circleRenderer.drawSmallCircleArc
+			(p2, middlePoint, viewportEdgeIntersectCallback, &userData);
 
 		fpt.transfo4d(rotLon);
 	}
@@ -471,6 +490,7 @@ void SkyGrid::draw(const StelCore* core) const
 
 			parallelSphericalCap.d = fpt[2];
 			const Vec3d rotCenter(0,0,parallelSphericalCap.d);
+			circleRenderer.setRotCenter(rotCenter);
 			if (!SphericalCap::intersectionPoints(viewPortSphericalCap, parallelSphericalCap, p1, p2))
 			{
 				if ((viewPortSphericalCap.d<parallelSphericalCap.d && viewPortSphericalCap.contains(parallelSphericalCap.n))
@@ -482,9 +502,12 @@ void SkyGrid::draw(const StelCore* core) const
 					rotFpt.transfo4d(rotLon120);
 					Vec3d rotFpt2=rotFpt;
 					rotFpt2.transfo4d(rotLon120);
-					sPainter.drawSmallCircleArc(fpt, rotFpt, rotCenter, viewportEdgeIntersectCallback, &userData);
-					sPainter.drawSmallCircleArc(rotFpt, rotFpt2, rotCenter, viewportEdgeIntersectCallback, &userData);
-					sPainter.drawSmallCircleArc(rotFpt2, fpt, rotCenter, viewportEdgeIntersectCallback, &userData);
+					circleRenderer.drawSmallCircleArc
+						(fpt, rotFpt, viewportEdgeIntersectCallback, &userData);
+					circleRenderer.drawSmallCircleArc
+						(rotFpt, rotFpt2, viewportEdgeIntersectCallback, &userData);
+					circleRenderer.drawSmallCircleArc
+						(rotFpt2, fpt, viewportEdgeIntersectCallback, &userData);
 					fpt.transfo4d(rotLon);
 					continue;
 				}
@@ -504,8 +527,10 @@ void SkyGrid::draw(const StelCore* core) const
 				middlePoint+=rotCenter;
 			}
 
-			sPainter.drawSmallCircleArc(p1, middlePoint, rotCenter, viewportEdgeIntersectCallback, &userData);
-			sPainter.drawSmallCircleArc(p2, middlePoint, rotCenter, viewportEdgeIntersectCallback, &userData);
+			circleRenderer.drawSmallCircleArc
+				(p1, middlePoint, viewportEdgeIntersectCallback, &userData);
+			circleRenderer.drawSmallCircleArc
+				(p2, middlePoint, viewportEdgeIntersectCallback, &userData);
 
 			fpt.transfo4d(rotLon);
 		}
@@ -518,6 +543,20 @@ SkyLine::SkyLine(SKY_LINE_TYPE _line_type) : color(0.f, 0.f, 1.f)
 	font.setPixelSize(14);
 	line_type = _line_type;
 
+	updateLabel();
+}
+
+SkyLine::~SkyLine()
+{
+}
+
+void SkyLine::setFontSize(double newFontSize)
+{
+	font.setPixelSize(newFontSize);
+}
+
+void SkyLine::updateLabel()
+{
 	switch (line_type)
 	{
 		case MERIDIAN:
@@ -536,42 +575,53 @@ SkyLine::SkyLine(SKY_LINE_TYPE _line_type) : color(0.f, 0.f, 1.f)
 			frameType = StelCore::FrameAltAz;
 			label = q_("Horizon");
 			break;
+		case GALACTICPLANE:
+			frameType = StelCore::FrameGalactic;
+			label = q_("Galactic Plane");
+			break;
 	}
 }
 
-SkyLine::~SkyLine()
-{
-}
-
-void SkyLine::setFontSize(double newFontSize)
-{
-	font.setPixelSize(newFontSize);
-}
-
-void SkyLine::draw(StelCore *core) const
+void SkyLine::draw(StelCore *core, StelRenderer* renderer) const
 {
 	if (!fader.getInterstate())
 		return;
 
-	StelProjectorP prj = core->getProjection(frameType, frameType!=StelCore::FrameAltAz ? StelCore::RefractionAuto : StelCore::RefractionOff);
+	StelProjectorP projector = core->getProjection(frameType, frameType!=StelCore::FrameAltAz ? StelCore::RefractionAuto : StelCore::RefractionOff);
 
 	// Get the bounding halfspace
-	const SphericalCap& viewPortSphericalCap = prj->getBoundingCap();
+	const SphericalCap& viewPortSphericalCap = projector->getBoundingCap();
 
-	// Initialize a painter and set openGL state
-	StelPainter sPainter(prj);
-	sPainter.setColor(color[0], color[1], color[2], fader.getInterstate());
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
+	Vec4f textColor, skyLineColor;
+	if (StelApp::getInstance().getVisionModeNight())
+	{
+		// instead of a filter which just zeros G&B, set the red
+		// value to the mean brightness of RGB.
+		float red = (color[0] + color[1] + color[2]) / 3.0;
+		textColor = Vec4f(red, 0.0f, 0.0f, 0.0f);
+		skyLineColor = Vec4f(red, 0.0f, 0.0f, fader.getInterstate());
+	}
+	else
+	{
+		skyLineColor = Vec4f(color[0], color[1], color[2], fader.getInterstate());
+		textColor = Vec4f(color[0], color[1], color[2], 0.0f);
+	}
+	renderer->setGlobalColor(skyLineColor);
+	renderer->setBlendMode(BlendMode_Alpha);
 
-	Vec4f textColor(color[0], color[1], color[2], 0);	
-	textColor*=2;
-	textColor[3]=fader.getInterstate();
+	textColor *= 2;
+	textColor[3] = fader.getInterstate();
 
-	ViewportEdgeIntersectCallbackData userData(&sPainter);	
-	sPainter.setFont(font);
-	userData.textColor = textColor;	
-	userData.text = label;
+	renderer->setFont(font);
+
+	ViewportEdgeIntersectCallbackData userData = 
+		ViewportEdgeIntersectCallbackData(QFontMetrics(font));
+	userData.renderer     = renderer;
+	userData.projector    = projector;
+	userData.textColor    = textColor;
+	userData.skyLineColor = skyLineColor;
+	userData.text         = label;
+
 	/////////////////////////////////////////////////
 	// Draw the line
 	SphericalCap meridianSphericalCap(Vec3d(0,0,1), 0);	
@@ -581,6 +631,7 @@ void SkyLine::draw(StelCore *core) const
 		meridianSphericalCap.n.set(0,1,0);
 	}
 
+	StelCircleArcRenderer circleRenderer(renderer, projector);
 	Vec3d p1, p2;
 	if (!SphericalCap::intersectionPoints(viewPortSphericalCap, meridianSphericalCap, p1, p2))
 	{
@@ -593,13 +644,15 @@ void SkyLine::draw(StelCore *core) const
 			rotFpt.transfo4d(rotLon120);
 			Vec3d rotFpt2=rotFpt;
 			rotFpt2.transfo4d(rotLon120);
-			sPainter.drawGreatCircleArc(fpt, rotFpt, NULL, viewportEdgeIntersectCallback, &userData);
-			sPainter.drawGreatCircleArc(rotFpt, rotFpt2, NULL, viewportEdgeIntersectCallback, &userData);
-			sPainter.drawGreatCircleArc(rotFpt2, fpt, NULL, viewportEdgeIntersectCallback, &userData);
-			return;
+
+			circleRenderer.drawGreatCircleArc
+				(fpt, rotFpt, NULL, viewportEdgeIntersectCallback, &userData); 
+			circleRenderer.drawGreatCircleArc
+				(rotFpt, rotFpt2, NULL, viewportEdgeIntersectCallback, &userData); 
+			circleRenderer.drawGreatCircleArc
+				(rotFpt2, fpt, NULL, viewportEdgeIntersectCallback, &userData); 
 		}
-		else
-			return;
+		return;
 	}
 
 
@@ -609,38 +662,43 @@ void SkyLine::draw(StelCore *core) const
 		middlePoint*=-1.;
 
 	// Draw the arc in 2 sub-arcs to avoid lengths > 180 deg
-	sPainter.drawGreatCircleArc(p1, middlePoint, NULL, viewportEdgeIntersectCallback, &userData);
-	sPainter.drawGreatCircleArc(p2, middlePoint, NULL, viewportEdgeIntersectCallback, &userData);
+	circleRenderer.drawGreatCircleArc
+		(p1, middlePoint, NULL, viewportEdgeIntersectCallback, &userData); 
+	circleRenderer.drawGreatCircleArc
+		(p2, middlePoint, NULL, viewportEdgeIntersectCallback, &userData); 
 
 // 	// Johannes: use a big radius as a dirty workaround for the bug that the
 // 	// ecliptic line is not drawn around the observer, but around the sun:
 // 	const Vec3d vv(1000000,0,0);
-
 }
 
 GridLinesMgr::GridLinesMgr()
 {
 	setObjectName("GridLinesMgr");
-	equGrid = new SkyGrid(StelCore::FrameEquinoxEqu);
-	equJ2000Grid = new SkyGrid(StelCore::FrameJ2000);
-	galacticGrid = new SkyGrid(StelCore::FrameGalactic);
-	aziGrid = new SkyGrid(StelCore::FrameAltAz);
-	equatorLine = new SkyLine(SkyLine::EQUATOR);
-	eclipticLine = new SkyLine(SkyLine::ECLIPTIC);
-	meridianLine = new SkyLine(SkyLine::MERIDIAN);
-	horizonLine = new SkyLine(SkyLine::HORIZON);
+	equGrid           = new SkyGrid(StelCore::FrameEquinoxEqu);
+	equJ2000Grid      = new SkyGrid(StelCore::FrameJ2000);
+	eclJ2000Grid      = new SkyGrid(StelCore::FrameObservercentricEcliptic);
+	galacticGrid      = new SkyGrid(StelCore::FrameGalactic);
+	aziGrid           = new SkyGrid(StelCore::FrameAltAz);
+	equatorLine       = new SkyLine(SkyLine::EQUATOR);
+	eclipticLine      = new SkyLine(SkyLine::ECLIPTIC);
+	meridianLine      = new SkyLine(SkyLine::MERIDIAN);
+	horizonLine       = new SkyLine(SkyLine::HORIZON);
+	galacticPlaneLine = new SkyLine(SkyLine::GALACTICPLANE);
 }
 
 GridLinesMgr::~GridLinesMgr()
 {
 	delete equGrid;
 	delete equJ2000Grid;
+	delete eclJ2000Grid;
 	delete galacticGrid;
 	delete aziGrid;
 	delete equatorLine;
 	delete eclipticLine;
 	delete meridianLine;
 	delete horizonLine;
+	delete galacticPlaneLine;
 }
 
 /*************************************************************************
@@ -661,12 +719,17 @@ void GridLinesMgr::init()
 	setFlagAzimuthalGrid(conf->value("viewing/flag_azimuthal_grid").toBool());
 	setFlagEquatorGrid(conf->value("viewing/flag_equatorial_grid").toBool());
 	setFlagEquatorJ2000Grid(conf->value("viewing/flag_equatorial_J2000_grid").toBool());
+	setFlagEclipticJ2000Grid(conf->value("viewing/flag_ecliptic_J2000_grid").toBool());
 	setFlagGalacticGrid(conf->value("viewing/flag_galactic_grid").toBool());
 	setFlagEquatorLine(conf->value("viewing/flag_equator_line").toBool());
 	setFlagEclipticLine(conf->value("viewing/flag_ecliptic_line").toBool());
 	setFlagMeridianLine(conf->value("viewing/flag_meridian_line").toBool());
 	setFlagHorizonLine(conf->value("viewing/flag_horizon_line").toBool());
-	connect(&StelApp::getInstance(), SIGNAL(colorSchemeChanged(const QString&)), this, SLOT(setStelStyle(const QString&)));
+	setFlagGalacticPlaneLine(conf->value("viewing/flag_galactic_plane_line").toBool());
+	
+	StelApp& app = StelApp::getInstance();
+	connect(&app, SIGNAL(colorSchemeChanged(const QString&)), this, SLOT(setStelStyle(const QString&)));
+	connect(&app, SIGNAL(languageChanged()), this, SLOT(updateLineLabels()));
 }
 
 void GridLinesMgr::update(double deltaTime)
@@ -674,24 +737,28 @@ void GridLinesMgr::update(double deltaTime)
 	// Update faders
 	equGrid->update(deltaTime);
 	equJ2000Grid->update(deltaTime);
+	eclJ2000Grid->update(deltaTime);
 	galacticGrid->update(deltaTime);
 	aziGrid->update(deltaTime);
 	equatorLine->update(deltaTime);
 	eclipticLine->update(deltaTime);
 	meridianLine->update(deltaTime);
 	horizonLine->update(deltaTime);
+	galacticPlaneLine->update(deltaTime);
 }
 
-void GridLinesMgr::draw(StelCore* core)
+void GridLinesMgr::draw(StelCore* core, class StelRenderer* renderer)
 {
-	equGrid->draw(core);
-	galacticGrid->draw(core);
-	equJ2000Grid->draw(core);
-	aziGrid->draw(core);
-	equatorLine->draw(core);
-	eclipticLine->draw(core);
-	meridianLine->draw(core);
-	horizonLine->draw(core);
+	equGrid->draw(core, renderer);
+	galacticGrid->draw(core, renderer);
+	equJ2000Grid->draw(core, renderer);
+	eclJ2000Grid->draw(core, renderer);
+	aziGrid->draw(core, renderer);
+	equatorLine->draw(core, renderer);
+	eclipticLine->draw(core, renderer);
+	meridianLine->draw(core, renderer);
+	horizonLine->draw(core, renderer);
+	galacticPlaneLine->draw(core, renderer);
 }
 
 void GridLinesMgr::setStelStyle(const QString& section)
@@ -702,68 +769,272 @@ void GridLinesMgr::setStelStyle(const QString& section)
 	QString defaultColor = conf->value(section+"/default_color").toString();
 	setColorEquatorGrid(StelUtils::strToVec3f(conf->value(section+"/equatorial_color", defaultColor).toString()));
 	setColorEquatorJ2000Grid(StelUtils::strToVec3f(conf->value(section+"/equatorial_J2000_color", defaultColor).toString()));
+	setColorEclipticJ2000Grid(StelUtils::strToVec3f(conf->value(section+"/ecliptic_J2000_color", defaultColor).toString()));
 	setColorGalacticGrid(StelUtils::strToVec3f(conf->value(section+"/galactic_color", defaultColor).toString()));
 	setColorAzimuthalGrid(StelUtils::strToVec3f(conf->value(section+"/azimuthal_color", defaultColor).toString()));
 	setColorEquatorLine(StelUtils::strToVec3f(conf->value(section+"/equator_color", defaultColor).toString()));
 	setColorEclipticLine(StelUtils::strToVec3f(conf->value(section+"/ecliptic_color", defaultColor).toString()));
 	setColorMeridianLine(StelUtils::strToVec3f(conf->value(section+"/meridian_color", defaultColor).toString()));
 	setColorHorizonLine(StelUtils::strToVec3f(conf->value(section+"/horizon_color", defaultColor).toString()));
+	setColorGalacticPlaneLine(StelUtils::strToVec3f(conf->value(section+"/galactic_plane_color", defaultColor).toString()));
+}
+
+void GridLinesMgr::updateLineLabels()
+{
+	equatorLine->updateLabel();
+	eclipticLine->updateLabel();
+	meridianLine->updateLabel();
+	horizonLine->updateLabel();
+	galacticPlaneLine->updateLabel();
 }
 
 //! Set flag for displaying Azimuthal Grid
-void GridLinesMgr::setFlagAzimuthalGrid(bool b) {aziGrid->setFlagshow(b);}
+void GridLinesMgr::setFlagAzimuthalGrid(const bool displayed)
+{
+	if(displayed != aziGrid->isDisplayed()) {
+		aziGrid->setDisplayed(displayed);
+		emit azimuthalGridDisplayedChanged(displayed);
+	}
+}
 //! Get flag for displaying Azimuthal Grid
-bool GridLinesMgr::getFlagAzimuthalGrid(void) const {return aziGrid->getFlagshow();}
-Vec3f GridLinesMgr::getColorAzimuthalGrid(void) const {return aziGrid->getColor();}
+bool GridLinesMgr::getFlagAzimuthalGrid(void) const
+{
+	return aziGrid->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorAzimuthalGrid(void) const
+{
+	return aziGrid->getColor();
+}
+void GridLinesMgr::setColorAzimuthalGrid(const Vec3f& newColor)
+{
+	if(newColor != aziGrid->getColor()) {
+		aziGrid->setColor(newColor);
+		emit azimuthalGridColorChanged(newColor);
+	}
+}
 
 //! Set flag for displaying Equatorial Grid
-void GridLinesMgr::setFlagEquatorGrid(bool b) {equGrid->setFlagshow(b);}
+void GridLinesMgr::setFlagEquatorGrid(const bool displayed)
+{
+	if(displayed != equGrid->isDisplayed()) {
+		equGrid->setDisplayed(displayed);
+		emit equatorGridDisplayedChanged(displayed);
+	}
+}
 //! Get flag for displaying Equatorial Grid
-bool GridLinesMgr::getFlagEquatorGrid(void) const {return equGrid->getFlagshow();}
-Vec3f GridLinesMgr::getColorEquatorGrid(void) const {return equGrid->getColor();}
+bool GridLinesMgr::getFlagEquatorGrid(void) const
+{
+	return equGrid->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorEquatorGrid(void) const
+{
+	return equGrid->getColor();
+}
+void GridLinesMgr::setColorEquatorGrid(const Vec3f& newColor)
+{
+	if(newColor != equGrid->getColor()) {
+		equGrid->setColor(newColor);
+		emit equatorGridColorChanged(newColor);
+	}
+}
 
 //! Set flag for displaying Equatorial J2000 Grid
-void GridLinesMgr::setFlagEquatorJ2000Grid(bool b) {equJ2000Grid->setFlagshow(b);}
+void GridLinesMgr::setFlagEquatorJ2000Grid(const bool displayed)
+{
+	if(displayed != equJ2000Grid->isDisplayed()) {
+		equJ2000Grid->setDisplayed(displayed);
+		emit equatorJ2000GridDisplayedChanged(displayed);
+	}
+}
 //! Get flag for displaying Equatorial J2000 Grid
-bool GridLinesMgr::getFlagEquatorJ2000Grid(void) const {return equJ2000Grid->getFlagshow();}
-Vec3f GridLinesMgr::getColorEquatorJ2000Grid(void) const {return equJ2000Grid->getColor();}
+bool GridLinesMgr::getFlagEquatorJ2000Grid(void) const
+{
+	return equJ2000Grid->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorEquatorJ2000Grid(void) const
+{
+	return equJ2000Grid->getColor();
+}
+void GridLinesMgr::setColorEquatorJ2000Grid(const Vec3f& newColor)
+{
+	if(newColor != equJ2000Grid->getColor()) {
+		equJ2000Grid->setColor(newColor);
+		emit equatorJ2000GridColorChanged(newColor);
+	}
+}
 
-//! Set flag for displaying Equatorial J2000 Grid
-void GridLinesMgr::setFlagGalacticGrid(bool b) {galacticGrid->setFlagshow(b);}
-//! Get flag for displaying Equatorial J2000 Grid
-bool GridLinesMgr::getFlagGalacticGrid(void) const {return galacticGrid->getFlagshow();}
-Vec3f GridLinesMgr::getColorGalacticGrid(void) const {return galacticGrid->getColor();}
+//! Set flag for displaying Ecliptic J2000 Grid
+void GridLinesMgr::setFlagEclipticJ2000Grid(const bool displayed)
+{
+	if(displayed != eclJ2000Grid->isDisplayed()) {
+		eclJ2000Grid->setDisplayed(displayed);
+		emit eclipticJ2000GridDisplayedChanged(displayed);
+	}
+}
+//! Get flag for displaying Ecliptic J2000 Grid
+bool GridLinesMgr::getFlagEclipticJ2000Grid(void) const
+{
+	return eclJ2000Grid->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorEclipticJ2000Grid(void) const
+{
+	return eclJ2000Grid->getColor();
+}
+void GridLinesMgr::setColorEclipticJ2000Grid(const Vec3f& newColor)
+{
+	if(newColor != eclJ2000Grid->getColor()) {
+		eclJ2000Grid->setColor(newColor);
+		emit eclipticJ2000GridColorChanged(newColor);
+	}
+}
+
+//! Set flag for displaying Galactic Grid
+void GridLinesMgr::setFlagGalacticGrid(const bool displayed)
+{
+	if(displayed != galacticGrid->isDisplayed()) {
+		galacticGrid->setDisplayed(displayed);
+		emit galacticGridDisplayedChanged(displayed);
+	}
+}
+//! Get flag for displaying Galactic Grid
+bool GridLinesMgr::getFlagGalacticGrid(void) const
+{
+	return galacticGrid->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorGalacticGrid(void) const
+{
+	return galacticGrid->getColor();
+}
+void GridLinesMgr::setColorGalacticGrid(const Vec3f& newColor)
+{
+	if(newColor != galacticGrid->getColor()) {
+		galacticGrid->setColor(newColor);
+		emit galacticGridColorChanged(newColor);
+	}
+}
 
 //! Set flag for displaying Equatorial Line
-void GridLinesMgr::setFlagEquatorLine(bool b) {equatorLine->setFlagshow(b);}
+void GridLinesMgr::setFlagEquatorLine(const bool displayed)
+{
+	if(displayed != equatorLine->isDisplayed()) {
+		equatorLine->setDisplayed(displayed);
+		emit equatorLineDisplayedChanged(displayed);
+	}
+}
 //! Get flag for displaying Equatorial Line
-bool GridLinesMgr::getFlagEquatorLine(void) const {return equatorLine->getFlagshow();}
-Vec3f GridLinesMgr::getColorEquatorLine(void) const {return equatorLine->getColor();}
+bool GridLinesMgr::getFlagEquatorLine(void) const
+{
+	return equatorLine->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorEquatorLine(void) const
+{
+	return equatorLine->getColor();
+}
+void GridLinesMgr::setColorEquatorLine(const Vec3f& newColor)
+{
+	if(newColor != equatorLine->getColor()) {
+		equatorLine->setColor(newColor);
+		emit equatorLineColorChanged(newColor);
+	}
+}
 
 //! Set flag for displaying Ecliptic Line
-void GridLinesMgr::setFlagEclipticLine(bool b) {eclipticLine->setFlagshow(b);}
+void GridLinesMgr::setFlagEclipticLine(const bool displayed)
+{
+	if(displayed != eclipticLine->isDisplayed()) {
+		eclipticLine->setDisplayed(displayed);
+		emit eclipticLineDisplayedChanged(displayed);
+	}
+}
 //! Get flag for displaying Ecliptic Line
-bool GridLinesMgr::getFlagEclipticLine(void) const {return eclipticLine->getFlagshow();}
-Vec3f GridLinesMgr::getColorEclipticLine(void) const {return eclipticLine->getColor();}
+bool GridLinesMgr::getFlagEclipticLine(void) const
+{
+	return eclipticLine->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorEclipticLine(void) const
+{
+	return eclipticLine->getColor();
+}
+void GridLinesMgr::setColorEclipticLine(const Vec3f& newColor)
+{
+	if(newColor != eclipticLine->getColor()) {
+		eclipticLine->setColor(newColor);
+		emit eclipticLineColorChanged(newColor);
+	}
+}
 
 
 //! Set flag for displaying Meridian Line
-void GridLinesMgr::setFlagMeridianLine(bool b) {meridianLine->setFlagshow(b);}
+void GridLinesMgr::setFlagMeridianLine(const bool displayed)
+{
+	if(displayed != meridianLine->isDisplayed()) {
+		meridianLine->setDisplayed(displayed);
+		emit meridianLineDisplayedChanged(displayed);
+	}
+}
 //! Get flag for displaying Meridian Line
-bool GridLinesMgr::getFlagMeridianLine(void) const {return meridianLine->getFlagshow();}
-Vec3f GridLinesMgr::getColorMeridianLine(void) const {return meridianLine->getColor();}
+bool GridLinesMgr::getFlagMeridianLine(void) const
+{
+	return meridianLine->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorMeridianLine(void) const
+{
+	return meridianLine->getColor();
+}
+void GridLinesMgr::setColorMeridianLine(const Vec3f& newColor)
+{
+	if(newColor != meridianLine->getColor()) {
+		meridianLine->setColor(newColor);
+		emit meridianLineColorChanged(newColor);
+	}
+}
 
 //! Set flag for displaying Horizon Line
-void GridLinesMgr::setFlagHorizonLine(bool b) {horizonLine->setFlagshow(b);}
+void GridLinesMgr::setFlagHorizonLine(const bool displayed)
+{
+	if(displayed != horizonLine->isDisplayed()) {
+		horizonLine->setDisplayed(displayed);
+		emit horizonLineDisplayedChanged(displayed);
+	}
+}
 //! Get flag for displaying Horizon Line
-bool GridLinesMgr::getFlagHorizonLine(void) const {return horizonLine->getFlagshow();}
-Vec3f GridLinesMgr::getColorHorizonLine(void) const {return horizonLine->getColor();}
+bool GridLinesMgr::getFlagHorizonLine(void) const
+{
+	return horizonLine->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorHorizonLine(void) const
+{
+	return horizonLine->getColor();
+}
+void GridLinesMgr::setColorHorizonLine(const Vec3f& newColor)
+{
+	if(newColor != horizonLine->getColor()) {
+		horizonLine->setColor(newColor);
+		emit horizonLineColorChanged(newColor);
+	}
+}
 
-void GridLinesMgr::setColorAzimuthalGrid(const Vec3f& v) { aziGrid->setColor(v);}
-void GridLinesMgr::setColorEquatorGrid(const Vec3f& v) { equGrid->setColor(v);}
-void GridLinesMgr::setColorEquatorJ2000Grid(const Vec3f& v) { equJ2000Grid->setColor(v);}
-void GridLinesMgr::setColorGalacticGrid(const Vec3f& v) { galacticGrid->setColor(v);}
-void GridLinesMgr::setColorEquatorLine(const Vec3f& v) { equatorLine->setColor(v);}
-void GridLinesMgr::setColorEclipticLine(const Vec3f& v) { eclipticLine->setColor(v);}
-void GridLinesMgr::setColorMeridianLine(const Vec3f& v) { meridianLine->setColor(v);}
-void GridLinesMgr::setColorHorizonLine(const Vec3f& v) { horizonLine->setColor(v);}
+//! Set flag for displaying GalacticPlane Line
+void GridLinesMgr::setFlagGalacticPlaneLine(const bool displayed)
+{
+	if(displayed != galacticPlaneLine->isDisplayed()) {
+		galacticPlaneLine->setDisplayed(displayed);
+		emit galacticPlaneLineDisplayedChanged(displayed);
+	}
+}
+//! Get flag for displaying GalacticPlane Line
+bool GridLinesMgr::getFlagGalacticPlaneLine(void) const
+{
+	return galacticPlaneLine->isDisplayed();
+}
+Vec3f GridLinesMgr::getColorGalacticPlaneLine(void) const
+{
+	return galacticPlaneLine->getColor();
+}
+void GridLinesMgr::setColorGalacticPlaneLine(const Vec3f& newColor)
+{
+	if(newColor != galacticPlaneLine->getColor()) {
+		galacticPlaneLine->setColor(newColor);
+		emit galacticPlaneLineColorChanged(newColor);
+	}
+}

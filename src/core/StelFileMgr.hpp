@@ -14,10 +14,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
-#ifndef _STELFILEMGR_HPP
+#ifndef _STELFILEMGR_HPP_
 #define _STELFILEMGR_HPP_
 
 #define CHECK_FILE "data/ssystem.ini"
@@ -35,16 +35,16 @@
 //! The concept is that the StelFileMgr will be asked for a named path, and it
 //! will try to locate that path within each of the search directories.
 //! @author Lippo Huhtala <lippo.huhtala@meridea.com>
-//! @author Matthew Gates <matthew@porpoisehead.net>
+//! @author Matthew Gates <matthewg42@gmail.com>
 //! @sa @ref fileStructure description.
 class StelFileMgr
 {
 public:
 	//! @enum Flags used as named bitfield flags as specifiers to filter results of StelFileMgr methods.
 	enum Flags {
-		RemovableMedia = 0x00000001,  //!< Search on removable media if present (default is not to).
-		Writable       = 0x00000002,  //!< Only return writable paths. For directories this means
-									  //!< that it is possible to create files within the directory.
+		RemovableMedia = 0x00000001, //!< Search on removable media if present (default is not to).
+		Writable       = 0x00000002, //!< Only return writable paths. For directories this means
+		                             //!< that it is possible to create files within the directory.
 		Directory      = 0x00000004, //!< Exclude non-directories.
 		File           = 0x00000008, //!< Exclude non-files.
 		New            = 0x00000010, //!< Exclude existing paths.

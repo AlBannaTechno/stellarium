@@ -14,7 +14,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 
@@ -195,8 +195,9 @@ void ScreenImageMgr::init()
 {
 }
 
-void ScreenImageMgr::draw(StelCore* core)
+void ScreenImageMgr::draw(StelCore* core, class StelRenderer* renderer)
 {
+	Q_UNUSED(renderer);
 	foreach(ScreenImage* m, allScreenImages)
 		if (m!=NULL)
 			m->draw(core);

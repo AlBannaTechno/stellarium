@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STELMAINGRAPHICSVIEW_HPP_
@@ -33,7 +33,7 @@ class StelQGLWidget;
 
 //! @class StelMainGraphicsView
 //! Reimplement a QGraphicsView for Stellarium.
-//! It is the class creating the singleton GL Widget, the main StelApp instance as well as the main GUI.
+//! It is the class creating the main StelApp instance as well as the main GUI.
 class StelMainGraphicsView : public QGraphicsView
 {
 Q_OBJECT
@@ -47,8 +47,8 @@ public:
 	//! Get the StelMainGraphicsView singleton instance.
 	static StelMainGraphicsView& getInstance() {Q_ASSERT(singleton); return *singleton;}
 
-	//! Delete openGL textures (to call before the GLContext disappears)
-	void deinitGL();
+	//! Delete textures (to call before the renderer disappears)
+	void deinit();
 
 	//! Return the QGraphicsWidget encapsulating the Stellarium main sky view.
 	//! Use its layout if you want to add widget on the top of the main sky view.
@@ -106,13 +106,6 @@ public slots:
 
 	//! Updates the scene and process all events
 	void updateScene() {
-
-		#ifdef QT_MAC_USE_COCOA
-			 //This call solves the problems with the qt event dispatcher. The stack grew huge and many events were discarded
-			 //http://bugreports.qt.nokia.com/browse/QTBUG-7502
-			 //The previous bug has been closed an fixed but this line is still needed. The patch didn't solve our problem
-			QCoreApplication::processEvents(QEventLoop::AllEvents);
-		#endif
 		scene()->update();
 	}
 
@@ -150,9 +143,8 @@ private:
 	QGraphicsWidget* backItem;
 	class StelAppGraphicsWidget* mainSkyItem;
 
-	//! The openGL window
-	StelQGLWidget* glWidget;
-	class QGLContext* glContext;
+	//! Handles all rendering (e.g. GL) functionality.
+	class StelRenderer* renderer;
 
 	StelGuiBase* gui;
 

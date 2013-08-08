@@ -14,7 +14,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _MILKYWAY_HPP_
@@ -22,7 +22,9 @@
 
 #include "StelModule.hpp"
 #include "VecMath.hpp"
-#include "StelTextureTypes.hpp"
+#include "renderer/GenericVertexTypes.hpp"
+#include "renderer/StelIndexBuffer.hpp"
+#include "renderer/StelVertexBuffer.hpp"
 
 //! @class MilkyWay 
 //! Manages the displaying of the Milky Way.
@@ -42,7 +44,10 @@ public:
 	virtual void init();
 
 	//! Draw the Milky Way.
-	virtual void draw(StelCore* core);
+	//!
+	//! @param core     The StelCore object.
+	//! @param renderer Renderer to draw with.
+	virtual void draw(StelCore* core, class StelRenderer* renderer);
 	
 	//! Update and time-dependent state.  Updates the fade level while the 
 	//! Milky way rendering is being changed from on to off or off to on.
@@ -55,9 +60,9 @@ public:
 	// Setter and getters
 public slots:
 	//! Get Milky Way intensity.
-	float getIntensity() const {return intensity;}
+	double getIntensity() const {return intensity;}
 	//! Set Milky Way intensity.
-	void setIntensity(float aintensity) {intensity = aintensity;}
+	void setIntensity(double aintensity) {intensity = aintensity;}
 	
 	//! Get the color used for rendering the milky way
 	Vec3f getColor() const {return color;}
@@ -71,12 +76,13 @@ public slots:
 	
 private:
 	float radius;
-	StelTextureSP tex;
+	class StelTextureNew* tex;
 	Vec3f color;
 	float intensity;
 	class LinearFader* fader;
 
-	struct StelVertexArray* vertexArray;
+	//! Sphere used to draw the Milky Way.
+	class StelGeometrySphere* skySphere;
 };
 
 #endif // _MILKYWAY_HPP_

@@ -96,7 +96,7 @@ bool PropertyBasedTableModel::setData(const QModelIndex &index, const QVariant &
 	if (index.isValid() && role == Qt::EditRole && index.column() < mappings.size()) {
 		QObject* object = content->at(index.row());
 		object->setProperty(mappings[index.column()].toStdString().c_str(), value);
-		emit(dataChanged(index, index));
+		emit(QAbstractItemModel::dataChanged(index, index));
 
 		changeMade = true;
 	}
@@ -111,5 +111,31 @@ Qt::ItemFlags PropertyBasedTableModel::flags(const QModelIndex &index) const
 	}
 
 	return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+}
+
+void PropertyBasedTableModel::moveRowUp(int position)
+{
+	int count = content->count();
+	if (count < 2 || position < 1 || position >= count)
+		return;
+
+	beginMoveRows(QModelIndex(), position, position, QModelIndex(), position-1);
+
+	content->move(position, position - 1);
+
+	endMoveRows();
+}
+
+void PropertyBasedTableModel::moveRowDown(int position)
+{
+	int count = content->count();
+	if (count < 2 || position < 0 || position > (count - 2))
+		return;
+
+	beginMoveRows(QModelIndex(), position, position, QModelIndex(), position+2);
+
+	content->move(position, position + 1);
+
+	endMoveRows();
 }
 

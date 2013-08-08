@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _SOLAR_SYSTEM_EDITOR_HPP_
@@ -77,7 +77,7 @@ public:
 	//! Dialog windows don't need explicit drawing, it's done automatically.
 	//! If a plug-in draws on the screen, it should be able to respect
 	//! the night vision mode.
-	virtual void draw(StelCore * core);
+	virtual void draw(StelCore * core, class StelRenderer* renderer);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 	//! called when the "configure" button in the "Plugins" tab is pressed
 	virtual bool configureGui(bool show);

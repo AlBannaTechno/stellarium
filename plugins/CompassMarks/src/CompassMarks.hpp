@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
  
 #ifndef COMPASSMARKS_HPP_
@@ -39,7 +39,7 @@ public:
 	// Methods defined in the StelModule class
 	virtual void init();
 	virtual void update(double deltaTime);
-	virtual void draw(StelCore* core);
+	virtual void draw(StelCore* core, class StelRenderer* renderer);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 
 public slots:

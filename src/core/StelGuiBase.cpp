@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "StelGuiBase.hpp"
@@ -48,40 +48,4 @@ void StelGuiBase::updateI18n()
 			}
 		}
 	}
-}
-
-// Note: "text" and "helpGroup" must be in English -- this method and the help
-// dialog take care of translating them. Of course, they still have to be
-// marked for translation using the N_() macro.
-QAction* StelGuiBase::addGuiActions(const QString& actionName, const QString& text, const QString& shortCut, const QString& helpGroup, bool checkable, bool autoRepeat)
-{
-	Q_UNUSED(helpGroup);
-	QAction* a;
-	a = new QAction(stelAppGraphicsWidget);
-	a->setObjectName(actionName);
-	a->setText(q_(text));
-	QList<QKeySequence> shortcuts;
-	QRegExp shortCutSplitRegEx(",(?!,|$)");
-	QStringList shortcutStrings = shortCut.split(shortCutSplitRegEx);
-	for (int i = 0; i < shortcutStrings.size(); ++i)
-		shortcuts << QKeySequence(shortcutStrings.at(i).trimmed());
-
-	a->setShortcuts(shortcuts);
-	a->setCheckable(checkable);
-	a->setAutoRepeat(autoRepeat);
-	a->setProperty("englishText", QVariant(text));
-	a->setShortcutContext(Qt::WidgetShortcut);
-	stelAppGraphicsWidget->addAction(a);
-	return a;
-}
-
-QAction* StelGuiBase::getGuiActions(const QString& actionName)
-{
-	QAction* a = stelAppGraphicsWidget->findChild<QAction*>(actionName);
-	if (!a)
-	{
-		qWarning() << "Can't find action " << actionName;
-		return NULL;
-	}
-	return a;
 }

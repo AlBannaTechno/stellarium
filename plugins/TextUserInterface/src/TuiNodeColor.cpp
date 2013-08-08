@@ -13,9 +13,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
+#include "StelTranslator.hpp"
 #include "TuiNodeColor.hpp"
 #include <QKeyEvent>
 
@@ -41,7 +42,6 @@ TuiNodeResponse TuiNodeColor::handleEditingKey(int key)
 			editingPart--;
 		}
 		response.accepted = true;
-		response.newNode = this;
 		if (!editing) 
 		{
 			emit(setValue(value));
@@ -53,7 +53,6 @@ TuiNodeResponse TuiNodeColor::handleEditingKey(int key)
 		editing = false;
 		editingPart = 0;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -64,14 +63,12 @@ TuiNodeResponse TuiNodeColor::handleEditingKey(int key)
 			editingPart++;
 		}
 		response.accepted = true;
-		response.newNode = this;
 		return response;
 	}
 	if (key==Qt::Key_Up)
 	{
 		incPart(editingPart, true);
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -79,7 +76,6 @@ TuiNodeResponse TuiNodeColor::handleEditingKey(int key)
 	{
 		incPart(editingPart, false);
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -88,21 +84,33 @@ TuiNodeResponse TuiNodeColor::handleEditingKey(int key)
 
 QString TuiNodeColor::getDisplayText() 
 {
+	QString red   = QString("%1").arg(value[0], 2, 'f', 2);
+	QString green = QString("%1").arg(value[1], 2, 'f', 2);
+	QString blue  = QString("%1").arg(value[2], 2, 'f', 2);
+	const char* formatString;
 	if (!editing)
 	{
-		return displayText + QString(":  RGB %1,%2,%3").arg(value[0], 2, 'f', 2).arg(value[1], 2, 'f', 2).arg(value[2], 2, 'f', 2);
+		formatString = ":  RGB %1,%2,%3";
 	}
 	else
 	{
-		if (editingPart==0)
-			return displayText + QString(":  RGB >%1<,%2,%3").arg(value[0], 2, 'f', 2).arg(value[1], 2, 'f', 2).arg(value[2], 2, 'f', 2);
-		else if (editingPart==1)
-			return displayText + QString(":  RGB %1,>%2<,%3").arg(value[0], 2, 'f', 2).arg(value[1], 2, 'f', 2).arg(value[2], 2, 'f', 2);
-		else if (editingPart==2)
-			return displayText + QString(":  RGB %1,%2,>%3<").arg(value[0], 2, 'f', 2).arg(value[1], 2, 'f', 2).arg(value[2], 2, 'f', 2);
-		else
-			return QString("error, unknown color part \"%1\"").arg(editingPart);
+		switch (editingPart)
+		{
+		case 0:
+			formatString = ":  RGB >%1<,%2,%3";
+			break;
+		case 1:
+			formatString = ":  RGB %1,>%2<,%3";
+			break;
+		case 2:
+			formatString = ":  RGB %1,%2,>%3<";
+			break;
+		default:
+			return QString(q_("error, unknown color part \"%1\"")).arg(editingPart);
+		}			
 	}
+	QString stringValue = QString(formatString).arg(red, green, blue);
+	return prefixText + q_(displayText) + stringValue;
 }
 
 void TuiNodeColor::incPart(int part, bool add)

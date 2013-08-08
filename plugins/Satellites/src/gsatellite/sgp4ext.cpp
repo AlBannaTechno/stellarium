@@ -24,6 +24,7 @@
 *       ----------------------------------------------------------------      */
 
 #include "sgp4ext.h"
+#include "StelUtils.hpp"
 
 
 double  sgn
@@ -184,45 +185,13 @@ double  angle
          return undefined;
    }  // end angle
 
-
-/* -----------------------------------------------------------------------------
-*
-*                           function asinh
-*
-*  this function evaluates the inverse hyperbolic sine function.
-*
-*  author        : david vallado                  719-573-2600    1 mar 2001
-*
-*  inputs          description                    range / units
-*    xval        - angle value                                  any real
-*
-*  outputs       :
-*    arcsinh     - result                                       any real
-*
-*  locals        :
-*    none.
-*
-*  coupling      :
-*    none.
-*
-* --------------------------------------------------------------------------- */
-
-double  asinh
-        (
-          double xval
-        )
-   {
-     return log( xval + sqrt( xval*xval + 1.0 ) );
-   }  // end asinh
-
-
 /* -----------------------------------------------------------------------------
 *
 *                           function newtonnu
 *
 *  this function solves keplers equation when the true anomaly is known.
 *    the mean and eccentric, parabolic, or hyperbolic anomaly is also found.
-*    the parabolic limit at 168ø is arbitrary. the hyperbolic anomaly is also
+*    the parabolic limit at 168 degree is arbitrary. the hyperbolic anomaly is also
 *    limited. the hyperbolic sine is used because it's not double valued.
 *
 *  author        : david vallado                  719-573-2600   27 may 2002
@@ -235,8 +204,8 @@ double  asinh
 *    nu          - true anomaly                   -2pi to 2pi rad
 *
 *  outputs       :
-*    e0          - eccentric anomaly              0.0  to 2pi rad       153.02 ø
-*    m           - mean anomaly                   0.0  to 2pi rad       151.7425 ø
+*    e0          - eccentric anomaly              0.0  to 2pi rad       153.02 degree
+*    m           - mean anomaly                   0.0  to 2pi rad       151.7425 degree
 *
 *  locals        :
 *    e1          - eccentric anomaly, next value  rad
@@ -283,16 +252,16 @@ void newtonnu
              // -------------------- hyperbolic  --------------------
              if ( ecc > 1.0 + small  )
                {
-                 if ((ecc > 1.0 ) && (fabs(nu)+0.00001 < pi-acos(1.0 /ecc)))
+                 if ((ecc > 1.0 ) && (fabs(nu)+0.00001 < M_PI-acos(1.0 /ecc)))
                    {
                      sine= ( sqrt( ecc*ecc-1.0  ) * sin(nu) ) / ( 1.0  + ecc*cos(nu) );
-                     e0  = asinh( sine );
+		     e0  = StelUtils::asinh( sine );
                      m   = ecc*sinh(e0) - e0;
                    }
                 }
                else
                  // ----------------- parabolic ---------------------
-                 if ( fabs(nu) < 168.0*pi/180.0  )
+                 if ( fabs(nu) < 168.0*M_PI/180.0  )
                    {
                      e0= tan( nu*0.5  );
                      m = e0 + (e0*e0*e0)/3.0;
@@ -300,10 +269,10 @@ void newtonnu
 
      if ( ecc < 1.0  )
        {
-         m = fmod( m,2.0 *pi );
+         m = fmod( m,2.0 *M_PI );
          if ( m < 0.0  )
-             m = m + 2.0 *pi;
-         e0 = fmod( e0,2.0 *pi );
+             m = m + 2.0 *M_PI;
+         e0 = fmod( e0,2.0 *M_PI );
        }
    }  // end newtonnu
 
@@ -378,8 +347,8 @@ void rv2coe
        int i;
        char typeorbit[3];
 
-     twopi  = 2.0 * pi;
-     halfpi = 0.5 * pi;
+     twopi  = 2.0 * M_PI;
+     halfpi = 0.5 * M_PI;
      small  = 0.00000001;
      undefined = 999999.1;
      infinite  = 999999.9;
@@ -421,7 +390,7 @@ void rv2coe
          if ( ecc < small )
            {
              // ----------------  circular equatorial ---------------
-             if  ((incl<small) | (fabs(incl-pi)<small))
+             if  ((incl<small) | (fabs(incl-M_PI)<small))
                  strcpy(typeorbit,"ce");
                else
                  // --------------  circular inclined ---------------
@@ -430,7 +399,7 @@ void rv2coe
            else
            {
              // - elliptical, parabolic, hyperbolic equatorial --
-             if  ((incl<small) | (fabs(incl-pi)<small))
+             if  ((incl<small) | (fabs(incl-M_PI)<small))
                  strcpy(typeorbit,"ee");
            }
 

@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
  
 #ifndef _COMET_HPP_
@@ -43,7 +43,8 @@ public:
 	       void* userDataPtr,
 	       OsculatingFunctType *osculatingFunc,
 	       bool closeOrbit,
-	       bool hidden);
+	       bool hidden,
+	       const QString &pType);
 
 	~Comet();
 
@@ -65,7 +66,7 @@ public:
 	//was not designed to handle different types of objects.
 	//virtual QString getType() const {return "Comet";}
 	//! \todo Find better sources for the g,k system
-	virtual float getVMagnitude(const StelCore* core) const;
+	virtual float getVMagnitude(const StelCore* core, bool withExtinction=false) const;
 
 	//! \brief sets absolute magnitude and slope parameter.
 	//! These are the parameters in the IAU's two-parameter magnitude system
@@ -74,9 +75,16 @@ public:
 	//! as the same parameters in MinorPlanet.
 	void setAbsoluteMagnitudeAndSlope(double magnitude, double slope);
 
+	//! set value for semi-major axis in AU
+	void setSemiMajorAxis(double value);
+
+	//! get sidereal period for minor planet
+	double getSiderealPeriod() const;
+
 private:
 	double absoluteMagnitude;
 	double slopeParameter;
+	double semiMajorAxis;
 
 	bool isCometFragment;
 	bool nameIsProvisionalDesignation;

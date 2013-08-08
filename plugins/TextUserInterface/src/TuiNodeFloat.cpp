@@ -13,9 +13,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
+#include "StelTranslator.hpp"
 #include "TuiNodeFloat.hpp"
 #include <QKeyEvent>
 
@@ -37,7 +38,6 @@ TuiNodeResponse TuiNodeFloat::handleEditingKey(int key)
 		typedDecimal = false;
 		editing = false;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -49,7 +49,6 @@ TuiNodeResponse TuiNodeFloat::handleEditingKey(int key)
 		if (value > maximum)
 			value = maximum;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -61,7 +60,6 @@ TuiNodeResponse TuiNodeFloat::handleEditingKey(int key)
 		if (value < minimum)
 			value = minimum;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -148,7 +146,6 @@ TuiNodeResponse TuiNodeFloat::handleEditingKey(int key)
 		if (i>=minimum && i<=maximum)
 			value = i;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -159,14 +156,14 @@ QString TuiNodeFloat::getDisplayText()
 {
 	if (!editing)
 	{
-		return displayText + QString(":  %1").arg(value);
+		return prefixText + q_(displayText) + QString("  %1").arg(value);
 	}
 	else
 	{
 		if (typedDecimal)
-			return displayText + QString(": >%1.<").arg(value);
+			return prefixText + q_(displayText) + QString(" >%1.<").arg(value);
 		else
-			return displayText + QString(": >%1<").arg(value);
+			return prefixText + q_(displayText) + QString(" >%1<").arg(value);
 	}
 }
 

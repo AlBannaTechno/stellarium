@@ -14,15 +14,17 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _METEOR_HPP_
 #define _METEOR_HPP_
 
+#include "renderer/StelVertexAttribute.hpp"
+#include "renderer/StelVertexBuffer.hpp"
+#include "StelProjector.hpp"
 #include "VecMath.hpp"
 class StelCore;
-class StelPainter;
 
 // all in km - altitudes make up meteor range
 #define EARTH_RADIUS 6369.f
@@ -49,13 +51,26 @@ public:
 	bool update(double deltaTime);
 	
 	//! Draws the meteor.
-	void draw(const StelCore* core, StelPainter& sPainter);
+	void draw(const StelCore* core, StelProjectorP projector, class StelRenderer* renderer);
 	
 	//! Determine if a meteor is alive or has burned out.
 	//! @return true if alive, else false.
 	bool isAlive(void);
 	
 private:
+	//! Vertex with a 3D position and a color.
+	struct Vertex
+	{
+		Vec3f position;
+		Vec4f color;
+		Vertex(const Vec3d& pos, const Vec4f& color) 
+			: position(Vec3f(pos[0], pos[1], pos[2])), color(color) {}
+		VERTEX_ATTRIBUTES(Vec3f Position, Vec4f Color);
+	};
+
+	//! Vertex buffer used for drawing.
+	StelVertexBuffer<Vertex>* vertexBuffer;
+
 	Mat4d mmat; // tranformation matrix to align radiant with earth direction of travel
 	Vec3d obs;  // observer position in meteor coord. system
 	Vec3d position;  // equatorial coordinate position
@@ -74,7 +89,6 @@ private:
 	double initDist;  // initial distance from observer
 	double minDist;  // nearest point to observer along path
 	double distMultiplier;  // scale magnitude due to changes in distance 
-	
 };
 
 

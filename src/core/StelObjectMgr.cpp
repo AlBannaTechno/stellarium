@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "StelApp.hpp"
@@ -242,5 +242,56 @@ QStringList StelObjectMgr::listMatchingObjectsI18n(const QString& objPrefix, uns
 	}
 
 	result.sort();
+	return result;
+}
+
+/*************************************************************************
+ Find and return the list of at most maxNbItem objects auto-completing
+ passed object English name
+*************************************************************************/
+QStringList StelObjectMgr::listMatchingObjects(const QString& objPrefix, unsigned int maxNbItem) const
+{
+	QStringList result;
+
+	// For all StelObjectmodules..
+	foreach (const StelObjectModule* m, objectsModule)
+	{
+		// Get matching object for this module
+		QStringList matchingObj = m->listMatchingObjects(objPrefix, maxNbItem);
+		result += matchingObj;
+		maxNbItem-=matchingObj.size();
+	}
+
+	result.sort();
+	return result;
+}
+
+QStringList StelObjectMgr::listAllModuleObjects(const QString &moduleId, bool inEnglish) const
+{
+	// search for module
+	StelObjectModule* module = NULL;
+	foreach(StelObjectModule* m, objectsModule)
+	{
+		if (m->objectName() == moduleId)
+		{
+			module = m;
+			break;
+		}
+	}
+	if (module == NULL)
+	{
+		qWarning() << "Can't find module with id " << moduleId;
+		return QStringList();
+	}
+	return module->listAllObjects(inEnglish);
+}
+
+QMap<QString, QString> StelObjectMgr::objectModulesMap() const
+{
+	QMap<QString, QString> result;
+	foreach(const StelObjectModule* m, objectsModule)
+	{
+		result[m->objectName()] = m->getName();
+	}
 	return result;
 }

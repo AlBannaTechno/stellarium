@@ -13,46 +13,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STELSKYPOLYGON_HPP_
 #define _STELSKYPOLYGON_HPP_
 
-#include "StelSphereGeometry.hpp"
 #include "MultiLevelJsonBase.hpp"
+#include "StelSphereGeometry.hpp"
+#include "StelSkyImageTile.hpp"
 
 #include <QTimeLine>
 
 class StelCore;
-
-//! Contain all the credits for a given server hosting the data
-class ServerCredits
-{
-public:
-	//! Very short credit to display in the loading bar
-	QString shortCredits;
-
-	//! Full credits
-	QString fullCredits;
-
-	//! The URL where to get more info about the server
-	QString infoURL;
-};
-
-//! Contains all the credits for the creator of the polygon collection
-class DataSetCredits
-{
-public:
-	//! Very short credit to display in the loading bar
-	QString shortCredits;
-
-	//! Full credits
-	QString fullCredits;
-
-	//! The URL where to get more info about the data collection
-	QString infoURL;
-};
 
 //! Base class for any polygon with a fixed position in the sky
 class StelSkyPolygon : public MultiLevelJsonBase
@@ -72,7 +45,7 @@ public:
 	~StelSkyPolygon();
 
 	//! Draw the image on the screen.
-	void draw(StelCore* core, StelPainter& sPainter, float opacity=1.);
+	void draw(StelCore* core, class StelRenderer* renderer, StelProjectorP projector, float opacity=1.);
 
 	//! Return the dataset credits to use in the progress bar
 	DataSetCredits getDataSetCredits() const {return dataSetCredits;}
@@ -115,7 +88,7 @@ private:
 
 	//! Draw the polygon on the screen.
 	//! @return true if the tile was actually displayed
-	bool drawTile(StelCore* core);
+	bool drawTile(class StelRenderer* renderer, StelProjectorP projector);
 
 	//! Return the minimum resolution
 	double getMinResolution() const {return minResolution;}

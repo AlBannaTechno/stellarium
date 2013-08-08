@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "StelApp.hpp"
@@ -45,11 +45,26 @@
 #include <QGraphicsLinearLayout>
 #include <QSettings>
 
-StelButton::StelButton(QGraphicsItem* parent, const QPixmap& apixOn, const QPixmap& apixOff,
-		const QPixmap& apixHover, QAction* aaction, bool noBackground) :
-			QGraphicsPixmapItem(apixOff, parent), pixOn(apixOn), pixOff(apixOff), pixHover(apixHover),
-			checked(ButtonStateOff), action(aaction), noBckground(noBackground), isTristate_(false),
-			opacity(1.), hoverOpacity(0.)
+#ifdef _MSC_BUILD
+#define round(dbl) dbl >= 0.0 ? (int)(dbl + 0.5) : ((dbl - (double)(int)dbl) <= -0.5 ? (int)dbl : (int)(dbl - 0.5))
+#endif
+
+StelButton::StelButton(QGraphicsItem* parent,
+                       const QPixmap& apixOn,
+                       const QPixmap& apixOff,
+                       const QPixmap& apixHover,
+                       QAction* aaction,
+                       bool noBackground) :
+	QGraphicsPixmapItem(apixOff, parent),
+	pixOn(apixOn),
+	pixOff(apixOff),
+	pixHover(apixHover),
+	checked(ButtonStateOff),
+	action(aaction),
+	noBckground(noBackground),
+	isTristate_(false),
+	opacity(1.),
+	hoverOpacity(0.)
 {
 	Q_ASSERT(!pixOn.isNull());
 	Q_ASSERT(!pixOff.isNull());
@@ -70,24 +85,41 @@ StelButton::StelButton(QGraphicsItem* parent, const QPixmap& apixOn, const QPixm
 
 	if (action!=NULL)
 	{
-		QObject::connect(action, SIGNAL(toggled(bool)), this, SLOT(setChecked(bool)));
+		QObject::connect(action, SIGNAL(toggled(bool)),
+		                 this, SLOT(setChecked(bool)));
 		if (action->isCheckable())
 		{
 			setChecked(action->isChecked());
-			QObject::connect(this, SIGNAL(toggled(bool)), action, SLOT(setChecked(bool)));
+			QObject::connect(this, SIGNAL(toggled(bool)),
+			                 action, SLOT(setChecked(bool)));
 		}
 		else
 		{
-			QObject::connect(this, SIGNAL(triggered()), action, SLOT(trigger()));
+			QObject::connect(this, SIGNAL(triggered()),
+			                 action, SLOT(trigger()));
 		}
 	}
 }
 
-StelButton::StelButton(QGraphicsItem* parent, const QPixmap& apixOn, const QPixmap& apixOff, const QPixmap& apixNoChange,
-		const QPixmap& apixHover, QAction* aaction, bool noBackground, bool isTristate) :
-			QGraphicsPixmapItem(apixOff, parent), pixOn(apixOn), pixOff(apixOff), pixNoChange(apixNoChange), pixHover(apixHover),
-			checked(ButtonStateOff), action(aaction), noBckground(noBackground), isTristate_(isTristate),
-			opacity(1.), hoverOpacity(0.)
+StelButton::StelButton(QGraphicsItem* parent,
+                       const QPixmap& apixOn,
+                       const QPixmap& apixOff,
+                       const QPixmap& apixNoChange,
+                       const QPixmap& apixHover,
+                       QAction* aaction,
+                       bool noBackground,
+                       bool isTristate) :
+	QGraphicsPixmapItem(apixOff, parent),
+	pixOn(apixOn),
+	pixOff(apixOff),
+	pixNoChange(apixNoChange),
+	pixHover(apixHover),
+	checked(ButtonStateOff),
+	action(aaction),
+	noBckground(noBackground),
+	isTristate_(isTristate),
+	opacity(1.),
+	hoverOpacity(0.)
 {
 	Q_ASSERT(!pixOn.isNull());
 	Q_ASSERT(!pixOff.isNull());
@@ -95,7 +127,8 @@ StelButton::StelButton(QGraphicsItem* parent, const QPixmap& apixOn, const QPixm
 	redMode = StelApp::getInstance().getVisionModeNight();
 	pixOnRed = StelButton::makeRed(pixOn);
 	pixOffRed = StelButton::makeRed(pixOff);
-	if (isTristate_) {
+	if (isTristate_)
+	{
 		Q_ASSERT(!pixNoChange.isNull());
 		pixNoChangeRed = StelButton::makeRed(pixNoChange);
 	}
@@ -108,27 +141,33 @@ StelButton::StelButton(QGraphicsItem* parent, const QPixmap& apixOn, const QPixm
 	setAcceptsHoverEvents(true);
 	timeLine = new QTimeLine(250, this);
 	timeLine->setCurveShape(QTimeLine::EaseOutCurve);
-	connect(timeLine, SIGNAL(valueChanged(qreal)), this, SLOT(animValueChanged(qreal)));
+	connect(timeLine, SIGNAL(valueChanged(qreal)),
+	        this, SLOT(animValueChanged(qreal)));
 
 	if (action!=NULL)
 	{
-		QObject::connect(action, SIGNAL(toggled(bool)), this, SLOT(setChecked(bool)));
+		QObject::connect(action, SIGNAL(toggled(bool)),
+		                 this, SLOT(setChecked(bool)));
 		if (action->isCheckable())
 		{
 			setChecked(action->isChecked());
-			QObject::connect(this, SIGNAL(toggled(bool)), action, SLOT(setChecked(bool)));
+			QObject::connect(this, SIGNAL(toggled(bool)),
+			                 action, SLOT(setChecked(bool)));
 		}
 		else
 		{
-			QObject::connect(this, SIGNAL(triggered()), action, SLOT(trigger()));
+			QObject::connect(this, SIGNAL(triggered()),
+			                 action, SLOT(trigger()));
 		}
 	}
 }
 
-int StelButton::toggleChecked(int checked) {
+int StelButton::toggleChecked(int checked)
+{
 	if (!isTristate_)
 		checked = !!!checked;
-	else {
+	else
+	{
 		if (++checked > ButtonStateNoChange)
 			checked = ButtonStateOff;
 	}
@@ -169,22 +208,22 @@ void StelButton::mouseReleaseEvent(QGraphicsSceneMouseEvent*)
 
 void StelButton::updateIcon()
 {
-	if (opacity<0.)
-		opacity=0;
+	if (opacity < 0.)
+		opacity = 0;
 	QPixmap pix(pixOn.size());
 	pix.fill(QColor(0,0,0,0));
 	QPainter painter(&pix);
 	painter.setOpacity(opacity);
 	if (!pixBackground.isNull() && noBckground==false)
-		painter.drawPixmap(0,0, redMode ? pixBackgroundRed : pixBackground);
+		painter.drawPixmap(0, 0, redMode ? pixBackgroundRed : pixBackground);
 	painter.drawPixmap(0, 0,
 		(isTristate_ && checked == ButtonStateNoChange) ? (redMode ? pixNoChangeRed : pixNoChange) :
 		(checked == ButtonStateOn) ? (redMode ? pixOnRed : pixOn) :
 		/* (checked == ButtonStateOff) ? */ (redMode ? pixOffRed : pixOff));
-	if (hoverOpacity>0)
+	if (hoverOpacity > 0)
 	{
-		painter.setOpacity(hoverOpacity*opacity);
-		painter.drawPixmap(0,0, redMode ? pixHoverRed : pixHover);
+		painter.setOpacity(hoverOpacity * opacity);
+		painter.drawPixmap(0, 0, redMode ? pixHoverRed : pixHover);
 	}
 	setPixmap(pix);
 }
@@ -201,6 +240,13 @@ void StelButton::setChecked(int b)
 	updateIcon();
 }
 
+void StelButton::setBackgroundPixmap(const QPixmap &newBackground)
+{
+	pixBackground = newBackground;
+	pixBackgroundRed = makeRed(newBackground);
+	updateIcon();
+}
+
 QPixmap StelButton::makeRed(const QPixmap& p)
 {
 	QImage im = p.toImage().convertToFormat(QImage::Format_ARGB32);
@@ -209,7 +255,8 @@ QPixmap StelButton::makeRed(const QPixmap& p)
 	const QRgb* stop = bits+im.width()*im.height();
 	do
 	{
-		*bits = qRgba(qRed(*bits), (int)(0.2*qGreen(*bits)), (int)(0.2*qBlue(*bits)), qAlpha(*bits));
+		Vec3f col = StelUtils::getNightColor(Vec3f(qRed(*bits)/256.0, qGreen(*bits)/256.0, qBlue(*bits)/256.0));
+		*bits = qRgba((int)(256*col[0]), (int)(256*col[1]), (int)(256*col[2]), qAlpha(*bits));
 		++bits;
 	}
 	while (bits!=stop);
@@ -314,9 +361,16 @@ void LeftStelBar::setRedMode(bool b)
 	}
 }
 
-BottomStelBar::BottomStelBar(QGraphicsItem* parent, const QPixmap& pixLeft, const QPixmap& pixRight,
-		const QPixmap& pixMiddle, const QPixmap& pixSingle) : QGraphicsItem(parent), pixBackgroundLeft(pixLeft), pixBackgroundRight(pixRight),
-		pixBackgroundMiddle(pixMiddle), pixBackgroundSingle(pixSingle)
+BottomStelBar::BottomStelBar(QGraphicsItem* parent,
+                             const QPixmap& pixLeft,
+                             const QPixmap& pixRight,
+                             const QPixmap& pixMiddle,
+                             const QPixmap& pixSingle) :
+	QGraphicsItem(parent),
+	pixBackgroundLeft(pixLeft),
+	pixBackgroundRight(pixRight),
+	pixBackgroundMiddle(pixMiddle),
+	pixBackgroundSingle(pixSingle)
 {
 	// The text is dummy just for testing
 	datetime = new QGraphicsSimpleTextItem("2008-02-06  17:33", this);
@@ -359,17 +413,17 @@ BottomStelBar::~BottomStelBar()
 void BottomStelBar::addButton(StelButton* button, const QString& groupName, const QString& beforeActionName)
 {
 	QList<StelButton*>& g = buttonGroups[groupName].elems;
-	bool done=false;
-	for (int i=0;i<g.size();++i)
+	bool done = false;
+	for (int i=0; i<g.size(); ++i)
 	{
 		if (g[i]->action && g[i]->action->objectName()==beforeActionName)
 		{
 			g.insert(i, button);
-			done=true;
+			done = true;
 			break;
 		}
 	}
-	if (done==false)
+	if (done == false)
 		g.append(button);
 
 	button->setVisible(true);
@@ -382,7 +436,7 @@ void BottomStelBar::addButton(StelButton* button, const QString& groupName, cons
 StelButton* BottomStelBar::hideButton(const QString& actionName)
 {
 	QString gName;
-	StelButton* bToRemove=NULL;
+	StelButton* bToRemove = NULL;
 	for (QMap<QString, ButtonGroup>::iterator iter=buttonGroups.begin();iter!=buttonGroups.end();++iter)
 	{
 		int i=0;
@@ -390,7 +444,7 @@ StelButton* BottomStelBar::hideButton(const QString& actionName)
 		{
 			if (b->action && b->action->objectName()==actionName)
 			{
-				gName=iter.key();
+				gName = iter.key();
 				bToRemove = b;
 				iter.value().elems.removeAt(i);
 				break;
@@ -398,9 +452,9 @@ StelButton* BottomStelBar::hideButton(const QString& actionName)
 			++i;
 		}
 	}
-	if (bToRemove==NULL)
+	if (bToRemove == NULL)
 		return NULL;
-	if (buttonGroups[gName].elems.size()==0)
+	if (buttonGroups[gName].elems.size() == 0)
 	{
 		buttonGroups.remove(gName);
 	}
@@ -417,15 +471,18 @@ void BottomStelBar::setGroupMargin(const QString& groupName, int left, int right
 {
 	if (!buttonGroups.contains(groupName))
 		return;
-	buttonGroups[groupName].leftMargin=left;
-	buttonGroups[groupName].rightMargin=right;
+	buttonGroups[groupName].leftMargin = left;
+	buttonGroups[groupName].rightMargin = right;
 	updateButtonsGroups();
 }
 
 //! Change the background of a group
-void BottomStelBar::setGroupBackground(const QString& groupName, const QPixmap& pixLeft,
-						const QPixmap& pixRight,  const QPixmap& pixMiddle,
-						const QPixmap& pixSingle){
+void BottomStelBar::setGroupBackground(const QString& groupName,
+                                       const QPixmap& pixLeft,
+                                       const QPixmap& pixRight,
+                                       const QPixmap& pixMiddle,
+                                       const QPixmap& pixSingle)
+{
 
 	if (!buttonGroups.contains(groupName))
 		return;
@@ -435,7 +492,6 @@ void BottomStelBar::setGroupBackground(const QString& groupName, const QPixmap& 
 	buttonGroups[groupName].pixBackgroundMiddle = new QPixmap(pixMiddle);
 	buttonGroups[groupName].pixBackgroundSingle = new QPixmap(pixSingle);
 	updateButtonsGroups();
-
 }
 
 QRectF BottomStelBar::getButtonsBoundingRect() const
@@ -461,63 +517,65 @@ QRectF BottomStelBar::getButtonsBoundingRect() const
 
 void BottomStelBar::updateButtonsGroups()
 {
-	double x=0;
-	double y = datetime->boundingRect().height()+3;
+	double x = 0;
+	double y = datetime->boundingRect().height() + 3;
 	for (QMap<QString, ButtonGroup >::iterator iter=buttonGroups.begin();iter!=buttonGroups.end();++iter)
 	{
-		if (iter.value().elems.empty())
+		ButtonGroup& group = iter.value();
+		QList<StelButton*>& buttons = group.elems;
+		if (buttons.empty())
 			continue;
-		x+=iter.value().leftMargin;
-		int n=0;
-		foreach (StelButton* b, iter.value().elems)
+		x += group.leftMargin;
+		int n = 0;
+		foreach (StelButton* b, buttons)
 		{
 			// We check if the group has its own background if not the case
 			// We apply a default background.
-			if (n==0)
+			if (n == 0)
 			{
-				if (iter.value().elems.size()==1)
+				if (buttons.size() == 1)
 				{
-					if (iter.value().pixBackgroundSingle == NULL)
-						b->pixBackground = pixBackgroundSingle;
+					if (group.pixBackgroundSingle == NULL)
+						b->setBackgroundPixmap(pixBackgroundSingle);
 					else
-						b->pixBackground = *(iter.value().pixBackgroundSingle);
+						b->setBackgroundPixmap(*group.pixBackgroundSingle);
 				}
 				else
 				{
-					if (iter.value().pixBackgroundLeft == NULL)
-						b->pixBackground = pixBackgroundLeft;
+					if (group.pixBackgroundLeft == NULL)
+						b->setBackgroundPixmap(pixBackgroundLeft);
 					else
-						b->pixBackground = *(iter.value().pixBackgroundLeft);
+						b->setBackgroundPixmap(*group.pixBackgroundLeft);
 				}
 			}
-			else if (n==iter.value().elems.size()-1)
+			else if (n == buttons.size()-1)
 			{
-				if (iter.value().elems.size()!=1)
+				if (buttons.size() != 1)
 				{
-					if (iter.value().pixBackgroundSingle == NULL)
-						b->pixBackground = pixBackgroundSingle;
+					if (group.pixBackgroundSingle == NULL)
+						b->setBackgroundPixmap(pixBackgroundSingle);
 					else
-						b->pixBackground = *(iter.value().pixBackgroundSingle);
+						b->setBackgroundPixmap(*group.pixBackgroundSingle);
 				}
-				if (iter.value().pixBackgroundRight == NULL)
-					b->pixBackground = pixBackgroundRight;
+				if (group.pixBackgroundRight == NULL)
+					b->setBackgroundPixmap(pixBackgroundRight);
 				else
-					b->pixBackground = *(iter.value().pixBackgroundRight);
+					b->setBackgroundPixmap(*group.pixBackgroundRight);
 			}
 			else
 			{
-				if (iter.value().pixBackgroundMiddle == NULL)
-					b->pixBackground = pixBackgroundMiddle;
+				if (group.pixBackgroundMiddle == NULL)
+					b->setBackgroundPixmap(pixBackgroundMiddle);
 				else
-					b->pixBackground = *(iter.value().pixBackgroundMiddle);
+					b->setBackgroundPixmap(*group.pixBackgroundMiddle);
 			}
 			// Update the button pixmap
 			b->animValueChanged(0.);
 			b->setPos(x, y);
-			x+=b->pixOn.width();
+			x += b->getButtonPixmapWidth();
 			++n;
 		}
-		x+=iter.value().rightMargin;
+		x+=group.rightMargin;
 	}
 	updateText(true);
 }
@@ -527,13 +585,38 @@ void BottomStelBar::updateText(bool updatePos)
 {
 	StelCore* core = StelApp::getInstance().getCore();
 	double jd = core->getJDay();
+	double deltaT = 0.;
+	double sigma = -1.;
+	QString sigmaInfo = "";
+	QString validRangeInfo = "";
+	bool displayDeltaT = false;
+	if (core->getCurrentLocation().planetName.contains("Earth"))
+	{
+		deltaT = core->getDeltaT(jd);
+		displayDeltaT = true;		
+		sigma = StelUtils::getDeltaTStandardError(jd);
+		core->getCurrentDeltaTAlgorithmValidRange(jd, &validRangeInfo);
+	}
 
-	QString newDate = flagShowTime ? StelApp::getInstance().getLocaleMgr().getPrintableDateLocal(jd) +"   "
-			+StelApp::getInstance().getLocaleMgr().getPrintableTimeLocal(jd) : " ";
+	// Add in a DeltaT correction. Divide DeltaT by 86400 to convert from seconds to days.
+	QString newDate = flagShowTime ? StelApp::getInstance().getLocaleMgr().getPrintableDateLocal(jd-deltaT/86400.) +"   "
+			+StelApp::getInstance().getLocaleMgr().getPrintableTimeLocal(jd-deltaT/86400.) : " ";
 	if (datetime->text()!=newDate)
 	{
 		updatePos = true;
 		datetime->setText(newDate);
+		if (displayDeltaT && core->getCurrentDeltaTAlgorithm()!=StelCore::WithoutCorrection)
+		{
+			if (sigma>0)
+				sigmaInfo = QString("; %1(%2T) = %3s").arg(QChar(0x03c3)).arg(QChar(0x0394)).arg(sigma, 3, 'f', 1);
+
+			if (std::abs(deltaT)>60.)
+				datetime->setToolTip(QString("%1T = %2 (%3s)%8 [%4 @ -23.8946%5/cy%6%7]").arg(QChar(0x0394)).arg(StelUtils::hoursToHmsStr(deltaT/3600.)).arg(deltaT, 5, 'f', 2).arg(QChar(0x1e45)).arg(QChar(0x2033)).arg(QChar(0x00B2)).arg(sigmaInfo).arg(validRangeInfo));
+			else
+				datetime->setToolTip(QString("%1T = %2s%7 [%3 @ -23.8946%4/cy%5%6]").arg(QChar(0x0394)).arg(deltaT, 3, 'f', 3).arg(QChar(0x1e45)).arg(QChar(0x2033)).arg(QChar(0x00B2)).arg(sigmaInfo).arg(validRangeInfo));
+		}
+		else
+			datetime->setToolTip("");
 	}
 
 	QString newLocation = flagShowLocation ? q_(core->getCurrentLocation().planetName) +", "
@@ -544,6 +627,20 @@ void BottomStelBar::updateText(bool updatePos)
 	{
 		updatePos = true;
 		location->setText(newLocation);
+		float lat = core->getCurrentLocation().latitude;
+		float lon = core->getCurrentLocation().longitude;
+		QString latStr, lonStr, pm;
+		if (lat >= 0)
+			pm = "N";
+		else
+			pm = "S";
+		latStr = QString("%1%2%3").arg(pm).arg(lat).arg(QChar(0x00B0));
+		if (lat >= 0)
+			pm = "E";
+		else
+			pm = "W";
+		lonStr = QString("%1%2%3").arg(pm).arg(lon).arg(QChar(0x00B0));
+		location->setToolTip(QString("%1 %2").arg(latStr).arg(lonStr));
 	}
 
 	QSettings* confSettings = StelApp::getInstance().getSettings();
@@ -582,8 +679,10 @@ void BottomStelBar::updateText(bool updatePos)
 	if (updatePos)
 	{
 		QRectF rectCh = getButtonsBoundingRect();
-		location->setPos(0, 0);
-		datetime->setPos(rectCh.right()-datetime->boundingRect().width()-5,0);
+		location->setPos(0, 0);		
+		int dtp = rectCh.right()-datetime->boundingRect().width()-5;
+		if ((dtp%2) == 1) dtp--; // make even pixel
+		datetime->setPos(dtp,0);
 		fov->setPos(datetime->x()-200, 0);
 		fps->setPos(datetime->x()-95, 0);
 	}
@@ -646,10 +745,11 @@ void BottomStelBar::buttonHoverChanged(bool b)
 	Q_ASSERT(button);
 	if (b==true)
 	{
-		if (button->action)
+		QAction* action = button->action;
+		if (action)
 		{
-			QString tip(button->action->toolTip());
-			QString shortcut(button->action->shortcut().toString());
+			QString tip(action->toolTip());
+			QString shortcut(action->shortcut().toString(QKeySequence::NativeText));
 			if (!shortcut.isEmpty())
 			{
 				if (shortcut == "Space")

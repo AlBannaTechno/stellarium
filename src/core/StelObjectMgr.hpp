@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STELOBJECTMGR_HPP_
@@ -42,7 +42,7 @@ public:
 	///////////////////////////////////////////////////////////////////////////
 	// Methods defined in the StelModule class
 	virtual void init() {;}
-	virtual void draw(StelCore*) {;}
+	virtual void draw(StelCore*, class StelRenderer*) {;}
 	virtual void update(double) {;}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -82,6 +82,15 @@ public:
 	//! @param maxNbItem the maximum number of returned object names.
 	//! @return a list of matching object names by order of relevance, or an empty list if nothing match
 	QStringList listMatchingObjectsI18n(const QString& objPrefix, unsigned int maxNbItem=5) const;
+
+	//! Find and return the list of at most maxNbItem objects auto-completing the passed object English name.
+	//! @param objPrefix the case insensitive first letters of the searched object
+	//! @param maxNbItem the maximum number of returned object names.
+	//! @return a list of matching object names by order of relevance, or an empty list if nothing match
+	QStringList listMatchingObjects(const QString& objPrefix, unsigned int maxNbItem=5) const;
+
+	QStringList listAllModuleObjects(const QString& moduleId, bool inEnglish) const;
+	QMap<QString, QString> objectModulesMap() const;
 
 	//! Return whether an object was selected during last selection related event.
 	bool getWasSelected(void) const {return !lastSelectedObjects.empty();}
@@ -129,7 +138,7 @@ public:
 signals:
 	//! Indicate that the selected StelObjects has changed.
 	//! @param action define if the user requested that the objects are added to the selection or just replace it
-	void selectedObjectChanged(StelModule::StelModuleSelectAction);
+	void selectedObjectChanged(StelModule::StelModuleSelectAction action);
 
 private:
 	// The list of StelObjectModule that are referenced in Stellarium

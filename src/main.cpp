@@ -1,6 +1,7 @@
 /*
  * Stellarium
  * Copyright (C) 2002 Fabien Chereau
+ * Copyright (C) 2012 Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "StelMainWindow.hpp"
@@ -34,6 +35,10 @@
 #include <QFontDatabase>
 #ifdef Q_OS_WIN
 #include <windows.h>
+#ifdef _MSC_BUILD
+	#include <MMSystem.h>
+	#pragma comment(lib,"Winmm.lib")
+#endif
 #endif //Q_OS_WIN
 
 //! @class GettextStelTranslator
@@ -43,11 +48,23 @@ class GettextStelTranslator : public QTranslator
 public:
 	virtual bool isEmpty() const { return false; }
 
+	//! Overrides QTranslator::translate().
+	//! Calls StelTranslator::qtranslate().
+	//! Can handle the Qt disambiguation strings of translatable
+	//! widgets from compiled .ui files - they are interpreted as
+	//! gettext context strings. See http://www.gnu.org/software/gettext/manual/gettext.html#Contexts 
+	//! @param context Qt context string - IGNORED.
+	//! @param sourceText the source message.
+	//! @param comment optional parameter, Qt disambiguation
+	//! comment string is interpreted as a gettext context.
+	//! (msgctxt) string.
 	virtual QString translate(const char* context, const char* sourceText, const char* comment=0) const
 	{
 		Q_UNUSED(context);
-		Q_UNUSED(comment);
-		return q_(sourceText);
+		if (comment)
+			return StelTranslator::globalTranslator.qtranslate(sourceText, comment);
+		else
+			return q_(sourceText);
 	}
 };
 
@@ -150,7 +167,7 @@ int main(int argc, char **argv)
 	// OK we start the full program.
 	// Print the console splash and get on with loading the program
 	QString versionLine = QString("This is %1 - http://www.stellarium.org").arg(StelUtils::getApplicationName());
-	QString copyrightLine = QString("Copyright (C) 2000-2011 Fabien Chereau et al");
+	QString copyrightLine = QString("Copyright (C) 2000-2013 Fabien Chereau et al");
 	int maxLength = qMax(versionLine.size(), copyrightLine.size());
 	qDebug() << qPrintable(QString(" %1").arg(QString().fill('-', maxLength+2)));
 	qDebug() << qPrintable(QString("[ %1 ]").arg(versionLine.leftJustified(maxLength, ' ')));
@@ -259,17 +276,16 @@ int main(int argc, char **argv)
 	// Override config file values from CLI.
 	CLIProcessor::parseCLIArgsPostConfig(argList, confSettings);
 
-	bool safeMode = false;
-	if (confSettings->value("main/use_qpaintenginegl2", true).toBool() && !qApp->property("onetime_safe_mode").isValid())
-	{
-		// The default is to let Qt choose which paint engine fits the best between OpenGL and OpenGL2.
-		// However it causes troubles on some older hardware, so add an option.
-	}
-	else
-	{
+#ifdef Q_OS_WIN
+	bool safeMode = false; // used in Q_OS_WIN, but need the QGL::setPreferredPaintEngine() call here.
+#endif
+	if (!confSettings->value("main/use_qpaintenginegl2", true).toBool()
+		|| qApp->property("onetime_safe_mode").isValid()) {
 		// The user explicitely request to use the older paint engine.
 		QGL::setPreferredPaintEngine(QPaintEngine::OpenGL);
+#ifdef Q_OS_WIN
 		safeMode = true;
+#endif
 	}
 
 #ifdef Q_OS_MAC
@@ -294,22 +310,41 @@ int main(int argc, char **argv)
 		// qWarning() << "ERROR while loading font DejaVuSans : " << e.what();
 	}
 
+	QString fileFont = confSettings->value("gui/base_font_file", "").toString();
+	if (!fileFont.isEmpty())
+	{
+		try
+		{
+			const QString& afName = StelFileMgr::findFile(QString("data/%1").arg(fileFont));
+			if (!afName.isEmpty() && !afName.contains("file not found"))
+				QFontDatabase::addApplicationFont(afName);
+		}
+		catch (std::runtime_error& e)
+		{
+			qWarning() << "ERROR while loading custom font " << fileFont << " : " << e.what();
+		}
+	}
+
+	QString baseFont = confSettings->value("gui/base_font_name", "DejaVu Sans").toString();
+	QString safeFont = confSettings->value("gui/safe_font_name", "Verdana").toString();
+
 	// Set the default application font and font size.
 	// Note that style sheet will possibly override this setting.
 #ifdef Q_OS_WIN
+
 	// On windows use Verdana font, to avoid unresolved bug with OpenGL1 Qt paint engine.
 	// See Launchpad question #111823 for more info
-	QFont tmpFont(safeMode ? "Verdana" : "DejaVu Sans");
-	tmpFont.setStyleStrategy(QFont::OpenGLCompatible);
+	QFont tmpFont(safeMode ? safeFont : baseFont);
+	tmpFont.setStyleHint(QFont::AnyStyle, QFont::OpenGLCompatible);
 
 	// Activate verdana by defaut for all win32 builds to see if it improves things.
 	// -> this seems to bring crippled arabic fonts with OpenGL2 paint engine..
 	// QFont tmpFont("Verdana");
 #else
 #ifdef Q_OS_MAC
-	QFont tmpFont("Verdana");
+	QFont tmpFont(safeFont);
 #else
-	QFont tmpFont("DejaVu Sans");
+	QFont tmpFont(baseFont);
 #endif
 #endif
 	tmpFont.setPixelSize(confSettings->value("gui/base_font_size", 13).toInt());
@@ -332,23 +367,27 @@ int main(int argc, char **argv)
 	app.installTranslator(&trans);
 
 	if (!QGLFormat::hasOpenGL())
-	{
+	{		
+		qWarning() << "Oops... This system does not support OpenGL.";
 		QMessageBox::warning(0, "Stellarium", q_("This system does not support OpenGL."));
+		app.quit();
 	}
+	else
+	{
+		StelMainWindow mainWin;
+		mainWin.init(confSettings);
+		app.exec();
+		mainWin.deinit();
 
-	StelMainWindow mainWin;
-	mainWin.init(confSettings);
-	app.exec();
-	mainWin.deinit();
+		delete confSettings;
+		StelLogger::deinit();
 
-	delete confSettings;
-	StelLogger::deinit();
+		#ifdef Q_OS_WIN
+		if(timerGrain)
+			timeEndPeriod(timerGrain);
+		#endif //Q_OS_WIN
 
-	#ifdef Q_OS_WIN
-	if(timerGrain)
-		timeEndPeriod(timerGrain);
-	#endif //Q_OS_WIN
-
-	return 0;
+		return 0;
+	}
 }
 

@@ -14,7 +14,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _SKYGUI_HPP_
@@ -38,10 +38,14 @@ class BottomStelBar;
 class InfoPanel : public QGraphicsTextItem
 {
 	public:
+		//! Reads "gui/selected_object_info", etc from the configuration file.
+		//! @todo Bad idea to read from the configuration file in a constructor? --BM
 		InfoPanel(QGraphicsItem* parent);
 		void setInfoTextFilters(const StelObject::InfoStringGroup& aflags) {infoTextFilters=aflags;}
 		const StelObject::InfoStringGroup& getInfoTextFilters(void) const {return infoTextFilters;}
 		void setTextFromObjects(const QList<StelObjectP>&);
+		const QString getSelectedText(void);
+
 	private:
 		StelObject::InfoStringGroup infoTextFilters;
 };

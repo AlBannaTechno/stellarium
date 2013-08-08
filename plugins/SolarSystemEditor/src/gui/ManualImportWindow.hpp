@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _MANUAL_IMPORT_WINDOW_
@@ -42,7 +42,7 @@ public:
 	virtual ~ManualImportWindow();
 
 public slots:
-	void languageChanged();
+	void retranslate();
 
 private slots:
 	//TODO: Object type
@@ -68,10 +68,9 @@ private:
 	void setColorButtonColor(QColor newColor);
 
 	void selectTextureFile(QLineEdit * filePathLineEdit);
-	//! Check if a file is a valid graphics file with OpenGL texture dimensions.
-	//! OpenGL accepts only dimentions that are powers of 2 (512, 1024, etc.)
+	//! Check if a file is a valid graphics file with power-of-two texture dimensions.
+	//! StelRenderer only guarantees support for dimentions that are powers of 2 (512, 1024, etc.)
 	bool verifyTextureFile(QString filePath);
-	bool verifyPowerOfTwo(int value);
 
 protected:
 	virtual void createDialogContent();

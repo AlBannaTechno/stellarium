@@ -15,7 +15,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
 #include "Dialog.hpp"
@@ -49,7 +49,7 @@ SlewDialog::~SlewDialog()
 	delete ui;
 }
 
-void SlewDialog::languageChanged()
+void SlewDialog::retranslate()
 {
 	if (dialog)
 		ui->retranslateUi(dialog);
@@ -60,19 +60,20 @@ void SlewDialog::createDialogContent()
 	ui->setupUi(dialog);
 	
 	//Inherited connect
-	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(languageChanged()));
+	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
 
 	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)), this, SLOT(setFormatHMS(bool)));
 	connect(ui->radioButtonDMS, SIGNAL(toggled(bool)), this, SLOT(setFormatDMS(bool)));
 	connect(ui->radioButtonDecimal, SIGNAL(toggled(bool)), this, SLOT(setFormatDecimal(bool)));
 
-	connect(ui->pushButtonSlew, SIGNAL(pressed()), this, SLOT(slew()));
-	connect(ui->pushButtonConfigure, SIGNAL(pressed()), this, SLOT(showConfiguration()));
+	connect(ui->pushButtonSlew, SIGNAL(clicked()), this, SLOT(slew()));
+	connect(ui->pushButtonConfigure, SIGNAL(clicked()), this, SLOT(showConfiguration()));
 
 	connect(telescopeManager, SIGNAL(clientConnected(int, QString)), this, SLOT(addTelescope(int, QString)));
 	connect(telescopeManager, SIGNAL(clientDisconnected(int)), this, SLOT(removeTelescope(int)));
-
+        //
+        connect(ui->pushButtonCurrent,SIGNAL(clicked()),this,SLOT(getCurrentObjectInfo()));
 	//Coordinates are in HMS by default:
 	ui->radioButtonHMS->setChecked(true);
 
@@ -178,3 +179,15 @@ void SlewDialog::slew()
 
 	telescopeManager->telescopeGoto(slot, targetPosition);
 }
+
+void SlewDialog::getCurrentObjectInfo(){
+    const QList<StelObjectP>& selected = GETSTELMODULE(StelObjectMgr)->getSelectedObject();
+    if (!selected.isEmpty()) {
+        double dec_j2000 = 0;
+        double ra_j2000 = 0;
+        StelUtils::rectToSphe(&ra_j2000,&dec_j2000,selected[0]->getJ2000EquatorialPos(StelApp::getInstance().getCore()));
+        ui->spinBoxRA->setRadians(ra_j2000);
+        ui->spinBoxDec->setRadians(dec_j2000);
+    }
+}
+

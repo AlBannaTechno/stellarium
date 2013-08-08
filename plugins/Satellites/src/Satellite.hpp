@@ -1,6 +1,6 @@
 /*
  * Stellarium
- * Copyright (C) 2009 Matthew Gates
+ * Copyright (C) 2009, 2012 Matthew Gates
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,50 +14,86 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _SATELLITE_HPP_
 #define _SATELLITE_HPP_ 1
 
-#include <QVariant>
-#include <QString>
-#include <QStringList>
+#include <QDateTime>
 #include <QFont>
 #include <QList>
-#include <QDateTime>
+#include <QSharedPointer>
+#include <QString>
+#include <QStringList>
+#include <QVariant>
 
 #include "StelObject.hpp"
-#include "StelTextureTypes.hpp"
 #include "StelSphereGeometry.hpp"
+#include "StelProjectorType.hpp"
 
-#include "StelPainter.hpp"
 #include "gSatWrapper.hpp"
 
 
-class StelPainter;
 class StelLocation;
 
+//! Radio communication channel properties.
 typedef struct
 {
-	double frequency;
-	QString modulation;
-	QString description;
-} commLink;
+	double frequency; //!< Channel frequency in MHz.
+	QString modulation; //!< Signal modulation mode.
+	QString description; //!< Channel description.
+} CommLink;
+
+//! Description of the data roles used in SatellitesListModel.
+enum SatelliteDataRole {
+	SatIdRole = Qt::UserRole,
+	SatDescriptionRole,
+	SatFlagsRole,
+	SatGroupsRole,
+	FirstLineRole,
+	SecondLineRole
+};
+
+//! Type for sets of satellite group IDs.
+typedef QSet<QString> GroupSet;
+
+//! Flag type reflecting internal flags of Satellite.
+enum SatFlag
+{
+	SatNoFlags = 0x0,
+	SatDisplayed = 0x1,
+	SatNotDisplayed = 0x2,
+	SatUser = 0x4,
+	SatOrbit = 0x8,
+	SatNew = 0x10,
+	SatError = 0x20
+};
+typedef QFlags<SatFlag> SatFlags;
+Q_DECLARE_OPERATORS_FOR_FLAGS(SatFlags)
+
+// Allows the type to be used by QVariant
+Q_DECLARE_METATYPE(GroupSet)
+Q_DECLARE_METATYPE(SatFlags)
 
 //! @class Satellite
-//! A Satellite object represents one satellite in Earth orbit.
-//! Details about the satellite are passed using a QVariant which contains
-//! a map of data from the json file.
+//! A representation of a satellite in Earth orbit.
+//! Details about the satellite are passed with a JSON-representation structure
+//! that contains a @ref satcat "satellite catalog" entry.
+//! 
+//! Thanks to operator<() overloading, container classes (QList, QMap, etc)
+//! with Satellite or SatelliteP objects can be sorted by satellite name/ID.
 class Satellite : public StelObject
 {
 	friend class Satellites;
 	friend class SatellitesDialog;
+	friend class SatellitesListModel;
+	
 public:
-	//! @param id The official designation for a satellite, e.g. "ZARYA"
-	//! @param conf a pointer to a QSettings object which contains the
-	//! details of the satellite (TLEs, description etc.)
-	Satellite(const QVariantMap& map);
+	//! \param identifier unique identifier (currently the Catalog Number)
+	//! \param data a QMap which contains the details of the satellite
+	//! (TLE set, description etc.)
+	Satellite(const QString& identifier, const QVariantMap& data);
 	~Satellite();
 
 	//! Get a QVariantMap which describes the satellite.  Could be used to
@@ -72,7 +108,7 @@ public:
 
 	//! Get an HTML string to describe the object
 	//! @param core A pointer to the core
-	//! @flags a set of flags with information types to include.
+	//! @param flags a set of flags with information types to include.
 	//! Supported types for Satellite objects:
 	//! - Name: designation in large type with the description underneath
 	//! - RaDecJ2000, RaDecOfDate, HourAngle, AltAzi
@@ -80,20 +116,19 @@ public:
 	//! - Extra2: Comms frequencies, modulation types and so on.
 	virtual QString getInfoString(const StelCore *core, const InfoStringGroup& flags) const;
 	virtual Vec3f getInfoColor(void) const;
-	virtual Vec3d getJ2000EquatorialPos(const StelCore*) const
-	{
-		return XYZ;
-	}
-	virtual float getVMagnitude(const StelCore* core=NULL) const;
+	virtual Vec3d getJ2000EquatorialPos(const StelCore*) const;
+	virtual float getVMagnitude(const StelCore* core=NULL, bool withExtinction=false) const;
 	virtual double getAngularSize(const StelCore* core) const;
 	virtual QString getNameI18n(void) const
 	{
-		return designation;
+		return name;
 	}
 	virtual QString getEnglishName(void) const
 	{
-		return designation;
+		return name;
 	}
+	//! Returns the (NORAD) catalog number. (For now, the ID string.)
+	QString getCatalogNumberString() const {return id;}
 
 	//! Set new tleElements.  This assumes the designation is already set, populates
 	//! the tleElements values and configures internal orbit parameters.
@@ -108,14 +143,27 @@ public:
 
 	// when the observer location changes we need to
 	void recalculateOrbitLines(void);
-
-public:
-	void enableDrawOrbit(bool b);
+	
+	void setNew() {newlyAdded = true;}
+	bool isNew() const {return newlyAdded;}
+	
+	//! Get internal flags as a single value.
+	SatFlags getFlags();
+	//! Sets the internal flags in one operation (only display flags)!
+	void setFlags(const SatFlags& flags);
+	
+	//! Parse TLE line to extract International Designator and launch year.
+	//! Sets #internationalDesignator and #jdLaunchYearJan1.
+	void parseInternationalDesignator(const QString& tle1);
+	
+	//! Needed for sorting lists (if this ever happens...).
+	//! Compares #name fields. If equal, #id fields, which can't be.
+	bool operator<(const Satellite& another) const;
 
 private:
 	//draw orbits methods
 	void computeOrbitPoints();
-	void drawOrbit(StelPainter& painter);
+	void drawOrbit(class StelRenderer* renderer, StelProjectorP projector);
 	//! returns 0 - 1.0 for the DRAWORBIT_FADE_NUMBER segments at
 	//! each end of an orbit, with 1 in the middle.
 	float calculateOrbitSegmentIntensity(int segNum);
@@ -123,20 +171,47 @@ private:
 
 private:
 	bool initialized;
-	bool visible;
-	bool orbitVisible;  //draw orbit enabled/disabled
+	//! Flag indicating whether the satellite should be displayed.
+	//! Should not be confused with the pedicted visibility of the 
+	//! actual satellite to the observer.
+	bool displayed;
+	//! Flag indicating whether an orbit section should be displayed.
+	bool orbitDisplayed;  // draw orbit enabled/disabled
+	//! Flag indicating that the satellite is user-defined.
+	//! This means that its TLE set shouldn't be updated and the satellite
+	//! itself shouldn't be removed if auto-remove is enabled.
+	bool userDefined;
+	//! Flag indicating that the satellite was added during the current session.
+	bool newlyAdded;
+	bool orbitValid;
 
-	QString designation;               // The ID of the satellite
-	QString description;               // longer description of spacecraft
-	Vec3d XYZ;                         // holds J2000 position
+	//! Identifier of the satellite, must be unique within the list.
+	//! Currently, the Satellite Catalog Number/NORAD Number is used,
+	//! as it is unique and it is contained in both lines of TLE sets.
+	QString id;
+	//! Human-readable name of the satellite.
+	//! Usually the string in the "Title line" of TLE sets.
+	QString name;
+	//! Longer description of the satellite.
+	QString description;
+	//! International Designator / COSPAR designation / NSSDC ID.
+	QString internationalDesignator;
+	//! Julian date of Jan 1st of the launch year.
+	//! Used to hide satellites before their launch date.
+	//! Extracted from TLE set with parseInternationalDesignator().
+	//! It defaults to 1 Jan 1957 if extraction fails.
+	double jdLaunchYearJan1;
+	//! Contains the J2000 position.
+	Vec3d XYZ;
 	QPair< QByteArray, QByteArray > tleElements;
 	double height, range, rangeRate;
-	QList<commLink> comms;
+	QList<CommLink> comms;
 	Vec3f hintColor;
-	QStringList groupIDs;
+	//! Identifiers of the groups to which the satellite belongs.
+	//! See @ref groups.
+	GroupSet groups;
 	QDateTime lastUpdated;
 
-	static StelTextureSP hintTexture;
 	static SphericalCap  viewportHalfspace;
 	static float hintBrightness;
 	static float hintScale;
@@ -144,16 +219,19 @@ private:
 	static int   orbitLineFadeSegments;
 	static int   orbitLineSegmentDuration; //measured in seconds
 	static bool  orbitLinesFlag;
+	//! Mask controlling which info display flags should be honored.
+	static StelObject::InfoStringGroupFlags flagsMask;
 
-	void draw(const StelCore* core, StelPainter& painter, float maxMagHints);
+	void draw(const StelCore* core, class StelRenderer* renderer, 
+	          StelProjectorP projector, class StelTextureNew* hintTexture);
 
-        //Satellite Orbit Position calculation
-        gSatWrapper *pSatWrapper;
-        Vec3d position;
-        Vec3d velocity;
-        Vec3d latLongSubPointPosition;
-        Vec3d elAzPosition;
-        int   visibility;
+	//Satellite Orbit Position calculation
+	gSatWrapper *pSatWrapper;
+	Vec3d position;
+	Vec3d velocity;
+	Vec3d latLongSubPointPosition;
+	Vec3d elAzPosition;
+	int   visibility;
 
 	//Satellite Orbit Draw
 	QFont     font;
@@ -163,8 +241,10 @@ private:
 	double    lastEpochCompForOrbit; //measured in Julian Days
 	double    epochTime;  //measured in Julian Days
 	QList<Vec3d> orbitPoints; //orbit points represented by ElAzPos vectors
-
 };
+
+typedef QSharedPointer<Satellite> SatelliteP;
+bool operator<(const SatelliteP& left, const SatelliteP& right);
 
 #endif // _SATELLITE_HPP_ 
 
