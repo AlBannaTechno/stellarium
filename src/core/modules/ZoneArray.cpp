@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include <QDebug>
@@ -25,6 +25,7 @@
 #endif
 
 #include "ZoneArray.hpp"
+#include "renderer/StelRenderer.hpp"
 #include "StelApp.hpp"
 #include "StelFileMgr.hpp"
 #include "StelGeodesicGrid.hpp"
@@ -41,7 +42,7 @@ namespace BigStarCatalogExtension
 static const Vec3f north(0,0,1);
 
 void ZoneArray::initTriangle(int index, const Vec3f &c0, const Vec3f &c1,
-							 const Vec3f &c2)
+                             const Vec3f &c2)
 {
 	// initialize center,axis0,axis1:
 	ZoneData &z(zones[index]);
@@ -82,7 +83,9 @@ static inline int ReadInt(QFile& file, unsigned int &x)
 }
 
 #if (!defined(__GNUC__))
+#ifndef _MSC_BUILD
 #warning Star catalogue loading has only been tested with gcc
+#endif
 #endif
 
 ZoneArray* ZoneArray::create(const QString& catalogFilePath, bool use_mmap)
@@ -137,12 +140,11 @@ ZoneArray* ZoneArray::create(const QString& catalogFilePath, bool use_mmap)
 	else if (magic == FILE_MAGIC)
 	{
 		// ok, FILE_MAGIC
-#if (!defined(__GNUC__))
+#if (!defined(__GNUC__) && !defined(_MSC_BUILD))
 		if (use_mmap)
 		{
 			// mmap only with gcc:
-			dbStr += "warning - you must convert catalogue "
-				  += "to native format before mmap loading";
+			dbStr += "warning - you must convert catalogue to native format before mmap loading";
 			qDebug(qPrintable(dbStr));
 
 			return 0;
@@ -194,7 +196,9 @@ ZoneArray* ZoneArray::create(const QString& catalogFilePath, bool use_mmap)
 			// for your compiler.
 			// Because your compiler does not pack the data,
 			// which is crucial for this application.
+#ifndef _MSC_BUILD
 			Q_ASSERT(sizeof(Star2) == 10);
+#endif
 			rval = new SpecialZoneArray<Star2>(file, byte_swap, use_mmap, level, mag_min, mag_range, mag_steps);
 			if (rval == 0)
 			{
@@ -213,7 +217,9 @@ ZoneArray* ZoneArray::create(const QString& catalogFilePath, bool use_mmap)
 			// for your compiler.
 			// Because your compiler does not pack the data,
 			// which is crucial for this application.
+#ifndef _MSC_BUILD
 			Q_ASSERT(sizeof(Star3) == 6);
+#endif
 			rval = new SpecialZoneArray<Star3>(file, byte_swap, use_mmap, level, mag_min, mag_range, mag_steps);
 			if (rval == 0)
 			{
@@ -244,10 +250,10 @@ ZoneArray* ZoneArray::create(const QString& catalogFilePath, bool use_mmap)
 }
 
 ZoneArray::ZoneArray(const QString& fname, QFile* file, int level, int mag_min,
-			 int mag_range, int mag_steps)
-			: fname(fname), level(level), mag_min(mag_min),
-			  mag_range(mag_range), mag_steps(mag_steps),
-			  star_position_scale(0.0), zones(0), file(file)
+                     int mag_range, int mag_steps)
+	: fname(fname), level(level), mag_min(mag_min),
+	  mag_range(mag_range), mag_steps(mag_steps),
+	  star_position_scale(0.0), zones(0), file(file)
 {
 	nr_of_zones = StelGeodesicGrid::nrOfZones(level);
 	nr_of_stars = 0;
@@ -260,7 +266,6 @@ bool ZoneArray::readFile(QFile& file, void *data, qint64 size)
 	if (part_size < 64*1024)
 	{
 		part_size = 64*1024;
-		parts = (size + (part_size>>1)) / part_size;
 	}
 	float i = 0.f;
 	i += 1.f;
@@ -444,6 +449,8 @@ SpecialZoneArray<Star>::SpecialZoneArray(QFile* file, bool byte_swap,bool use_mm
 				file->close();
 			}
 		}
+		// GZ: Some diagnostics to understand the undocumented vars around mag.
+		// qDebug() << "SpecialZoneArray: mag_min=" << mag_min << ", mag_steps=" << mag_steps << ", mag_range=" << mag_range ;
 	}
 }
 
@@ -473,35 +480,75 @@ SpecialZoneArray<Star>::~SpecialZoneArray(void)
 }
 
 template<class Star>
-void SpecialZoneArray<Star>::draw(StelPainter* sPainter, int index, bool is_inside, const float *rcmag_table, StelCore* core, unsigned int maxMagStarName,
-				  float names_brightness) const
+void SpecialZoneArray<Star>::draw 
+	(StelProjectorP projector, StelRenderer* renderer, int index, bool is_inside,
+	 const float *rcmag_table, StelCore* core, unsigned int maxMagStarName,
+	 float names_brightness) const
 {
 	StelSkyDrawer* drawer = core->getSkyDrawer();
 	SpecialZoneData<Star> *const z = getZones() + index;
-	Vec3f vf;	
+	Vec3f vf;
 	const Star *const end = z->getStars() + z->size;
 	static const double d2000 = 2451545.0;
 	const double movementFactor = (M_PI/180)*(0.0001/3600) * ((core->getJDay()-d2000)/365.25) / star_position_scale;
-	const float* tmpRcmag;
+	const float* tmpRcmag; // will point to precomputed rC in table
+	Extinction extinction=core->getSkyDrawer()->getExtinction();
+	const bool withExtinction=(drawer->getFlagHasAtmosphere() && extinction.getExtinctionCoefficient()>=0.01f);
+	const float k = (0.001f*mag_range)/mag_steps; // from StarMgr.cpp line 654
+	// GZ: allow artificial cutoff:
+	const int clampStellarMagnitude_mmag = (int) floor(drawer->getCustomStarMagnitudeLimit() * 1000.0f);
+	// find s->mag, which is the step into the magnitudes which is just bright enough to be drawn.
+	int cutoffMagStep=(drawer->getFlagStarMagnitudeLimit() ? (clampStellarMagnitude_mmag - mag_min)*mag_steps/mag_range : mag_steps);
+
+	// go through all stars, which are sorted by magnitude (bright stars first)
 	for (const Star *s=z->getStars();s<end;++s)
 	{
+		if (s->mag > cutoffMagStep) break; // e.g. naked-eye stars only.
 		tmpRcmag = rcmag_table+2*s->mag;
-		if (*tmpRcmag<=0.f)
-			break;
+		if (*tmpRcmag<=0.f) break; // no size for this and following (even dimmer, unextincted) stars? --> early exit
 		s->getJ2000Pos(z,movementFactor, vf);
-		if (drawer->drawPointSource(sPainter, vf, tmpRcmag, s->bV, !is_inside) && s->hasName() && s->mag < maxMagStarName && s->hasComponentID()<=1)
+
+		const Vec3d vd(vf[0], vf[1], vf[2]);
+
+		if (withExtinction)
 		{
-			const float offset = *tmpRcmag*0.7f;
-			const Vec3f& colorr = (StelApp::getInstance().getVisionModeNight() ? Vec3f(0.8f, 0.2f, 0.2f) : StelSkyDrawer::indexToColor(s->bV))*0.75f;
-			sPainter->setColor(colorr[0], colorr[1], colorr[2],names_brightness);
-			sPainter->drawText(Vec3d(vf[0], vf[1], vf[2]), s->getNameI18n(), 0, offset, offset, false);
+			//GZ: We must compute position first, then shift magnitude.
+			Vec3d altAz = core->j2000ToAltAz(vd, StelCore::RefractionOn);
+			float extMagShift = 0.0f;
+			extinction.forward(&altAz, &extMagShift);
+			const int extMagShiftStep = 
+				qMin((int)floor(extMagShift / k), RCMAG_TABLE_SIZE-mag_steps); 
+			if ((s->mag + extMagShiftStep) > cutoffMagStep) // i.e., if extincted it is dimmer than cutoff, so remove [draw with hopefully zero size].
+			{
+				tmpRcmag = rcmag_table + 2 * (RCMAG_TABLE_SIZE-1);
+			}
+			else
+			{
+				tmpRcmag = rcmag_table + 2 * (s->mag+extMagShiftStep);
+			}
+		}
+
+		Vec3f win;
+		if(drawer->pointSourceVisible(&(*projector), vf, tmpRcmag, !is_inside, win))
+		{
+			drawer->drawPointSource(win, tmpRcmag, s->bV);
+			if(s->hasName() && s->mag < maxMagStarName && s->hasComponentID()<=1)
+			{
+				const float offset = *tmpRcmag*0.7f;
+				const Vec3f& colorr = (StelApp::getInstance().getVisionModeNight() ? Vec3f(0.8f, 0.0f, 0.0f) : StelSkyDrawer::indexToColor(s->bV))*0.75f;
+
+				renderer->setGlobalColor(colorr[0], colorr[1], colorr[2], names_brightness);
+				renderer->drawText(TextParams(vf, projector, s->getNameI18n())
+				                   .shift(offset, offset).useGravity());
+			}
 		}
 	}
 }
 
 template<class Star>
-void SpecialZoneArray<Star>::searchAround(const StelCore* core, int index, const Vec3d &v, double cosLimFov,
-					  QList<StelObjectP > &result)
+void SpecialZoneArray<Star>::searchAround
+	(const StelCore* core, int index, const Vec3d &v, double cosLimFov,
+	 QList<StelObjectP > &result)
 {
 	static const double d2000 = 2451545.0;
 	const double movementFactor = (M_PI/180.)*(0.0001/3600.) * ((core->getJDay()-d2000)/365.25)/ star_position_scale;

@@ -1,6 +1,7 @@
 /*
  * Stellarium
  * Copyright (C) 2002 Fabien Chereau
+ * Copyright (C) 2012 Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _CONSTELLATION_HPP_
@@ -27,11 +28,10 @@
 #include "StelObject.hpp"
 #include "StelUtils.hpp"
 #include "StelFader.hpp"
-#include "StelTextureTypes.hpp"
+#include "StelProjector.hpp"
 #include "StelSphereGeometry.hpp"
 
 class StarMgr;
-class StelPainter;
 
 //! @class Constellation
 //! The Constellation class models a grouping of stars in a Sky Culture.
@@ -76,12 +76,17 @@ private:
 	//! @return false if can't parse record, else true.
 	bool read(const QString& record, StarMgr *starMgr);
 
-	//! Draw the constellation name
-	void drawName(StelPainter& sPainter) const;
-	//! Draw the constellation art
-	void drawArt(StelPainter& sPainter) const;
-	//! Draw the constellation boundary
-	void drawBoundaryOptim(StelPainter& sPainter) const;
+	//! Draw the constellation name.
+	//!
+	//! @param renderer  Renderer to draw with.
+	//! @param projector Font to draw the name with.
+	void drawName(class StelRenderer* renderer, QFont& font) const;
+
+	//! Draw the constellation boundary.
+	//!
+	//! @param renderer  Renderer to draw with.
+	//! @param projector Projector to project vertices to viewport.
+	void drawBoundaryOptim(StelRenderer* renderer, StelProjectorP projector) const;
 
 	//! Test if a star is part of a Constellation.
 	//! This member tests to see if a star is one of those which make up
@@ -102,26 +107,41 @@ private:
 	QString getEnglishName() const {return abbreviation;}
 	//! Get the short name for the Constellation (returns the abbreviation).
 	QString getShortName() const {return abbreviation;}
+
+	//! Generate the vertex buffer to draw constellation art.
+	//!
+	//! @param renderer   Renderer to create the vertex buffer.
+	//! @param resolution Resolution of the vertex grid to draw art with.
+	void generateArtVertices(class StelRenderer* renderer, const int resolution);
+
 	//! Draw the lines for the Constellation.
 	//! This method uses the coords of the stars (optimized for use thru
 	//! the class ConstellationMgr only).
-	void drawOptim(StelPainter& sPainter, const StelCore* core, const SphericalCap& viewportHalfspace) const;
+	void drawOptim(class StelRenderer* renderer, StelProjectorP projector, 
+	               const StelCore* core, const SphericalCap& viewportHalfspace) const;
+
 	//! Draw the art texture, optimized function to be called thru a constellation manager only.
-	void drawArtOptim(StelPainter& sPainter, const SphericalRegion& region) const;
+	//!
+	//! @param renderer  Renderer to draw with.
+	//! @param projector Projector to project 3D coordinates to the viewport.
+	//! @param region    Spherical region containing viewable area, used for culling.
+	void drawArtOptim(class StelRenderer* renderer, StelProjectorP projector, 
+	                  const SphericalRegion& region) const;
+
 	//! Update fade levels according to time since various events.
 	void update(int deltaTime);
 	//! Turn on and off Constellation line rendering.
 	//! @param b new state for line drawing.
-	void setFlagLines(bool b) {lineFader=b;}
+	void setFlagLines(const bool b) {lineFader=b;}
 	//! Turn on and off Constellation boundary rendering.
 	//! @param b new state for boundary drawing.
-	void setFlagBoundaries(bool b) {boundaryFader=b;}
+	void setFlagBoundaries(const bool b) {boundaryFader=b;}
 	//! Turn on and off Constellation name label rendering.
 	//! @param b new state for name label drawing.
-	void setFlagName(bool b) {nameFader=b;}
+	void setFlagLabels(const bool b) {nameFader=b;}
 	//! Turn on and off Constellation art rendering.
 	//! @param b new state for art drawing.
-	void setFlagArt(bool b) {artFader=b;}
+	void setFlagArt(const bool b) {artFader=b;}
 	//! Get the current state of Constellation line rendering.
 	//! @return true if Constellation line rendering it turned on, else false.
 	bool getFlagLines() const {return lineFader;}
@@ -130,7 +150,7 @@ private:
 	bool getFlagBoundaries() const {return boundaryFader;}
 	//! Get the current state of Constellation name label rendering.
 	//! @return true if Constellation name label rendering it turned on, else false.
-	bool getFlagName() const {return nameFader;}
+	bool getFlagLabels() const {return nameFader;}
 	//! Get the current state of Constellation art rendering.
 	//! @return true if Constellation art rendering it turned on, else false.
 	bool getFlagArt() const {return artFader;}
@@ -151,14 +171,36 @@ private:
 	//! List of stars forming the segments
 	StelObjectP* asterism;
 
-	StelTextureSP artTexture;
-	StelVertexArray artPolygon;
+	class StelTextureNew* artTexture;
+
+	QString artTexturePath;
+
+	//! Vertex with a 3D position and a texture coordinate.
+	struct Vertex
+	{
+		Vec3f position;
+		Vec2f texCoord;
+		Vertex(const Vec3f& position, const Vec2f texCoord) 
+			: position(position), texCoord(texCoord) {}
+		VERTEX_ATTRIBUTES(Vec3f Position, Vec2f TexCoord);
+	};
+
+	//! Vertex grid to draw constellation art on.
+	StelVertexBuffer<Vertex>* artVertices;
+	
+	//! Index buffer representing triangles of the cells of the grid.
+	class StelIndexBuffer* artIndices;
+
 	SphericalCap boundingCap;
 
 	//! Define whether art, lines, names and boundary must be drawn
 	LinearFader artFader, lineFader, nameFader, boundaryFader;
 	std::vector<std::vector<Vec3f> *> isolatedBoundarySegments;
 	std::vector<std::vector<Vec3f> *> sharedBoundarySegments;
+
+	//! Matrix to transform art grid vertices from unnormalized texture
+	//! positions (pixel indices) to 3D coordinates to draw them at.
+	Mat4f texCoordTo3D;
 
 	//! Currently we only need one color for all constellations, this may change at some point
 	static Vec3f lineColor;

@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STELAPP_HPP_
@@ -26,18 +26,20 @@
 
 // Predeclaration of some classes
 class StelCore;
-class StelTextureMgr;
 class StelObjectMgr;
 class StelLocaleMgr;
 class StelModuleMgr;
 class StelSkyCultureMgr;
+class StelShortcutMgr;
 class QSettings;
 class QNetworkAccessManager;
 class QNetworkReply;
 class QTime;
+class QTimer;
 class StelLocationMgr;
 class StelSkyLayerMgr;
 class StelAudioMgr;
+class StelVideoMgr;
 class StelGuiBase;
 
 //! @class StelApp
@@ -69,7 +71,7 @@ public:
 	virtual ~StelApp();
 
 	//! Initialize core and default modules.
-	void init(QSettings* conf);
+	void init(QSettings* conf, class StelRenderer* renderer);
 
 	//! Load and initialize external modules (plugins)
 	void initPlugIns();
@@ -90,10 +92,6 @@ public:
 	//! @return the sky cultures manager
 	StelSkyCultureMgr& getSkyCultureMgr() {return *skyCultureMgr;}
 
-	//! Get the texture manager to use for loading textures.
-	//! @return the texture manager to use for loading textures.
-	StelTextureMgr& getTextureManager() {return *textureMgr;}
-
 	//! Get the Location manager to use for managing stored locations
 	//! @return the Location manager to use for managing stored locations
 	StelLocationMgr& getLocationMgr() {return *planetLocationMgr;}
@@ -102,12 +100,16 @@ public:
 	//! @return the StelObject manager to use for querying from all stellarium objects 	.
 	StelObjectMgr& getStelObjectMgr() {return *stelObjectMgr;}
 
-	//! Get the StelObject manager to use for querying from all stellarium objects.
-	//! @return the StelObject manager to use for querying from all stellarium objects 	.
 	StelSkyLayerMgr& getSkyImageMgr() {return *skyImageMgr;}
 
 	//! Get the audio manager
 	StelAudioMgr* getStelAudioMgr() {return audioMgr;}
+
+	//! Get the shortcuts manager to use for managing and editing shortcuts
+	StelShortcutMgr* getStelShortcutManager() {return shortcutMgr;}
+
+	//! Get the video manager
+	StelVideoMgr* getStelVideoMgr() {return videoMgr;}
 
 	//! Get the core of the program.
 	//! It is the one which provide the projection, navigation and tone converter.
@@ -132,18 +134,14 @@ public:
 	//! Update all object according to the deltaTime in seconds.
 	void update(double deltaTime);
 
-	//! Draw all registered StelModule in the order defined by the order lists.
-	//! @return the max squared distance in pixels that any object has travelled since the last update.
-	void draw();
-
 	//! Iterate through the drawing sequence.
 	//! This allow us to split the slow drawing operation into small parts,
 	//! we can then decide to pause the painting for this frame and used the cached image instead.
 	//! @return true if we should continue drawing (by calling the method again)
-	bool drawPartial();
+	bool drawPartial(class StelRenderer* renderer);
 
-	//! Call this when the size of the GL window has changed.
-	void glWindowHasBeenResized(float x, float y, float w, float h);
+	//! Call this when the size of the window has changed.
+	void windowHasBeenResized(float x, float y, float w, float h);
 
 	//! Get the GUI instance implementing the abstract GUI interface.
 	StelGuiBase* getGui() const {return stelGui;}
@@ -154,12 +152,15 @@ public:
 	static void initStatic();
 	static void deinitStatic();
 
-	//! Get flag for using opengl shaders
-	bool getUseGLShaders() const {return useGLShaders;}
+	//! Get whether solar shadows should be rendered.
+	bool getRenderSolarShadows() const;
 
 	///////////////////////////////////////////////////////////////////////////
 	// Scriptable methods
 public slots:
+
+	//! Set flag for activating solar shadow rendering.
+	void setRenderSolarShadows(bool);
 
 	//! Set flag for activating night vision mode.
 	void setVisionModeNight(bool);
@@ -176,7 +177,7 @@ public slots:
 	//! Report that a download occured. This is used for statistics purposes.
 	//! Connect this slot to QNetworkAccessManager::finished() slot to obtain statistics at the end of the program.
 	void reportFileDownloadFinished(QNetworkReply* reply);
-	
+
 signals:
 	void colorSchemeChanged(const QString&);
 	void languageChanged();
@@ -208,8 +209,8 @@ private:
 	// Sky cultures manager for the application
 	StelSkyCultureMgr* skyCultureMgr;
 
-	// Textures manager for the application
-	StelTextureMgr* textureMgr;
+	//Shortcuts manager for the application
+	StelShortcutMgr* shortcutMgr;
 
 	// Manager for all the StelObjects of the program
 	StelObjectMgr* stelObjectMgr;
@@ -226,9 +227,15 @@ private:
 	// The audio manager.  Must execute in the main thread.
 	StelAudioMgr* audioMgr;
 
+	// The video manager.  Must execute in the main thread.
+	StelVideoMgr* videoMgr;
+
 	StelSkyLayerMgr* skyImageMgr;
 
 	StelGuiBase* stelGui;
+
+	// Used to collect wheel events
+	QTimer * wheelEventTimer;
 
 	float fps;
 	int frame;
@@ -237,8 +244,8 @@ private:
 	//! Define whether we are in night vision mode
 	bool flagNightVision;
 
-	//! Define whether we use opengl shaders
-	bool useGLShaders;
+	//! Define whether solar shadows should be rendered (using GLSL shaders)
+	bool renderSolarShadows;
 
 	QSettings* confSettings;
 
@@ -247,7 +254,7 @@ private:
 
 	static QTime* qtime;
 
-	// Temporary variables used to store the last gl window resize
+	// Temporary variables used to store the last window resize
 	// if the core was not yet initialized
 	int saveProjW;
 	int saveProjH;

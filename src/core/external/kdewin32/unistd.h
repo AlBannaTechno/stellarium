@@ -21,9 +21,11 @@
 #define _KDEWIN_UNISTD_H
 
 #include "kdewin32/sys/types.h"
+#ifndef _MSC_BUILD 
 #include <../include/unistd.h>
 
 #include <winsock2.h>
+#endif
 
 #define environ _environ
 
@@ -99,7 +101,9 @@ int link(const char *__name1, const char *__name2);
 
 int pipe(int *fd);
 
+#ifndef __MINGW64__
 pid_t fork(void);
+#endif
 
 pid_t setsid(void);
 

@@ -1,12 +1,24 @@
 #!/usr/bin/perl
 
+# This is a helper script of download_tle_find_new.sh
+# It accepts a TLE list, checks if the satellites in it already are listed in
+# satellites.json, and if not, outputs appropriately formatted JSON entries.
+# The new satellites are added to the groups passed as parameters.
+
+# SUGGESTION: Instead of striping the Celestrak status code (the char in []
+# sometimes added after the name), use it to set the "non-operation" group
+# instead of arbitrarily adding it to all sats from certain sources
+# (see download_tle_find_new.sh)
+# Key from Celestrak.com: [+] = Operational, [-] = Nonoperational,
+# for others see at the bottom of http://celestrak.com/NORAD/elements/master.asp
+
 #my $groups = "\"scientific\", \"weather\", \"non-operational\"";
 map { s/^/"/; s/$/"/; } @ARGV;
 my $groups = join(", ", @ARGV);
 
 my %ignore;
 
-open(SAT, "<satellites.json") || die "cannot open existing satellites.json file";
+open(SAT, "<satellites.json") || die "Cannot open existing satellites.json file";
 while(<SAT>) {
 	chomp;
 	if (/^\s*\"([^"]+)":\s*$/) {
@@ -16,9 +28,13 @@ while(<SAT>) {
 
 my(%h);
 
+my $count = 0;
+
 while(<STDIN>) {
 	chomp;
 	s/\s+$//;
+	$_ =~ /^2\s(\d+)\s/;
+	$h{'id'} = $1; 
 	if (/^1/) { $h{'tle1'} = $_; }
 	elsif (/^2/) {
 		$h{'tle2'} = $_;
@@ -27,13 +43,15 @@ while(<STDIN>) {
 	}
 	else { 
 		s/\s*\[[^\]]+\]\s*$//; 
-		$h{'id'} = $_; 
+		$h{'name'} = $_; 
 	}
 }
 
+print STDERR "Added " . $count . " new in [" . $groups . "]\n";
+
 sub out {
 	if (defined($ignore{$h{'id'}})) { 
-		print STDERR "ignoring " . $h{'id'} . "\n";
+		print STDERR "Ignoring " . $h{'id'} . "/" . $h{'name'} . "\n";
 		return;
 	}
 
@@ -41,9 +59,11 @@ sub out {
 	print  "\t\t{\n";
 	print  "\t\t\t\"groups\": [$groups],\n";
 	print  "\t\t\t\"orbitVisible\": false,\n";
+	printf "\t\t\t\"name\": \"%s\",\n", $h{'name'};
 	printf "\t\t\t\"tle1\": \"%s\",\n", $h{'tle1'};
 	printf "\t\t\t\"tle2\": \"%s\",\n", $h{'tle2'};
 	print  "\t\t\t\"visible\": false\n";
 	print  "\t\t},\n";
 
+	$count++;
 }

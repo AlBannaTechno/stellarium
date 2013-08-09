@@ -2,6 +2,7 @@
  * Stellarium
  * Copyright (C) 2006 Fabien Chereau
  * Copyright (C) 2010 Bogdan Marinov (add/remove landscapes feature)
+ * Copyright (C) 2012 Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _LANDSCAPEMGR_HPP_
@@ -40,6 +41,22 @@ class QSettings;
 class LandscapeMgr : public StelModule
 {
 	Q_OBJECT
+	Q_PROPERTY(bool atmosphereDisplayed
+			   READ getFlagAtmosphere
+			   WRITE setFlagAtmosphere
+			   NOTIFY atmosphereDisplayedChanged)
+	Q_PROPERTY(bool cardinalsPointsDisplayed
+			   READ getFlagCardinalsPoints
+			   WRITE setFlagCardinalsPoints
+			   NOTIFY cardinalsPointsDisplayedChanged)
+	Q_PROPERTY(bool fogDisplayed
+			   READ getFlagFog
+			   WRITE setFlagFog
+			   NOTIFY fogDisplayedChanged)
+	Q_PROPERTY(bool landscapeDisplayed
+			   READ getFlagLandscape
+			   WRITE setFlagLandscape
+			   NOTIFY landscapeDisplayedChanged)
 
 public:
 	LandscapeMgr();
@@ -54,7 +71,7 @@ public:
 	virtual void init();
 
 	//! Draw the landscape graphics, cardinal points and atmosphere.
-	virtual void draw(StelCore* core);
+	virtual void draw(StelCore* core, class StelRenderer* renderer);
 
 	//! Update time-dependent state.
 	//! Includes:
@@ -134,12 +151,12 @@ public slots:
 	//! Get flag for displaying Landscape.
 	bool getFlagLandscape() const;
 	//! Set flag for displaying Landscape.
-	void setFlagLandscape(bool b);
+	void setFlagLandscape(const bool displayed);
 
 	//! Get flag for displaying Fog.
 	bool getFlagFog() const;
 	//! Set flag for displaying Fog.
-	void setFlagFog(bool b);
+	void setFlagFog(const bool displayed);
 
 	//! Return the value of the flag determining if a change of landscape will update the observer location.
 	bool getFlagLandscapeSetsLocation() const {return flagLandscapeSetsLocation;}
@@ -149,7 +166,7 @@ public slots:
 	//! Get flag for displaying Cardinals Points.
 	bool getFlagCardinalsPoints() const;
 	//! Set flag for displaying Cardinals Points.
-	void setFlagCardinalsPoints(bool b);
+	void setFlagCardinalsPoints(const bool displayed);
 
 	//! Get Cardinals Points color.
 	Vec3f getColorCardinalPoints() const;
@@ -159,7 +176,7 @@ public slots:
 	//! Get flag for displaying Atmosphere.
 	bool getFlagAtmosphere() const;
 	//! Set flag for displaying Atmosphere.
-	void setFlagAtmosphere(bool b);
+	void setFlagAtmosphere(const bool displayed);
 
 	//! Get atmosphere fade duration in s.
 	float getAtmosphereFadeDuration() const;
@@ -209,24 +226,24 @@ public slots:
 	//! @todo Find a better way to pass error messages.
 	QString installLandscapeFromArchive(QString pathToSourceArchive, bool display = false, bool forAllUsers = false);
 
-	//! Install a landscape from a directory.
-	//! Expected directory structure: the name of the directory that contains
-	//! a landscape.ini file is assumed to be the landscape ID and should be
-	//! unique.
-	//! This directory and all files in it will be installed, but its
-	//! subdirectories will be skipped along with any other files or
-	//! directories in the archive.
-	//! @param pathToSourceLandscapeIni path to a landscape.ini file. Its parent
-	//! directory is assumed to be the landscape source directory.
-	//! @param display If true, the landscape will be set to be the current
-	//! landscape after installation.
-	//! @param forAllUsers If true, this function will try to install the
-	//! landscape in a way that meakes it is available to all users of this
-	//! computer. May require running Stellarium as an administrator (root)
-	//! on some Windows or *nix systems. (NOT IMPLEMENTED!)
-	//! @returns the installed landscape's identifier (the folder name), or
-	//! an empty string on failure.
-	//QString installLandscapeFromDirectory(QString pathToSourceLandscapeIni, bool display = false, bool forAllUsers = false);
+	// //! Install a landscape from a directory.
+	// //! Expected directory structure: the name of the directory that contains
+	// //! a landscape.ini file is assumed to be the landscape ID and should be
+	// //! unique.
+	// //! This directory and all files in it will be installed, but its
+	// //! subdirectories will be skipped along with any other files or
+	// //! directories in the archive.
+	// //! @param pathToSourceLandscapeIni path to a landscape.ini file. Its parent
+	// //! directory is assumed to be the landscape source directory.
+	// //! @param display If true, the landscape will be set to be the current
+	// //! landscape after installation.
+	// //! @param forAllUsers If true, this function will try to install the
+	// //! landscape in a way that meakes it is available to all users of this
+	// //! computer. May require running Stellarium as an administrator (root)
+	// //! on some Windows or *nix systems. (NOT IMPLEMENTED!)
+	// //! @returns the installed landscape's identifier (the folder name), or
+	// //! an empty string on failure.
+	// QString installLandscapeFromDirectory(QString pathToSourceLandscapeIni, bool display = false, bool forAllUsers = false);
 
 	//! This function removes a landscape from the user data directory.
 	//! It tries to recursively delete all files in the landscape directory
@@ -234,7 +251,7 @@ public slots:
 	//! If the function encounters any file that can't be deleted
 	//! it aborts the operation (previously deleted files are not restored).
 	//! Landscapes that were packaged with Stellarium can't be removed,
-	//! thanks to the #packagedtLandscapeIDs list.
+	//! thanks to the #packagedLandscapeIDs list.
 	//! @param landscapeID an installed landscape's identifier (the folder name)
 	//! @todo Find a better way to pass error messages.
 	bool removeLandscape(QString landscapeID);
@@ -252,6 +269,11 @@ public slots:
 	quint64 loadLandscapeSize(QString landscapeID);
 
 signals:
+	void atmosphereDisplayedChanged(const bool displayed);
+	void cardinalsPointsDisplayedChanged(const bool displayed);
+	void fogDisplayedChanged(const bool displayed);
+	void landscapeDisplayedChanged(const bool displayed);
+
 	//! Emitted when a landscape has been installed or un-installed.
 	//! For example, it is used to update the list of landscapes in
 	//! the Sky and viewing options window (the ViewDialog class)
@@ -283,6 +305,11 @@ private slots:
 
 	//! Translate labels to new language settings.
 	void updateI18n();	
+
+	//! Return the value of the initial brightness of landscape
+	float getInitialLandscapeBrightness() const {return initialLandscapeBrightness;}
+	//! Set the value of the initial brightness of landscape.
+	void setInitialLandscapeBrightness(float b) {initialLandscapeBrightness=b;}
 
 private:
 	//! Get light pollution luminance level.
@@ -323,6 +350,8 @@ private:
 	//! manually on changes.
 	//! @todo Find a way to update it automatically.
 	QStringList packagedLandscapeIDs;
+
+	float initialLandscapeBrightness;
 };
 
 #endif // _LANDSCAPEMGR_HPP_

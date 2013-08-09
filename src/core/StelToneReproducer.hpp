@@ -13,11 +13,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STELTONEREPRODUCER_HPP_
 #define _STELTONEREPRODUCER_HPP_
+
+#include <QDebug>
+
 
 //! Converts tones in function of the eye adaptation to luminance.
 //! The aim is to get on the screen something which is perceptualy accurate,
@@ -131,7 +134,23 @@ public:
 	float adaptLuminanceScaledLn(float lnWorldLuminance, float pFact=0.5f) const
 	{
 		const float lnPix0p0001 = -8.0656104861f;
-		return std::exp(((lnInputScale+lnWorldLuminance+lnPix0p0001)*alphaWaOverAlphaDa+lnTerm2+lnOneOverMaxdL)*pFact);
+		//Needs better name
+		const float temp        = ((lnInputScale + lnWorldLuminance + lnPix0p0001) * 
+		                            alphaWaOverAlphaDa+lnTerm2 + lnOneOverMaxdL) * pFact;
+
+		// Optimization:
+		// Always using exp here takes 6-9% of runtime in release mode.
+		// This code is used to determine point source radius.
+		//
+		// If this value is < 5 (and < 4, for that matter), the star won't 
+		// even be displayed as it's radius is too low. We also get rid 
+		// of ~90% of exp calls.
+		if(temp < -5.0f)
+		{
+			return 0.0f;
+		}
+
+		return std::exp(temp);
 	}
 	
 	//! Convert from xyY color system to RGB.

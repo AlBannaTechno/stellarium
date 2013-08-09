@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "CLIProcessor.hpp"
@@ -50,7 +50,7 @@ void CLIProcessor::parseCLIArgsPreConfig(const QStringList& argList)
 		          << "--help (or -h)          : This cruft.\n"
 		          << "--config-file (or -c)   : Use an alternative name for the config file\n"
 		          << "--user-dir (or -u)      : Use an alternative user data directory\n"
-		          << "--safe-mode (or -s)     : Disable GL shaders and use older GL engine\n"
+		          << "--safe-mode (or -s)     : Disable shaders and use older GL renderer\n"
 		          << "                          Try this is you have graphics problems\n"
 		          << "--full-screen (or -f)   : With argument \"yes\" or \"no\" over-rides\n"
 		          << "                          the full screen setting in the config file\n"
@@ -188,7 +188,7 @@ void CLIProcessor::parseCLIArgsPostConfig(const QStringList& argList, QSettings*
 				qWarning() << "WARNING: --sky-date argument has unrecognised format  (I want yyyymmdd)";
 		}
 
-		if (skyTime.isEmpty())
+		if (!skyTime.isEmpty())
 		{
 			QRegExp timeRx("\\d{1,2}:\\d{2}:\\d{2}");
 			if (timeRx.exactMatch(skyTime))

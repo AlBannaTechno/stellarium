@@ -25,6 +25,10 @@ Print program name and version and exit.
 
 Print a brief synopsis of program options and exit.
 
+=item B<--safe-mode>
+
+Do not use OpenGL2 features (such as shaders). Useful on systems that report support for OpenGL 2, but its implementation is buggy. Used as a work-around for the "broken fonts" bug.
+
 =item B<-c, --config-file> I<file>
 
 Use I<file> for the config filename instead of the default F<config.ini>.
@@ -158,13 +162,13 @@ Main website: L<http://stellarium.org/>
 
 Wiki: L<http://stellarium.org/wiki/>
 
-Forums: L<http://sourceforge.net/forum/forum.php?forum_id=278769>
+Forums: L<http://sourceforge.net/projects/stellarium/forums>
 
-Downloads: L<https://sourceforge.net/project/showfiles.php?group_id=48857>
+Downloads: L<http://sourceforge.net/projects/stellarium/files/>
 
-Support Requests:
+Support Requests: L<https://answers.launchpad.net/stellarium>
 
-Bug Tracker:
+Bug Tracker: L<https://bugs.launchpad.net/stellarium>
 
 =item The Stellarium User Guide
 
@@ -179,8 +183,10 @@ of this page.
 
 =head1 AUTHOR
 
-Fabien Chéreau, Rob Spearman, Johan Meuris, Matthew Gates, 
-Johannes Gajdosik, Nigel Kerr, Andras Mohari.
+Fabien Chereau, Rob Spearman, Johan Meuris, Matthew Gates, 
+Johannes Gajdosik, Nigel Kerr, Andras Mohari, Bogdan Marinov, 
+Timothy Reaves, Mike Storm, Diego Marcos, Guillaume Chereau, 
+Alexander Wolf, Georg Zotti
 
 x14817
 

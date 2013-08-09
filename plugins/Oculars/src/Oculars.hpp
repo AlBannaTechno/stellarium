@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 Timothy Reaves
+ * Copyright (C) 2011 Bogdan Marinov
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _OCULARS_HPP_
@@ -25,6 +26,7 @@
 #include "CCD.hpp"
 #include "Ocular.hpp"
 #include "Telescope.hpp"
+#include "Lens.hpp"
 
 #include <QFont>
 #include <QSettings>
@@ -32,7 +34,9 @@
 #define MIN_OCULARS_INI_VERSION 0.12
 
 QT_BEGIN_NAMESPACE
+class QAction;
 class QKeyEvent;
+class QMenu;
 class QMouseEvent;
 class QPixmap;
 class QSettings;
@@ -41,10 +45,13 @@ QT_END_NAMESPACE
 
 class StelButton;
 
-//! This is an example of a plug-in which can be dynamically loaded into stellarium
+//! Main class of the Oculars plug-in.
 class Oculars : public StelModule
 {
 	Q_OBJECT
+	//BM: Temporary, until the GUI is finalized and some other method of getting
+	//info from the main class is implemented.
+	friend class OcularsGuiPanel;
 
 public:
 	Oculars();
@@ -56,7 +63,7 @@ public:
 	virtual void init();
 	virtual void deinit();
 	virtual bool configureGui(bool show=true);
-	virtual void draw(StelCore* core);
+	virtual void draw(StelCore* core, class StelRenderer* renderer);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 	//! Returns the module-specific style sheet.
 	//! The main StelStyle instance should be passed.
@@ -68,11 +75,19 @@ public:
 	virtual void handleMouseClicks(class QMouseEvent* event);
 	virtual void update(double) {;}
 
+	QString getDimensionsString(double fovX, double fovY) const;
+	QString getFOVString(double fov) const;
+
 public slots:
+	//! Update the ocular, telescope and sensor lists after the removal of a member.
+	//! Necessary because of the way model/view management in the OcularDialog
+	//! is implemented.
+	void updateLists();
 	void ccdRotationReset();
 	void decrementCCDIndex();
 	void decrementOcularIndex();
 	void decrementTelescopeIndex();
+	void decrementLensIndex();
 	void displayPopupMenu();
 	//! This method is called with we detect that our hot key is pressed.  It handles
 	//! determining if we should do anything - based on a selected object.
@@ -80,18 +95,32 @@ public slots:
 	void incrementCCDIndex();
 	void incrementOcularIndex();
 	void incrementTelescopeIndex();
-	void rotateCCD(QString amount); //<! amount must be a number.
-	void selectCCDAtIndex(QString indexString); //<! indexString must be an integer, in the range of -1:ccds.count()
-	void selectOcularAtIndex(QString indexString);  //<! indexString must be an integer, in the range of -1:oculars.count()
-	void selectTelescopeAtIndex(QString indexString);  //<! indexString must be an integer, in the range of -1:telescopes.count()
+	void incrementLensIndex();
+	void disableLens();
+	void rotateCCD(QString amount); //!< amount must be a number.
+	void selectCCDAtIndex(QString indexString); //!< indexString must be an integer, in the range of -1:ccds.count()
+	void selectOcularAtIndex(QString indexString);  //!< indexString must be an integer, in the range of -1:oculars.count()
+	void selectTelescopeAtIndex(QString indexString);  //!< indexString must be an integer, in the range of -1:telescopes.count()
+	void selectLensAtIndex(QString indexString); //!< indexString must be an integer, in the range -1:lense.count<()
+	//! Toggles the sensor frame overlay.
+	void toggleCCD(bool show);
+	//! Toggles the sensor frame overlay (overloaded for blind switching).
 	void toggleCCD();
-	void toggleCrosshair();
+	void toggleCrosshairs(bool show = true);
+	//! Toggles the Telrad sight overlay.
+	void toggleTelrad(bool show);
+	//! Toggles the Telrad sight overlay (overloaded for blind switching).
 	void toggleTelrad();
+	void enableGuiPanel(bool enable = true);
+
+	void setFlagDecimalDegrees(const bool b);
+	bool getFlagDecimalDegrees(void) const;
 
 signals:
 	void selectedCCDChanged();
 	void selectedOcularChanged();
 	void selectedTelescopeChanged();
+	void selectedLensChanged();
 
 private slots:
 	//! Signifies a change in ocular or telescope.  Sets new zoom level.
@@ -100,28 +129,29 @@ private slots:
 	void setRequireSelection(bool state);
 	void setScaleImageCircle(bool state);
 	void setScreenFOVForCCD();
+	void retranslateGui();
 	void setStelStyle(const QString& style);
 
 private:
 	//! Set up the Qt actions needed to activate the plugin.
 	void initializeActivationActions();
-	
+
 	//! Returns TRUE if at least one bincular is defined.
 	bool isBinocularDefined();
 
 	//! Reneders the CCD bounding box on-screen.  A telescope must be selected, or this call does nothing.
-	void paintCCDBounds();
+	void paintCCDBounds(class StelRenderer* renderer);
 	//! Renders crosshairs into the viewport.
-	void paintCrosshairs();
+	void paintCrosshairs(class StelRenderer* renderer);
 	//! Paint the mask into the viewport.
-	void paintOcularMask();
+	void paintOcularMask(class StelRenderer* renderer);
 	//! Renders the three Telrad circles, but only if not in ocular mode.
-	void paintTelrad();
+	void paintTelrad(class StelRenderer* renderer);
 
 
 	//! Paints the text about the current object selections to the upper right hand of the screen.
 	//! Should only be called from a 'ready' state; currently from the draw() method.
-	void paintText(const StelCore* core);
+	void paintText(const StelCore* core, StelRenderer* renderer);
 
 	//! This method is called by the zoom() method, when this plugin is toggled off; it resets to the default view.
 	void unzoomOcular();
@@ -142,13 +172,27 @@ private:
 	//! This method is called by the zoom() method, when this plugin is toggled on; it resets the zoomed view.
 	void zoomOcular();
 
+	void hideUsageMessageIfDisplayed();
+
+	//! Creates the sub-menu listing lense in the pop-up menu
+	QMenu* addLensSubmenu(QMenu* parent);
+
+	//! Creates the sub-menu listing telescopes in the pop-up menu.
+	QMenu* addTelescopeSubmenu(QMenu* parent);
+
+	//! Returns selected lens,or NULL if no lens is selected
+	Lens* selectedLens();
+
 	//! A list of all the oculars defined in the ini file.  Must have at least one, or module will not run.
 	QList<CCD *> ccds;
 	QList<Ocular *> oculars;
 	QList<Telescope *> telescopes;
-	int selectedCCDIndex; //<! index of the current CCD, in the range of -1:ccds.count().  -1 means no CCD is selected.
-	int selectedOcularIndex; //<! index of the current ocular, in the range of -1:oculars.count().  -1 means no ocular is selected.
-	int selectedTelescopeIndex; //<! index of the current telescope, in the range of -1:telescopes.count(). -1 means none is selected.
+	QList<Lens *> lense;
+
+	int selectedCCDIndex; //!< index of the current CCD, in the range of -1:ccds.count().  -1 means no CCD is selected.
+	int selectedOcularIndex; //!< index of the current ocular, in the range of -1:oculars.count().  -1 means no ocular is selected.
+	int selectedTelescopeIndex; //!< index of the current telescope, in the range of -1:telescopes.count(). -1 means none is selected.
+	int selectedLensIndex; //!<  index of the current lens, in the range of -1:lense.count(). -1 means no lens is selected
 
 	QFont font;					//!< The font used for drawing labels.
 	bool flagShowCCD;				//!< flag used to track f we are in CCD mode.
@@ -158,21 +202,30 @@ private:
 	int usageMessageLabelID;	//!< the id of the label showing the usage message. -1 means it's not displayed.
 
 	bool flagAzimuthalGrid;		//!< Flag to track if AzimuthalGrid was displayed at activation.
+	bool flagGalacticGrid;		//!< Flag to track if GalacticGrid was displayed at activation.
 	bool flagEquatorGrid;		//!< Flag to track if EquatorGrid was displayed at activation.
 	bool flagEquatorJ2000Grid;	//!< Flag to track if EquatorJ2000Grid was displayed at activation.
 	bool flagEquatorLine;		//!< Flag to track if EquatorLine was displayed at activation.
 	bool flagEclipticLine;		//!< Flag to track if EclipticLine was displayed at activation.
+	bool flagEclipticJ2000Grid;	//!< Flag to track if EclipticJ2000Grid was displayed at activation.
 	bool flagMeridianLine;		//!< Flag to track if MeridianLine was displayed at activation.
+	bool flagHorizonLine;		//!< Flag to track if HorizonLine was displayed at activation.
+	bool flagGalacticPlaneLine;	//!< Flag to track if GalacticPlaneLine was displayed at activation.
+	bool flagAdaptation;		//!< Flag to track if adaptationCheckbox was enabled at activation.
 
-	double ccdRotationAngle;	//<! The angle to rotate the CCD bounding box. */
+	double ccdRotationAngle;	//!< The angle to rotate the CCD bounding box. */
 	double maxEyepieceAngle;	//!< The maximum aFOV of any eyepiece.
 	bool requireSelection;		//!< Read from the ini file, whether an object is required to be selected to zoom in.
 	bool useMaxEyepieceAngle;	//!< Read from the ini file, whether to scale the mask based aFOV.
+	//! Display the GUI control panel
+	bool guiPanelEnabled;
+	bool flagDecimalDegrees;
 
-	QSignalMapper* ccdRotationSignalMapper;  //<! Used to rotate the CCD. */
-	QSignalMapper* ccdsSignalMapper; //<! Used to determine which CCD was selected from the popup navigator. */
-	QSignalMapper* ocularsSignalMapper; //<! Used to determine which ocular was selected from the popup navigator. */
-	QSignalMapper* telescopesSignalMapper; //<! Used to determine which telescope was selected from the popup navigator. */
+	QSignalMapper* ccdRotationSignalMapper;  //!< Used to rotate the CCD. */
+	QSignalMapper* ccdsSignalMapper; //!< Used to determine which CCD was selected from the popup navigator. */
+	QSignalMapper* ocularsSignalMapper; //!< Used to determine which ocular was selected from the popup navigator. */
+	QSignalMapper* telescopesSignalMapper; //!< Used to determine which telescope was selected from the popup navigator. */
+	QSignalMapper* lenseSignalMapper; //!< Used to determine which lens was selected from the popup navigator */
 
 	// for toolbar button
 	QPixmap* pxmapGlow;
@@ -182,6 +235,19 @@ private:
 
 	OcularDialog *ocularDialog;
 	bool ready; //!< A flag that determines that this module is usable.  If false, we won't open.
+
+	QAction* actionShowOcular;
+	QAction* actionShowCrosshairs;
+	QAction* actionShowSensor;
+	QAction* actionShowTelrad;
+	QAction* actionConfiguration;
+	QAction* actionMenu;
+	QAction* actionTelescopeIncrement;
+	QAction* actionTelescopeDecrement;
+	QAction* actionOcularIncrement;
+	QAction* actionOcularDecrement;
+
+	class OcularsGuiPanel* guiPanel;
 
 	//Styles
 	QByteArray normalStyleSheet;
@@ -204,4 +270,3 @@ public:
 };
 
 #endif /*_OCULARS_HPP_*/
-

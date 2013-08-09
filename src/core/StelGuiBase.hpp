@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STELGUIBASE_HPP_
@@ -49,20 +49,6 @@ public:
 	//! @return a pointer to the progress bar.
 	virtual class QProgressBar* addProgressBar() =0;
 
-	//! Add a new action managed by the GUI. This method should be used to add new shortcuts to the program
-	//! @param actionName qt object name. Used as a reference for later uses
-	//! @param text the text to display when hovering, or in the help window
-	//! @param shortCut the qt shortcut to use
-	//! @param helpGroup hint on how to group the text in the help window
-	//! @param checkable whether the action should be checkable
-	//! @param autoRepeat whether the action should be autorepeated
-	virtual QAction* addGuiActions(const QString& actionName, const QString& text, const QString& shortCut, const QString& helpGroup, bool checkable=true, bool autoRepeat=false);
-
-	//! Get a pointer on an action managed by the GUI
-	//! @param actionName qt object name for this action
-	//! @return a pointer on the QAction object or NULL if don't exist
-	virtual QAction* getGuiActions(const QString& actionName);
-
 	virtual void forceRefreshGui() {;}
 
 	//! Show whether the GUI is visible.
@@ -93,7 +79,7 @@ public:
 	//! Get the instance of StelGuiBase implmenting the GUI.
 	virtual class StelGuiBase* getStelGuiBase() const = 0;
 };
-Q_DECLARE_INTERFACE(StelGuiPluginInterface, "stellarium.StelGuiPluginInterface/1.0");
+Q_DECLARE_INTERFACE(StelGuiPluginInterface, "stellarium.StelGuiPluginInterface/1.0")
 
 
 #endif // _STELGUIBASE_HPP_

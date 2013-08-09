@@ -3,6 +3,7 @@
  * Copyright (C) 2006 Fabien Chereau
  * Copyright (C) 2010 Bogdan Marinov (add/remove landscapes feature)
  * Copyright (C) 2011 Alexander Wolf
+ * Copyright (C) 2012 Timothy Reaves
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +17,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include <QDebug>
@@ -25,12 +26,6 @@
 #include <QDir>
 #include <QFile>
 #include <QTemporaryFile>
-
-#ifdef USE_OPENGL_ES2
- #include "GLES2/gl2.h"
-#else
- #include <QtOpenGL>
-#endif
 
 #include <stdexcept>
 
@@ -46,7 +41,7 @@
 #include "Planet.hpp"
 #include "StelIniParser.hpp"
 #include "StelSkyDrawer.hpp"
-#include "StelPainter.hpp"
+#include "renderer/StelRenderer.hpp"
 #include "karchive.h"
 #include "kzip.h"
 
@@ -56,7 +51,7 @@ class Cardinals
 public:
 	Cardinals(float _radius = 1.);
 	virtual ~Cardinals();
-	void draw(const StelCore* core, double latitude) const;
+	void draw(const StelCore* core, StelRenderer* renderer, double latitude) const;
 	void setColor(const Vec3f& c) {color = c;}
 	Vec3f get_color() {return color;}
 	void updateI18n();
@@ -90,11 +85,10 @@ Cardinals::~Cardinals()
 
 // Draw the cardinals points : N S E W
 // handles special cases at poles
-void Cardinals::draw(const StelCore* core, double latitude) const
+void Cardinals::draw(const StelCore* core, StelRenderer* renderer, double latitude) const
 {
 	const StelProjectorP prj = core->getProjection(StelCore::FrameAltAz, StelCore::RefractionOff);
-	StelPainter sPainter(prj);
-	sPainter.setFont(font);
+	renderer->setFont(font);
 
 	if (!fader.getInterstate()) return;
 
@@ -110,33 +104,47 @@ void Cardinals::draw(const StelCore* core, double latitude) const
 	if (latitude ==  90.0 ) d[0] = d[1] = d[2] = d[3] = sSouth;
 	if (latitude == -90.0 ) d[0] = d[1] = d[2] = d[3] = sNorth;
 
-	sPainter.setColor(color[0],color[1],color[2],fader.getInterstate());
-	glEnable(GL_BLEND);
-	sPainter.enableTexture2d(true);
-	// Normal transparency mode
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	renderer->setGlobalColor(color[0], color[1], color[2], fader.getInterstate());
+	renderer->setBlendMode(BlendMode_Alpha);
 
 	Vec3f pos;
 	Vec3f xy;
 
-	float shift = sPainter.getFontMetrics().width(sNorth)/2;
+	float shift = QFontMetrics(font).width(sNorth)/2;
+	if (core->getProjection(StelCore::FrameJ2000)->getMaskType() == StelProjector::MaskDisk)
+		shift = 0;
 
 	// N for North
 	pos.set(-1.f, 0.f, 0.f);
-	if (prj->project(pos,xy)) sPainter.drawText(xy[0], xy[1], d[0], 0., -shift, -shift, false);
+	if (prj->project(pos, xy)) 
+	{
+		renderer->drawText(TextParams(xy[0], xy[1], d[0])
+		                  .shift(-shift, -shift).useGravity());
+	}
 
 	// S for South
 	pos.set(1.f, 0.f, 0.f);
-	if (prj->project(pos,xy)) sPainter.drawText(xy[0], xy[1], d[1], 0., -shift, -shift, false);
+	if (prj->project(pos, xy)) 
+	{
+		renderer->drawText(TextParams(xy[0], xy[1], d[1])
+		                  .shift(-shift, -shift).useGravity());
+	}
 
 	// E for East
 	pos.set(0.f, 1.f, 0.f);
-	if (prj->project(pos,xy)) sPainter.drawText(xy[0], xy[1], d[2], 0., -shift, -shift, false);
+	if (prj->project(pos, xy)) 
+	{
+		renderer->drawText(TextParams(xy[0], xy[1], d[2])
+		                  .shift(-shift, -shift).useGravity());
+	}
 
 	// W for West
 	pos.set(0.f, -1.f, 0.f);
-	if (prj->project(pos,xy)) sPainter.drawText(xy[0], xy[1], d[3], 0., -shift, -shift, false);
-
+	if (prj->project(pos, xy)) 
+	{
+		renderer->drawText(TextParams(xy[0], xy[1], d[3])
+		                  .shift(-shift, -shift).useGravity());
+	}
 }
 
 // Translate cardinal labels with gettext to current sky language and update font for the language
@@ -194,8 +202,8 @@ void LandscapeMgr::update(double deltaTime)
 	// Compute the moon position in local coordinate
 	Vec3d moonPos = ssystem->getMoon()->getAltAzPosApparent(core);
 	atmosphere->computeColor(core->getJDay(), sunPos, moonPos,
-		ssystem->getMoon()->getPhase(ssystem->getEarth()->getHeliocentricEclipticPos()),
-		core, core->getCurrentLocation().latitude, core->getCurrentLocation().altitude,
+		ssystem->getMoon()->getPhaseAngle(ssystem->getEarth()->getHeliocentricEclipticPos()),
+		core, ssystem->getEclipseFactor(core), core->getCurrentLocation().latitude, core->getCurrentLocation().altitude,
 		15.f, 40.f);	// Temperature = 15c, relative humidity = 40%
 
 	core->getSkyDrawer()->reportLuminanceInFov(3.75+atmosphere->getAverageLuminance()*3.5, true);
@@ -233,13 +241,14 @@ void LandscapeMgr::update(double deltaTime)
 
 	// We define the brigthness zero when the sun is 8 degrees below the horizon.
 	float sinSunAngleRad = sin(qMin(M_PI_2, asin(sunPos[2])+8.*M_PI/180.));
+	float initBrightness = getInitialLandscapeBrightness();
 
 	if(sinSunAngleRad < -0.1/1.5 )
-		landscapeBrightness = 0.01;
+		landscapeBrightness = initBrightness;
 	else
-		landscapeBrightness = (0.01 + 1.5*(sinSunAngleRad+0.1/1.5));
+		landscapeBrightness = (initBrightness + 1.5*(sinSunAngleRad+0.1/1.5));
 	if (moonPos[2] > -0.1/1.5)
-		landscapeBrightness += qMax(0.2/-12.*ssystem->getMoon()->getVMagnitude(core),0.)*moonPos[2];
+		landscapeBrightness += qMax(0.2/-12.*ssystem->getMoon()->getVMagnitude(core, true),0.)*moonPos[2];
 
 	// TODO make this more generic for non-atmosphere planets
 	if(atmosphere->getFadeIntensity() == 1)
@@ -249,20 +258,30 @@ void LandscapeMgr::update(double deltaTime)
 		landscapeBrightness *= (atmosphere->getRealDisplayIntensityFactor()+0.1);
 	}
 
+	// Brightness can't be over 1.f (see https://bugs.launchpad.net/stellarium/+bug/1115364)
+	if (landscapeBrightness>0.95)
+		landscapeBrightness = 0.95;
+
 	// TODO: should calculate dimming with solar eclipse even without atmosphere on
-	landscape->setBrightness(landscapeBrightness+0.05);
+	if (core->getCurrentLocation().planetName.contains("Sun"))
+	{
+		// NOTE: Simple workaround for brightness of landscape when observing from the Sun.
+		landscape->setBrightness(1.f);
+	}
+	else
+		landscape->setBrightness(landscapeBrightness+0.05);
 }
 
-void LandscapeMgr::draw(StelCore* core)
+void LandscapeMgr::draw(StelCore* core, class StelRenderer* renderer)
 {
 	// Draw the atmosphere
-	atmosphere->draw(core);
+	atmosphere->draw(core, renderer);
 
 	// Draw the landscape
-	landscape->draw(core);
+	landscape->draw(core, renderer);
 
 	// Draw the cardinal points
-	cardinalsPoints->draw(core, StelApp::getInstance().getCore()->getCurrentLocation().latitude);
+	cardinalsPoints->draw(core, renderer, StelApp::getInstance().getCore()->getCurrentLocation().latitude);
 }
 
 void LandscapeMgr::init()
@@ -276,18 +295,20 @@ void LandscapeMgr::init()
 	setCurrentLandscapeID(defaultLandscapeID);
 	setFlagLandscape(conf->value("landscape/flag_landscape", conf->value("landscape/flag_ground", true).toBool()).toBool());
 	setFlagFog(conf->value("landscape/flag_fog",true).toBool());
-	setFlagAtmosphere(conf->value("landscape/flag_atmosphere").toBool());
+	setFlagAtmosphere(conf->value("landscape/flag_atmosphere", true).toBool());
 	setAtmosphereFadeDuration(conf->value("landscape/atmosphere_fade_duration",0.5).toFloat());
 	setAtmosphereLightPollutionLuminance(conf->value("viewing/light_pollution_luminance",0.0).toFloat());
 	cardinalsPoints = new Cardinals();
 	cardinalsPoints->setFlagShow(conf->value("viewing/flag_cardinal_points",true).toBool());
 	setFlagLandscapeSetsLocation(conf->value("landscape/flag_landscape_sets_location",false).toBool());
+	// Set initial brightness for landscape. This feature has been added for folks which say "landscape is super dark, please add light". --AW
+	setInitialLandscapeBrightness(conf->value("landscape/initial_brightness", 0.01).toFloat());
 
 	bool ok =true;
-	setAtmosphereBortleLightPollution(conf->value("landscape/init_bortle_scale",3).toInt(&ok));
+	setAtmosphereBortleLightPollution(conf->value("stars/init_bortle_scale",3).toInt(&ok));
 	if (!ok)
 	{
-		conf->setValue("landscape/init_bortle_scale",3);
+		conf->setValue("stars/init_bortle_scale",3);
 		setAtmosphereBortleLightPollution(3);
 		ok = true;
 	}
@@ -343,36 +364,35 @@ bool LandscapeMgr::setCurrentLandscapeID(const QString& id)
 		StelSkyDrawer* drawer=StelApp::getInstance().getCore()->getSkyDrawer();
 
 		if (landscape->getDefaultFogSetting() >-1)
-		  {
-		    setFlagFog((bool) landscape->getDefaultFogSetting());
-		    landscape->setFlagShowFog((bool) landscape->getDefaultFogSetting());
-		  }
+		{
+			setFlagFog((bool) landscape->getDefaultFogSetting());
+			landscape->setFlagShowFog((bool) landscape->getDefaultFogSetting());
+		}
 		if (landscape->getDefaultBortleIndex() > 0)
-		  {
-		    setAtmosphereBortleLightPollution(landscape->getDefaultBortleIndex());
-		    // TODO: HOWTO make the GUI aware of the new value? 
-		    // conf->setValue("landscape/init_bortle_scale", landscape->getDefaultBortleIndex());
-		  }
+		{
+			setAtmosphereBortleLightPollution(landscape->getDefaultBortleIndex());
+			drawer->setBortleScale(landscape->getDefaultBortleIndex());
+		}
 		if (landscape->getDefaultAtmosphericExtinction() >= 0.0)
-		  {
-		    drawer->setExtinctionCoefficient(landscape->getDefaultAtmosphericExtinction());
-		  }
+		{
+			drawer->setExtinctionCoefficient(landscape->getDefaultAtmosphericExtinction());
+		}
 		if (landscape->getDefaultAtmosphericTemperature() > -273.15)
-		  {
-		    drawer->setAtmosphereTemperature(landscape->getDefaultAtmosphericTemperature());
-		  }
+		{
+			drawer->setAtmosphereTemperature(landscape->getDefaultAtmosphericTemperature());
+		}
 		if (landscape->getDefaultAtmosphericPressure() >= 0.0)
-		  {
-		    drawer->setAtmospherePressure(landscape->getDefaultAtmosphericPressure());
-		  }
+		{
+			drawer->setAtmospherePressure(landscape->getDefaultAtmosphericPressure());
+		}
 		else if (landscape->getDefaultAtmosphericPressure() == -1.0)
-		  {
-		    // compute standard pressure for standard atmosphere in given altitude if landscape.ini coded as atmospheric_pressure=-1
-		    // International altitude formula found in Wikipedia.
-		    double alt=landscape->getLocation().altitude;
-		    double p=1013.25*std::pow(1-(0.0065*alt)/288.15, 5.255);
-		    drawer->setAtmospherePressure(p);
-		  }
+		{
+			// compute standard pressure for standard atmosphere in given altitude if landscape.ini coded as atmospheric_pressure=-1
+			// International altitude formula found in Wikipedia.
+			double alt=landscape->getLocation().altitude;
+			double p=1013.25*std::pow(1-(0.0065*alt)/288.15, 5.255);
+			drawer->setAtmospherePressure(p);
+		}
 	}
 	return true;
 }
@@ -411,9 +431,12 @@ void LandscapeMgr::updateI18n()
 	if (cardinalsPoints) cardinalsPoints->updateI18n();
 }
 
-void LandscapeMgr::setFlagLandscape(bool b)
+void LandscapeMgr::setFlagLandscape(const bool displayed)
 {
-	landscape->setFlagShow(b);
+	if(landscape->getFlagShow() != displayed) {
+		landscape->setFlagShow(displayed);
+		emit landscapeDisplayedChanged(displayed);
+	}
 }
 
 bool LandscapeMgr::getFlagLandscape() const
@@ -421,9 +444,12 @@ bool LandscapeMgr::getFlagLandscape() const
 	return landscape->getFlagShow();
 }
 
-void LandscapeMgr::setFlagFog(bool b)
+void LandscapeMgr::setFlagFog(const bool displayed)
 {
-	landscape->setFlagShowFog(b);
+	if (landscape->getFlagShowFog() != displayed) {
+		landscape->setFlagShowFog(displayed);
+		emit fogDisplayedChanged(displayed);
+	}
 }
 
 bool LandscapeMgr::getFlagFog() const
@@ -503,9 +529,12 @@ QString LandscapeMgr::getCurrentLandscapeHtmlDescription() const
 }
 
 //! Set flag for displaying Cardinals Points
-void LandscapeMgr::setFlagCardinalsPoints(bool b)
+void LandscapeMgr::setFlagCardinalsPoints(const bool displayed)
 {
-	cardinalsPoints->setFlagShow(b);
+	if (cardinalsPoints->getFlagShow() != displayed) {
+		cardinalsPoints->setFlagShow(displayed);
+		emit cardinalsPointsDisplayedChanged(displayed);
+	}
 }
 
 //! Get flag for displaying Cardinals Points
@@ -529,10 +558,13 @@ Vec3f LandscapeMgr::getColorCardinalPoints() const
 ///////////////////////////////////////////////////////////////////////////////////////
 // Atmosphere
 //! Set flag for displaying Atmosphere
-void LandscapeMgr::setFlagAtmosphere(bool b)
+void LandscapeMgr::setFlagAtmosphere(const bool displayed)
 {
-	atmosphere->setFlagShow(b);
-	StelApp::getInstance().getCore()->getSkyDrawer()->setFlagHasAtmosphere(b);
+	if (atmosphere->getFlagShow() != displayed) {
+		atmosphere->setFlagShow(displayed);
+		StelApp::getInstance().getCore()->getSkyDrawer()->setFlagHasAtmosphere(displayed);
+		emit atmosphereDisplayedChanged(displayed);
+	}
 }
 
 //! Get flag for displaying Atmosphere
@@ -962,7 +994,11 @@ quint64 LandscapeMgr::loadLandscapeSize(QString landscapeID)
 
 QString LandscapeMgr::getDescription() const
 {
-	QString lang = StelApp::getInstance().getLocaleMgr().getAppLanguage();
+        QString lang = StelApp::getInstance().getLocaleMgr().getAppLanguage();
+        if (!QString("pt_BR zh_CN zh_HK zh_TW").contains(lang))
+        {
+                lang = lang.split("_").at(0);
+        }
 	QString descriptionFile = StelFileMgr::findFile("landscapes/" + getCurrentLandscapeID(), StelFileMgr::Directory) + "/description." + lang + ".utf8";
 	QString desc;
 

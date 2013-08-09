@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STELSPHERICALINDEX_HPP_
@@ -75,7 +75,7 @@ private:
 	struct CountFunc
 	{
 		CountFunc() : nb(0) {;}
-		void operator()(const StelRegionObjectP&)
+		void operator()(const StelRegionObject*)
 		{
 			++nb;
 		}
@@ -239,8 +239,11 @@ private:
 			{
 				foreach (const NodeElem& el, node.elements)
 				{
+					// Optimization: We pass a plain pointer here, not smart pointer.
+					// As long as the FuncObject does not need to store the pointer,
+					// this isn't a problem.
 					if (region->intersects(el.obj->getRegion().data()))
-						func(el.obj);
+						func(&(*el.obj));
 				}
 				foreach (const Node& child, node.children)
 				{
@@ -255,8 +258,11 @@ private:
 			{
 				foreach (const NodeElem& el, node.elements)
 				{
+					// Optimization: We pass a plain pointer here, not smart pointer.
+					// As long as the FuncObject does not need to store the pointer,
+					// this isn't a problem.
 					if (cap.intersects(el.cap))
-						func(el.obj);
+						func(&(*el.obj));
 				}
 				foreach (const Node& child, node.children)
 				{
@@ -272,8 +278,11 @@ private:
 			{
 				foreach (const NodeElem& el, node.elements)
 				{
+					// Optimization: We pass a plain pointer here, not smart pointer.
+					// As long as the FuncObject does not need to store the pointer,
+					// this isn't a problem.
 					if (region->contains(el.obj->getRegion().data()))
-						func(el.obj);
+						func(&(*el.obj));
 				}
 				foreach (const Node& child, node.children)
 				{
@@ -287,8 +296,11 @@ private:
 			//! Process all the objects intersecting the given region using the passed function object.
 			template<class FuncObject> void processAll(const Node& node, FuncObject& func) const
 			{
+				// Optimization: We pass a plain pointer here, not smart pointer.
+				// As long as the FuncObject does not need to store the pointer,
+				// this isn't a problem.
 				foreach (const NodeElem& el, node.elements)
-					func(el.obj);
+					func(&(*el.obj));
 				foreach (const Node& child, node.children)
 					processAll(child, func);
 			}

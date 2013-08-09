@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STAR_HPP_
@@ -36,7 +36,7 @@ typedef short int Int16;
 typedef unsigned short int Uint16;
 
 
-template <class Star> struct SpecialZoneArray;
+template <class Star> class SpecialZoneArray;
 template <class Star> struct SpecialZoneData;
 
 
@@ -55,8 +55,13 @@ static inline float IndexToBV(unsigned char bV) {
 #pragma pack(1)
 #endif
 struct Star1 { // 28 byte
+#ifdef _MSC_BUILD
+  unsigned int hip:24;         // 17 bits needed
+  unsigned int componentIds:8; //  5 bits needed
+#else
   int hip:24;                  // 17 bits needed
   unsigned char componentIds;  //  5 bits needed
+#endif
   Int32 x0;                    // 32 bits needed
   Int32 x1;                    // 32 bits needed
   unsigned char bV;            //  7 bits needed

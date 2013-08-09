@@ -13,9 +13,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
+#include "StelTranslator.hpp"
 #include "TuiNodeDouble.hpp"
 #include <QKeyEvent>
 
@@ -38,7 +39,6 @@ TuiNodeResponse TuiNodeDouble::handleEditingKey(int key)
 		typedDecimal = false;
 		editing = false;
 		response.accepted = true;
-		response.newNode = this;
 		stringValue.setNum(value,'g',-1);
 		emit(setValue(value));
 		return response;
@@ -51,7 +51,6 @@ TuiNodeResponse TuiNodeDouble::handleEditingKey(int key)
 		if (value > maximum)
 			value = maximum;
 		response.accepted = true;
-		response.newNode = this;
 		stringValue.setNum(value,'g',-1);
 		emit(setValue(value));
 		return response;
@@ -64,7 +63,6 @@ TuiNodeResponse TuiNodeDouble::handleEditingKey(int key)
 		if (value < minimum)
 			value = minimum;
 		response.accepted = true;
-		response.newNode = this;
 		stringValue.setNum(value,'g',-1);
 		emit(setValue(value));
 		return response;
@@ -87,7 +85,6 @@ TuiNodeResponse TuiNodeDouble::handleEditingKey(int key)
 			}
 		}
 		response.accepted = true;
-		response.newNode = this;
 	}
 	else if (key>=Qt::Key_0 && key<=Qt::Key_9)
 	{
@@ -128,7 +125,6 @@ TuiNodeResponse TuiNodeDouble::handleEditingKey(int key)
 			}
 		}
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -140,7 +136,6 @@ TuiNodeResponse TuiNodeDouble::handleEditingKey(int key)
 			value = i;
 		stringValue.setNum(value,'g',-1);;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -151,11 +146,11 @@ QString TuiNodeDouble::getDisplayText()
 {
 	if (!editing)
 	{
-		return displayText + QString(":  %1").arg(value);
+		return prefixText + q_(displayText) + QString("  %1").arg(value);
 	}
 	else
 	{
-		return displayText + QString(": >%1<").arg(stringValue);
+		return prefixText + q_(displayText) + QString(" >%1<").arg(stringValue);
 	}
 }
 

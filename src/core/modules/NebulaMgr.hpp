@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _NEBULAMGR_HPP_
@@ -24,23 +24,24 @@
 #include <QString>
 #include <QStringList>
 #include <QFont>
+#include "Nebula.hpp"
 #include "StelObjectType.hpp"
 #include "StelFader.hpp"
 #include "StelSphericalIndex.hpp"
 #include "StelObjectModule.hpp"
-#include "StelTextureTypes.hpp"
 
 class Nebula;
 class StelTranslator;
 class StelToneReproducer;
 class QSettings;
-class StelPainter;
 
 typedef QSharedPointer<Nebula> NebulaP;
 
 //! @class NebulaMgr
 //! Manage a collection of nebulae. This class is used
 //! to display the NGC catalog with information, and textures for some of them.
+// GZ: This doc seems outdated/misleading - photo textures are not mamaged here but in StelSkyImageTile
+
 class NebulaMgr : public StelObjectModule
 {
 	Q_OBJECT
@@ -61,7 +62,7 @@ public:
 	virtual void init();
 
 	//! Draws all nebula objects.
-	virtual void draw(StelCore* core);
+	virtual void draw(StelCore* core, class StelRenderer* renderer);
 
 	//! Update state which is time dependent.
 	virtual void update(double deltaTime) {hintsFader.update((int)(deltaTime*1000)); flagShow.update((int)(deltaTime*1000));}
@@ -92,11 +93,19 @@ public:
 	//! @param maxNbItem the maximum number of returned object names
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
 	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5) const;
+	//! Find and return the list of at most maxNbItem objects auto-completing the passed object English name.
+	//! @param objPrefix the case insensitive first letters of the searched object
+	//! @param maxNbItem the maximum number of returned object names
+	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
+	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5) const;
+	// empty for now
+	virtual QStringList listAllObjects(bool inEnglish) const { Q_UNUSED(inEnglish) return QStringList(); }
+	virtual QString getName() const { return "Nebulae"; }
 
 	///////////////////////////////////////////////////////////////////////////
 	// Properties setters and getters
 public slots:
-	//! Set the color used to draw the nebula circles.
+	//! Set the color used to draw the nebula symbols (circles, boxes. etc).
 	void setCirclesColor(const Vec3f& c);
 	//! Get current value of the nebula circle color.
 	const Vec3f& getCirclesColor(void) const;
@@ -107,6 +116,7 @@ public slots:
 	float getCircleScale(void) const;
 
 	//! Set how long it takes for nebula hints to fade in and out when turned on and off.
+	//! @param duration given in seconds
 	void setHintsFadeDuration(float duration) {hintsFader.setDuration((int) (duration * 1000.f));}
 
 	//! Set flag for displaying Nebulae Hints.
@@ -123,11 +133,6 @@ public slots:
 	void setLabelsColor(const Vec3f& c);
 	//! Get current value of the nebula label color.
 	const Vec3f& getLabelsColor(void) const;
-
-	//! Set flag for displaying nebulae even without textures.
-	void setFlagDisplayNoTexture(bool b) {displayNoTexture = b;}
-	//! Get flag for displaying nebulae without textures.
-	bool getFlagDisplayNoTexture(void) const {return displayNoTexture;}
 
 	//! Set the amount of nebulae labels. The real amount is also proportional with FOV.
 	//! The limit is set in function of the nebulae magnitude
@@ -172,11 +177,12 @@ private:
 	void loadNebulaSet(const QString& setName);
 
 	//! Draw a nice animated pointer around the object
-	void drawPointer(const StelCore* core, StelPainter& sPainter);
+	void drawPointer(const StelCore* core, class StelRenderer* renderer);
 
 	NebulaP searchM(unsigned int M);
 	NebulaP searchNGC(unsigned int NGC);
 	NebulaP searchIC(unsigned int IC);
+	NebulaP searchC(unsigned int C);
 	bool loadNGC(const QString& fileName);
     bool loadNGCLegacy(const QString& catNGC);
 	bool loadNGCNames(const QString& fileName);
@@ -194,12 +200,13 @@ private:
 	//! The amount of labels (between 0 and 10)
 	float labelsAmount;
 
-	bool displayNoTexture;			// Define if nebulas without textures are to be displayed
-
 	//! The selection pointer texture
-	StelTextureSP texPointer;
+	StelTextureNew* texPointer;
 	
 	QFont nebulaFont;      // Font used for names printing
+
+	//! Textures used to draw nebula hints.
+	Nebula::NebulaHintTextures nebulaHintTextures;
 };
 
 #endif // _NEBULAMGR_HPP_

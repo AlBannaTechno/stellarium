@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
  
 #ifndef _MINOR_PLANET_HPP_
@@ -38,17 +38,18 @@ class MinorPlanet : public Planet
 {
 public:
 	MinorPlanet(const QString& englishName,
-	       int flagLighting,
-	       double radius,
-	       double oblateness,
-	       Vec3f color,
-	       float albedo,
-	       const QString& texMapName,
-	       posFuncType _coordFunc,
-	       void* userDataPtr,
-	       OsculatingFunctType *osculatingFunc,
-	       bool closeOrbit,
-	       bool hidden);
+		int flagLighting,
+		double radius,
+		double oblateness,
+		Vec3f color,
+		float albedo,
+		const QString& texMapName,
+		posFuncType _coordFunc,
+		void* userDataPtr,
+		OsculatingFunctType *osculatingFunc,
+		bool closeOrbit,
+		bool hidden,
+		const QString &pType);
 
 	~MinorPlanet();
 
@@ -70,7 +71,7 @@ public:
 	//was not designed to handle different types of objects.
 	// \todo Decide if this is going to be "MinorPlanet" or "Asteroid"
 	//virtual QString getType() const {return "MinorPlanet";}
-	virtual float getVMagnitude(const StelCore* core) const;
+	virtual float getVMagnitude(const StelCore* core, bool withExtinction=false) const;
 	//! sets the nameI18 property with the appropriate translation.
 	//! Function overriden to handle the problem with name conflicts.
 	virtual void translateName(StelTranslator& trans);
@@ -101,11 +102,17 @@ public:
 	//! designation.
 	static QString renderProvisionalDesignationinHtml(QString plainText);
 
+	//! set value for semi-major axis in AU
+	void setSemiMajorAxis(double value);
+
+	//! get sidereal period for minor planet
+	double getSiderealPeriod() const;
 
 private:
 	int minorPlanetNumber;
 	double absoluteMagnitude;
 	double slopeParameter;
+	double semiMajorAxis;
 
 	bool nameIsProvisionalDesignation;
 	QString provisionalDesignationHtml;

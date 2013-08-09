@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _SUPERNOVA_HPP_
@@ -27,11 +27,9 @@
 #include <QDateTime>
 
 #include "StelObject.hpp"
-#include "StelTextureTypes.hpp"
-#include "StelPainter.hpp"
 #include "StelFader.hpp"
+#include "StelProjectorType.hpp"
 
-class StelPainter;
 
 //! @class Supernova
 //! A Supernova object represents one supernova on the sky.
@@ -65,7 +63,7 @@ public:
 	{
 		return XYZ;
 	}
-	virtual float getVMagnitude(const StelCore* core) const;
+	virtual float getVMagnitude(const StelCore* core, bool withExtinction=false) const;
 	virtual double getAngularSize(const StelCore* core) const;
 	virtual QString getNameI18n(void) const
 	{
@@ -83,9 +81,7 @@ private:
 
 	Vec3d XYZ;                         // holds J2000 position
 
-	static StelTextureSP hintTexture;
-
-	void draw(StelCore* core, StelPainter& painter);
+	void draw(StelCore* core, class StelRenderer* renderer, StelProjectorP projector);
 
 	// Supernova
 	QString designation;               //! The ID of the supernova

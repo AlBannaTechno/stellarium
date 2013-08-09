@@ -14,7 +14,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _STELOBJECTMODULE_HPP_
@@ -60,6 +60,16 @@ public:
 	//! @param maxNbItem the maximum number of returned object names
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing matches
 	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5) const = 0;
+
+	//! Find and return the list of at most maxNbItem objects auto-completing passed object English name
+	//! @param objPrefix the first letters of the searched object
+	//! @param maxNbItem the maximum number of returned object names
+	//! @return a list of matching object name by order of relevance, or an empty list if nothing matches
+	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5) const = 0;
+
+	virtual QStringList listAllObjects(bool inEnglish) const = 0;
+
+	virtual QString getName() const = 0;
 };
 
 #endif // _STELOBJECTMODULE_HPP_

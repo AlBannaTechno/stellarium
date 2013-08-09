@@ -13,11 +13,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "CCD.hpp"
 #include "Telescope.hpp"
+#include "Lens.hpp"
 
 #include <QDebug>
 #include <QSettings>
@@ -140,15 +141,17 @@ void CCD::setPixelHeight(double height)
 	m_pixelHeight = height;
 }
 
-double CCD::getActualFOVx(Telescope *telescope) const
+double CCD::getActualFOVx(Telescope *telescope, Lens *lens) const
 {
-	double FOVx = RADIAN_TO_DEGREES * this->chipHeight() / telescope->focalLength();
+	const double lens_multipler = (lens != NULL ? lens->multipler() : 1.0f);
+	double FOVx = RADIAN_TO_DEGREES * this->chipHeight() / (telescope->focalLength() * lens_multipler);
 	return FOVx;
 }
 
-double CCD::getActualFOVy(Telescope *telescope) const
+double CCD::getActualFOVy(Telescope *telescope, Lens *lens) const
 {
-	double FOVy = RADIAN_TO_DEGREES * this->chipWidth() / telescope->focalLength();
+	const double lens_multipler = (lens != NULL ? lens->multipler() : 1.0f);
+	double FOVy = RADIAN_TO_DEGREES * this->chipWidth() / (telescope->focalLength() * lens_multipler);
 	return FOVy;
 }
 

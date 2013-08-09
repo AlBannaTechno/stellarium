@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _OCTAHEDRON_REGION_HPP_
@@ -24,7 +24,7 @@
 #include <QDebug>
 #include <QVarLengthArray>
 #include "VecMath.hpp"
-#include "StelVertexArray.hpp"
+
 
 //! @struct EdgeVertex
 //! Describe a vertex composing polygon contours, and whether it belong to an edge or not.
@@ -57,13 +57,17 @@ public:
 
 //! @class OctahedronContour
 //! Manage a non-convex polygon which can extends on more than 180 deg.
-//! The contours defining the polygon are splitted and projected on the 8 sides of an Octahedron to enable 2D geometry
+//! The contours defining the polygon are split and projected on the 8 sides of an Octahedron to enable 2D geometry
 //! algorithms to be used.
 class OctahedronPolygon
 {
 public:
-	OctahedronPolygon() : fillCachedVertexArray(StelVertexArray::Triangles), outlineCachedVertexArray(StelVertexArray::Lines), capN(1,0,0), capD(-2.)
-	{sides.resize(8);}
+	OctahedronPolygon() 
+		: capN(1,0,0)
+		, capD(-2.)
+	{
+		sides.resize(8);
+	}
 
 	//! Create the OctahedronContour by splitting the passed SubContour on the 8 sides of the octahedron.
 	OctahedronPolygon(const SubContour& subContour);
@@ -74,10 +78,6 @@ public:
 	double getArea() const;
 
 	Vec3d getPointInside() const;
-
-	//! Returns the list of triangles resulting from tesselating the contours.
-	StelVertexArray getFillVertexArray() const {return fillCachedVertexArray;}
-	StelVertexArray getOutlineVertexArray() const {return outlineCachedVertexArray;}
 
 	void getBoundingCap(Vec3d& v, double& d) const {v=capN; d=capD;}
 
@@ -95,7 +95,10 @@ public:
 	bool isEmpty() const;
 
 	static const OctahedronPolygon& getAllSkyOctahedronPolygon();
-	static const OctahedronPolygon& getEmptyOctahedronPolygon() {static OctahedronPolygon poly; return poly;}
+	static const OctahedronPolygon& getEmptyOctahedronPolygon() 
+	{
+		static OctahedronPolygon poly; return poly;
+	}
 
 	static double sphericalTriangleArea(const Vec3d& v0, const Vec3d& v1, const Vec3d& v2)
 	{
@@ -106,6 +109,18 @@ public:
 	}
 
 	QString toJson() const;
+
+	//! Get vertices forming triangles filling out the polygon.
+	const QVector<Vec3d>& fillVertices() const
+	{
+		return fillCachedVertexArray;
+	}
+
+	//! Get vertices forming lines outlining the polygon.
+	const QVector<Vec3d>& outlineVertices() const
+	{
+		return outlineCachedVertexArray;
+	}
 
 private:
 	// For unit tests
@@ -141,8 +156,12 @@ private:
 
 	//! Update the content of both cached vertex arrays.
 	void updateVertexArray();
-	StelVertexArray fillCachedVertexArray;
-	StelVertexArray outlineCachedVertexArray;
+
+	//! Vertex array storing triangles of the polygon (each 3 vertices being one triangle).
+	QVector<Vec3d> fillCachedVertexArray;
+	//! Vertex array storing lines of the polygon outline (each 2 vertices being one line).
+	QVector<Vec3d> outlineCachedVertexArray;
+
 	void computeBoundingCap();
 	Vec3d capN;
 	double capD;

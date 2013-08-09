@@ -1,11 +1,11 @@
-SET(SATELLITES_VERSION "0.6.4")
+# WARNING! Update also the version number in resources/satellites.json,
+# otherwise the local copy of that file will be overwritten every time
+# Stellarium starts. (Less of a problem if it manages to get one update.)
+SET(SATELLITES_VERSION "0.8.0")
 
 SET(CMAKE_INSTALL_PREFIX $ENV{HOME}/.stellarium)
 
-
-########### Generate plugin_config.h ###########
-SET(PLUGIN_VERSION ${SATELLITES_VERSION})
-CONFIGURE_FILE(plugin_config.h.cmake ${CMAKE_BINARY_DIR}/plugins/Satellites/src/plugin_config.h)
+ADD_DEFINITIONS(-DSATELLITES_PLUGIN_VERSION="${SATELLITES_VERSION}")
 
 ADD_SUBDIRECTORY( src )
 INSTALL(FILES DESTINATION "modules/Satellites")

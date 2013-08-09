@@ -14,7 +14,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
  
 #ifndef _LOCATIONDIALOG_HPP_
@@ -37,7 +37,7 @@ public:
 	void styleChanged();
 
 public slots:
-	void languageChanged();
+	void retranslate();
 
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
@@ -55,9 +55,6 @@ private:
 	//! True if the user is currently editing a new location
 	bool isEditingNew;
 	
-	//! To be called when user edits any field
-	void reportEdit();
-	
 	void disconnectEditSignals();
 	void connectEditSignals();
 	
@@ -69,37 +66,47 @@ private:
 	//! The original names are kept in the user data field of each QComboBox
 	//! item.
 	void populatePlanetList();
+
+	//! Populates the drop-down list of countries.
+	//! The displayed names are localized in the current interface language.
+	//! The original names are kept in the user data field of each QComboBox
+	//! item.
+	void populateCountryList();
 	
 private slots:
+	//! To be called when user edits any field
+	void reportEdit();
+	
 	//! Update the widget to make sure it is synchrone if the location is changed programmatically
 	//! This function should be called repeatidly with e.g. a timer
-	void updateFromProgram();
+	void updateFromProgram(const StelLocation& location);
 	
-	//! Called when the map is clicked
+	//! Called when the map is clicked.
 	void setPositionFromMap(double longitude, double latitude);
 	
-	//! Called when the user activates an item from the list
-	void listItemActivated(const QModelIndex&);
+	//! Called when the user activates an item from the locations list.
+	void setPositionFromList(const QModelIndex& index);
 	
-	//! Called when the planet/country name is manually changed
-	void comboBoxChanged(const QString& text);
+	//! Called when the planet is manually changed.
+	void moveToAnotherPlanet(const QString& text);
 	//! Called when latitude/longitude/altitude is modified
-	void spinBoxChanged(int i=0);
-	//! Called when the location name is manually changed
-	void locationNameChanged(const QString&);
+	void setPositionFromCoords(int i=0);
 	
-	//! Called when the user clic on the add to list button
+	//! Called when the user clicks on the add to list button
 	void addCurrentLocationToList();
 	
-	//! Called when the user clic on the delete button
+	//! Called when the user clicks on the delete button
 	void deleteCurrentLocationFromList();
 	
 	//! Called when the user wants to use the current location as default
-	void useAsDefaultClicked();
+	void setDefaultLocation();
 	
 private:
 	QString lastPlanet;	
 	bool lastVisionMode;
+	
+	//! Updates the check state and the enabled/disabled status.
+	void updateDefaultLocationControls(bool currentIsDefault);
 };
 
 #endif // _LOCATIONDIALOG_HPP_

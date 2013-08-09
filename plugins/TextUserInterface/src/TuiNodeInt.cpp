@@ -13,9 +13,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
+#include "StelTranslator.hpp"
 #include "TuiNodeInt.hpp"
 #include <QKeyEvent>
 
@@ -37,7 +38,6 @@ TuiNodeResponse TuiNodeInt::handleEditingKey(int key)
 		editing = false;
 		typing = false;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -48,7 +48,6 @@ TuiNodeResponse TuiNodeInt::handleEditingKey(int key)
 		if (value > maximum)
 			value = maximum;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -59,7 +58,6 @@ TuiNodeResponse TuiNodeInt::handleEditingKey(int key)
 		if (value < minimum)
 			value = minimum;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -118,7 +116,6 @@ TuiNodeResponse TuiNodeInt::handleEditingKey(int key)
 		if (i>=minimum && i<=maximum)
 			value = i;
 		response.accepted = true;
-		response.newNode = this;
 		emit(setValue(value));
 		return response;
 	}
@@ -129,11 +126,11 @@ QString TuiNodeInt::getDisplayText()
 {
 	if (!editing)
 	{
-		return displayText + QString(":  %1").arg(value);
+		return prefixText + q_(displayText) + QString("  %1").arg(value);
 	}
 	else
 	{
-		return displayText + QString(": >%1<").arg(value);
+		return prefixText + q_(displayText) + QString(" >%1<").arg(value);
 	}
 }
 

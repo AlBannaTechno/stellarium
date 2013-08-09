@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include <QObject>
@@ -367,8 +367,8 @@ void TestStelSphericalGeometry::testLoading()
 	QVERIFY(reg->getType()==SphericalRegion::Polygon);
 	qDebug() << reg->getArea()*180./M_PI*180/M_PI;
 
-	StelVertexArray vertexAr = reg->getOutlineVertexArray();
-	QVERIFY(vertexAr.primitiveType==StelVertexArray::Lines && vertexAr.vertex.size()%2==0);
+	QVERIFY(reg->getOutlinePrimitiveType()==PrimitiveType_Lines &&
+	        reg->getOutlineVertexPositions().size()%2==0);
 }
 
 void TestStelSphericalGeometry::benchmarkContains()
@@ -416,9 +416,9 @@ void TestStelSphericalGeometry::testOctahedronPolygon()
 	OctahedronPolygon splittedSub(contour);
 	QCOMPARE(splittedSub.getArea(), smallSquareConvex.getArea());
 
-	QVector<Vec3d> va = northPoleSquare.getOutlineVertexArray().vertex;
+	QVector<Vec3d> va = northPoleSquare.getOutlineVertexPositions();
 	QCOMPARE(va.size(),16);
-	va = southPoleSquare.getOutlineVertexArray().vertex;
+	va = southPoleSquare.getOutlineVertexPositions();
 	QCOMPARE(va.size(),16);
 
 	// Copy

@@ -14,7 +14,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
  
 #ifndef _SEARCHDIALOG_HPP_
@@ -58,6 +58,8 @@ private:
 	QStringList values;
 };
 
+QT_FORWARD_DECLARE_CLASS(QListWidgetItem)
+
 //! @class SearchDialog
 //! The sky object search dialog.
 class SearchDialog : public StelDialog
@@ -72,10 +74,10 @@ public:
 	bool eventFilter(QObject *object, QEvent *event);
 	
 public slots:
-	void languageChanged();
+	void retranslate();
 	//! Add auto focus of the edit line
 	void setVisible(bool);
-    //! This style only displays the text search field and the search button
+	//! This style only displays the text search field and the search button
 	void setSimpleStyle();
 
 protected:
@@ -84,17 +86,37 @@ protected:
 	virtual void createDialogContent();
 
 private slots:
-    void greekLetterClicked();
+	void greekLetterClicked();
 	//! Called when the current simbad query status changes
 	void onSimbadStatusChanged();
 	//! Called when the user changed the input text
 	void onSearchTextChanged(const QString& text);
 	
 	void gotoObject();
+	void gotoObject(const QString& nameI18n);
+	// for going from list views
+	void gotoObject(QListWidgetItem* item);
+
+	void searchListChanged(const QString& newText);
 	
 	//! Called when the user edit the manual position controls
 	void manualPositionChanged();
-	
+
+	//! Whether to use SIMBAD for searches or not.
+	void enableSimbadSearch(bool enable);
+
+	//! Set flagHasSelectedText as true, if search box has selected text
+	void setHasSelectedFlag();
+
+	//! Called when a SIMBAD server is selected in the list.
+	void selectSimbadServer(int index);
+
+	//! Called when new type of objects selected in list view tab
+	void updateListWidget(int index);
+
+	// retranslate/recreate tab
+	void updateListTab();
+
 private:
 	class SimbadSearcher* simbadSearcher;
 	class SimbadLookupReply* simbadReply;
@@ -104,6 +126,15 @@ private:
 	QString substituteGreek(const QString& keyString);
 	QString getGreekLetterByName(const QString& potentialGreekLetterName);
 	QHash<QString, QString> greekLetters;
+	//! Used when substituting text with a Greek letter.
+	bool flagHasSelectedText;
+	
+	bool useSimbad;
+	//! URL of the server used for SIMBAD queries. 
+	QString simbadServerUrl;
+	void populateSimbadServerList();
+	//! URL of the default SIMBAD server (Strasbourg).
+	static const char* DEF_SIMBAD_URL;
 };
 
 #endif // _SEARCHDIALOG_HPP_

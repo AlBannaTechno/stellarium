@@ -14,10 +14,14 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with this program; if not, write to the Free Software
-* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
+#ifdef _MSC_BUILD 
+#include "kdewin32/dirent.h"
+#else
 #include <dirent.h>
+#endif
 #include <cstdio>
 #include <algorithm>
 #include <fstream>
@@ -67,11 +71,19 @@ void StelTranslator::initSystemLanguage(void)
 		else
 		{
 #ifdef Q_OS_WIN
-			char cc[3];
-			if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, cc, 3))
+			char ulng[3], ctry[3];
+			if (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, ulng, 3))
 			{
-				cc[2] = '\0';
-				systemLangName = cc;
+				ulng[2] = '\0';
+				if (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, ctry, 3))
+				{
+					ctry[2] = '\0';
+					systemLangName = QString("%1_%2").arg(ulng).arg(ctry);
+				}
+				else
+				{
+					systemLangName = ulng;
+				}
 			}
 			else
 			{
@@ -146,20 +158,20 @@ void StelTranslator::reload()
 }
 
 
-//! Convert from ISO639-1 2 letters langage code to native language name
+//! Convert from ISO639-1 2(+3) letters langage code to native language name
 QString StelTranslator::iso639_1CodeToNativeName(const QString& languageCode)
 {
 	if (languageCode=="C")
 		return "English";
 
-	QLocale loc(languageCode);
-	QString l = loc.name();
+	//QLocale loc(languageCode);
+	//QString l = loc.name();
 	// There is a QLocale for this code.  This should be the case for most
 	// language codes, but there are a few without QLocales, e.g. Interlingua
-	if (l.contains('_'))
-		l.truncate(l.indexOf('_'));
-	if (iso639codes.find(l)!=iso639codes.end())
-		return iso639codes[l]+ (languageCode.size()==2 ? "" : QString(" (")+QLocale::countryToString(loc.country())+")");
+	//if (l.contains('_'))
+	//	l.truncate(l.indexOf('_'));
+	//if (iso639codes.find(l)!=iso639codes.end())
+	//	return iso639codes[l]+ (languageCode.size()==2 ? "" : QString(" (")+QLocale::countryToString(loc.country())+")");
 
 	// For codes which return the locale C, use the language code to do the lookup
 	if (iso639codes.contains(languageCode))

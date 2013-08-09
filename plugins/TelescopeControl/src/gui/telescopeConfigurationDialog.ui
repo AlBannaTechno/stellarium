@@ -25,9 +25,6 @@
     <height>480</height>
    </size>
   </property>
-  <property name="windowTitle">
-   <string>Form</string>
-  </property>
   <layout class="QVBoxLayout" name="_2">
    <property name="spacing">
     <number>0</number>
@@ -327,7 +324,7 @@
 Increase this value if the reticle is skipping.</string>
               </property>
               <property name="suffix">
-               <string comment="seconds">s</string>
+               <string notr="true" comment="seconds">s</string>
               </property>
               <property name="decimals">
                <number>2</number>
@@ -552,7 +549,7 @@ Increase this value if the reticle is skipping.</string>
              <string>Host name or IPv4 address of the machine that hosts the telescope server</string>
             </property>
             <property name="text">
-             <string>localhost</string>
+             <string notr="true">localhost</string>
             </property>
             <property name="maxLength">
              <number>255</number>

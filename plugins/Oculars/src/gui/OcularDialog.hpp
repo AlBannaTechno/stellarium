@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 Timothy Reaves
+ * Copyright (C) 2011 Bogdan Marinov
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #ifndef _OCULARDIALOG_HPP_
@@ -26,6 +27,7 @@
 #include "StelDialog.hpp"
 #include "StelStyle.hpp"
 #include "Telescope.hpp"
+#include "Lens.hpp"
 
 class Ui_ocularDialogForm;
 
@@ -38,17 +40,17 @@ class QModelIndex;
 class QStandardItemModel;
 QT_END_NAMESPACE
 
+class Oculars;
 
 class OcularDialog : public StelDialog
 {
 	Q_OBJECT
 
 public:
-	OcularDialog(QList<CCD *>* ccds, QList<Ocular *>* oculars, QList<Telescope *>* telescopes);
+	OcularDialog(Oculars* plugin, QList<CCD *>* ccds, QList<Ocular *>* oculars, QList<Telescope *>* telescopes, QList<Lens *>* lense);
 	virtual ~OcularDialog();
 	//! Notify that the application style changed
 	void styleChanged();
-	void setOculars(QList<Ocular*> theOculars);
 	void updateStyle();
 
 public slots:
@@ -56,10 +58,20 @@ public slots:
 	void deleteSelectedCCD();
 	void deleteSelectedOcular();
 	void deleteSelectedTelescope();
+	void deleteSelectedLens();
 	void insertNewCCD();
 	void insertNewOcular();
 	void insertNewTelescope();
-	void languageChanged();
+	void insertNewLens();
+	void moveUpSelectedSensor();
+	void moveUpSelectedOcular();
+	void moveUpSelectedTelescope();
+	void moveUpSelectedLens();
+	void moveDownSelectedSensor();
+	void moveDownSelectedOcular();
+	void moveDownSelectedTelescope();
+	void moveDownSelectedLens();
+	void retranslate();
 
 signals:
 	void requireSelectionChanged(bool state);
@@ -73,26 +85,33 @@ protected:
 private slots:
 	void keyBindingTogglePluginChanged(const QString& newString);
 	void keyBindingPopupNavigatorConfigChanged(const QString& newString);
+	void initAboutText();
 	void requireSelectionStateChanged(int state);
 	void scaleImageCircleStateChanged(int state);
 
 private:
-	QDataWidgetMapper*			ccdMapper;
-	QList<CCD *>*					ccds;
+	Oculars* plugin;
+
+	QDataWidgetMapper*		ccdMapper;
+	QList<CCD *>*			ccds;
 	PropertyBasedTableModel*	ccdTableModel;
-	QDataWidgetMapper*			ocularMapper;
-	QList<Ocular *>*				oculars;
+	QDataWidgetMapper*		ocularMapper;
+	QList<Ocular *>*		oculars;
 	PropertyBasedTableModel*	ocularTableModel;
-	QDataWidgetMapper*			telescopeMapper;
-	QList<Telescope *>*			telescopes;
+	QDataWidgetMapper*		telescopeMapper;
+	QList<Telescope *>*		telescopes;
 	PropertyBasedTableModel*	telescopeTableModel;
-	QIntValidator*					validatorOcularAFOV;
-	QDoubleValidator*				validatorOcularEFL;
-	QDoubleValidator*				validatorTelescopeDiameter;
-	QDoubleValidator*				validatorTelescopeFL;
-	QRegExpValidator*				validatorName;
-	QIntValidator*					validatorPositiveInt;
-	QDoubleValidator*				validatorPositiveDouble;
+	QDataWidgetMapper*		lensMapper;
+	QList<Lens *>*			lense;
+	PropertyBasedTableModel*	lensTableModel;
+	QDoubleValidator*		validatorOcularAFOV;
+	QDoubleValidator*		validatorOcularEFL;
+	QDoubleValidator*		validatorTelescopeDiameter;
+	QDoubleValidator*		validatorTelescopeFL;
+	QDoubleValidator*		validatorLensMultipler;
+	QRegExpValidator*		validatorName;
+	QIntValidator*			validatorPositiveInt;
+	QDoubleValidator*		validatorPositiveDouble;
 };
 
 #endif // _OCULARDIALOG_HPP_

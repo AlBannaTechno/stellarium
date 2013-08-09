@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
 #include "StelApp.hpp"
@@ -28,7 +28,7 @@
 
 StelLocationMgr::StelLocationMgr()
 {
-	// The line below allows to re-generate the location file, you still need to gunzip manually it afterward.
+	// The line below allows to re-generate the location file, you still need to gunzip it manually afterward.
 	// generateBinaryLocationFile("data/base_locations.txt", false, "data/base_locations.bin");
 
 	locations = loadCitiesBin("data/base_locations.bin.gz");
@@ -124,7 +124,7 @@ QMap<QString, StelLocation> StelLocationMgr::loadCities(const QString& fileName,
 	while (!sourcestream.atEnd())
 	{
 		const QString& rawline=sourcestream.readLine();
-		if (rawline.isEmpty() || rawline.startsWith('#'))
+		if (rawline.isEmpty() || rawline.startsWith('#') || (rawline.split("\t").count() < 8))
 			continue;
 		loc = StelLocation::createFromLine(rawline);
 		loc.isUserLocation = isUserLocation;

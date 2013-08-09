@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
  
 #ifndef TEXTUSERINTERFACE_HPP_
@@ -21,6 +21,7 @@
 
 #include "StelModule.hpp"
 #include "DummyDialog.hpp"
+
 #include <QObject>
 #include <QString>
 #include <QFont>
@@ -39,9 +40,24 @@ public:
 	// Methods defined in the StelModule class
 	virtual void init();
 	virtual void update(double) {;}
-	virtual void draw(StelCore* core);
+	virtual void draw(StelCore* core, class StelRenderer* renderer);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 	virtual void handleKeys(class QKeyEvent* event);
+
+	///////////////////////////////////////////////////////////////////////////
+	// Methods specific to TextUserInterface
+	//! Loads the module's configuration from the config file.
+	void loadConfiguration(void);
+
+public slots:
+	//! Show/hide the TUI menu
+	void setTuiMenuActive(bool tActive) { tuiActive = tActive;}
+	//! Show/hide the TUI date time display
+	void setTuiDateTime(bool tDateTime) { tuiDateTime = tDateTime; }
+	//! Show/hide the selected object's short object information 
+	void setTuiObjInfo(bool tObjInfo) { tuiObjInfo = tObjInfo; }
+	//! Set Gravity text for the TUI text
+	void setTuiGravityUi(bool tGravityUi) { tuiGravityUi = tGravityUi; }
 
 private slots:
 	void setHomePlanet(QString planetName);
@@ -54,11 +70,16 @@ private slots:
 	void setSkyCulture(QString i18);
 	void setAppLanguage(QString lang);
 	void saveDefaultSettings(void);
+	void shutDown(void);
+	void setBortleScale(int bortle);
 
 private:
 	DummyDialog dummyDialog;
 	QFont font;
 	bool tuiActive;
+	bool tuiDateTime;
+	bool tuiObjInfo;
+	bool tuiGravityUi;
 	TuiNode* currentNode;
 
 	double getLatitude(void);
