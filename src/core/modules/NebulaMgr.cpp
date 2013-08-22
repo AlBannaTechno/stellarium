@@ -136,11 +136,9 @@ struct DrawNebulaFuncObject
 		if (n->angularSize>angularSizeLimit || (checkMaxMagHints && n->mag <= maxMagHints))
 		{
 			float refmag_add=0; // value to adjust hints visibility threshold.
-			//sPainter->getProjector()->project(n->XYZ,n->XY);
-            //            sPainter->getProjector()->project(n->XYZ2,n->XY2); //FIXME
-            //            n->drawLabel(*sPainter, maxMagLabels-refmag_add);
 			projector->project(n->XYZ,n->XY);
-			n->drawLabel(renderer, projector, maxMagLabels-refmag_add);
+            projector->project(n->XYZ2,n->XY2);
+            n->drawLabel(renderer, projector, maxMagLabels-refmag_add);
             n->drawHints(renderer, projector, maxMagHints -refmag_add, nebulaHintTextures);
 		}
 	}

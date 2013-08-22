@@ -182,6 +182,7 @@ QString Nebula::getInfoString(const StelCore *core, const InfoStringGroup& flags
 			oss << q_("Size: %1 x %2").arg(StelUtils::radToDmsStr(sizeX/60. * M_PI/180.)).arg(StelUtils::radToDmsStr(sizeY/60. * M_PI/180.)) << "<br>";
 		else
 			oss << q_("Size: %1").arg(StelUtils::radToDmsStr(sizeX/60. * M_PI/180.)) << "<br>";
+        oss << q_("Principl angle: %1 deg").arg(PAdeg) << "<br>";
 	}
 	postProcessInfoString(str, flags);
 
@@ -242,7 +243,10 @@ void Nebula::drawHints(StelRenderer* renderer, StelProjectorP projector, float m
 	float lum = 1.f;//qMin(1,4.f/getOnScreenSize(core))*0.8;
 
     // local direction towards N on screen
-    float angleNorth = 180./M_PI * atan2(-XY2[0] + XY[0], XY2[1] - XY[1]);
+    Vec3d dir = XY2 - XY;
+    dir.normalize();
+
+    double angleNorth = 180.0/M_PI * std::atan2(dir[1], dir[0]);
 
     float pixelPerDegree = M_PI/180. * projector->getPixelPerRadAtCenter();
 
@@ -266,9 +270,9 @@ void Nebula::drawHints(StelRenderer* renderer, StelProjectorP projector, float m
 			//qDebug("x=%f y=%f sizeX=%f sizeY=%f", XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60.);
             //sPainter.setShadeModel(StelPainter::ShadeModelFlat);
 			if(sizeY < 1e-3)
-                renderer->drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60, sizeX*pixelPerDegree/60, PAdeg);
+                renderer->drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60, sizeX*pixelPerDegree/60, 0.);
 			else
-                renderer->drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60., PAdeg);
+                renderer->drawEllipse(XY[0], XY[1], sizeX*pixelPerDegree/60., sizeY*pixelPerDegree/60., PAdeg +angleNorth);
             //hintTextures.texGalaxy->bind();
             break;
 			
@@ -447,7 +451,7 @@ void Nebula::parseRecord(const QString& record, int idx)
 #endif
 	// Calc the Cartesian coord with RA and DE
         StelUtils::spheToRect(ra, dec, XYZ);
-        StelUtils::spheToRect(ra-0.01,dec,XYZ2); // FIXME: used to calculate direction of North
+        StelUtils::spheToRect(ra, dec-0.05,XYZ2); // FIXME: used to calculate direction of North
 
 	// Read the blue (photographic) and visual magnitude
 	magB = record.mid(56, 4).toFloat();
@@ -518,7 +522,7 @@ void Nebula::readNGC(QDataStream& in)
 	}
 	StelUtils::spheToRect(ra,dec,XYZ);
         Q_ASSERT(fabs(XYZ.lengthSquared()-1.)<0.000000001);
-	nType = (Nebula::NebulaType)type;
+    nType = (Nebula::NebulaType)type;
 	// GZ: Trace the undefined entries...
 	//if (type >= 5) {
 	//	qDebug()<< (isIc?"IC" : "NGC") << nb << " type " << type ;
@@ -576,7 +580,8 @@ void Nebula::readExtendedNGC(QDataStream& in)
 	
 	StelUtils::spheToRect(ra,dec,XYZ);
 	Q_ASSERT(fabs(XYZ.lengthSquared()-1.)<0.000000001);
-	nType = (Nebula::NebulaType)type;
+    StelUtils::spheToRect(ra,dec-0.01,XYZ2); // used to calculate direction of North
+    nType = (Nebula::NebulaType)type;
 	pointRegion = SphericalRegionP(new SphericalPoint(getJ2000EquatorialPos(NULL)));
 
 }
