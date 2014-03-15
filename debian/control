@@ -3,9 +3,11 @@ Section: science
 Priority: optional
 Maintainer: Tomasz Buchert <tomasz.buchert@inria.fr>
 Build-Depends: debhelper (>= 9), cmake (>= 2.8.11), doxygen,
- qt5-default (>= 5.2.1), libqt5opengl5-dev (>= 5.2.1), zlib1g-dev,
- qtbase5-dev (>= 5.2.1), qtbase5-dev-tools (>= 5.2.1), qtdeclarative5-dev (>= 5.2.1),
- qtdeclarative5-dev-tools (>= 5.2.1), libqt5declarative5 (>= 5.2.1)
+ qt5-default (>= 5.2.1), zlib1g-dev, qtdeclarative5-dev (>= 5.2.1),
+ qtdeclarative5-dev-tools (>= 5.2.1), libqt5declarative5 (>= 5.2.1),
+ qtquick1-5-dev (>= 5.2.1), qtscript5-dev (>= 5.2.1), 
+ libqt5svg5-dev (>= 5.2.1), qttools5-dev-tools (>= 5.2.1), 
+ qttools5-dev (>= 5.2.1)
 Standards-Version: 3.9.5
 Homepage: http://www.stellarium.org
 Vcs-Git: git://anonscm.debian.org/collab-maint/stellarium.git
