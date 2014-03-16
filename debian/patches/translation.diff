@@ -1,0 +1,15 @@
+Description: Disable translation support
+Author: Alexander Wolf <alex.v.wolf@gmail.com>
+Index: stellarium/CMakeLists.txt
+===================================================================
+--- stellarium.orig/CMakeLists.txt	2014-03-16 15:48:14.683702274 +0700
++++ stellarium/CMakeLists.txt	2014-03-16 15:49:34.971827312 +0700
+@@ -109,7 +109,7 @@
+ 
+ ########### Others ###########
+ # Activate translation
+-SET(ENABLE_NLS 1 CACHE BOOL "Define whether program translation should be supported.")
++SET(ENABLE_NLS 0 CACHE BOOL "Define whether program translation should be supported.")
+ IF(ENABLE_NLS)
+   ADD_DEFINITIONS(-DENABLE_NLS)
+ ENDIF()
