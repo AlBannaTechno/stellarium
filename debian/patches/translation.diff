@@ -1,9 +1,9 @@
-Description: Disable translation support
+Description: Disable localization support (bug in upstream)
 Author: Alexander Wolf <alex.v.wolf@gmail.com>
 Index: stellarium/CMakeLists.txt
 ===================================================================
---- stellarium.orig/CMakeLists.txt	2014-03-16 15:48:14.683702274 +0700
-+++ stellarium/CMakeLists.txt	2014-03-16 15:49:34.971827312 +0700
+--- stellarium.orig/CMakeLists.txt	2014-03-16 20:29:08.204287725 +0700
++++ stellarium/CMakeLists.txt	2014-03-16 20:31:21.845396469 +0700
 @@ -109,7 +109,7 @@
  
  ########### Others ###########
