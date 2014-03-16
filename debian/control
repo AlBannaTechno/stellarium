@@ -16,7 +16,8 @@ Vcs-Browser: http://anonscm.debian.org/gitweb/?p=collab-maint/stellarium.git
 
 Package: stellarium
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, stellarium-data (>= ${source:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, stellarium-data (>= ${source:Version}),
+ qtquick1-qml-plugins (>= 5.2.1)
 Description: real-time photo-realistic sky generator
  Stellarium renders 3D photo-realistic skies in real-time. With Stellarium, you
  really see what you can see with your eyes, binoculars or a small telescope.
