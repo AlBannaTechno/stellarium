@@ -3,12 +3,11 @@ Section: science
 Priority: optional
 Maintainer: Alexander Wolf <alex.v.wolf@gmail.com>
 Build-Depends: debhelper (>= 9), cmake (>= 2.8.11), doxygen,
- qt5-default (>= 5.2.1), zlib1g-dev, qtdeclarative5-dev (>= 5.2.1),
- qtdeclarative5-dev-tools (>= 5.2.1), libqt5declarative5 (>= 5.2.1),
+ zlib1g-dev, qtdeclarative5-dev (>= 5.2.1), mesa-common-dev,
+ qtdeclarative5-dev-tools (>= 5.2.1),  libqt5declarative5 (>= 5.2.1), 
  qtquick1-5-dev (>= 5.2.1), qtscript5-dev (>= 5.2.1),
  libqt5svg5-dev (>= 5.2.1), qttools5-dev-tools (>= 5.2.1),
- qttools5-dev (>= 5.2.1), libqt5opengl5-dev (>= 5.2.1),
- qtquick1-qml-plugins (>= 5.2.1)
+ qttools5-dev (>= 5.2.1), libqt5opengl5-dev (>= 5.2.1) 
 Standards-Version: 3.9.5
 Homepage: http://www.stellarium.org
 
