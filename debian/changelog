@@ -1,3 +1,9 @@
+stellarium (0.13.1-0) UNRELEASED; urgency=low
+
+  * Update to version 0.13.1
+
+  -- Alexander Wolf <alex.v.wolf@gmail.com>  Mon, 11 Aug 2014 07:22:00 +0700
+
 stellarium (0.13.0-0) UNRELEASED; urgency=low
 
   * Switch to Qt5 libraries
