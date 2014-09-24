@@ -78,6 +78,13 @@ private:
 	
 	QStandardItemModel* newSatellitesModel;
 	QSortFilterProxyModel * filterProxyModel;
+
+protected:
+
+#ifdef Q_OS_WIN
+	virtual bool eventFilter(QObject *object, QEvent *event);
+#endif
+
 };
 
 #endif // IMPORTSATELLITESWINDOW_HPP

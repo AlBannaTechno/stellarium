@@ -162,6 +162,13 @@ void ConfigurationDialog::createDialogContent()
 	addscroll << ui->pluginsListWidget << ui->scriptListWidget;
 	installKineticScrolling(addscroll);
 
+#ifdef Q_OS_WIN
+	// Install the Event Filter to show the touch keyboard
+	ui->screenshotDirEdit->installEventFilter(this);
+	ui->todayTimeSpinBox->installEventFilter(this);
+	ui->mouseTimeoutSpinBox->installEventFilter(this);
+#endif
+
 	// Selected object info
 	if (gui->getInfoTextFilters() == StelObject::InfoStringGroup(0))
 	{
@@ -1235,3 +1242,17 @@ void ConfigurationDialog::showCustomDeltaTEquationDialog()
 
 	customDeltaTEquationDialog->setVisible(true);
 }
+
+#ifdef Q_OS_WIN
+bool ConfigurationDialog::eventFilter(QObject *object, QEvent *event)
+{
+	if (object == ui->screenshotDirEdit || object == ui->todayTimeSpinBox || object == ui->mouseTimeoutSpinBox)
+	{
+		if (event->type() == QEvent::FocusIn)
+			showTouchKeyboard(true);
+		if (event->type() == QEvent::FocusOut)
+			showTouchKeyboard(false);
+	}
+	return false;
+}
+#endif

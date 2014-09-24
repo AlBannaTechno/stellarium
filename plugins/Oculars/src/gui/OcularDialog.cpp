@@ -346,6 +346,16 @@ void OcularDialog::createDialogContent()
 	QList<QWidget *> addscroll;
 	addscroll << ui->textBrowser << ui->telescopeListView << ui->ccdListView << ui->ocularListView << ui->lensListView;
 	installKineticScrolling(addscroll);
+
+#ifdef Q_OS_WIN
+	// Install the Event Filter to show the touch keyboard
+	QList<QWidget *> listShowTouchKeyboard;
+	listShowTouchKeyboard << ui->togglePluginLineEdit << ui->togglePopupNavigatorWindowLineEdit << ui->ocularName << ui->ocularAFov << ui->ocularFL << ui->ocularFieldStop << ui->lensName << ui->lensMultipler
+		<< ui->ccdName << ui->ccdResX << ui->ccdResY << ui->ccdChipX << ui->ccdChipY << ui->ccdPixelX << ui->ccdPixelY << ui->telescopeName << ui->telescopeFL << ui->telescopeDiameter;
+
+	foreach(QWidget * w, listShowTouchKeyboard)
+		w->installEventFilter(this);
+#endif
 	
 	//Now the rest of the actions.
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
@@ -547,3 +557,31 @@ void OcularDialog::initAboutText()
 
 	ui->textBrowser->setHtml(html);
 }
+
+#ifdef Q_OS_WIN
+bool  OcularDialog::eventFilter(QObject *object, QEvent *event)
+{
+	QList<QWidget *> listShowTouchKeyboard;
+	listShowTouchKeyboard << ui->togglePluginLineEdit << ui->togglePopupNavigatorWindowLineEdit << ui->ocularName << ui->ocularAFov << ui->ocularFL << ui->ocularFieldStop << ui->lensName << ui->lensMultipler
+		<< ui->ccdName << ui->ccdResX << ui->ccdResY << ui->ccdChipX << ui->ccdChipY << ui->ccdPixelX << ui->ccdPixelY << ui->telescopeName << ui->telescopeFL << ui->telescopeDiameter;
+
+	foreach(QWidget * w, listShowTouchKeyboard)
+	{
+		if (object == w)
+		{
+			if (event->type() == QEvent::FocusIn)
+			{
+				showTouchKeyboard(true);
+				return false;
+			}
+			if (event->type() == QEvent::FocusOut)
+			{
+				showTouchKeyboard(false);
+				return false;
+			}
+				
+		}
+	}
+	return false;
+}
+#endif

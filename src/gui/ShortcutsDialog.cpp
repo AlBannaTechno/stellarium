@@ -296,6 +296,13 @@ void ShortcutsDialog::createDialogContent()
 	addscroll << ui->shortcutsTreeView;
 	installKineticScrolling(addscroll);
 
+#ifdef Q_OS_WIN
+	// Install the Event Filter to show the touch keyboard
+	ui->primaryShortcutEdit->installEventFilter(this);
+	ui->lineEditSearch->installEventFilter(this);
+	ui->altShortcutEdit->installEventFilter(this);
+#endif
+
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->shortcutsTreeView->selectionModel(),
 	        SIGNAL(currentChanged(QModelIndex,QModelIndex)),
@@ -496,3 +503,17 @@ void ShortcutsDialog::setModelHeader()
 	             << q_("Alternative shortcut");
 	mainModel->setHorizontalHeaderLabels(headerLabels);
 }
+
+#ifdef Q_OS_WIN
+bool ShortcutsDialog::eventFilter(QObject *object, QEvent *event)
+{
+	if (object == ui->primaryShortcutEdit || object == ui->lineEditSearch || object == ui->altShortcutEdit)
+	{
+		if (event->type() == QEvent::FocusIn)
+			showTouchKeyboard(true);
+		if (event->type() == QEvent::FocusOut)
+			showTouchKeyboard(false);
+	}
+	return false;
+}
+#endif

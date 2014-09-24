@@ -50,6 +50,10 @@ protected:
 	virtual void createDialogContent();
 	Ui_configurationDialogForm* ui;
 
+#ifdef Q_OS_WIN
+	virtual bool eventFilter(QObject *object, QEvent *event);
+#endif
+
 private:
 	//! Contains the parsed content of the starsConfig.json file
 	QVariantMap nextStarCatalogToDownload;

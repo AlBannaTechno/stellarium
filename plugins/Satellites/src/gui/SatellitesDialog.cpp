@@ -98,6 +98,12 @@ void SatellitesDialog::createDialogContent()
 	addscroll << ui->satellitesList << ui->sourceList << ui->aboutTextBrowser;
 	installKineticScrolling(addscroll);
 
+#ifdef Q_OS_WIN
+	// Install the Event Filter to show the touch keyboard
+	ui->lineEditSearch->installEventFilter(this);
+	ui->sourceEdit->installEventFilter(this);
+#endif
+
 	// Settings tab / updates group
 	// These controls are refreshed by updateSettingsPage(), which in
 	// turn is triggered by setting any of these values. Because 
@@ -915,3 +921,17 @@ void SatellitesDialog::enableSatelliteDataForm(bool enabled)
 	ui->orbitCheckbox->blockSignals(!enabled);
 	ui->userCheckBox->blockSignals(!enabled);
 }
+
+#ifdef Q_OS_WIN
+bool SatellitesDialog::eventFilter(QObject *object, QEvent *event)
+{
+	if (object == ui->lineEditSearch || object == ui->sourceEdit)
+	{
+		if (event->type() == QEvent::FocusIn)
+			showTouchKeyboard(true);
+		if (event->type() == QEvent::FocusOut)
+			showTouchKeyboard(false);
+	}
+	return false;
+}
+#endif

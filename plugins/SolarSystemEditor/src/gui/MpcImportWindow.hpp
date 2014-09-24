@@ -138,6 +138,10 @@ private:
 protected:
 	virtual void createDialogContent();
 	Ui_mpcImportWindow * ui;
+
+#ifdef Q_OS_WIN
+	virtual bool eventFilter(QObject *object, QEvent *event);
+#endif
 };
 
 #endif //_MPC_IMPORT_WINDOW_

@@ -178,6 +178,9 @@ bool StelSkyItem::event(QEvent * e)
 		if (touchPoints.count() == 1)
 			setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton | Qt::MiddleButton);
 
+		if (StelApp::getInstance().getSettings()->value("gui/flag_enable_touch_keyboard", false).toBool() == false)
+			StelApp::getInstance().getSettings()->setValue("gui/flag_enable_touch_keyboard", true);
+
 		return true;
 	}
 		break;

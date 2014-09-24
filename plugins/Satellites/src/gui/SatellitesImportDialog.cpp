@@ -90,6 +90,11 @@ void SatellitesImportDialog::createDialogContent()
 	addscroll << ui->listView;
 	installKineticScrolling(addscroll);
 	
+#ifdef Q_OS_WIN
+	// Install the Event Filter to show the touch keyboard
+	ui->lineEditSearch->installEventFilter(this);
+#endif
+
 	connect(ui->closeStelWindow, SIGNAL(clicked()),
 	        this, SLOT(close()));
 
@@ -404,3 +409,17 @@ void SatellitesImportDialog::setCheckState(Qt::CheckState state)
 		}
 	}
 }
+
+#ifdef Q_OS_WIN
+bool SatellitesImportDialog::eventFilter(QObject *object, QEvent *event)
+{
+	if (object == ui->lineEditSearch)
+	{
+		if (event->type() == QEvent::FocusIn)
+			showTouchKeyboard(true);
+		if (event->type() == QEvent::FocusOut)
+			showTouchKeyboard(false);
+	}
+	return false;
+}
+#endif

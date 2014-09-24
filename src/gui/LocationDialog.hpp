@@ -43,6 +43,10 @@ protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();
 	Ui_locationDialogForm* ui;
+
+#ifdef Q_OS_WIN
+	virtual bool eventFilter(QObject *object, QEvent *event);
+#endif
 	
 private:
 	//! Set the values of all the fields from a location info

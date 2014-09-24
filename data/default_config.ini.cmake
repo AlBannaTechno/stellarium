@@ -116,6 +116,7 @@ selected_object_info                = all
 auto_hide_horizontal_toolbar        = true
 auto_hide_vertical_toolbar          = true
 flag_enable_kinetic_scrolling       = true
+flag_enable_touch_keyboard          = false
 
 [color]
 default_color                       = 0.5,0.5,0.7

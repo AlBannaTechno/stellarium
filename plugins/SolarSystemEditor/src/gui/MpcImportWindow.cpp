@@ -92,6 +92,14 @@ void MpcImportWindow::createDialogContent()
 {
 	ui->setupUi(dialog);
 
+#ifdef Q_OS_WIN
+	// Install the Event Filter to show the touch keyboard
+	ui->lineEditURL->installEventFilter(this);
+	ui->lineEditBookmarkTitle->installEventFilter(this);
+	ui->lineEditFilePath->installEventFilter(this);
+	ui->lineEditQuery->installEventFilter(this);
+#endif
+
 	//Signals
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
@@ -1055,3 +1063,17 @@ void MpcImportWindow::saveBookmarksGroup(Bookmarks & bookmarkGroup, QVariantMap 
 		output.insert(title, bookmarkGroup.value(title));
 	}
 }
+
+#ifdef Q_OS_WIN
+bool MpcImportWindow::eventFilter(QObject *object, QEvent *event)
+{
+	if (object == ui->lineEditURL || object == ui->lineEditBookmarkTitle || object == ui->lineEditFilePath || object == ui->lineEditQuery)
+	{
+		if (event->type() == QEvent::FocusIn)
+			showTouchKeyboard(true);
+		if (event->type() == QEvent::FocusOut)
+			showTouchKeyboard(false);
+	}
+	return false;
+}
+#endif

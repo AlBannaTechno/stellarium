@@ -92,6 +92,15 @@ void LocationDialog::createDialogContent()
 	addscroll << ui->citiesListView;
 	installKineticScrolling(addscroll);
 
+#ifdef Q_OS_WIN
+	// Install the Event Filter to show the touch keyboard
+	ui->citySearchLineEdit->installEventFilter(this);
+	ui->cityNameLineEdit->installEventFilter(this);
+	ui->latitudeSpinBox->installEventFilter(this);
+	ui->longitudeSpinBox->installEventFilter(this);
+	ui->altitudeSpinBox->installEventFilter(this);
+#endif
+
 	populatePlanetList();
 	populateCountryList();
 
@@ -570,3 +579,17 @@ void LocationDialog::filterSitesByCountry()
 	connect(ui->citySearchLineEdit, SIGNAL(textChanged(const QString&)), proxyModel, SLOT(setFilterWildcard(const QString&)));
 	ui->citySearchLineEdit->setFocus();
 }
+
+#ifdef Q_OS_WIN
+bool LocationDialog::eventFilter(QObject *object, QEvent *event)
+{
+	if (object == ui->citySearchLineEdit || object == ui->cityNameLineEdit || object == ui->latitudeSpinBox || object == ui->longitudeSpinBox || object == ui->altitudeSpinBox)
+	{
+		if (event->type() == QEvent::FocusIn)
+			showTouchKeyboard(true);
+		if (event->type() == QEvent::FocusOut)
+			showTouchKeyboard(false);
+	}
+	return false;
+}
+#endif

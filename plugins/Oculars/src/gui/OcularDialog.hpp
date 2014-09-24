@@ -82,6 +82,10 @@ protected:
 	virtual void createDialogContent();
 	Ui_ocularDialogForm* ui;
 
+#ifdef Q_OS_WIN
+	virtual bool eventFilter(QObject *object, QEvent *event);
+#endif
+
 private slots:
 	void keyBindingTogglePluginChanged(const QString& newString);
 	void keyBindingPopupNavigatorConfigChanged(const QString& newString);

@@ -81,6 +81,11 @@ protected:
 
 	//! Kinetic scrolling for lists.
 	void installKineticScrolling(QList<QWidget *> addscroll);
+
+#ifdef Q_OS_WIN
+	//! Show touch Keyboard for tablet pc
+	void showTouchKeyboard(bool show);
+#endif
 };
 
 #endif // _STELDIALOG_HPP_

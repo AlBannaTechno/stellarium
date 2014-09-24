@@ -210,6 +210,12 @@ void SearchDialog::createDialogContent()
 	connect(ui->lineEditSearchSkyObject, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
 
 	ui->lineEditSearchSkyObject->installEventFilter(this);
+#ifdef Q_OS_WIN
+	// Install the Event Filter to show the touch keyboard
+	ui->searchInListLineEdit->installEventFilter(this);
+	ui->RAAngleSpinBox->installEventFilter(this);
+	ui->DEAngleSpinBox->installEventFilter(this);
+#endif
 	ui->RAAngleSpinBox->setDisplayFormat(AngleSpinBox::HMSLetters);
 	ui->DEAngleSpinBox->setDisplayFormat(AngleSpinBox::DMSSymbols);
 	ui->DEAngleSpinBox->setPrefixType(AngleSpinBox::NormalPlus);
@@ -492,8 +498,19 @@ void SearchDialog::searchListChanged(const QString &newText)
 	}
 }
 
-bool SearchDialog::eventFilter(QObject*, QEvent *event)
+bool SearchDialog::eventFilter(QObject *object, QEvent *event)
 {
+#ifdef Q_OS_WIN
+	if (object == ui->lineEditSearchSkyObject || object == ui->searchInListLineEdit || object == ui->DEAngleSpinBox || object == ui->RAAngleSpinBox)
+	{
+		if (event->type() == QEvent::FocusIn)
+			showTouchKeyboard(true);
+		if (event->type() == QEvent::FocusOut)
+			showTouchKeyboard(false);
+		return false;
+	}
+#endif
+
 	if (event->type() == QEvent::KeyRelease)
 	{
 		QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);

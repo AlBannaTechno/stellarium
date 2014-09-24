@@ -50,6 +50,10 @@ protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	void createDialogContent();
 
+#ifdef Q_OS_WIN
+	virtual bool eventFilter(QObject *object, QEvent *event);
+#endif
+
 public slots:
 	void retranslate();
 

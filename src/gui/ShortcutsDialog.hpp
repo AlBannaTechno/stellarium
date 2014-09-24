@@ -89,6 +89,10 @@ protected:
 	//! Initialize the dialog widgets and connect the signals/slots.
 	virtual void createDialogContent();
 
+#ifdef Q_OS_WIN
+	virtual bool eventFilter(QObject *object, QEvent *event);
+#endif
+
 private:
 	//! checks whether given item can be changed by editors.
 	static bool itemIsEditable(QStandardItem *item);
