@@ -303,6 +303,8 @@ void SearchDialog::createDialogContent()
 #ifdef Q_OS_WIN
 	// Install the Event Filter to show the touch keyboard
 	ui->searchInListLineEdit->installEventFilter(this);
+	ui->AxisYSpinBox->installEventFilter(this);
+	ui->AxisXSpinBox->installEventFilter(this);
 #endif
 
 	//Kinetic scrolling for tablet pc and pc
@@ -371,7 +373,7 @@ void SearchDialog::createDialogContent()
 	updateListTab();
 
 	// Set the focus directly on the line edit
-	if (ui->lineEditSearchSkyObject->isEnabled())
+	if (ui->lineEditSearchSkyObject->isEnabled() && StelApp::getInstance().getSettings()->value("gui/flag_enable_touch_keyboard", false).toBool() == false)
 		ui->lineEditSearchSkyObject->setFocus();
 }
 
@@ -622,7 +624,7 @@ void SearchDialog::searchListChanged(const QString &newText)
 bool SearchDialog::eventFilter(QObject *object, QEvent *event)
 {
 #ifdef Q_OS_WIN
-	if (object == ui->lineEditSearchSkyObject || object == ui->searchInListLineEdit)
+	if (object == ui->lineEditSearchSkyObject || object == ui->searchInListLineEdit || object == ui->AxisXSpinBox || object == ui->AxisYSpinBox)
 	{
 		if (event->type() == QEvent::FocusIn)
 			showTouchKeyboard(true);

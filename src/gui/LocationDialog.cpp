@@ -138,6 +138,7 @@ void LocationDialog::createDialogContent()
 	
 	connect(core, SIGNAL(locationChanged(StelLocation)), this, SLOT(updateFromProgram(StelLocation)));
 
+	if (StelApp::getInstance().getSettings()->value("gui/flag_enable_touch_keyboard", false).toBool() == false)
 	ui->citySearchLineEdit->setFocus();
 }
 
