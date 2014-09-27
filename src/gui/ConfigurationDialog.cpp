@@ -191,8 +191,7 @@ void ConfigurationDialog::createDialogContent()
 	connect(ui->noSelectedInfoRadio, SIGNAL(released()), this, SLOT(setNoSelectedInfo()));
 	connect(ui->allSelectedInfoRadio, SIGNAL(released()), this, SLOT(setAllSelectedInfo()));
 	connect(ui->briefSelectedInfoRadio, SIGNAL(released()), this, SLOT(setBriefSelectedInfo()));
-	connect(ui->buttonGroupDisplayedFields, SIGNAL(buttonClicked(int)),
-	        this, SLOT(setSelectedInfoFromCheckBoxes()));
+	connect(ui->buttonGroupDisplayedFields, SIGNAL(buttonClicked(int)), this, SLOT(setSelectedInfoFromCheckBoxes()));
 	
 	// Navigation tab
 	// Startup time
@@ -218,9 +217,7 @@ void ConfigurationDialog::createDialogContent()
 	connect(ui->enableKeysNavigationCheckBox, SIGNAL(toggled(bool)), mvmgr, SLOT(setFlagEnableZoomKeys(bool)));
 	connect(ui->enableMouseNavigationCheckBox, SIGNAL(toggled(bool)), mvmgr, SLOT(setFlagEnableMouseNavigation(bool)));
 	connect(ui->fixedDateTimeCurrentButton, SIGNAL(clicked()), this, SLOT(setFixedDateTimeToCurrent()));
-	connect(ui->editShortcutsPushButton, SIGNAL(clicked()),
-	        this,
-	        SLOT(showShortcutsWindow()));
+	connect(ui->editShortcutsPushButton, SIGNAL(clicked()), this, SLOT(showShortcutsWindow()));
 
 	// Delta-T
 	populateDeltaTAlgorithmsList();	
@@ -237,8 +234,7 @@ void ConfigurationDialog::createDialogContent()
 	// Tools tab
 	ConstellationMgr* cmgr = GETSTELMODULE(ConstellationMgr);
 	Q_ASSERT(cmgr);
-	// XXX: to reintroduce.
-	// ui->sphericMirrorCheckbox->setChecked(StelMainView::getInstance().getStelAppGraphicsWidget()->getViewportEffect() == "sphericMirrorDistorter");
+	ui->sphericMirrorCheckbox->setChecked(StelApp::getInstance().getViewportEffect() == "sphericMirrorDistorter");
 	connect(ui->sphericMirrorCheckbox, SIGNAL(toggled(bool)), this, SLOT(setSphericMirror(bool)));
 	ui->gravityLabelCheckbox->setChecked(proj->getFlagGravityLabels());
 	connect(ui->gravityLabelCheckbox, SIGNAL(toggled(bool)), StelApp::getInstance().getCore(), SLOT(setFlagGravityLabels(bool)));
@@ -254,6 +250,9 @@ void ConfigurationDialog::createDialogContent()
 
 	ui->showNebulaBgButtonCheckbox->setChecked(gui->getFlagShowNebulaBackgroundButton());
 	connect(ui->showNebulaBgButtonCheckbox, SIGNAL(toggled(bool)), gui, SLOT(setFlagShowNebulaBackgroundButton(bool)));
+
+	ui->decimalDegreeCheckBox->setChecked(gui->getFlagShowDecimalDegrees());
+	connect(ui->decimalDegreeCheckBox, SIGNAL(toggled(bool)), gui, SLOT(setFlagShowDecimalDegrees(bool)));
 
 	ui->mouseTimeoutCheckbox->setChecked(StelMainView::getInstance().getFlagCursorTimeout());
 	ui->mouseTimeoutSpinBox->setValue(StelMainView::getInstance().getCursorTimeout());
@@ -371,14 +370,12 @@ void ConfigurationDialog::setSphericMirror(bool b)
 	{
 		savedProjectionType = core->getCurrentProjectionType();
 		core->setCurrentProjectionType(StelCore::ProjectionFisheye);
-		// XXX: to reintroduce
-		// StelMainView::getInstance().getStelAppGraphicsWidget()->setViewportEffect("sphericMirrorDistorter");
+		StelApp::getInstance().setViewportEffect("sphericMirrorDistorter");
 	}
 	else
 	{
 		core->setCurrentProjectionType((StelCore::ProjectionType)savedProjectionType);
-		// XXX: to reintroduce
-		// StelMainView::getInstance().getStelAppGraphicsWidget()->setViewportEffect("none");
+		StelApp::getInstance().setViewportEffect("none");
 	}
 }
 
@@ -539,7 +536,7 @@ void ConfigurationDialog::saveCurrentViewOptions()
 	conf->setValue("viewing/flag_horizon_line", glmgr->getFlagHorizonLine());
 	conf->setValue("viewing/flag_equatorial_J2000_grid", glmgr->getFlagEquatorJ2000Grid());
 	conf->setValue("viewing/flag_galactic_grid", glmgr->getFlagGalacticGrid());
-	conf->setValue("viewing/flag_galactic_plane_line", glmgr->getFlagGalacticPlaneLine());
+	conf->setValue("viewing/flag_galactic_equator_line", glmgr->getFlagGalacticEquatorLine());
 	conf->setValue("viewing/flag_cardinal_points", lmgr->getFlagCardinalsPoints());
 	conf->setValue("viewing/flag_constellation_drawing", cmgr->getFlagLines());
 	conf->setValue("viewing/flag_constellation_name", cmgr->getFlagLabels());
@@ -630,6 +627,7 @@ void ConfigurationDialog::saveCurrentViewOptions()
 	conf->setValue("gui/auto_hide_horizontal_toolbar", gui->getAutoHideHorizontalButtonBar());
 	conf->setValue("gui/auto_hide_vertical_toolbar", gui->getAutoHideVerticalButtonBar());
 	conf->setValue("gui/flag_show_nebulae_background_button", gui->getFlagShowNebulaBackgroundButton());
+	conf->setValue("gui/flag_show_decimal_degrees", gui->getFlagShowDecimalDegrees());
 
 	mvmgr->setInitFov(mvmgr->getCurrentFov());
 	mvmgr->setInitViewDirectionToCurrent();
@@ -651,8 +649,7 @@ void ConfigurationDialog::saveCurrentViewOptions()
 
 	// configuration dialog / tools tab
 	conf->setValue("gui/flag_show_flip_buttons", gui->getFlagShowFlipButtons());
-	// XXX: to reintroduce.
-	// conf->setValue("video/viewport_effect", StelMainView::getInstance().getStelAppGraphicsWidget()->getViewportEffect());
+	conf->setValue("video/viewport_effect", StelApp::getInstance().getViewportEffect());
 	conf->setValue("projection/viewport", StelProjector::maskTypeToString(proj->getMaskType()));
 	conf->setValue("viewing/flag_gravity_labels", proj->getFlagGravityLabels());
 	conf->setValue("navigation/auto_zoom_out_resets_direction", mvmgr->getFlagAutoZoomOutResetsDirection());
