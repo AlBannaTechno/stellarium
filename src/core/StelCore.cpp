@@ -114,15 +114,10 @@ void StelCore::init()
 	defaultLocationID = conf->value("init_location/location", "auto").toString();
 	bool ok;
 	StelLocationMgr* locationMgr = &StelApp::getInstance().getLocationMgr();
-	StelLocation location;
+	StelLocation location = locationMgr->locationForString(defaultLocationID);
+
 	if (defaultLocationID == "auto")
-	{
 		locationMgr->locationFromIP();
-	}
-	else
-	{
-		location = locationMgr->locationForString(defaultLocationID);
-	}
 
 	if (!location.isValid())
 	{
