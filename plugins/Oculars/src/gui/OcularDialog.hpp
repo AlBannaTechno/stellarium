@@ -109,6 +109,9 @@ private:
 	QList<Lens *>*			lense;
 	PropertyBasedTableModel*	lensTableModel;
 	QRegExpValidator*		validatorName;
+#ifdef Q_OS_WIN
+	QList<QWidget *> listShowTouchKeyboard;
+#endif
 };
 
 #endif // _OCULARDIALOG_HPP_
