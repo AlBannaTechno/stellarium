@@ -183,17 +183,25 @@ void StelDialog::showTouchKeyboard(bool show)
 	if (StelApp::getInstance().getSettings()->value("gui/flag_enable_touch_keyboard", false).toBool() == false)
 		return;
 
-	if (show)
+	switch (QSysInfo::WindowsVersion){
+	case QSysInfo::WV_6_3:
+	case QSysInfo::WV_6_2:
 	{
-		ShellExecuteA(NULL, "open", "\"C:\\Program Files\\Common Files\\microsoft shared\\ink\\TabTip.exe\"", "", 0, SW_NORMAL);
-	}
-	else
-	{
-		HWND wKB = ::FindWindow(_TEXT("IPTip_Main_Window"), NULL);
-		if (wKB != NULL && ::IsWindowVisible(wKB))
-		{
-			::PostMessage(wKB, WM_SYSCOMMAND, SC_CLOSE, 0);
+		if (show)
+	    {
+		    ShellExecuteA(NULL, "open", "\"C:\\Program Files\\Common Files\\microsoft shared\\ink\\TabTip.exe\"", "", 0, SW_NORMAL);
 		}
+		else
+		{
+			HWND wKB = ::FindWindow(_TEXT("IPTip_Main_Window"), NULL);
+			if (wKB != NULL && ::IsWindowVisible(wKB))
+			{
+				::PostMessage(wKB, WM_SYSCOMMAND, SC_CLOSE, 0);
+			}
+		}
+		break;
+	}
+	default: return;
 	}
 }
 #endif
