@@ -1,3 +1,9 @@
+stellarium (0.13.2-0) UNRELEASED; urgency=low
+
+  * Update to version 0.13.2
+
+  -- Alexander Wolf <alex.v.wolf@gmail.com>  Sun, 19 Oct 2014 17:45:00 +0700
+
 stellarium (0.13.1-0) UNRELEASED; urgency=low
 
   * Update to version 0.13.1
