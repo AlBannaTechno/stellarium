@@ -52,3 +52,14 @@ Description: Stellarium data files
  .
  This package contains data files required by Stellarium. They include
  textures, star catalogues and translations.
+
+Package: stellarium-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: stellarium (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for stellarium
+ Stellarium renders 3D photo-realistic skies in real-time. With Stellarium, you
+ really see what you can see with your eyes, binoculars or a small telescope.
+ .
+ This package contains the debugging symbols for stellarium.

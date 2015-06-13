@@ -8,3 +8,6 @@
 
 override_dh_install:
 	dh_install -XDejaVuSans.ttf -XDejaVuSansMono.ttf
+
+override_dh_strip:
+	dh_strip --dbg-package=stellarium-dbg
