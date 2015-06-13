@@ -43,15 +43,6 @@ Description: real-time photo-realistic sky generator
  like eclipse predictions. However, it is the ideal program to prepare an
  observation evening with naked eye, binocular, or small telescope.
 
-Package: stellarium-dbg
-Architecture: any
-Depends: stellarium (= ${binary:Version}), ${misc:Depends}, stellarium-data (>= ${source:Version})
-Description: debugging symbols for stellarium
- Stellarium renders 3D photo-realistic skies in real-time. With Stellarium, you
- really see what you can see with your eyes, binoculars or a small telescope.
- .
- This package contains the debugging symbols for stellarium.
-
 Package: stellarium-data
 Architecture: all
 Depends: ${misc:Depends}, fonts-dejavu-core (>= 2.33)
