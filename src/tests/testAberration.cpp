@@ -35,7 +35,7 @@ void TestAberration::testAberration()
 	// J. Meeus "Astronomical Algorithms" (2nd ed., with corrections as of August 10, 2009) p.156-157.
 	double RA  = 41.0540613; //  2h44m12.9747s
 	double Dec = 49.2277489; // 49d13m39.896s
-	double JDE = 2462088.6900125; // 2028 Nov. 13.19 TD
+	double JDE = 2462088.6900125; // 2028 Nov. 13.19 TDT
 
 	// convert to radians
 	RA  *= M_PI/180.;
@@ -51,6 +51,6 @@ void TestAberration::testAberration()
 	cRA  *= 180./M_PI;
 	cDec *= 180./M_PI;
 
-	QVERIFY2(fabs(cRA  - rRA )<=0.000001, QString("JD %1: Computed RA : %2 Difference: %3").arg(JDE).arg(cRA).arg(cRA - rRA).toUtf8());
-	QVERIFY2(fabs(cDec - rDec)<=0.000001, QString("JD %1: Computed Dec: %2 Difference: %3").arg(JDE).arg(cDec).arg(cDec - rDec).toUtf8());
+	QVERIFY2(fabs(cRA  - rRA )<=0.000001, QString("JD %1: Computed RA : %2 Difference: %3").arg(QString::number(JDE, 'f', 6)).arg(cRA).arg(cRA - rRA).toUtf8());
+	QVERIFY2(fabs(cDec - rDec)<=0.000001, QString("JD %1: Computed Dec: %2 Difference: %3").arg(QString::number(JDE, 'f', 6)).arg(cDec).arg(cDec - rDec).toUtf8());
 }
