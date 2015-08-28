@@ -176,6 +176,8 @@ SET(stellarium_lib_SRCS
 	core/planetsephems/pluto.h
 	core/planetsephems/precession.c
 	core/planetsephems/precession.h
+	core/planetsephems/aberration.c
+	core/planetsephems/aberration.h
 	core/planetsephems/sidereal_time.c
 	core/planetsephems/sidereal_time.h
 	core/planetsephems/stellplanet.c
@@ -643,6 +645,24 @@ QT5_USE_MODULES(testPrecession Core Gui Widgets Script Test)
 TARGET_LINK_LIBRARIES(testPrecession ${extLinkerOptionTest})
 ADD_DEPENDENCIES(buildTests testPrecession)
 ADD_TEST(testPrecession)
+
+SET(tests_testAberration_SRCS
+        tests/testAberration.hpp
+        tests/testAberration.cpp
+        core/planetsephems/aberration.h
+        core/planetsephems/aberration.c
+        core/StelUtils.hpp
+        core/StelUtils.cpp)
+IF(WIN32)
+        # StelUtils required zlib sources
+        SET(tests_testAberration_SRCS ${tests_testAberration_SRCS} ${zlib_SRCS})
+ENDIF()
+ADD_EXECUTABLE(testAberration EXCLUDE_FROM_ALL ${tests_testAberration_SRCS})
+QT5_USE_MODULES(testAberration Core Gui Widgets Script Test)
+TARGET_LINK_LIBRARIES(testAberration ${extLinkerOptionTest})
+ADD_DEPENDENCIES(buildTests testAberration)
+ADD_TEST(testAberration)
+
 
 ADD_CUSTOM_TARGET(tests COMMENT "Run the Stellarium unit tests")
 FOREACH(NAME ${STELLARIUM_TESTS})
