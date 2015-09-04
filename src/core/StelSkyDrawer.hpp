@@ -21,6 +21,7 @@
 #define _STELSKYDRAWER_HPP_
 
 #include "RefractionExtinction.hpp"
+#include "Aberration.hpp"
 #include "StelTextureTypes.hpp"
 #include "StelProjectorType.hpp"
 #include "VecMath.hpp"
@@ -217,6 +218,8 @@ public slots:
 	const Extinction& getExtinction() const {return extinction;}
 	//! Get the current valid refraction computation object.
 	const Refraction& getRefraction() const {return refraction;}
+	//! Get the current valid aberration computation object.
+	const Aberration& getAberration() const {return aberration;}
 
 	//! Get the radius of the big halo texture used when a 3d model is very bright.
 	float getBig3dModelHaloRadius() const {return big3dModelHaloRadius;}
@@ -278,6 +281,7 @@ private:
 
 	Extinction extinction;
 	Refraction refraction;
+	Aberration aberration;
 
 	float maxAdaptFov, minAdaptFov, lnfovFactor;
 	bool flagStarTwinkle;
