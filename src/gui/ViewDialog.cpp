@@ -186,20 +186,26 @@ void ViewDialog::createDialogContent()
 	// Stars
 	ui->starLimitMagnitudeCheckBox->setChecked(drawer->getFlagStarMagnitudeLimit());
 	ui->starLimitMagnitudeDoubleSpinBox->setValue(drawer->getCustomStarMagnitudeLimit());
+	// Planets
+	ui->planetLimitMagnitudeCheckBox->setChecked(drawer->getFlagPlanetMagnitudeLimit());
+	ui->planetLimitMagnitudeDoubleSpinBox->setValue(drawer->getCustomPlanetMagnitudeLimit());
 	// DSO
 	ui->nebulaLimitMagnitudeCheckBox->setChecked(drawer->getFlagNebulaMagnitudeLimit());
 	ui->nebulaLimitMagnitudeDoubleSpinBox->setValue(drawer->getCustomNebulaMagnitudeLimit());
 	
 	connect(ui->starLimitMagnitudeCheckBox, SIGNAL(toggled(bool)),
 	        drawer, SLOT(setFlagStarMagnitudeLimit(bool)));
+	connect(ui->planetLimitMagnitudeCheckBox, SIGNAL(toggled(bool)),
+		drawer, SLOT(setFlagPlanetMagnitudeLimit(bool)));
 	connect(ui->nebulaLimitMagnitudeCheckBox, SIGNAL(toggled(bool)),
 	        drawer, SLOT(setFlagNebulaMagnitudeLimit(bool)));
 	connect(ui->starLimitMagnitudeDoubleSpinBox, SIGNAL(valueChanged(double)),
 	        drawer, SLOT(setCustomStarMagnitudeLimit(double)));
+	connect(ui->planetLimitMagnitudeDoubleSpinBox, SIGNAL(valueChanged(double)),
+		drawer, SLOT(setCustomPlanetMagnitudeLimit(double)));
 	connect(ui->nebulaLimitMagnitudeDoubleSpinBox,
 	        SIGNAL(valueChanged(double)),
-	        drawer,
-	        SLOT(setCustomNebulaMagnitudeLimit(double)));
+		drawer, SLOT(setCustomNebulaMagnitudeLimit(double)));
 
 	// Planets section
 	SolarSystem* ssmgr = GETSTELMODULE(SolarSystem);
@@ -228,10 +234,10 @@ void ViewDialog::createDialogContent()
 	SporadicMeteorMgr* mmgr = GETSTELMODULE(SporadicMeteorMgr);
 	Q_ASSERT(mmgr);
 
-	ui->zhrSpinBox->setValue(mmgr->getZHR());
-	connect(mmgr, SIGNAL(zhrChanged(int)), this, SLOT(updateZhrControls(int)));
-	connect(ui->zhrSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setZhrFromControls(int)));
-	updateZhrDescription();
+	connect(mmgr, SIGNAL(zhrChanged(int)), this, SLOT(setZHR(int)));
+	connect(ui->zhrSlider, SIGNAL(valueChanged(int)), this, SLOT(setZHR(int)));
+	connect(ui->zhrSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setZHR(int)));
+	setZHR(mmgr->getZHR());
 
 	// Labels section
 	StarMgr* smgr = GETSTELMODULE(StarMgr);
@@ -778,25 +784,22 @@ void ViewDialog::showAtmosphereDialog()
 }
 
 
-void ViewDialog::setZhrFromControls(int zhr)
+void ViewDialog::setZHR(int zhr)
 {
 	SporadicMeteorMgr* mmgr = GETSTELMODULE(SporadicMeteorMgr);
-	if (zhr==0)
-	{
-		mmgr->setFlagShow(false);
-	}
-	else
-	{
-		mmgr->setFlagShow(true);
-		mmgr->setZHR(zhr);
-	}
-	updateZhrDescription();
-}
+	mmgr->blockSignals(true);
+	ui->zhrSlider->blockSignals(true);
+	ui->zhrSpinBox->blockSignals(true);
 
-void ViewDialog::updateZhrControls(int zhr)
-{
+	mmgr->setFlagShow(zhr > 0);
+	mmgr->setZHR(zhr);
+	ui->zhrSlider->setValue(zhr);
 	ui->zhrSpinBox->setValue(zhr);
 	updateZhrDescription();
+
+	mmgr->blockSignals(false);
+	ui->zhrSlider->blockSignals(false);
+	ui->zhrSpinBox->blockSignals(false);
 }
 
 void ViewDialog::updateZhrDescription()

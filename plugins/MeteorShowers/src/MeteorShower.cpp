@@ -66,7 +66,7 @@ MeteorShower::MeteorShower(MeteorShowersMgr* mgr, const QVariantMap& map)
 	m_rAlphaPeak = m_radiantAlpha;
 	m_rDeltaPeak = m_radiantDelta;
 
-	int genericYear = 1000;
+	const int genericYear = 1000;
 
 	// build the activity list
 	QList<QVariant> activities = map.value("activity").toList();
@@ -114,60 +114,78 @@ MeteorShower::MeteorShower(MeteorShowersMgr* mgr, const QVariantMap& map)
 		peak = peak.isEmpty() ? "" : peak + " " + year;
 		d.peak = QDate::fromString(peak, "MM.dd yyyy");
 
-		if (d.start.isValid() && d.finish.isValid() && d.peak.isValid())
-		{
-			// Fix the 'finish' year! Handling cases when the shower starts on
-			// the current year and ends on the next year!
-			if(d.start.operator >(d.finish))
-			{
-				d.finish = d.finish.addYears(1);
-			}
-			// Fix the 'peak' year
-			if(d.start.operator >(d.peak))
-			{
-				d.peak = d.peak.addYears(1);
-			}
-		}
-
 		m_activities.append(d);
 	}
 
 	// filling null values of the activity list with generic data
+	// and fixing the edge cases (showers between december and january)
 	const Activity& g = m_activities.at(0);
 	const int activitiesSize = m_activities.size();
-	for (int i = 1; i < activitiesSize; ++i)
+	for (int i = 0; i < activitiesSize; ++i)
 	{
 		Activity a = m_activities.at(i);
-		if (a.zhr == 0)
+		if (i != 0)
 		{
-			a.zhr = g.zhr;
-			a.variable = g.variable;
+			if (a.zhr == 0)
+			{
+				a.zhr = g.zhr;
+				a.variable = g.variable;
+			}
+
+			int aux = a.year - genericYear;
+			a.start = a.start.isValid() ? a.start : g.start.addYears(aux);
+			a.finish = a.finish.isValid() ? a.finish : g.finish.addYears(aux);
+			a.peak = a.peak.isValid() ? a.peak : g.peak.addYears(aux);
 		}
 
-		int aux = a.year - genericYear;
-		a.start = a.start.isValid() ? a.start : g.start.addYears(aux);
-		a.finish = a.finish.isValid() ? a.finish : g.finish.addYears(aux);
-		a.peak = a.peak.isValid() ? a.peak : g.peak.addYears(aux);
-		m_activities.replace(i, a);
-
-		if (!a.start.isValid() || !a.finish.isValid() || !a.peak.isValid())
+		if (a.start.isValid() && a.finish.isValid() && a.peak.isValid())
+		{
+			// Fix the 'finish' year! Handling cases when the shower starts on
+			// the current year and ends on the next year!
+			if(a.start.operator >(a.finish))
+			{
+				a.finish = a.finish.addYears(1);
+			}
+			// Fix the 'peak' year
+			if(a.start.operator >(a.peak))
+			{
+				a.peak = a.peak.addYears(1);
+			}
+		}
+		else
 		{
 			qWarning() << "MeteorShower: INVALID data for "
 				   << m_showerID << "Unable to read some dates!";
 			qWarning() << "MeteorShower: Please, check your 'showers.json' catalog!";
 			return;
 		}
+
+		m_activities.replace(i, a);
 	}
 
 	if(map.contains("colors"))
 	{
+		int totalIntensity = 0;
 		foreach(const QVariant &ms, map.value("colors").toList())
 		{
 			QVariantMap colorMap = ms.toMap();
 			QString color = colorMap.value("color").toString();
 			int intensity = colorMap.value("intensity").toInt();
-			m_colors.append(Meteor::colorPair(color, intensity));
+			m_colors.append(Meteor::ColorPair(color, intensity));
+			totalIntensity += intensity;
 		}
+
+		// the total intensity must be 100
+		if (totalIntensity != 100) {
+			qWarning() << "MeteorShower: INVALID data for "
+				   << m_showerID << "The total intensity must be equal to 100";
+			qWarning() << "MeteorShower: Please, check your 'showers.json' catalog!";
+			m_colors.clear();
+		}
+	}
+
+	if (m_colors.isEmpty()) {
+		m_colors.push_back(Meteor::ColorPair("white", 100));
 	}
 
 	m_status = UNDEFINED;
@@ -283,7 +301,10 @@ void MeteorShower::update(StelCore* core, double deltaTime)
 		{
 			MeteorObj *m = new MeteorObj(core, m_speed, m_radiantAlpha, m_radiantDelta,
 						     m_pidx, m_colors, m_mgr->getBolideTexture());
-			m_activeMeteors.append(m);
+			if (m->isAlive())
+			{
+				m_activeMeteors.append(m);
+			}
 		}
 	}
 }
@@ -326,8 +347,13 @@ void MeteorShower::drawRadiant(StelCore *core)
 	rgb /= 255.f;
 	painter.setColor(rgb[0], rgb[1], rgb[2], alpha);
 
+	// Hide the radiant markers at during day light and make it visible
+	// when first stars will shine on the sky.
+	float mlimit = core->getSkyDrawer()->getLimitMagnitude();
+	float mag = 2.0f;
+
 	Vec3d win;
-	if (m_mgr->getEnableMarker() && painter.getProjector()->projectCheck(m_position, win))
+	if (m_mgr->getEnableMarker() && painter.getProjector()->projectCheck(m_position, win) && mag<=mlimit)
 	{
 		m_mgr->getRadiantTexture()->bind();
 		painter.drawSprite2dMode(XY[0], XY[1], 45);
@@ -337,7 +363,8 @@ void MeteorShower::drawRadiant(StelCore *core)
 			painter.setFont(m_mgr->getFont());
 			float size = getAngularSize(NULL)*M_PI/180.*painter.getProjector()->getPixelPerRadAtCenter();
 			float shift = 8.f + size/1.8f;
-			painter.drawText(XY[0]+shift, XY[1]+shift, getNameI18n(), 0, 0, 0, false);
+			if ((mag+1.f)<mlimit)
+				painter.drawText(XY[0]+shift, XY[1]+shift, getNameI18n(), 0, 0, 0, false);
 		}
 	}
 }
@@ -402,6 +429,7 @@ MeteorShower::Activity MeteorShower::hasGenericShower(QDate date, bool &found) c
 			       g.peak.day());
 		return g;
 	}
+
 	return Activity();
 }
 
@@ -439,7 +467,7 @@ int MeteorShower::calculateZHR(const double& currentJD)
 	float maxZHR = m_activity.zhr == -1 ? m_activity.variable.at(1) : m_activity.zhr;
 	float minZHR = m_activity.zhr == -1 ? m_activity.variable.at(0) : 0;
 
-	float gaussian = maxZHR * qExp( - qPow(currentJD - peakJD, 2) / (sd * sd) ) + minZHR;
+	float gaussian = maxZHR * qExp( - qPow(currentJD - peakJD, 2) / (2 * sd * sd) ) + minZHR;
 
 	return qRound(gaussian);
 }

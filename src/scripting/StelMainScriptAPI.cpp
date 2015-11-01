@@ -749,10 +749,10 @@ void StelMainScriptAPI::selectObjectByName(const QString& name, bool pointer)
 {
 	StelObjectMgr* omgr = GETSTELMODULE(StelObjectMgr);
 	omgr->setFlagSelectedObjectPointer(pointer);
-	if (name=="")
+	if (name.isEmpty() || !omgr->findAndSelect(name))
+	{
 		omgr->unSelect();
-	else
-		omgr->findAndSelect(name);
+	}
 }
 
 //DEPRECATED: Use getObjectInfo()

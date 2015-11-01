@@ -65,7 +65,7 @@ Planet::Planet(const QString& englishName,
 	       int flagLighting,
 	       double radius,
 	       double oblateness,
-	       Vec3f color,
+	       Vec3f halocolor,
 	       float albedo,
 	       const QString& atexMapName,
 	       const QString& anormalMapName,
@@ -81,7 +81,7 @@ Planet::Planet(const QString& englishName,
 	  flagLighting(flagLighting),
 	  radius(radius),
 	  oneMinusOblateness(1.0-oblateness),
-	  color(color),
+	  haloColor(halocolor),
 	  albedo(albedo),
 	  axisRotation(0.),
 	  rings(NULL),
@@ -197,6 +197,9 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 {
 	QString str;
 	QTextStream oss(&str);
+	double az_app, alt_app;
+	StelUtils::rectToSphe(&az_app,&alt_app,getAltAzPosApparent(core));
+	Q_UNUSED(az_app);
 
 	if (flags&Name)
 	{
@@ -215,7 +218,7 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 
 	if (flags&Magnitude && getVMagnitude(core)!=std::numeric_limits<float>::infinity())
 	{
-		if (core->getSkyDrawer()->getFlagHasAtmosphere())
+		if (core->getSkyDrawer()->getFlagHasAtmosphere() && (alt_app>-3.0*M_PI/180.0)) // Don't show extincted magnitude much below horizon where model is meaningless.
 			oss << q_("Magnitude: <b>%1</b> (extincted to: <b>%2</b>)").arg(QString::number(getVMagnitude(core), 'f', 2),
 											QString::number(getVMagnitudeWithExtinction(core), 'f', 2)) << "<br>";
 		else
@@ -334,6 +337,19 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 
 			oss << QString(q_("Phase: %1")).arg(phase) << "<br>";
 			oss << QString(q_("Illuminated: %1%")).arg(getPhase(observerHelioPos) * 100, 0, 'f', 1) << "<br>";
+		}
+		if (englishName=="Sun")
+		{
+			// Only show during eclipse, show percent?
+			static SolarSystem *ssystem=GETSTELMODULE(SolarSystem);
+			// Debug solution:
+//			float eclipseFactor = ssystem->getEclipseFactor(core);
+//			oss << QString(q_("Eclipse Factor: %1 alpha: %2")).arg(eclipseFactor).arg(-0.1f*qMax(-10.0f, (float) std::log10(eclipseFactor))) << "<br>";
+			// Release version:
+			float eclipseFactor = 100.f*(1.f-ssystem->getEclipseFactor(core));
+			if (eclipseFactor>0.f)
+				oss << QString(q_("Eclipse Factor: %1%")).arg(eclipseFactor) << "<br>";
+
 		}
 	}
 
@@ -828,8 +844,8 @@ void Planet::setHeliocentricEclipticPos(const Vec3d &pos)
 double Planet::computeDistance(const Vec3d& obsHelioPos)
 {
 	distance = (obsHelioPos-getHeliocentricEclipticPos()).length();
-	// improve fps by juggling updates for asteroids. They must be fast if close to observer, but can be slow if further away.
-	if (pType == Planet::isAsteroid)
+	// improve fps by juggling updates for asteroids and other minor bodies. They must be fast if close to observer, but can be slow if further away.
+	if (pType >= Planet::isAsteroid)
 			deltaJDE=distance*StelCore::JD_SECOND;
 	return distance;
 }
@@ -870,9 +886,19 @@ float Planet::getVMagnitude(const StelCore* core) const
 {
 	if (parent == 0)
 	{
-		// sun, compute the apparent magnitude for the absolute mag (4.83) and observer's distance
+		// Sun, compute the apparent magnitude for the absolute mag (V: 4.83) and observer's distance
+		// Hint: Absolute Magnitude of the Sun in Several Bands: http://mips.as.arizona.edu/~cnaw/sun.html
 		const double distParsec = std::sqrt(core->getObserverHeliocentricEclipticPos().lengthSquared())*AU/PARSEC;
-		return 4.83 + 5.*(std::log10(distParsec)-1.);
+
+		// check how much of it is visible
+		const SolarSystem* ssm = GETSTELMODULE(SolarSystem);
+		double shadowFactor = ssm->getEclipseFactor(core);
+		// See: Hughes, D. W., Brightness during a solar eclipse // Journal of the British Astronomical Association, vol.110, no.4, p.203-205
+		// URL: http://adsabs.harvard.edu/abs/2000JBAA..110..203H
+		if(shadowFactor < 0.000128)
+			shadowFactor = 0.000128;
+
+		return 4.83 + 5.*(std::log10(distParsec)-1.) - 2.5*(std::log10(shadowFactor));
 	}
 
 	// Compute the angular phase
@@ -1091,6 +1117,11 @@ void Planet::draw(StelCore* core, float maxMagLabels, const QFont& planetNameFon
 {
 	if (hidden)
 		return;
+
+	// Exclude drawing if user set a hard limit magnitude.
+	if (core->getSkyDrawer()->getFlagPlanetMagnitudeLimit() && (getVMagnitude(core) > core->getSkyDrawer()->getCustomPlanetMagnitudeLimit()))
+		return;
+
 	// Try to improve speed for minor planets: test if visible at all.
 	// For a full catalog of NEAs (11000 objects), with this and resetting deltaJD according to distance, rendering time went 4.5fps->12fps.	
 	// TBD: Note that taking away the asteroids at this stage breaks dim-asteroid occultation of stars!
@@ -1452,6 +1483,11 @@ void Planet::draw3dModel(StelCore* core, StelProjector::ModelViewTranformP trans
 	// Some work has to be done on this method to make the rendering nicer
 	SolarSystem* ssm = GETSTELMODULE(SolarSystem);
 
+	// Find extinction settings to change colors. The method is rather ad-hoc.
+	float extinctedMag=getVMagnitudeWithExtinction(core)-getVMagnitude(core); // this is net value of extinction, in mag.
+	float magFactorGreen=pow(0.85f, 0.6f*extinctedMag);
+	float magFactorBlue=pow(0.6f, 0.5f*extinctedMag);
+
 	if (screenSz>1.)
 	{
 		StelProjector::ModelViewTranformP transfo2 = transfo->clone();
@@ -1466,19 +1502,24 @@ void Planet::draw3dModel(StelCore* core, StelProjector::ModelViewTranformP trans
 			light.position=Vec4f(sunPos[0],sunPos[1],sunPos[2],1.f);
 
 			// Set the light parameters taking sun as the light source
-			light.diffuse = Vec4f(1.f,1.f,1.f);
-			light.ambient = Vec4f(0.02f,0.02f,0.02f);
+			light.diffuse = Vec4f(1.f,magFactorGreen*1.f,magFactorBlue*1.f);
+			light.ambient = Vec4f(0.02f,magFactorGreen*0.02f,magFactorBlue*0.02f);
 
 			if (this==ssm->getMoon())
 			{
-				// Special case for the Moon (maybe better use 1.5,1.5,1.5,1.0 ?)
-				light.diffuse = Vec4f(1.6f,1.6f,1.6f,1.f);
+				// Special case for the Moon (maybe better use 1.5,1.5,1.5,1.0 ?) Was 1.6, but this often is too bright.
+				light.diffuse = Vec4f(1.5f,magFactorGreen*1.5f,magFactorBlue*1.5f,1.f);
 			}
 		}
 		else
 		{
-			sPainter->setColor(albedo,albedo,albedo);
+			sPainter->setColor(albedo,magFactorGreen*albedo,magFactorBlue*albedo);
 		}
+
+		// possibly tint sun's color from extinction. This should deliberately cause stronger reddening than for the other objects.
+		if (this==ssm->getSun())
+			sPainter->setColor(2.f, pow(0.75f, extinctedMag)*2.f, pow(0.42f, 0.9f*extinctedMag)*2.f);
+
 
 		if (rings)
 		{
@@ -1514,7 +1555,24 @@ void Planet::draw3dModel(StelCore* core, StelProjector::ModelViewTranformP trans
 
 		StelPainter sPainter(core->getProjection(StelCore::FrameJ2000));
 		Vec3d tmp = getJ2000EquatorialPos(core);
-		core->getSkyDrawer()->postDrawSky3dModel(&sPainter, Vec3f(tmp[0], tmp[1], tmp[2]), surfArcMin2, getVMagnitudeWithExtinction(core), color);
+
+		// Find new extincted color for halo. The method is again rather ad-hoc, but does not look too bad.
+		// For the sun, we have again to use the stronger extinction to avoid color mismatch.
+		Vec3f haloColorToDraw;
+		if (this==ssm->getSun())
+			haloColorToDraw.set(haloColor[0], pow(0.75f, extinctedMag) * haloColor[1], pow(0.42f, 0.9f*extinctedMag) * haloColor[2]);
+		else
+			haloColorToDraw.set(haloColor[0], magFactorGreen * haloColor[1], magFactorBlue * haloColor[2]);
+
+		core->getSkyDrawer()->postDrawSky3dModel(&sPainter, Vec3f(tmp[0], tmp[1], tmp[2]), surfArcMin2, getVMagnitudeWithExtinction(core), haloColorToDraw);
+
+		if ((englishName=="Sun") && (core->getCurrentLocation().planetName == "Earth"))
+		{
+			float eclipseFactor = ssm->getEclipseFactor(core);
+			// This alpha ensures 0 for complete sun, 1 for eclipse better 1e-10, with a strong increase towards full eclipse. We still need to square it.
+			float alpha=-0.1f*qMax(-10.0f, (float) std::log10(eclipseFactor));			
+			core->getSkyDrawer()->drawSunCorona(&sPainter, Vec3f(tmp[0], tmp[1], tmp[2]), 512.f/192.f*screenSz, haloColorToDraw, alpha*alpha);
+		}
 	}
 }
 
@@ -1665,7 +1723,7 @@ void Planet::drawSphere(StelPainter* painter, float screenSz, bool drawOnlyRing)
 	if (this==ssm->getSun())
 	{
 		texMap->bind();
-		painter->setColor(2, 2, 2);
+		//painter->setColor(2, 2, 0.2); // This is now in draw3dModel() to apply extinction
 		painter->setArrays((Vec3f*)projectedVertexArr.constData(), (Vec2f*)model.texCoordArr.constData());
 		painter->drawFromArray(StelPainter::Triangles, model.indiceArr.size(), 0, false, model.indiceArr.constData());
 		return;

@@ -119,6 +119,8 @@ Oculars::Oculars():
 	magLimitStars(0.0),
 	flagLimitDSOs(false),
 	magLimitDSOs(0.0),
+	flagLimitPlanets(false),
+	magLimitPlanets(0.0),
 	flagMoonScale(false),
 	ccdRotationAngle(0.0),
 	maxEyepieceAngle(0.0),
@@ -1528,7 +1530,7 @@ void Oculars::paintOcularMask(const StelCore *core)
 		glEnable(GL_BLEND);
 		painter.enableTexture2d(true);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		painter.setColor(0.77, 0.14, 0.16, 1.0);		
+		painter.setColor(0.77, 0.14, 0.16, 1.0);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
 		reticleTexture->bind();
 
@@ -1808,8 +1810,10 @@ void Oculars::unzoomOcular()
 	gridManager->setFlagGalacticEquatorLine(flagGalacticEquatorLine);
 	skyManager->setFlagLuminanceAdaptation(flagAdaptation);
 	skyManager->setFlagStarMagnitudeLimit(flagLimitStars);
+	skyManager->setFlagPlanetMagnitudeLimit(flagLimitPlanets);
 	skyManager->setFlagNebulaMagnitudeLimit(flagLimitDSOs);
 	skyManager->setCustomStarMagnitudeLimit(magLimitStars);
+	skyManager->setCustomPlanetMagnitudeLimit(magLimitPlanets);
 	skyManager->setCustomNebulaMagnitudeLimit(magLimitDSOs);
 	movementManager->setFlagTracking(false);
 	movementManager->setFlagEnableZoomKeys(true);
@@ -1857,8 +1861,10 @@ void Oculars::zoom(bool zoomedIn)
 			// Current state
 			flagAdaptation = skyManager->getFlagLuminanceAdaptation();
 			flagLimitStars = skyManager->getFlagStarMagnitudeLimit();
+			flagLimitPlanets = skyManager->getFlagPlanetMagnitudeLimit();
 			flagLimitDSOs = skyManager->getFlagNebulaMagnitudeLimit();
 			magLimitStars = skyManager->getCustomStarMagnitudeLimit();
+			magLimitPlanets = skyManager->getCustomPlanetMagnitudeLimit();
 			magLimitDSOs = skyManager->getCustomNebulaMagnitudeLimit();
 
 			flagMoonScale = GETSTELMODULE(SolarSystem)->getFlagMoonScale();
