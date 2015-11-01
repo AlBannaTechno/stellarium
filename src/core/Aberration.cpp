@@ -294,7 +294,51 @@ void Aberration::innerAberrationForward(Vec3d& equPos) const
 
 void Aberration::innerAberrationBackward(Vec3d& equPos) const
 {
+	const double JDE = StelApp::getInstance().getCore()->getJDE();
+	double A, RA, Dec, correctedRA, correctedDec;
+	int i;
+	// speed of light in 10-8 au per day
+	double c = 17314463350.0;
 
+	// calculate T
+	double T = (JDE - 2451545.0) / 36525.0;
+
+	// calculate planetary perturbutions
+	double L2 = 3.1761467 + 1021.3285546 * T;
+	double L3 = 1.7534703 + 628.3075849 * T;
+	double L4 = 6.2034809 + 334.0612431 * T;
+	double L5 = 0.5995464 + 52.9690965 * T;
+	double L6 = 0.8740168 + 21.329909095 * T;
+	double L7 = 5.4812939 + 7.4781599 * T;
+	double L8 = 5.3118863 + 3.8133036 * T;
+	double LL = 3.8103444 + 8399.6847337 * T;
+	double D = 5.1984667 + 7771.3771486 * T;
+	double MM = 2.3555559 + 8328.6914289 * T;
+	double F = 1.6279052 + 8433.4661601 * T;
+
+	double X = 0;
+	double Y = 0;
+	double Z = 0;
+
+	// sum the terms
+	for (i=0; i<TERMS; i++)
+	{
+		A = arguments[i].L2 * L2 + arguments[i].L3 * L3 + arguments[i].L4 * L4 + arguments[i].L5 * L5 +
+		    arguments[i].L6 * L6 + arguments[i].L7 * L7 + arguments[i].L8 * L8 + arguments[i].LL * LL +
+		    arguments[i].D * D   + arguments[i].MM * MM + arguments[i].F * F;
+
+		X += (x_coefficients[i].sin1 + x_coefficients[i].sin2 * T) * sin (A) + (x_coefficients[i].cos1 + x_coefficients[i].cos2 * T) * cos (A);
+		Y += (y_coefficients[i].sin1 + y_coefficients[i].sin2 * T) * sin (A) + (y_coefficients[i].cos1 + y_coefficients[i].cos2 * T) * cos (A);
+		Z += (z_coefficients[i].sin1 + z_coefficients[i].sin2 * T) * sin (A) + (z_coefficients[i].cos1 + z_coefficients[i].cos2 * T) * cos (A);
+	}
+
+	StelUtils::rectToSphe(&RA, &Dec, equPos);
+
+	// FIXME: A dirty hack for testing
+	correctedRA  =  RA - (Y * cos(RA) - X * sin(RA)) / (c * cos(Dec));
+	correctedDec = Dec - ((X * cos(RA) + Y * sin(RA)) * sin(Dec) - Z * cos(Dec))/-c;
+
+	StelUtils::spheToRect(correctedRA, correctedDec, equPos);
 }
 
 void Aberration::forward(Vec3d& equPos) const
