@@ -14,8 +14,7 @@ Homepage: http://www.stellarium.org
 
 Package: stellarium
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, stellarium-data (>= ${source:Version}),
- qtquick1-qml-plugins (>= 5.3.0)
+Depends: ${shlibs:Depends}, ${misc:Depends}, stellarium-data (>= ${source:Version})
 Description: real-time photo-realistic sky generator
  Stellarium renders 3D photo-realistic skies in real-time. With Stellarium, you
  really see what you can see with your eyes, binoculars or a small telescope.
