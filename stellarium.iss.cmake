@@ -12,8 +12,14 @@ WizardImageBackColor=clBlack
 AppName=Stellarium
 AppVersion=@PACKAGE_VERSION@
 AppVerName=Stellarium @PACKAGE_VERSION@
+AppCopyright=Copyright (C) @COPYRIGHT_YEARS@ Stellarium team
 AppPublisher=Stellarium team
 AppPublisherURL=http://www.stellarium.org/
+AppSupportURL=http://www.stellarium.org/
+AppUpdatesURL=http://www.stellarium.org/
+VersionInfoVersion=@PACKAGE_VERSION@
+MinVersion=0,@MIN_VERSION@
+SetupIconFile=data\stellarium.ico
 OutputBaseFilename=stellarium-@PACKAGE_VERSION@-@ISS_PACKAGE_PLATFORM@
 OutputDir=installers
 ; In 64-bit mode, {pf} is equivalent to {pf64},
@@ -22,7 +28,10 @@ DefaultDirName={pf}\Stellarium
 DefaultGroupName=Stellarium
 UninstallDisplayIcon={app}\data\stellarium.ico
 LicenseFile=COPYING
-Compression=zip/9
+ChangesAssociations=yes
+; LZMA2/max required 95 MB RAM for compression and 8 MB RAM for decompression
+; Using LZMA2/max algorithm reduces size of package on ~10%
+Compression=lzma2/max
 
 [Files]
 Source: "@CMAKE_INSTALL_PREFIX@\bin\stellarium.exe"; DestDir: "{app}"
@@ -47,15 +56,11 @@ Source: "@QtXmlPatterns_location@"; DestDir: "{app}";
 Source: "@QtConcurrent_location@"; DestDir: "{app}";
 @ISS_QT_SCRIPT@
 @ISS_QT_MULTIMEDIA@
+@ISS_QT_SERIALPORT@
 @ISS_ANGLE_LIBS@
 @ISS_ICU_LIBS@
-@ISS_WINDOWS_PLUGIN@
-@ISS_ICO_PLUGIN@
-@ISS_JPEG_PLUGIN@
+@ISS_QT_PLUGINS@
 @ISS_MULTIMEDIA_PLUGINS@
-@ISS_QML_DIR@
-@ISS_QML_PLUGINS@
-@ISS_QML_SHADERS@
 Source: "@CMAKE_INSTALL_PREFIX@\share\stellarium\*"; DestDir: "{app}\"; Flags: recursesubdirs
 
 [Tasks]
@@ -94,6 +99,9 @@ Name: "{group}\Stellarium"; Filename: "{app}\stellarium.exe"; WorkingDir: "{app}
 ;Name: "{group}\Stellarium {cm:FallbackMode}"; Filename: "{app}\stellarium.exe"; Parameters: "--safe-mode"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"
 Name: "{group}\Stellarium {cm:DebugMode}"; Filename: "{app}\stellarium.exe"; Parameters: "--dump-opengl-details"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"
 Name: "{group}\Stellarium {cm:AngleMode}"; Filename: "{app}\stellarium.exe"; Parameters: "--angle-mode"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"
+Name: "{group}\Stellarium {cm:AngleD3D9Mode}"; Filename: "{app}\stellarium.exe"; Parameters: "--angle-d3d9"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"
+Name: "{group}\Stellarium {cm:AngleD3D11Mode}"; Filename: "{app}\stellarium.exe"; Parameters: "--angle-d3d11"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"
+Name: "{group}\Stellarium {cm:AngleWarpMode}"; Filename: "{app}\stellarium.exe"; Parameters: "--angle-warp"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"
 Name: "{group}\Stellarium {cm:MesaMode}"; Filename: "{app}\stellarium.exe"; Parameters: "--mesa-mode"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"
 Name: "{group}\{cm:UninstallProgram,Stellarium}"; Filename: "{uninstallexe}"
 Name: "{group}\config.ini"; Filename: "{userappdata}\Stellarium\config.ini"
@@ -102,6 +110,13 @@ Name: "{group}\{cm:ChangeLog}"; Filename: "{app}\ChangeLog.rtf"
 Name: "{group}\{cm:Scenery3dDocs}"; Filename: "{app}\data\Scenery3d.pdf"
 Name: "{commondesktop}\Stellarium"; Filename: "{app}\stellarium.exe"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"; Tasks: desktopicon\common
 Name: "{userdesktop}\Stellarium"; Filename: "{app}\stellarium.exe"; WorkingDir: "{app}"; IconFilename: "{app}\data\stellarium.ico"; Tasks: desktopicon\user
+
+[Registry]
+; Set file associations for Stellarium scripts
+Root: HKCR; Subkey: ".ssc"; ValueType: string; ValueName: ""; ValueData: "Stellarium.Script"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Stellarium.Script"; ValueType: string; ValueName: ""; ValueData: "Stellarium Script"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Stellarium.Script\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\stellarium.exe,0"
+Root: HKCR; Subkey: "Stellarium.Script\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\stellarium.exe"" --startup-script ""%1"""
 
 ; Recommended use Inno Setup 5.5.3+
 [Languages]

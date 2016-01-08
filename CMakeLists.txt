@@ -23,7 +23,7 @@ SET(STELLARIUM_MINOR "15")
 SET(STELLARIUM_PATCH "0")
 SET(VERSION "${STELLARIUM_MAJOR}.${STELLARIUM_MINOR}.${STELLARIUM_PATCH}")
 SET(PACKAGE stellarium)
-SET(COPYRIGHT_YEARS "2000-2015")
+SET(COPYRIGHT_YEARS "2000-2016")
 
 SET(PACKAGE_VERSION "${VERSION}")
 ADD_DEFINITIONS(-DPACKAGE_VERSION="${PACKAGE_VERSION}")
@@ -38,6 +38,12 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None Debug GProf Valgrind Release RelWithDebInfo MinSizeRel." FORCE)
 ENDIF()
+
+# GZ I had seen that some releases (e.g. 0.13.3 Ubuntu/ARM) were not compiled with NDEBUG defined. Maybe a bug in compilatation setup? 
+# Hint from http://public.kitware.com/Bug/view.php?id=14292. Actually fixed with CMake 2.8.12, but maybe we have other effects?
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DQT_NO_DEBUG -DNDEBUG)
+endif()
 
 # Add gprof build options if necessary.  Note gmon.out will be created in working directory when Stellarium is executed
 IF(${CMAKE_BUILD_TYPE} MATCHES "GProf")
@@ -129,13 +135,13 @@ IF(ENABLE_NLS)
      ADD_DEFINITIONS(-DENABLE_NLS)
 ENDIF()
 
-SET(RELEASE_BUILD 1 CACHE BOOL "Flag this build as an official release.")
-IF(RELEASE_BUILD)
-     ADD_DEFINITIONS(-DRELEASE_BUILD)
+SET(STELLARIUM_RELEASE_BUILD 1 CACHE BOOL "Flag this build as an official release.")
+IF(STELLARIUM_RELEASE_BUILD)
+     ADD_DEFINITIONS(-DSTELLARIUM_RELEASE_BUILD)
 ENDIF()
 
-# Activate sound support
-SET(ENABLE_SOUND 0 CACHE BOOL "Define whether sound support should be activated.")
+# Activate media support
+SET(ENABLE_MEDIA 0 CACHE BOOL "Define whether media support should be activated.")
 
 SET(ENABLE_SCRIPTING 1 CACHE BOOL "Define whether scripting features should be activated.")
 IF(ENABLE_SCRIPTING)
@@ -149,7 +155,7 @@ ELSE()
 ENDIF()
 
 
-SET(GUI_MODE Standard CACHE STRING "Choose the type of GUI to build, options are: Standard, None")
+SET(STELLARIUM_GUI_MODE Standard CACHE STRING "Choose the type of GUI to build, options are: Standard, None")
 
 SET(GENERATE_PACKAGE_TARGET 1 CACHE BOOL "Set to 1 or true if you want to have make package target")
 
@@ -222,6 +228,9 @@ FIND_PACKAGE(Qt5Gui REQUIRED)
 FIND_PACKAGE(Qt5Network REQUIRED)
 FIND_PACKAGE(Qt5OpenGL REQUIRED)
 FIND_PACKAGE(Qt5Widgets REQUIRED)
+IF(USE_PLUGIN_TELESCOPECONTROL)
+     FIND_PACKAGE(Qt5SerialPort REQUIRED)
+ENDIF()
 IF(WIN32)
      FIND_PACKAGE(Qt5Sql REQUIRED)
      FIND_PACKAGE(Qt5XmlPatterns REQUIRED)
@@ -238,11 +247,12 @@ IF(ENABLE_SCRIPTING)
     FIND_PACKAGE(Qt5Script REQUIRED)
     INCLUDE_DIRECTORIES(${Qt5Script_INCLUDE_DIRS})
 ENDIF()
-IF(ENABLE_SOUND)
-    ADD_DEFINITIONS(-DENABLE_SOUND)
+IF(ENABLE_MEDIA)
+    ADD_DEFINITIONS(-DENABLE_MEDIA)
     FIND_PACKAGE(Qt5Multimedia REQUIRED)
     FIND_PACKAGE(Qt5MultimediaWidgets REQUIRED)
     INCLUDE_DIRECTORIES(${Qt5Multimedia_INCLUDE_DIRS})
+    INCLUDE_DIRECTORIES(${Qt5MultimediaWidgets_INCLUDE_DIRS})
 ENDIF()
 
 # I add this test because on Windows with angle we should not link
@@ -275,21 +285,36 @@ ELSE()
 ENDIF()
 
 ########### Get revision number for non-release builds ###########
-IF(NOT RELEASE_BUILD)
+IF(NOT STELLARIUM_RELEASE_BUILD)
     #Hack until CMake detection for Bazaar is finished
     IF(BZR_REVISION)
         SET(PACKAGE_VERSION "bzr${BZR_REVISION}")
         ADD_DEFINITIONS(-DBZR_REVISION="${BZR_REVISION}")
     ENDIF()
-    IF(DEV_VERSION)
-        ADD_DEFINITIONS(-DDEV_VERSION="${DEV_VERSION}")
+    IF(STELLARIUM_VERSION)
+        SET(PACKAGE_VERSION "${STELLARIUM_VERSION}")
+        ADD_DEFINITIONS(-DSTELLARIUM_VERSION="${STELLARIUM_VERSION}")
     ENDIF()
 ENDIF()
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/data/stellarium.exe.manifest.cmake ${CMAKE_SOURCE_DIR}/data/stellarium.exe.manifest @ONLY)
 
-### [Optional] Embed icon in the Windows executable ###
 IF(WIN32)
+    #######################################################
+    ### Generate a VersionInfo file                     ###
+    #######################################################
+
+    IF(STELLARIUM_RELEASE_BUILD)
+       SET(PACKAGE_VERSION_RC "${PACKAGE_VERSION},0")
+    ELSE()
+       SET(PACKAGE_VERSION_RC "${PACKAGE_VERSION}")
+    ENDIF()
+    STRING(REGEX REPLACE "([.]+)" "," PACKAGE_VERSION_RC ${PACKAGE_VERSION_RC})
+    CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/data/stellarium.rc.cmake ${CMAKE_SOURCE_DIR}/data/stellarium.rc @ONLY)
+
+    #######################################################
+    ### [Optional] Embed icon in the Windows executable ###
+    #######################################################
+
     SET(ENABLE_WINDOWS_EXE_ICON 1 CACHE BOOL "Determine if it should try to embed the Stellarium icon in the Windows .exe file")
     IF(ENABLE_WINDOWS_EXE_ICON AND NOT RC_COMPILER_PATH)
         IF(NOT MSVC)
@@ -301,10 +326,11 @@ IF(WIN32)
             MESSAGE(STATUS "Found .rc compiler: ${RC_COMPILER_PATH}")
         ENDIF(RC_COMPILER_PATH)
     ENDIF(ENABLE_WINDOWS_EXE_ICON AND NOT RC_COMPILER_PATH)
-ENDIF()
 
-### Generate an Inno Setup project file ###
-IF(WIN32)
+    #######################################################
+    ### Generate an Inno Setup project file             ###
+    #######################################################
+
     # Try to guess the MinGW /bin directory...
     GET_FILENAME_COMPONENT(MINGW_BIN_DIRECTORY ${CMAKE_CXX_COMPILER} PATH)
     IF("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
@@ -353,7 +379,13 @@ IF(WIN32)
     ELSE()
         SET(ISS_QT_SCRIPT "; QtScript isn't used")
     ENDIF()
-    IF(ENABLE_SOUND)
+    IF(USE_PLUGIN_TELESCOPECONTROL)
+        GET_TARGET_PROPERTY(QtSerialPort_location Qt5::SerialPort LOCATION)
+        SET(ISS_QT_SERIALPORT "Source: \"${QtSerialPort_location}\"; DestDir: \"{app}\";")
+    ELSE()
+        SET(ISS_QT_SERIALPORT "; QtSerialPort isn't used")
+    ENDIF()
+    IF(ENABLE_MEDIA)
         GET_TARGET_PROPERTY(QtMultimedia_location Qt5::Multimedia LOCATION)
         GET_TARGET_PROPERTY(QtMultimediaWidgets_location Qt5::MultimediaWidgets LOCATION)
         SET(ISS_QT_MULTIMEDIA "Source: \"${QtMultimedia_location}\"; DestDir: \"{app}\";\nSource: \"${QtMultimediaWidgets_location}\"; DestDir: \"{app}\";")
@@ -362,23 +394,33 @@ IF(WIN32)
     ENDIF()
     GET_FILENAME_COMPONENT(QT5_LIBS ${QtCore_location} PATH)
     IF(MSVC)
+        # Use installer for checking minimum requirements
+        # Stellarium/MSVC require Windows Vista (6.0) for work
+        # Details: http://www.jrsoftware.org/ishelp/index.php?topic=winvernotes
+        SET(MIN_VERSION "6.0")
         SET(ISS_ANGLE_LIBS "; ANGLE support (libEGL.dll, libGLESv2.dll and d3dcompiler_*.dll)\nSource: \"${QT5_LIBS}/libEGL.dll\"; DestDir: \"{app}\";\nSource: \"${QT5_LIBS}/libGLESv2.dll\"; DestDir: \"{app}\";\nSource: \"${QT5_LIBS}/d3dcompiler_*.dll\"; DestDir: \"{app}\";")
     ELSE()
+        # Use installer for checking minimum requirements
+        # Stellarium/MinGW require Windows XP (5.1) for work
+        # Details: http://www.jrsoftware.org/ishelp/index.php?topic=winvernotes
+        SET(MIN_VERSION "5.1")
         SET(ISS_ANGLE_LIBS "; ANGLE support doesn't exists for MinGW")
     ENDIF()
     SET(ISS_ICU_LIBS "; ICU support\nSource: \"${QT5_LIBS}/icu*.dll\"; DestDir: \"{app}\";")
     # Deploy related stuff
-    SET(ISS_WINDOWS_PLUGIN "Source: \"${QT5_LIBS}/../plugins/platforms/qwindows.dll\"; DestDir: \"{app}/platforms/\";")
-    SET(ISS_ICO_PLUGIN "Source: \"${QT5_LIBS}/../plugins/imageformats/qico.dll\"; DestDir: \"{app}/imageformats/\";")
-    SET(ISS_JPEG_PLUGIN "Source: \"${QT5_LIBS}/../plugins/imageformats/qjpeg.dll\"; DestDir: \"{app}/imageformats/\";")
-    IF(ENABLE_SOUND)
-        SET(ISS_MULTIMEDIA_PLUGINS "Source: \"${QT5_LIBS}/../plugins/mediaservice/dsengine.dll\"; DestDir: \"{app}/mediaservice/\";\nSource: \"${QT5_LIBS}/../plugins/mediaservice/qtmedia_audioengine.dll\"; DestDir: \"{app}/mediaservice/\";\nSource: \"${QT5_LIBS}/../plugins/playlistformats/qtmultimedia_m3u.dll\"; DestDir: \"{app}/playlistformats/\";")
+    SET(ISS_QT_PLUGINS "; Qt plugins")
+    SET(ISS_QT_PLUGINS "${ISS_QT_PLUGINS}\nSource: \"${QT5_LIBS}/../plugins/platforms/qwindows.dll\"; DestDir: \"{app}/platforms/\";")
+    SET(ISS_QT_PLUGINS "${ISS_QT_PLUGINS}\nSource: \"${QT5_LIBS}/../plugins/imageformats/qico.dll\"; DestDir: \"{app}/imageformats/\";")
+    SET(ISS_QT_PLUGINS "${ISS_QT_PLUGINS}\nSource: \"${QT5_LIBS}/../plugins/imageformats/qjpeg.dll\"; DestDir: \"{app}/imageformats/\";")
+    IF(ENABLE_MEDIA)
+	IF(MSVC)
+    	    SET(ISS_MULTIMEDIA_PLUGINS "Source: \"${QT5_LIBS}/../plugins/mediaservice/dsengine.dll\"; DestDir: \"{app}/mediaservice/\";\nSource: \"${QT5_LIBS}/../plugins/mediaservice/wmfengine.dll\"; DestDir: \"{app}/mediaservice/\";\nSource: \"${QT5_LIBS}/../plugins/mediaservice/qtmedia_audioengine.dll\"; DestDir: \"{app}/mediaservice/\";\nSource: \"${QT5_LIBS}/../plugins/playlistformats/qtmultimedia_m3u.dll\"; DestDir: \"{app}/playlistformats/\";")
+    	ELSE()
+    	    SET(ISS_MULTIMEDIA_PLUGINS "Source: \"${QT5_LIBS}/../plugins/mediaservice/dsengine.dll\"; DestDir: \"{app}/mediaservice/\";\nSource: \"${QT5_LIBS}/../plugins/mediaservice/qtmedia_audioengine.dll\"; DestDir: \"{app}/mediaservice/\";\nSource: \"${QT5_LIBS}/../plugins/playlistformats/qtmultimedia_m3u.dll\"; DestDir: \"{app}/playlistformats/\";")
+    	ENDIF()
     ELSE()
         SET(ISS_MULTIMEDIA_PLUGINS "; QtMultimedia isn't used")
     ENDIF()
-    SET(ISS_QML_DIR "Source: \"${QT5_LIBS}/../imports/Qt/labs/shaders/qmldir\"; DestDir: \"{app}/Qt/labs/shaders/\";")
-    SET(ISS_QML_PLUGINS "Source: \"${QT5_LIBS}/../imports/Qt/labs/shaders/plugins.qmltypes\"; DestDir: \"{app}/Qt/labs/shaders/\";")
-    SET(ISS_QML_SHADERS "Source: \"${QT5_LIBS}/../imports/Qt/labs/shaders/qmlshadersplugin.dll\"; DestDir: \"{app}/Qt/labs/shaders/\";")
 
     CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/stellarium.iss.cmake ${CMAKE_SOURCE_DIR}/stellarium.iss @ONLY)
     CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/stellarium-patch.iss.cmake ${CMAKE_SOURCE_DIR}/stellarium-patch.iss @ONLY)
@@ -421,7 +463,7 @@ IF(GENERATE_PACKAGE_TARGET)
     SET(CPACK_GENERATOR "TGZ")
     SET(CPACK_STRIP_FILES "bin/stellarium")
     SET(CPACK_PACKAGE_EXECUTABLES "stellarium" "Stellarium")
-    SET(CPACK_SOURCE_IGNORE_FILES "/CVS/" "/.svn/" "/.git/" "/.bzr/" "builds/" "installers/" "Stellarium.tag$" "Stellarium.kdevelop.pcs$" "/CMakeLists.txt.user$" "\\\\.bzrignore$" "~$" "\\\\.swp$" "\\\\.#" "/#")
+    SET(CPACK_SOURCE_IGNORE_FILES "/CVS/" "/.svn/" "/.git/" "/.bzr/" "builds/" "installers/" "Stellarium.tag$" "Stellarium.kdevelop.pcs$" "/CMakeLists.txt.user$" "\\\\.bzrignore$" "\\\\.yml$" "~$" "\\\\.swp$" "\\\\.#" "/#")
     SET(CPACK_RPM_PACKAGE_LICENSE "GPLv2+")
     SET(CPACK_RPM_PACKAGE_GROUP "Amusements/Graphics")
     SET(CPACK_RPM_PACKAGE_URL "http://stellarium.org/")
@@ -458,7 +500,8 @@ IF(WIN32)
     STRING(REPLACE "/" "\\" PROJECT_SOURCE_DIR_WINPATH ${PROJECT_SOURCE_DIR})
     STRING(REPLACE "/" "\\" PROJECT_BINARY_DIR_WINPATH ${PROJECT_BINARY_DIR})
     CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/util/copy-translations.bat.cmake ${PROJECT_SOURCE_DIR}/util/copy-translations.bat @ONLY NEWLINE_STYLE WIN32)
-ENDIF()
+ENDIF() 
+
 
 ########### Top level include directories ###########
 # This will be used for all compilations in sub-directories

@@ -110,20 +110,6 @@ void clearCache()
 	cacheMgr->clear(); // Removes all items from the cache.
 }
 
-void registerPluginsDir(QDir& appDir)
-{
-	QStringList pathes;
-	// Windows
-	pathes << appDir.absolutePath();
-	pathes << appDir.absoluteFilePath("platforms");
-	// OS X
-	appDir.cdUp();	
-	pathes << appDir.absoluteFilePath("plugins");
-	// All systems
-	pathes << QCoreApplication::libraryPaths();
-	QCoreApplication::setLibraryPaths(pathes);
-}
-
 // Main stellarium procedure
 int main(int argc, char **argv)
 {
@@ -145,10 +131,15 @@ int main(int argc, char **argv)
 	QCoreApplication::setOrganizationDomain("stellarium.org");
 	QCoreApplication::setOrganizationName("stellarium");
 
-	// LP:1335611: Avoid troubles with search of the paths of the plugins (deployments troubles) --AW
+	#if defined(Q_OS_MAC)
 	QFileInfo appInfo(QString::fromUtf8(argv[0]));
 	QDir appDir(appInfo.absolutePath());
-	registerPluginsDir(appDir);
+	appDir.cdUp();
+	QCoreApplication::addLibraryPath(appDir.absoluteFilePath("plugins"));
+	#elif defined(Q_OS_WIN)
+	QFileInfo appInfo(QString::fromUtf8(argv[0]));
+	QCoreApplication::addLibraryPath(appInfo.absolutePath());
+	#endif	
 
 	QGuiApplication::setDesktopSettingsAware(false);
 
