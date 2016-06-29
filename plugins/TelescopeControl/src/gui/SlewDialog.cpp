@@ -50,6 +50,7 @@ SlewDialog::~SlewDialog()
 	storedPointsDialog = NULL;
 }
 
+
 void SlewDialog::retranslate()
 {
 	if (dialog)
@@ -70,7 +71,9 @@ void SlewDialog::createDialogContent()
 	connect(ui->radioButtonDecimal, SIGNAL(toggled(bool)), this, SLOT(setFormatDecimal(bool)));
 
 	connect(ui->pushButtonSlew, SIGNAL(clicked()), this, SLOT(slew()));
-	connect(ui->pushButtonConfigure, SIGNAL(clicked()), this, SLOT(showConfiguration()));
+    connect(ui->pushButtonSync, SIGNAL(clicked()), this, SLOT(sync()));
+    connect(ui->pushButtonCancelSlew, SIGNAL(clicked()), this, SLOT(cancelSlew()));
+    connect(ui->pushButtonConfigure, SIGNAL(clicked()), this, SLOT(showConfiguration()));
 
 	connect(telescopeManager, SIGNAL(clientConnected(int, QString)), this, SLOT(addTelescope(int, QString)));
 	connect(telescopeManager, SIGNAL(clientDisconnected(int)), this, SLOT(removeTelescope(int)));
@@ -80,6 +83,9 @@ void SlewDialog::createDialogContent()
 
 	connect(ui->pushButtonCurrent, SIGNAL(clicked()), this, SLOT(getCurrentObjectInfo()));
 	connect(ui->pushButtonCenter, SIGNAL(clicked()), this, SLOT(getCenterInfo()));
+
+    connect(GETSTELMODULE(StelObjectMgr), SIGNAL(selectedObjectChanged(StelModule::StelModuleSelectAction)), this, SLOT(getCurrentObjectInfo()));
+
 
 	//Coordinates are in HMS by default:
 	ui->radioButtonHMS->setChecked(true);
@@ -144,9 +150,10 @@ void SlewDialog::updateTelescopeList()
 	QHash<int, QString> connectedSlotsByNumber = telescopeManager->getConnectedClientsNames();
 	foreach(const int slot, connectedSlotsByNumber.keys())
 	{
-		QString telescopeName = connectedSlotsByNumber.value(slot);
-		connectedSlotsByName.insert(telescopeName, slot);
-		ui->comboBoxTelescope->addItem(telescopeName);
+        QString telescopeName = connectedSlotsByNumber.value(slot);
+        //connectedSlotsByName.insert(telescopeName, slot);
+        //ui->comboBoxTelescope->addItem(telescopeName);
+        addTelescope(slot, telescopeName);
 	}
 	
 	updateTelescopeControls();
@@ -167,7 +174,22 @@ void SlewDialog::addTelescope(int slot, QString name)
 		return;
 
 	connectedSlotsByName.insert(name, slot);
-	ui->comboBoxTelescope->addItem(name);
+
+    bool insert = true;
+    if (name.compare("Sync")==0)
+    {
+        ui->pushButtonSync->setEnabled(true);
+        insert = false;
+    }
+    if (name.compare("Cancel")==0)
+    {
+        ui->pushButtonCancelSlew->setEnabled(true);
+        insert = false;
+    }
+
+    if (insert)
+        ui->comboBoxTelescope->addItem(name);
+
 
 	updateTelescopeControls();
 }
@@ -198,23 +220,51 @@ void SlewDialog::removeTelescope(int slot)
 	updateTelescopeControls();
 }
 
+void SlewDialog::slew(int slot)
+{
+    double radiansRA  = ui->spinBoxRA->valueRadians();
+    double radiansDec = ui->spinBoxDec->valueRadians();
+
+    Vec3d targetPosition;
+    StelUtils::spheToRect(radiansRA, radiansDec, targetPosition);
+
+    telescopeManager->telescopeGoto(slot, targetPosition);
+}
+
+
 void SlewDialog::slew()
 {
-	double radiansRA  = ui->spinBoxRA->valueRadians();
-	double radiansDec = ui->spinBoxDec->valueRadians();
 	int slot = connectedSlotsByName.value(ui->comboBoxTelescope->currentText());
+    slew(slot);
 
-	Vec3d targetPosition;
-	StelUtils::spheToRect(radiansRA, radiansDec, targetPosition);
+}
 
-	telescopeManager->telescopeGoto(slot, targetPosition);
+void SlewDialog::sync()
+{
+    int slot = connectedSlotsByName.value("Sync");
+    slew(slot);
+}
+
+void SlewDialog::cancelSlew()
+{
+    int slot = connectedSlotsByName.value("Cancel");
+    slew(slot);
 }
 
 void SlewDialog::getCurrentObjectInfo()
 {
 	const QList<StelObjectP>& selected = GETSTELMODULE(StelObjectMgr)->getSelectedObject();
 	if (!selected.isEmpty()) {
-		double dec_j2000 = 0;
+
+        if (ui->comboBoxStoredPoints->count()==0)
+            ui->comboBoxStoredPoints->addItem(selected[0]->getEnglishName());
+        else
+            ui->comboBoxStoredPoints->setCurrentIndex(0);
+
+        ui->comboBoxStoredPoints->setItemText(0,selected[0]->getEnglishName());
+
+
+        double dec_j2000 = 0;
 		double ra_j2000 = 0;
 		StelUtils::rectToSphe(&ra_j2000,&dec_j2000,selected[0]->getJ2000EquatorialPos(StelApp::getInstance().getCore()));
 		ui->spinBoxRA->setRadians(ra_j2000);
@@ -224,7 +274,16 @@ void SlewDialog::getCurrentObjectInfo()
 
 void SlewDialog::getCenterInfo()
 {
-	StelCore *core = StelApp::getInstance().getCore();
+    QString txt = ui->pushButtonCenter->text();
+    if (ui->comboBoxStoredPoints->count()==0)
+        ui->comboBoxStoredPoints->addItem(txt);
+    else
+        ui->comboBoxStoredPoints->setCurrentIndex(0);
+
+    ui->comboBoxStoredPoints->setItemText(0,txt);
+
+
+    StelCore *core = StelApp::getInstance().getCore();
 	const StelProjectorP projector = core->getProjection(StelCore::FrameEquinoxEqu);
 	Vec3d centerPosition;
 	Vec2f center = projector->getViewportCenter();
@@ -300,6 +359,7 @@ void SlewDialog::getStoredPointInfo()
 
 	ui->spinBoxRA->setRadians(sp.radiansRA);
 	ui->spinBoxDec->setRadians(sp.radiansDec);
+
 }
 
 void SlewDialog::savePointsToFile()

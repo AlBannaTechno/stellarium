@@ -57,6 +57,8 @@ private slots:
 
 	//! reads the fields and slews a telescope
 	void slew();
+    void sync();
+    void cancelSlew();
 
 	void addTelescope(int slot, QString name);
 	void removeTelescope(int slot);
@@ -103,6 +105,8 @@ private:
 
 	void savePointsToFile();
 	void loadPointsFromFile();
+
+    void slew(int slot);
 };
 
 #endif // _SLEWDIALOG_
