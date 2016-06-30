@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>430</width>
     <height>399</height>
    </rect>
   </property>
@@ -385,20 +385,77 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButtonSlew">
-           <property name="minimumSize">
-            <size>
-             <width>50</width>
-             <height>48</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>&amp;Slew</string>
-           </property>
-           <property name="default">
-            <bool>true</bool>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="QPushButton" name="pushButtonSlew">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>48</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>&amp;Slew</string>
+             </property>
+             <property name="default">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonSync">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>48</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Sync</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButtonCancelSlew">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>48</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Cancel</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
@@ -452,7 +509,6 @@ margin-bottom:10px;</string>
   <tabstop>radioButtonDMS</tabstop>
   <tabstop>radioButtonDecimal</tabstop>
   <tabstop>comboBoxTelescope</tabstop>
-  <tabstop>pushButtonSlew</tabstop>
   <tabstop>pushButtonConfigure</tabstop>
  </tabstops>
  <resources/>
