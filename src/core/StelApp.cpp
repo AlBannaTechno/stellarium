@@ -26,6 +26,7 @@
 #include "ConstellationMgr.hpp"
 #include "NebulaMgr.hpp"
 #include "LandscapeMgr.hpp"
+#include "CustomObjectMgr.hpp"
 #include "GridLinesMgr.hpp"
 #include "MilkyWay.hpp"
 #include "ZodiacalLight.hpp"
@@ -494,6 +495,11 @@ void StelApp::init(QSettings* conf)
 
 	skyCultureMgr->init();
 
+	// Init custom objects
+	CustomObjectMgr* custObj = new CustomObjectMgr();
+	custObj->init();
+	getModuleMgr().registerModule(custObj);
+
 	//Create the script manager here, maybe some modules/plugins may want to connect to it
 	//It has to be initialized later after all modules have been loaded by calling initScriptMgr
 #ifndef DISABLE_SCRIPTING
@@ -614,10 +620,11 @@ void StelApp::prepareRenderBuffer()
 	renderBuffer->bind();
 }
 
-void StelApp::applyRenderBuffer()
+void StelApp::applyRenderBuffer(int drawFbo)
 {
 	if (!renderBuffer) return;
 	renderBuffer->release();
+	if (drawFbo) GL(glBindFramebuffer(GL_FRAMEBUFFER, drawFbo));
 	viewportEffect->paintViewportBuffer(renderBuffer);
 }
 
@@ -626,6 +633,10 @@ void StelApp::draw()
 {
 	if (!initialized)
 		return;
+
+	int drawFbo;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &drawFbo);
+
 	prepareRenderBuffer();
 	core->preDraw();
 
@@ -635,7 +646,7 @@ void StelApp::draw()
 		module->draw(core);
 	}
 	core->postDraw();
-	applyRenderBuffer();
+	applyRenderBuffer(drawFbo);
 }
 
 /*************************************************************************
