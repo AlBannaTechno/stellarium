@@ -516,6 +516,9 @@ MACRO(ADD_TEST NAME)
 ENDMACRO()
 
 SET(TESTS_LIBRARIES Qt5::Core Qt5::Gui Qt5::Test)
+IF(NOT WIN32)
+     SET(TESTS_LIBRARIES ${TESTS_LIBRARIES} z)
+ENDIF()
 
 # Custom target used to build all tests at once
 ADD_CUSTOM_TARGET(buildTests)
