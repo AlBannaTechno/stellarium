@@ -32,7 +32,7 @@
 #include <QFont>
 #include <QSettings>
 
-#define MIN_OCULARS_INI_VERSION 2
+#define MIN_OCULARS_INI_VERSION 3.1f
 
 QT_BEGIN_NAMESPACE
 class QKeyEvent;
@@ -282,6 +282,12 @@ private:
 	bool flagCelestialJ2000Poles;	//!< Flag to track if CelestialJ2000Poles was displayed at activation.
 	bool flagCelestialPoles;	//!< Flag to track if CelestialPoles was displayed at activation.
 	bool flagZenithNadirPoints;	//!< Flag to track if ZenithNadir was displayed at activation.
+	bool flagEclipticJ2000Poles;	//!< Flag to track if EclipticJ2000Poles was displayed at activation.
+	bool flagEclipticPoles;		//!< Flag to track if EclipticPoles was displayed at activation.
+	bool flagGalacticPoles;		//!< Flag to track if GalacticPoles was displayed at activation.
+	bool flagSupergalacticPoles;	//!< Flag to track if SupergalacticPoles was displayed at activation.
+	bool flagEquinoxJ2000Points;	//!< Flag to track if EquinoxJ2000Points was displayed at activation.
+	bool flagEquinoxPoints;		//!< Flag to track if EquinoxPoints was displayed at activation.
 
 	bool flagAdaptation;		//!< Flag to track if adaptationCheckbox was enabled at activation.
 

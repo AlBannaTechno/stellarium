@@ -244,6 +244,60 @@ class GridLinesMgr : public StelModule
 		   WRITE setColorZenithNadir
 		   NOTIFY zenithNadirColorChanged)
 
+	Q_PROPERTY(bool eclipticJ2000PolesDisplayed
+		   READ getFlagEclipticJ2000Poles
+		   WRITE setFlagEclipticJ2000Poles
+		   NOTIFY eclipticJ2000PolesDisplayedChanged)
+	Q_PROPERTY(Vec3f eclipticJ2000PolesColor
+		   READ getColorEclipticJ2000Poles
+		   WRITE setColorEclipticJ2000Poles
+		   NOTIFY eclipticJ2000PolesColorChanged)
+
+	Q_PROPERTY(bool eclipticPolesDisplayed
+		   READ getFlagEclipticPoles
+		   WRITE setFlagEclipticPoles
+		   NOTIFY eclipticPolesDisplayedChanged)
+	Q_PROPERTY(Vec3f eclipticPolesColor
+		   READ getColorEclipticPoles
+		   WRITE setColorEclipticPoles
+		   NOTIFY eclipticPolesColorChanged)
+
+	Q_PROPERTY(bool galacticPolesDisplayed
+		   READ getFlagGalacticPoles
+		   WRITE setFlagGalacticPoles
+		   NOTIFY galacticPolesDisplayedChanged)
+	Q_PROPERTY(Vec3f galacticPolesColor
+		   READ getColorGalacticPoles
+		   WRITE setColorGalacticPoles
+		   NOTIFY galacticPolesColorChanged)
+
+	Q_PROPERTY(bool supergalacticPolesDisplayed
+		   READ getFlagSupergalacticPoles
+		   WRITE setFlagSupergalacticPoles
+		   NOTIFY supergalacticPolesDisplayedChanged)
+	Q_PROPERTY(Vec3f supergalacticPolesColor
+		   READ getColorSupergalacticPoles
+		   WRITE setColorSupergalacticPoles
+		   NOTIFY supergalacticPolesColorChanged)
+
+	Q_PROPERTY(bool equinoxJ2000PointsDisplayed
+		   READ getFlagEquinoxJ2000Points
+		   WRITE setFlagEquinoxJ2000Points
+		   NOTIFY equinoxJ2000PointsDisplayedChanged)
+	Q_PROPERTY(Vec3f equinoxJ2000PointsColor
+		   READ getColorEquinoxJ2000Points
+		   WRITE setColorEquinoxJ2000Points
+		   NOTIFY equinoxJ2000PointsColorChanged)
+
+	Q_PROPERTY(bool equinoxPointsDisplayed
+		   READ getFlagEquinoxPoints
+		   WRITE setFlagEquinoxPoints
+		   NOTIFY equinoxPointsDisplayedChanged)
+	Q_PROPERTY(Vec3f equinoxPointsColor
+		   READ getColorEquinoxPoints
+		   WRITE setColorEquinoxPoints
+		   NOTIFY equinoxPointsColorChanged)
+
 public:
 	GridLinesMgr();
 	virtual ~GridLinesMgr();
@@ -603,6 +657,90 @@ public slots:
 	//! @endcode
 	void setColorZenithNadir(const Vec3f& newColor);
 
+	//! Setter for displaying ecliptic poles of J2000.
+	void setFlagEclipticJ2000Poles(const bool displayed);
+	//! Accessor for displaying ecliptic poles of J2000.
+	bool getFlagEclipticJ2000Poles(void) const;
+	//! Get the current color of the ecliptic poles of J2000.
+	Vec3f getColorEclipticJ2000Poles(void) const;
+	//! Set the color of the ecliptic poles of J2000.
+	//! @param newColor The color of ecliptic poles of J2000
+	//! @code
+	//! // example of usage in scripts
+	//! GridLinesMgr.setColorEclipticJ2000Poles(Vec3f(1.0,0.0,0.0));
+	//! @endcode
+	void setColorEclipticJ2000Poles(const Vec3f& newColor);
+
+	//! Setter for displaying ecliptic poles.
+	void setFlagEclipticPoles(const bool displayed);
+	//! Accessor for displaying ecliptic poles.
+	bool getFlagEclipticPoles(void) const;
+	//! Get the current color of the ecliptic poles.
+	Vec3f getColorEclipticPoles(void) const;
+	//! Set the color of the ecliptic poles.
+	//! @param newColor The color of ecliptic poles
+	//! @code
+	//! // example of usage in scripts
+	//! GridLinesMgr.setColorEclipticPoles(Vec3f(1.0,0.0,0.0));
+	//! @endcode
+	void setColorEclipticPoles(const Vec3f& newColor);
+
+	//! Setter for displaying galactic poles.
+	void setFlagGalacticPoles(const bool displayed);
+	//! Accessor for displaying galactic poles.
+	bool getFlagGalacticPoles(void) const;
+	//! Get the current color of the galactic poles.
+	Vec3f getColorGalacticPoles(void) const;
+	//! Set the color of the galactic poles.
+	//! @param newColor The color of galactic poles
+	//! @code
+	//! // example of usage in scripts
+	//! GridLinesMgr.setColorGalacticPoles(Vec3f(1.0,0.0,0.0));
+	//! @endcode
+	void setColorGalacticPoles(const Vec3f& newColor);
+
+	//! Setter for displaying supergalactic poles.
+	void setFlagSupergalacticPoles(const bool displayed);
+	//! Accessor for displaying supergalactic poles.
+	bool getFlagSupergalacticPoles(void) const;
+	//! Get the current color of the supergalactic poles.
+	Vec3f getColorSupergalacticPoles(void) const;
+	//! Set the color of the supergalactic poles.
+	//! @param newColor The color of supergalactic poles
+	//! @code
+	//! // example of usage in scripts
+	//! GridLinesMgr.setColorSupergalacticPoles(Vec3f(1.0,0.0,0.0));
+	//! @endcode
+	void setColorSupergalacticPoles(const Vec3f& newColor);
+
+	//! Setter for displaying equinox points of J2000.
+	void setFlagEquinoxJ2000Points(const bool displayed);
+	//! Accessor for displaying equinox points of J2000.
+	bool getFlagEquinoxJ2000Points(void) const;
+	//! Get the current color of the equinox points of J2000.
+	Vec3f getColorEquinoxJ2000Points(void) const;
+	//! Set the color of the equinox points of J2000.
+	//! @param newColor The color of equinox points
+	//! @code
+	//! // example of usage in scripts
+	//! GridLinesMgr.setColorEquinoxJ2000Points(Vec3f(1.0,0.0,0.0));
+	//! @endcode
+	void setColorEquinoxJ2000Points(const Vec3f& newColor);
+
+	//! Setter for displaying equinox points.
+	void setFlagEquinoxPoints(const bool displayed);
+	//! Accessor for displaying equinox points.
+	bool getFlagEquinoxPoints(void) const;
+	//! Get the current color of the equinox points.
+	Vec3f getColorEquinoxPoints(void) const;
+	//! Set the color of the equinox points.
+	//! @param newColor The color of equinox points
+	//! @code
+	//! // example of usage in scripts
+	//! GridLinesMgr.setColorEquinoxPoints(Vec3f(1.0,0.0,0.0));
+	//! @endcode
+	void setColorEquinoxPoints(const Vec3f& newColor);
+
 signals:
 	void azimuthalGridDisplayedChanged(const bool) const;
 	void azimuthalGridColorChanged(const Vec3f & newColor) const;
@@ -650,6 +788,18 @@ signals:
 	void celestialPolesColorChanged(const Vec3f & newColor) const;
 	void zenithNadirDisplayedChanged(const bool displayed) const;
 	void zenithNadirColorChanged(const Vec3f & newColor) const;
+	void eclipticJ2000PolesDisplayedChanged(const bool displayed) const;
+	void eclipticJ2000PolesColorChanged(const Vec3f & newColor) const;
+	void eclipticPolesDisplayedChanged(const bool displayed) const;
+	void eclipticPolesColorChanged(const Vec3f & newColor) const;
+	void galacticPolesDisplayedChanged(const bool displayed) const;
+	void galacticPolesColorChanged(const Vec3f & newColor) const;
+	void supergalacticPolesDisplayedChanged(const bool displayed) const;
+	void supergalacticPolesColorChanged(const Vec3f & newColor) const;
+	void equinoxJ2000PointsDisplayedChanged(const bool displayed) const;
+	void equinoxJ2000PointsColorChanged(const Vec3f & newColor) const;
+	void equinoxPointsDisplayedChanged(const bool displayed) const;
+	void equinoxPointsColorChanged(const Vec3f & newColor) const;
 
 private slots:
 	//! Re-translate the labels of the great circles.
@@ -683,6 +833,12 @@ private:
 	SkyPoint * celestialJ2000Poles;		// Celestial poles of J2000
 	SkyPoint * celestialPoles;		// Celestial poles
 	SkyPoint * zenithNadir;			// Zenith and nadir
+	SkyPoint * eclipticJ2000Poles;		// Ecliptic poles of J2000
+	SkyPoint * eclipticPoles;		// Ecliptic poles
+	SkyPoint * galacticPoles;		// Galactic poles
+	SkyPoint * supergalacticPoles;		// Supergalactic poles
+	SkyPoint * equinoxJ2000Points;		// Equinox points of J2000
+	SkyPoint * equinoxPoints;		// Equinox points
 };
 
 #endif // _GRIDLINESMGR_HPP_
