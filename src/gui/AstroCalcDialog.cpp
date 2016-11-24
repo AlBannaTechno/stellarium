@@ -114,10 +114,11 @@ void AstroCalcDialog::createDialogContent()
 	populateGroupCelestialBodyList();
 
 	double JD = core->getJD() + core->getUTCOffset(core->getJD())/24;
-	ui->dateFromDateTimeEdit->setDateTime(StelUtils::jdToQDateTime(JD));
-	ui->dateToDateTimeEdit->setDateTime(StelUtils::jdToQDateTime(JD + 30.f));
-	ui->phenomenFromDateEdit->setDateTime(StelUtils::jdToQDateTime(JD));
-	ui->phenomenToDateEdit->setDateTime(StelUtils::jdToQDateTime(JD + 365.f));
+	QDateTime currentDT = StelUtils::jdToQDateTime(JD);
+	ui->dateFromDateTimeEdit->setDateTime(currentDT);
+	ui->dateToDateTimeEdit->setDateTime(currentDT.addMonths(1));
+	ui->phenomenFromDateEdit->setDateTime(currentDT);
+	ui->phenomenToDateEdit->setDateTime(currentDT.addYears(1));
 
 	// bug #1350669 (https://bugs.launchpad.net/stellarium/+bug/1350669)
 	connect(ui->planetaryPositionsTreeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
@@ -442,7 +443,7 @@ void AstroCalcDialog::populateCelestialBodyList()
 	//Restore the selection
 	index = planets->findData(selectedPlanetId, Qt::UserRole, Qt::MatchCaseSensitive);
 	if (index<0)
-		index = planets->findData("Moon", Qt::UserRole, Qt::MatchCaseSensitive);;
+		index = planets->findData("Moon", Qt::UserRole, Qt::MatchCaseSensitive);
 	planets->setCurrentIndex(index);
 	planets->model()->sort(0);
 	planets->blockSignals(false);
@@ -503,7 +504,7 @@ void AstroCalcDialog::populateMajorPlanetList()
 	//Restore the selection
 	index = majorPlanet->findData(selectedPlanetId, Qt::UserRole, Qt::MatchCaseSensitive);
 	if (index<0)
-		index = majorPlanet->findData("Mercury", Qt::UserRole, Qt::MatchCaseSensitive);;
+		index = majorPlanet->findData("Venus", Qt::UserRole, Qt::MatchCaseSensitive);
 	majorPlanet->setCurrentIndex(index);
 	majorPlanet->model()->sort(0);
 	majorPlanet->blockSignals(false);
@@ -530,9 +531,9 @@ void AstroCalcDialog::populateGroupCelestialBodyList()
 	groups->addItem(q_("Oort cloud objects"), "8");
 	groups->addItem(q_("Star clusters"), "9");
 	groups->addItem(q_("Planetary nebulae"), "10");
-	groups->addItem(q_("Bright nebulae"), "11");
+	groups->addItem(q_("Bright nebulae (<10 mag.)"), "11");
 	groups->addItem(q_("Dark nebulae"), "12");
-	groups->addItem(q_("Galaxies"), "13");
+	groups->addItem(q_("Bright galaxies (<10 mag.)"), "13");
 
 	index = groups->findData(selectedGroupId, Qt::UserRole, Qt::MatchCaseSensitive);
 	if (index<0)
@@ -687,7 +688,7 @@ void AstroCalcDialog::calculatePhenomena()
 		case 11: // Bright nebulae
 			foreach(const NebulaP& object, allDSO)
 			{
-				if (object->getDSOType()==Nebula::NebN || object->getDSOType()==Nebula::NebBn || object->getDSOType()==Nebula::NebEn || object->getDSOType()==Nebula::NebRn || object->getDSOType()==Nebula::NebHII || object->getDSOType()==Nebula::NebISM || object->getDSOType()==Nebula::NebCn || object->getDSOType()==Nebula::NebSNR)
+				if (object->getVMagnitude(core)<10.f && (object->getDSOType()==Nebula::NebN || object->getDSOType()==Nebula::NebBn || object->getDSOType()==Nebula::NebEn || object->getDSOType()==Nebula::NebRn || object->getDSOType()==Nebula::NebHII || object->getDSOType()==Nebula::NebISM || object->getDSOType()==Nebula::NebCn || object->getDSOType()==Nebula::NebSNR))
 					dso.append(object);
 			}
 			break;
@@ -701,7 +702,7 @@ void AstroCalcDialog::calculatePhenomena()
 		case 13: // Galaxies
 			foreach(const NebulaP& object, allDSO)
 			{
-				if (object->getDSOType()==Nebula::NebGx || object->getDSOType()==Nebula::NebAGx || object->getDSOType()==Nebula::NebRGx || object->getDSOType()==Nebula::NebQSO || object->getDSOType()==Nebula::NebPossQSO || object->getDSOType()==Nebula::NebBLL || object->getDSOType()==Nebula::NebBLA || object->getDSOType()==Nebula::NebIGx)
+				if (object->getVMagnitude(core)<10.f && (object->getDSOType()==Nebula::NebGx || object->getDSOType()==Nebula::NebAGx || object->getDSOType()==Nebula::NebRGx || object->getDSOType()==Nebula::NebQSO || object->getDSOType()==Nebula::NebPossQSO || object->getDSOType()==Nebula::NebBLL || object->getDSOType()==Nebula::NebBLA || object->getDSOType()==Nebula::NebIGx))
 					dso.append(object);
 			}
 			break;
@@ -710,9 +711,9 @@ void AstroCalcDialog::calculatePhenomena()
 	PlanetP planet = solarSystem->searchByEnglishName(currentPlanet);
 	if (planet)
 	{
-		double currentJD = core->getJD(); // save current JD
-		double startJD = StelUtils::qDateTimeToJd(ui->phenomenFromDateEdit->dateTime());
-		double stopJD = StelUtils::qDateTimeToJd(ui->phenomenToDateEdit->dateTime());
+		double currentJD = core->getJD(); // save current JD		
+		double startJD = StelUtils::qDateTimeToJd(QDateTime(ui->phenomenFromDateEdit->date()));
+		double stopJD = StelUtils::qDateTimeToJd(QDateTime(ui->phenomenToDateEdit->date().addDays(1)));
 		startJD = startJD - core->getUTCOffset(startJD)/24;
 		stopJD = stopJD - core->getUTCOffset(stopJD)/24;
 
@@ -797,10 +798,28 @@ void AstroCalcDialog::fillPhenomenaTable(const QMap<double, double> list, const 
 
 		QString phenomenType = q_("Conjunction");
 		double separation = it.value();
+		bool occultation = false;
+		double s1 = object1->getSpheroidAngularSize(core);
+		double s2 = object2->getSpheroidAngularSize(core);
 		if (opposition)
 		{
 			phenomenType = q_("Opposition");
 			separation += M_PI;
+		}
+		else if (separation<(s2*M_PI/180.) || separation<(s1*M_PI/180.))
+		{
+			double d1 = object1->getJ2000EquatorialPos(core).length();
+			double d2 = object2->getJ2000EquatorialPos(core).length();
+			if ((d1<d2 && s1<=s2) || (d1>d2 && s1>s2))
+				phenomenType = q_("Transit");
+			else
+				phenomenType = q_("Occultation");
+
+			// Added a special case - eclipse
+			if (qAbs(s1-s2)<=0.05 && (object1->getEnglishName()=="Sun" || object2->getEnglishName()=="Sun")) // 5% error of difference of sizes
+				phenomenType = q_("Eclipse");
+
+			occultation = true;
 		}
 
 		ACTreeWidgetItem *treeItem = new ACTreeWidgetItem(ui->phenomenaTreeWidget);
@@ -809,7 +828,10 @@ void AstroCalcDialog::fillPhenomenaTable(const QMap<double, double> list, const 
 		treeItem->setText(PhenomenaDate, StelUtils::jdToQDateTime(it.key() + core->getUTCOffset(it.key())/24).toString("yyyy-MM-dd hh:mm:ss"));
 		treeItem->setText(PhenomenaObject1, object1->getNameI18n());
 		treeItem->setText(PhenomenaObject2, object2->getNameI18n());
-		treeItem->setText(PhenomenaSeparation, StelUtils::radToDmsStr(separation));
+		if (occultation)
+			treeItem->setText(PhenomenaSeparation, QChar(0x2014));
+		else
+			treeItem->setText(PhenomenaSeparation, StelUtils::radToDmsStr(separation));
 	}
 }
 
@@ -820,7 +842,7 @@ QMap<double, double> AstroCalcDialog::findClosestApproach(PlanetP &object1, Plan
 	QMap<double, double> separations;
 	QPair<double, double> extremum;
 
-	step0 = (stopJD - startJD)/4.0;
+	step0 = (stopJD - startJD)/12.0;
 	if (step0>24.8*365.25)
 		step0 = 24.8*365.25;
 
@@ -951,6 +973,12 @@ void AstroCalcDialog::fillPhenomenaTable(const QMap<double, double> list, const 
 
 		QString phenomenType = q_("Conjunction");
 		double separation = it.value();
+		bool occultation = false;
+		if (separation<(object2->getAngularSize(core)*M_PI/180.) || separation<(object1->getSpheroidAngularSize(core)*M_PI/180.))
+		{
+			phenomenType = q_("Occultation");
+			occultation = true;
+		}
 
 		ACTreeWidgetItem *treeItem = new ACTreeWidgetItem(ui->phenomenaTreeWidget);
 		treeItem->setText(PhenomenaType, phenomenType);
@@ -961,7 +989,10 @@ void AstroCalcDialog::fillPhenomenaTable(const QMap<double, double> list, const 
 			treeItem->setText(PhenomenaObject2, object2->getNameI18n());
 		else
 			treeItem->setText(PhenomenaObject2, object2->getDSODesignation());
-		treeItem->setText(PhenomenaSeparation, StelUtils::radToDmsStr(separation));
+		if (occultation)
+			treeItem->setText(PhenomenaSeparation, QChar(0x2014));
+		else
+			treeItem->setText(PhenomenaSeparation, StelUtils::radToDmsStr(separation));
 	}
 }
 
@@ -972,7 +1003,7 @@ QMap<double, double> AstroCalcDialog::findClosestApproach(PlanetP &object1, Nebu
 	QMap<double, double> separations;
 	QPair<double, double> extremum;
 
-	step0 = (stopJD - startJD)/4.0;
+	step0 = (stopJD - startJD)/8.0;
 	if (step0>24.8*365.25)
 		step0 = 24.8*365.25;
 

@@ -516,6 +516,7 @@ void StelCore::setCurrentProjectionType(ProjectionType type)
 
 		emit currentProjectionTypeChanged(type);
 		emit currentProjectionTypeKeyChanged(getCurrentProjectionTypeKey());
+		emit currentProjectionNameI18nChanged(getCurrentProjectionNameI18n());
 	}
 }
 
@@ -541,6 +542,11 @@ void StelCore::setCurrentProjectionTypeKey(QString key)
 QString StelCore::getCurrentProjectionTypeKey(void) const
 {
 	return metaObject()->enumerator(metaObject()->indexOfEnumerator("ProjectionType")).key(currentProjectionType);
+}
+
+QString StelCore::getCurrentProjectionNameI18n() const
+{
+	return projectionTypeKeyToNameI18n(getCurrentProjectionTypeKey());
 }
 
 //! Get the list of all the available projections
@@ -618,6 +624,15 @@ double StelCore::getViewportVerticalOffset(void)
 void StelCore::setViewportVerticalOffset(double newOffsetPct)
 {
 	currentProjectorParams.viewportCenterOffset[1]=0.01f* qMin(50., qMax(-50., newOffsetPct));
+	currentProjectorParams.viewportCenter.set(currentProjectorParams.viewportXywh[0]+(0.5f+currentProjectorParams.viewportCenterOffset.v[0])*currentProjectorParams.viewportXywh[2],
+						currentProjectorParams.viewportXywh[1]+(0.5f+currentProjectorParams.viewportCenterOffset.v[1])*currentProjectorParams.viewportXywh[3]);
+}
+
+// Set both viewport offsets. Arguments will be clamped to be inside [-50...50]. I (GZ) hope this will avoid some of the shaking.
+void StelCore::setViewportOffset(double newHorizontalOffsetPct, double newVerticalOffsetPct)
+{
+	currentProjectorParams.viewportCenterOffset[0]=0.01f* qMin(50., qMax(-50., newHorizontalOffsetPct));
+	currentProjectorParams.viewportCenterOffset[1]=0.01f* qMin(50., qMax(-50., newVerticalOffsetPct));
 	currentProjectorParams.viewportCenter.set(currentProjectorParams.viewportXywh[0]+(0.5f+currentProjectorParams.viewportCenterOffset.v[0])*currentProjectorParams.viewportXywh[2],
 						currentProjectorParams.viewportXywh[1]+(0.5f+currentProjectorParams.viewportCenterOffset.v[1])*currentProjectorParams.viewportXywh[3]);
 }
@@ -1165,7 +1180,7 @@ float StelCore::getUTCOffset(const double JD) const
 	QTimeZone* tz = new QTimeZone(tzName.toUtf8());
 
 	int shiftInSeconds = 0;
-	if (tzName=="system_default" || (loc.planetName=="Earth" && !tz->isValid()))
+	if (tzName=="system_default" || (loc.planetName=="Earth" && !tz->isValid() && !QString("LMST LTST").contains(tzName)))
 	{
 		QDateTime local = universal.toLocalTime();
 		//Both timezones should be interpreted as UTC because secsTo() converts both
