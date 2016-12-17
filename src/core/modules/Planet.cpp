@@ -49,13 +49,28 @@
 
 Vec3f Planet::labelColor = Vec3f(0.4f,0.4f,0.8f);
 Vec3f Planet::orbitColor = Vec3f(1.0f,0.6f,1.0f);
-Vec3f Planet::orbitPlanetsColor = Vec3f(1.0f,0.6f,1.0f);
-Vec3f Planet::orbitAsteroidsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitMajorPlanetsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitMoonsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitMinorPlanetsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitDwarfPlanetsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitCubewanosColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitPlutinosColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitScatteredDiscObjectsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitOortCloudObjectsColor = Vec3f(1.0f,0.6f,1.0f);
 Vec3f Planet::orbitCometsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitMercuryColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitVenusColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitEarthColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitMarsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitJupiterColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitSaturnColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitUranusColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitNeptuneColor = Vec3f(1.0f,0.6f,1.0f);
 StelTextureSP Planet::hintCircleTex;
 StelTextureSP Planet::texEarthShadow;
 
 bool Planet::permanentDrawingOrbits = false;
+Planet::PlanetOrbitColorStyle Planet::orbitColorStyle = Planet::ocsOneColor;
 
 bool Planet::flagCustomGrsSettings = false;
 double Planet::customGrsJD = 2456901.5;
@@ -88,7 +103,18 @@ Planet::Planet(const QString& englishName,
 	       bool hasAtmosphere,
 	       bool hasHalo,
 	       const QString& pTypeStr)
-	: englishName(englishName),
+	: flagNativeName(true),
+	  flagTranslatedName(true),
+	  lastOrbitJDE(0.0),
+	  deltaJDE(StelCore::JD_SECOND),
+	  deltaOrbitJDE(0.0),
+	  orbitCached(false),
+	  closeOrbit(acloseOrbit),
+	  englishName(englishName),
+	  nameI18(englishName),
+	  nativeName(""),
+	  texMapName(atexMapName),
+	  normalMapName(anormalMapName),
 	  flagLighting(flagLighting),
 	  radius(radius),
 	  oneMinusOblateness(1.0-oblateness),
@@ -96,25 +122,18 @@ Planet::Planet(const QString& englishName,
 	  albedo(albedo),
 	  axisRotation(0.),
 	  rings(NULL),
+	  distance(0.0),
 	  sphereScale(1.f),
 	  lastJDE(J2000),
 	  coordFunc(coordFunc),
 	  userDataPtr(auserDataPtr),
 	  osculatingFunc(osculatingFunc),
 	  parent(NULL),
+	  flagLabels(true),
 	  hidden(hidden),
 	  atmosphere(hasAtmosphere),
 	  halo(hasHalo)
 {
-	texMapName = atexMapName;
-	normalMapName = anormalMapName;
-	lastOrbitJDE =0;
-	deltaJDE = StelCore::JD_SECOND;
-	orbitCached = 0;
-	closeOrbit = acloseOrbit;
-	deltaOrbitJDE = 0;
-	distance = 0;
-
 	// Initialize pType with the key found in pTypeMap, or mark planet type as undefined.
 	// The latter condition should obviously never happen.
 	pType = pTypeMap.key(pTypeStr, Planet::isUNDEFINED);
@@ -125,15 +144,12 @@ Planet::Planet(const QString& englishName,
 	texMap = StelApp::getInstance().getTextureManager().createTextureThread(StelFileMgr::getInstallationDir()+"/textures/"+texMapName, StelTexture::StelTextureParams(true, GL_LINEAR, GL_REPEAT));
 	normalMap = StelApp::getInstance().getTextureManager().createTextureThread(StelFileMgr::getInstallationDir()+"/textures/"+normalMapName, StelTexture::StelTextureParams(true, GL_LINEAR, GL_REPEAT));
 
-	nameI18 = englishName;
-	nativeName = "";
 	if (englishName!="Pluto")
 	{
 		deltaJDE = 0.001*StelCore::JD_SECOND;
 	}
-	flagLabels = true;
-	flagNativeName = true;
-	flagTranslatedName = true;
+
+
 }
 
 // called in SolarSystem::init() before first planet is created. Loads pTypeMap.
@@ -306,7 +322,7 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 		}
 		else
 		{
-			if (sphereScale>1.f) // We must give correct diameters even if upscaling (e.g. Moon)
+			if (sphereScale!=1.f) // We must give correct diameters even if upscaling (e.g. Moon)
 			{
 				if (withDecimalDegree)
 					oss << q_("Apparent diameter: %1, scaled up to: %2")
@@ -2021,6 +2037,79 @@ Ring::Ring(float radiusMin, float radiusMax, const QString &texname)
 	tex = StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/"+texname);
 }
 
+Vec3f Planet::getCurrentOrbitColor()
+{
+	Vec3f orbColor = orbitColor;
+	switch(orbitColorStyle)
+	{
+		case ocsGroups:
+		{
+			switch (pType)
+			{
+				case isMoon:
+					orbColor = orbitMoonsColor;
+					break;
+				case isPlanet:
+					orbColor = orbitMajorPlanetsColor;
+					break;
+				case isAsteroid:
+					orbColor = orbitMinorPlanetsColor;
+					break;
+				case isDwarfPlanet:
+					orbColor = orbitDwarfPlanetsColor;
+					break;
+				case isCubewano:
+					orbColor = orbitCubewanosColor;
+					break;
+				case isPlutino:
+					orbColor = orbitPlutinosColor;
+					break;
+				case isSDO:
+					orbColor = orbitScatteredDiscObjectsColor;
+					break;
+				case isOCO:
+					orbColor = orbitOortCloudObjectsColor;
+					break;
+				case isComet:
+					orbColor = orbitCometsColor;
+					break;
+				default:
+					orbColor = orbitColor;
+			}
+			break;
+		}
+		case ocsMajorPlanets:
+		{
+			QString pName = getEnglishName().toLower();
+			if (pName=="mercury")
+				orbColor = orbitMercuryColor;
+			else if (pName=="venus")
+				orbColor = orbitVenusColor;
+			else if (pName=="earth")
+				orbColor = orbitEarthColor;
+			else if (pName=="mars")
+				orbColor = orbitMarsColor;
+			else if (pName=="jupiter")
+				orbColor = orbitJupiterColor;
+			else if (pName=="saturn")
+				orbColor = orbitSaturnColor;
+			else if (pName=="uranus")
+				orbColor = orbitUranusColor;
+			else if (pName=="neptune")
+				orbColor = orbitNeptuneColor;
+			else
+				orbColor = orbitColor;
+			break;
+		}
+		case ocsOneColor:
+		{
+			orbColor = orbitColor;
+			break;
+		}
+	}
+
+	return orbColor;
+}
 
 // draw orbital path of Planet
 void Planet::drawOrbit(const StelCore* core)
@@ -2038,27 +2127,7 @@ void Planet::drawOrbit(const StelCore* core)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 
-	Vec3f orbColor = orbitColor;
-	switch (pType)
-	{
-		case isMoon:
-		case isPlanet:
-			orbColor = orbitPlanetsColor;
-			break;
-		case isAsteroid:
-		case isDwarfPlanet:
-		case isCubewano:
-		case isPlutino:
-		case isSDO:
-		case isOCO:
-			orbColor = orbitAsteroidsColor;
-			break;
-		case isComet:
-			orbColor = orbitCometsColor;
-			break;
-		default:
-			orbColor = orbitColor;
-	}
+	Vec3f orbColor = getCurrentOrbitColor();
 
 	sPainter.setColor(orbColor[0], orbColor[1], orbColor[2], orbitFader.getInterstate());
 	Vec3d onscreen;

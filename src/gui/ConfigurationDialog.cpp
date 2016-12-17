@@ -94,10 +94,6 @@ void ConfigurationDialog::retranslate()
 	if (dialog) {
 		ui->retranslateUi(dialog);
 
-		//Hack to shrink the tabs to optimal size after language change
-		//by causing the list items to be laid out again.
-		updateTabBarListWidgetWidth();
-		
 		//Initial FOV and direction on the "Main" page
 		updateConfigLabels();
 		
@@ -114,10 +110,12 @@ void ConfigurationDialog::retranslate()
 		populatePluginsList();
 
 		populateDeltaTAlgorithmsList();
-
 		populateDateFormatsList();
-
 		populateTimeFormatsList();
+
+		//Hack to shrink the tabs to optimal size after language change
+		//by causing the list items to be laid out again.
+		updateTabBarListWidgetWidth();
 	}
 }
 
@@ -394,16 +392,13 @@ void ConfigurationDialog::selectLanguage(const QString& langName)
 {
 	QString code = StelTranslator::nativeNameToIso639_1Code(langName);
 	StelApp::getInstance().getLocaleMgr().setAppLanguage(code);
-//	StelApp::getInstance().getLocaleMgr().setSkyLanguage(code);
 	StelMainView::getInstance().initTitleI18n();
 }
 
 void ConfigurationDialog::selectSkyLanguage(const QString& langName)
 {
 	QString code = StelTranslator::nativeNameToIso639_1Code(langName);
-//	StelApp::getInstance().getLocaleMgr().setAppLanguage(code);
 	StelApp::getInstance().getLocaleMgr().setSkyLanguage(code);
-//	StelMainView::getInstance().initTitleI18n();
 }
 
 void ConfigurationDialog::setStartupTimeMode()
@@ -478,7 +473,7 @@ void ConfigurationDialog::setBriefSelectedInfo(void)
 
 void ConfigurationDialog::setSelectedInfoFromCheckBoxes()
 {
-	// As this signal will be called when a checbox is toggled,
+	// As this signal will be called when a checkbox is toggled,
 	// change the general mode to Custom.
 	if (!ui->customSelectedInfoRadio->isChecked())
 		ui->customSelectedInfoRadio->setChecked(true);
@@ -517,6 +512,8 @@ void ConfigurationDialog::setSelectedInfoFromCheckBoxes()
 		flags |= StelObject::EclipticCoordJ2000;
 	if (ui->checkBoxEclipticCoordsOfDate->isChecked())
 		flags |= StelObject::EclipticCoordOfDate;
+	if (ui->checkBoxConstellation->isChecked())
+		flags |= StelObject::IAUConstellation;
 
 	gui->setInfoTextFilters(flags);
 }
@@ -778,6 +775,8 @@ void ConfigurationDialog::saveCurrentViewOptions()
 			       (bool) (flags & StelObject::EclipticCoordOfDate));
 		conf->setValue("flag_show_eclcoordj2000",
 			       (bool) (flags & StelObject::EclipticCoordJ2000));
+		conf->setValue("flag_show_constellation",
+			       (bool) (flags & StelObject::IAUConstellation));
 		conf->endGroup();
 	}
 
@@ -1332,6 +1331,7 @@ void ConfigurationDialog::updateSelectedInfoCheckBoxes()
 	ui->checkBoxType->setChecked(flags & StelObject::ObjectType);
 	ui->checkBoxEclipticCoordsJ2000->setChecked(flags & StelObject::EclipticCoordJ2000);
 	ui->checkBoxEclipticCoordsOfDate->setChecked(flags & StelObject::EclipticCoordOfDate);
+	ui->checkBoxConstellation->setChecked(flags & StelObject::IAUConstellation);
 }
 
 void ConfigurationDialog::updateTabBarListWidgetWidth()
