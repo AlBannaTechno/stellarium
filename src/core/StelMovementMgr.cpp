@@ -92,7 +92,11 @@ StelMovementMgr::StelMovementMgr(StelCore* acore)
 
 StelMovementMgr::~StelMovementMgr()
 {
-	if (viewportOffsetTimeline) delete viewportOffsetTimeline; viewportOffsetTimeline=NULL;
+	if (viewportOffsetTimeline)
+	{
+		delete viewportOffsetTimeline;
+		viewportOffsetTimeline=NULL;
+	}
 }
 
 void StelMovementMgr::init()
@@ -102,7 +106,7 @@ void StelMovementMgr::init()
 	Q_ASSERT(conf);
 	Q_ASSERT(objectMgr);
 	connect(objectMgr, SIGNAL(selectedObjectChanged(StelModule::StelModuleSelectAction)),
-			this, SLOT(selectedObjectChange(StelModule::StelModuleSelectAction)));
+		this, SLOT(selectedObjectChange(StelModule::StelModuleSelectAction)));
 
 	flagEnableMoveAtScreenEdge = conf->value("navigation/flag_enable_move_at_screen_edge",false).toBool();
 	mouseZoomSpeed = conf->value("navigation/mouse_zoom",30).toInt();
@@ -726,7 +730,7 @@ void StelMovementMgr::lookZenith(void)
 {
 	Vec3f dir;
 	StelUtils::spheToRect(M_PI, M_PI/2., dir);
-	qDebug() << "lookZenith: Up is " << upVectorMountFrame[0] << "/" << upVectorMountFrame[1] << "/" << upVectorMountFrame[2];
+	//qDebug() << "lookZenith: Up is " << upVectorMountFrame[0] << "/" << upVectorMountFrame[1] << "/" << upVectorMountFrame[2];
 	setViewDirectionJ2000(core->altAzToJ2000(Vec3d(dir[0], dir[1], dir[2]), StelCore::RefractionOff));
 	//qDebug() << "lookZenith: View is " << viewDirectionMountFrame[0] << "/" << viewDirectionMountFrame[1] << "/" << viewDirectionMountFrame[2];
 	if (mountMode==MountAltAzimuthal)

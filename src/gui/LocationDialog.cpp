@@ -144,10 +144,9 @@ void LocationDialog::createDialogContent()
 
 	customTimeZone = conf->value("localization/time_zone", "").toString();
 	if (!customTimeZone.isEmpty())
-		b = true;
+		ui->useCustomTimeZoneCheckBox->setChecked(true);
 	else
-		b = false;
-	updateTimeZoneControls(b);
+		ui->timeZoneNameComboBox->setEnabled(false);
 
 	setFieldsFromLocation(currentLocation);
 
