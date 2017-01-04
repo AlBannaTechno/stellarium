@@ -6,15 +6,15 @@ Uploaders: Tomasz Buchert <tomasz@debian.org>
 Build-Depends: cmake (>= 3.0),
                debhelper (>= 9),
                doxygen,
-               libqt5opengl5-dev (>= 5.3),
-               libqt5serialport5-dev (>= 5.3),
+               libqt5opengl5-dev (>= 5.2),
+               libqt5serialport5-dev (>= 5.2),
                mesa-common-dev,
-               qtbase5-dev (>= 5.3),
-               qtdeclarative5-dev (>= 5.3),
-               qtdeclarative5-dev-tools (>= 5.3),
-               qtscript5-dev (>= 5.3),
-               qttools5-dev (>= 5.3),
-               qttools5-dev-tools (>= 5.3),
+               qtbase5-dev (>= 5.2),
+               qtdeclarative5-dev (>= 5.2),
+               qtdeclarative5-dev-tools (>= 5.2),
+               qtscript5-dev (>= 5.2),
+               qttools5-dev (>= 5.2),
+               qttools5-dev-tools (>= 5.2),
                zlib1g-dev
 Standards-Version: 3.9.7
 Homepage: http://www.stellarium.org
