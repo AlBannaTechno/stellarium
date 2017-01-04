@@ -195,7 +195,7 @@ ADD_PLUGIN(Scenery3d 0)
 ADD_PLUGIN(SolarSystemEditor 1)
 ADD_PLUGIN(Supernovae 1)
 ADD_PLUGIN(TextUserInterface 1)
-ADD_PLUGIN(TelescopeControl 1)
+ADD_PLUGIN(TelescopeControl 0)
 ADD_PLUGIN(TimeZoneConfiguration 1)
 
 ########## Static plugins need to define includes and libraries
