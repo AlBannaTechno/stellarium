@@ -1326,7 +1326,7 @@ QStringList ConstellationMgr::listMatchingObjectsI18n(const QString& objPrefix, 
 	QStringList result;
 	if (maxNbItem==0) return result;
 
-	QString cn;
+	QString cn, cna;
 	bool find;
 	vector < Constellation * >::const_iterator iter;
 	for (iter = asterisms.begin(); iter != asterisms.end(); ++iter)
@@ -1335,7 +1335,6 @@ QStringList ConstellationMgr::listMatchingObjectsI18n(const QString& objPrefix, 
 		find = false;
 		if (useStartOfWords)
 		{
-			//if (objPrefix.toUpper()==cn.mid(0, objPrefix.size()).toUpper())  // WHY SO LONG?
 			if (cn.startsWith(objPrefix, Qt::CaseInsensitive))
 				find = true;
 		}
@@ -1344,6 +1343,11 @@ QStringList ConstellationMgr::listMatchingObjectsI18n(const QString& objPrefix, 
 			if (cn.contains(objPrefix,Qt::CaseInsensitive))
 				find = true;
 		}
+		// This is possible abbreviation of constellation
+		cna = (*iter)->getShortName();
+		if (cna.startsWith(objPrefix, Qt::CaseInsensitive))
+			result << cna;
+
 		if (find)
 		{
 			result << cn;
