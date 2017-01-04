@@ -1,31 +1,23 @@
 Source: stellarium
 Section: science
 Priority: optional
-Maintainer: Debian Astro Maintainers <debian-astro-maintainers@lists.alioth.debian.org>
-Uploaders: Tomasz Buchert <tomasz@debian.org>
-Build-Depends: cmake (>= 3.0),
-               debhelper (>= 9),
-               doxygen,
-               libqt5opengl5-dev (>= 5.2),
-               libqt5serialport5-dev (>= 5.2),
-               mesa-common-dev,
-               qtbase5-dev (>= 5.2),
-               qtdeclarative5-dev (>= 5.2),
-               qtdeclarative5-dev-tools (>= 5.2),
-               qtscript5-dev (>= 5.2),
-               qttools5-dev (>= 5.2),
-               qttools5-dev-tools (>= 5.2),
-               zlib1g-dev
-Standards-Version: 3.9.7
+XSBC-Original-Maintainer: Debian Astro Maintainers <debian-astro-maintainers@lists.alioth.debian.org>
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Uploaders: Tomasz Buchert <tomasz.buchert@inria.fr>
+Build-Depends: debhelper (>= 9), cmake (>= 2.8.11), doxygen, zlib1g-dev,
+ qtbase5-dev (>= 5.2.1), libqt5opengl5-dev (>= 5.2.1),
+ qtdeclarative5-dev (>= 5.2.1), qtdeclarative5-dev-tools (>= 5.2.1),
+ qtquick1-5-dev (>= 5.2.1), qtscript5-dev (>= 5.2.1), qttools5-dev (>= 5.2.1),
+ qttools5-dev-tools (>= 5.2.1), mesa-common-dev
+Standards-Version: 3.9.6
 Homepage: http://www.stellarium.org
 Vcs-Git: git://anonscm.debian.org/debian-astro/packages/stellarium.git
-Vcs-Browser: https://anonscm.debian.org/cgit/debian-astro/packages/stellarium.git
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-astro/packages/stellarium.git
 
 Package: stellarium
 Architecture: any
-Depends: stellarium-data (= ${source:Version}),
-         ${misc:Depends},
-         ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, stellarium-data (= ${source:Version}),
+ qtquick1-qml-plugins (>= 5.2.1)
 Description: real-time photo-realistic sky generator
  Stellarium renders 3D photo-realistic skies in real-time. With Stellarium, you
  really see what you can see with your eyes, binoculars or a small telescope.
@@ -55,7 +47,7 @@ Description: real-time photo-realistic sky generator
 Package: stellarium-data
 Architecture: all
 Recommends: stellarium (= ${source:Version})
-Depends: fonts-dejavu-core (>= 2.33), ${misc:Depends}
+Depends: ${misc:Depends}, fonts-dejavu-core (>= 2.33)
 Description: Stellarium data files
  Stellarium renders 3D photo-realistic skies in real-time. With Stellarium, you
  really see what you can see with your eyes, binoculars or a small telescope.

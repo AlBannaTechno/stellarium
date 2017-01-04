@@ -1,61 +1,22 @@
-stellarium (0.14.3-1) unstable; urgency=medium
+stellarium (0.13.1-1ubuntu3) vivid; urgency=medium
 
-  * Imported Upstream version 0.14.3
-  * Bumped standards version to 3.9.7 (no changes needed)
-  * Removed menu file per tech-ctte decision in bug 741573
-  * Fixed source lintian overrides which didn't work
+  * No-change rebuild against Qt 5.4.1.
 
- -- Tomasz Buchert <tomasz@debian.org>  Fri, 25 Mar 2016 11:33:43 +0100
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Wed, 11 Mar 2015 09:22:20 +0200
 
-stellarium (0.14.2-1) unstable; urgency=medium
+stellarium (0.13.1-1ubuntu2) vivid; urgency=medium
 
-  * Imported Upstream version 0.14.2
+  * No-change rebuild against Qt 5.4.0.
 
- -- Tomasz Buchert <tomasz@debian.org>  Sun, 10 Jan 2016 21:42:18 +0100
+ -- Timo Jyrinki <timo-jyrinki@ubuntu.com>  Fri, 13 Feb 2015 13:07:41 +0200
 
-stellarium (0.14.1-2) unstable; urgency=medium
+stellarium (0.13.1-1ubuntu1) vivid; urgency=medium
 
-  * d/control: drop qtquick dependencies (Closes: #808698)
+  * debian/patches/fix_ftbfs_armhf_qt5.4.diff:
+    - Re-include the removed in Qt GL_DOUBLE and GLdouble typedefs to enable
+      properly building on GLES platforms against Qt 5.4 (LP: #1395655)
 
- -- Tomasz Buchert <tomasz@debian.org>  Tue, 22 Dec 2015 12:42:20 +0100
-
-stellarium (0.14.1-1) unstable; urgency=medium
-
-  * Imported Upstream version 0.14.1
-
- -- Tomasz Buchert <tomasz@debian.org>  Wed, 02 Dec 2015 18:42:23 +0100
-
-stellarium (0.14.0-1) unstable; urgency=medium
-
-  * Imported Upstream version 0.14.0 (Closes: #803568)
-  * d/patches: drop patches
-  * d/source.lintian-overrides: temporary override for minified js
-
- -- Tomasz Buchert <tomasz@debian.org>  Sun, 01 Nov 2015 14:34:04 +0100
-
-stellarium (0.13.3-2) unstable; urgency=medium
-
-  [ Marcus Lundblad ]
-  * Install appstream appdata.
-
-  [ Tomasz Buchert ]
-  * d/gbp.conf: update config
-  * d/patches: Fix Qt linking problem (Closes: #786715)
-
- -- Tomasz Buchert <tomasz@debian.org>  Wed, 03 Jun 2015 12:59:37 +0200
-
-stellarium (0.13.3-1) unstable; urgency=medium
-
-  * Imported Upstream version 0.13.3
-  * Bugs fixed (Closes: #779046)
-
- -- Tomasz Buchert <tomasz@debian.org>  Sat, 25 Apr 2015 22:20:59 +0200
-
-stellarium (0.13.2-1) unstable; urgency=medium
-
-  * Imported Upstream version 0.13.2
-
- -- Tomasz Buchert <tomasz.buchert@inria.fr>  Tue, 20 Jan 2015 19:20:13 +0100
+ -- Łukasz 'sil2100' Zemczak <lukasz.zemczak@canonical.com>  Fri, 16 Jan 2015 12:06:48 +0100
 
 stellarium (0.13.1-1) unstable; urgency=medium
 

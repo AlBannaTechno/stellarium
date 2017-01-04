@@ -1,4 +1,3 @@
-# the upstream gzipped files are reproducible
 stellarium-data: package-contains-timestamped-gzip usr/share/stellarium/data/base_locations.bin.gz
-stellarium-data: package-contains-timestamped-gzip usr/share/stellarium/scenery3d/Sterngarten/Sterngarten_Wien_innerArea-optimized.obj.gz
-stellarium-data: package-contains-timestamped-gzip usr/share/stellarium/scenery3d/Testscene/Stellarium-Testscene_withGrid_Bump-separateSpheres.obj.gz
+# the gzipped file is provided in the upstream tarball
+# and as such is reproducible
