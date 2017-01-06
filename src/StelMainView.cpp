@@ -1143,8 +1143,7 @@ void StelMainView::mousePressEvent(QMouseEvent* event)
 void StelMainView::mouseReleaseEvent(QMouseEvent* event)
 {
 	thereWasAnEvent(); // Refresh screen ASAP
-	QGraphicsView::mouseReleaseEvent(event);
-	skyItem->setFocus(); // Change the focus after clicking on button in the GUI
+	QGraphicsView::mouseReleaseEvent(event);	
 }
 
 void StelMainView::wheelEvent(QWheelEvent* event)
