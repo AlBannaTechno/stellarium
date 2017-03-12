@@ -166,7 +166,7 @@ Exoplanet::~Exoplanet()
 	//
 }
 
-QVariantMap Exoplanet::getMap(void)
+QVariantMap Exoplanet::getMap(void) const
 {
 	QVariantMap map;
 	map["designation"] = designation;
@@ -467,6 +467,25 @@ QString Exoplanet::getInfoString(const StelCore* core, const InfoStringGroup& fl
 	return str;
 }
 
+QVariantMap Exoplanet::getInfoMap(const StelCore *core) const
+{
+	QVariantMap map = StelObject::getInfoMap(core);
+
+	// Tentatively add a few more strings. Details are left to the plugin author.
+	if (!starProperName.isEmpty()) map["starProperName"] = starProperName;
+	map["distance"] = distance;
+	map["stype"] = stype;
+	map["smass"] = smass;
+	map["smetal"] = smetal;
+	// map["Vmag"] = Vmag; // maybe same as getVmagnitude?
+	map["sradius"] = sradius;
+	map["effectiveTemp"] = effectiveTemp;
+	map["hasHabitablePlanets"] = hasHabitableExoplanets;
+	map["type"] = "ExoplanetSystem"; // Replace default but confusing "Exoplanet" from class name.
+	// TODO: Maybe add number of habitables? Add details?
+	return map;
+}
+
 QString Exoplanet::getPlanetaryClassI18n(QString ptype) const
 {
 	QString result = "";
@@ -559,8 +578,7 @@ void Exoplanet::draw(StelCore* core, StelPainter *painter)
 	StelUtils::spheToRect(RA, DE, XYZ);
 	double mag = getVMagnitudeWithExtinction(core);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
+	painter->setBlending(true, GL_ONE, GL_ONE);
 	painter->setColor(color[0], color[1], color[2], 1);
 
 	if (timelineMode)

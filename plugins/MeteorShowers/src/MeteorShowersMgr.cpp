@@ -123,6 +123,12 @@ void MeteorShowersMgr::deinit()
 	m_bolideTexture.clear();
 	m_radiantTexture.clear();
 	m_pointerTexture.clear();
+	delete m_meteorShowers;
+	m_meteorShowers = NULL;
+	delete m_configDialog;
+	m_configDialog = NULL;
+	delete m_searchDialog;
+	m_searchDialog = NULL;
 }
 
 double MeteorShowersMgr::getCallOrder(StelModuleActionName actionName) const
@@ -286,7 +292,7 @@ void MeteorShowersMgr::repaint()
 
 void MeteorShowersMgr::checkForUpdates()
 {
-	if (m_enableAutoUpdates && m_lastUpdate.addSecs(m_updateFrequencyHours * 3600.) <= QDateTime::currentDateTime())
+	if (m_enableAutoUpdates && m_lastUpdate.addSecs(m_updateFrequencyHours * 3600.) <= QDateTime::currentDateTime() && m_downloadMgr->networkAccessible()==QNetworkAccessManager::Accessible)
 	{
 		updateCatalog();
 	}

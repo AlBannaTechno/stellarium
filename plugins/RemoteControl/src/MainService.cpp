@@ -35,17 +35,17 @@
 #include "StelUtils.hpp"
 
 #include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 
 MainService::MainService(const QByteArray &serviceName, QObject *parent)
 	: AbstractAPIService(serviceName,parent),
-	  moveX(0),moveY(0),lastMoveUpdateTime(0)
+	  moveX(0),moveY(0),lastMoveUpdateTime(0),
+	  //100 should be more than enough
+	  //this only has to emcompass events that occur between 2 status updates
+	  actionCache(100), propCache(100)
 {
-	//100 should be more than enough
-	//this only has to emcompass events that occur between 2 status updates
-	actionCache.setCapacity(100);
-	propCache.setCapacity(100);
-
 	//this is run in the main thread
 	core = StelApp::getInstance().getCore();
 	actionMgr =  StelApp::getInstance().getStelActionManager();
@@ -370,6 +370,29 @@ void MainService::postImpl(const QByteArray& operation, const APIParameters &par
 		else
 			response.writeRequestError("requires x or y parameter");
 	}
+	else if(operation == "view")
+	{
+		QString azs = QString::fromUtf8(parameters.value("az"));
+		QString alts = QString::fromUtf8(parameters.value("alt"));
+
+		bool azOk,altOk;
+		double az = azs.toDouble(&azOk);
+		double alt = alts.toDouble(&altOk);
+
+		if(azOk || altOk)
+		{
+			QMetaObject::invokeMethod(this,"updateView", SERVICE_DEFAULT_INVOKETYPE,
+						  Q_ARG(double,az),
+						  Q_ARG(double,alt),
+						  Q_ARG(bool,azOk),
+						  Q_ARG(bool,altOk));
+
+			response.setData("ok");
+		}
+		else
+			response.writeRequestError("requires x or y parameter");
+	}
+
 	else if (operation == "fov")
 	{
 		QString fov = QString::fromUtf8(parameters.value("fov"));
@@ -462,6 +485,24 @@ void MainService::updateMovement(float x, float y, bool xUpdated, bool yUpdated)
 	qint64 curTime = QDateTime::currentMSecsSinceEpoch();
 	//qDebug()<<"updateMove"<<x<<y<<(curTime-lastMoveUpdateTime);
 	lastMoveUpdateTime = curTime;
+}
+
+void MainService::updateView(double az, double alt, bool azUpdated, bool altUpdated)
+{
+	Vec3d viewDirJ2000=mvmgr->getViewDirectionJ2000();
+	Vec3d viewDirAltAz=core->j2000ToAltAz(viewDirJ2000, StelCore::RefractionOff);
+	double anAz, anAlt;
+	StelUtils::rectToSphe(&anAz, &anAlt, viewDirAltAz);
+	if (azUpdated)
+	{
+		anAz=az;
+	}
+	if (altUpdated)
+	{
+		anAlt=alt;
+	}
+	StelUtils::spheToRect(anAz, anAlt, viewDirAltAz);
+	mvmgr->setViewDirectionJ2000(core->altAzToJ2000(viewDirAltAz, StelCore::RefractionOff));
 }
 
 void MainService::setFov(double fov)

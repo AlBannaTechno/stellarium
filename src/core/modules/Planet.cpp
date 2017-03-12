@@ -57,6 +57,7 @@ Vec3f Planet::orbitCubewanosColor = Vec3f(1.0f,0.6f,1.0f);
 Vec3f Planet::orbitPlutinosColor = Vec3f(1.0f,0.6f,1.0f);
 Vec3f Planet::orbitScatteredDiscObjectsColor = Vec3f(1.0f,0.6f,1.0f);
 Vec3f Planet::orbitOortCloudObjectsColor = Vec3f(1.0f,0.6f,1.0f);
+Vec3f Planet::orbitSednoidsColor = Vec3f(1.0f,0.6f,1.0f);
 Vec3f Planet::orbitCometsColor = Vec3f(1.0f,0.6f,1.0f);
 Vec3f Planet::orbitMercuryColor = Vec3f(1.0f,0.6f,1.0f);
 Vec3f Planet::orbitVenusColor = Vec3f(1.0f,0.6f,1.0f);
@@ -171,6 +172,7 @@ void Planet::init()
 	pTypeMap.insert(Planet::isCubewano,	"cubewano");
 	pTypeMap.insert(Planet::isSDO,		"scattered disc object");
 	pTypeMap.insert(Planet::isOCO,		"Oort cloud object");
+	pTypeMap.insert(Planet::isSednoid,	"sednoid");
 	pTypeMap.insert(Planet::isUNDEFINED,	"UNDEFINED"); // something must be broken before we ever see this!
 
 	if (vMagAlgorithmMap.count() > 0)
@@ -254,7 +256,10 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 			oss << q_("Magnitude: <b>%1</b>").arg(getVMagnitude(core), 0, 'f', 2) << "<br>";
 	}
 	if (flags&AbsoluteMagnitude && getVMagnitude(core)!=std::numeric_limits<float>::infinity())
+	{
+		// TODO: Calculate accurate value of absolute magnitude for Solar System bodies (H)
 		oss << q_("Absolute Magnitude: %1").arg(getVMagnitude(core)-5.*(std::log10(distanceAu*AU/PARSEC)-1.), 0, 'f', 2) << "<br>";
+	}
 
 	oss << getPositionInfoString(core, flags);
 
@@ -415,6 +420,7 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 				oss << " (" << moonPhase << ")";
 			oss << "<br>";
 			oss << QString(q_("Illuminated: %1%")).arg(getPhase(observerHelioPos) * 100, 0, 'f', 1) << "<br>";
+			oss << QString(q_("Albedo: %1")).arg(QString::number(getAlbedo(), 'f', 3)) << "<br>";
 		}
 		if (englishName=="Sun")
 		{
@@ -435,6 +441,33 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 
 	return str;
 }
+
+QVariantMap Planet::getInfoMap(const StelCore *core) const
+{
+	QVariantMap map = StelObject::getInfoMap(core);
+
+	if (getEnglishName()!="Sun")
+	{
+		const Vec3d& observerHelioPos = core->getObserverHeliocentricEclipticPos();
+		map.insert("distance", getJ2000EquatorialPos(core).length());
+		double phase=getPhase(observerHelioPos);
+		map.insert("phase", phase);
+		map.insert("illumination", 100.*phase);
+		double phaseAngle = getPhaseAngle(observerHelioPos);
+		map.insert("phase-angle", phaseAngle);
+		map.insert("phase-angle-dms", StelUtils::radToDmsStr(phaseAngle));
+		map.insert("phase-angle-deg", StelUtils::radToDecDegStr(phaseAngle));
+		double elongation = getElongation(observerHelioPos);
+		map.insert("elongation", elongation);
+		map.insert("elongation-dms", StelUtils::radToDmsStr(elongation));
+		map.insert("elongation-deg", StelUtils::radToDecDegStr(elongation));
+		map.insert("type", getPlanetTypeString()); // replace existing "type=Planet" by something more detailed.
+		// TBD: Is there ANY reason to keep "type"="Planet" and add a "ptype"=getPlanetTypeString() field?
+	}
+
+	return map;
+}
+
 
 //! Get sky label (sky translation)
 QString Planet::getSkyLabel(const StelCore*) const
@@ -848,9 +881,13 @@ double Planet::getMeanSolarDay() const
 	double msd = 0.;
 
 	if (englishName=="Sun")
-		return msd;
+	{
+		// A mean solar day (equals to Earth's day) has been added here for educational purposes
+		// Details: https://sourceforge.net/p/stellarium/discussion/278769/thread/fbe282db/
+		return 1.;
+	}
 
-	double sday = getSiderealDay();	
+	double sday = getSiderealDay();
 	double coeff = qAbs(sday/getSiderealPeriod());
 	float sign = 1;
 	// planets with retrograde rotation
@@ -1805,9 +1842,9 @@ void Planet::drawSphere(StelPainter* painter, float screenSz, bool drawOnlyRing)
 			return;
 		}
 	}
-	painter->enableTexture2d(true);
-	glDisable(GL_BLEND);
-	glEnable(GL_CULL_FACE);
+
+	painter->setBlending(false);
+	painter->setCullFace(true);
 
 	// Draw the spheroid itself
 	// Adapt the number of facets according with the size of the sphere for optimization
@@ -1940,24 +1977,25 @@ void Planet::drawSphere(StelPainter* painter, float screenSz, bool drawOnlyRing)
 	GL(shader->setAttributeArray(shaderVars->texCoord, (const GLfloat*)model.texCoordArr.constData(), 2));
 	GL(shader->enableAttributeArray(shaderVars->texCoord));
 
+	QOpenGLFunctions* gl = painter->glFuncs();
+
 	if (rings)
 	{
-		glDepthMask(GL_TRUE);
-		glClear(GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_DEPTH_TEST);
+		painter->setDepthMask(true);
+		painter->setDepthTest(true);
+		gl->glClear(GL_DEPTH_BUFFER_BIT);
 	}
 	
 	if (!drawOnlyRing)
-		GL(glDrawElements(GL_TRIANGLES, model.indiceArr.size(), GL_UNSIGNED_SHORT, model.indiceArr.constData()));
+		GL(gl->glDrawElements(GL_TRIANGLES, model.indiceArr.size(), GL_UNSIGNED_SHORT, model.indiceArr.constData()));
 
 	if (rings)
 	{
 		// Draw the rings just after the planet
-		glDepthMask(GL_FALSE);
+		painter->setDepthMask(false);
 	
 		// Normal transparency mode
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
+		painter->setBlending(true);
 	
 		Ring3DModel ringModel;
 		sRing(&ringModel, rings->radiusMin, rings->radiusMax, 128, 32);
@@ -1987,19 +2025,19 @@ void Planet::drawSphere(StelPainter* painter, float screenSz, bool drawOnlyRing)
 		GL(ringPlanetShaderProgram->enableAttributeArray(ringPlanetShaderVars.texCoord));
 		
 		if (eyePos[2]<0)
-			glCullFace(GL_FRONT);
+			gl->glCullFace(GL_FRONT);
 					
-		GL(glDrawElements(GL_TRIANGLES, ringModel.indiceArr.size(), GL_UNSIGNED_SHORT, ringModel.indiceArr.constData()));
+		GL(gl->glDrawElements(GL_TRIANGLES, ringModel.indiceArr.size(), GL_UNSIGNED_SHORT, ringModel.indiceArr.constData()));
 		
 		if (eyePos[2]<0)
-			glCullFace(GL_BACK);
+			gl->glCullFace(GL_BACK);
 		
-		glDisable(GL_DEPTH_TEST);
+		painter->setDepthTest(false);
 	}
 	
 	GL(shader->release());
 	
-	glDisable(GL_CULL_FACE);
+	painter->setCullFace(false);
 }
 
 
@@ -2024,9 +2062,7 @@ void Planet::drawHints(const StelCore* core, const QFont& planetNameFont)
 	sPainter.setColor(labelColor[0], labelColor[1], labelColor[2],labelsFader.getInterstate()*hintFader.getInterstate()/tmp*0.7f);
 
 	// Draw the 2D small circle
-	glEnable(GL_BLEND);
-	sPainter.enableTexture2d(true);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	sPainter.setBlending(true);
 	Planet::hintCircleTex->bind();
 	sPainter.drawSprite2dMode(screenPos[0], screenPos[1], 11);
 }
@@ -2072,6 +2108,9 @@ Vec3f Planet::getCurrentOrbitColor()
 					break;
 				case isComet:
 					orbColor = orbitCometsColor;
+					break;
+				case isSednoid:
+					orbColor = orbitSednoidsColor;
 					break;
 				default:
 					orbColor = orbitColor;
@@ -2124,8 +2163,7 @@ void Planet::drawOrbit(const StelCore* core)
 	StelPainter sPainter(prj);
 
 	// Normal transparency mode
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
+	sPainter.setBlending(true);
 
 	Vec3f orbColor = getCurrentOrbitColor();
 

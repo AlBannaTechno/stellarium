@@ -34,10 +34,9 @@
 #include <QDebug>
 #include <QStringList>
 
-StelObjectMgr::StelObjectMgr() : searchRadiusPixel(25.f), distanceWeight(1.f)
+StelObjectMgr::StelObjectMgr() : objectPointerVisibility(true), searchRadiusPixel(25.f), distanceWeight(1.f)
 {
 	setObjectName("StelObjectMgr");
-	objectPointerVisibility = true;
 }
 
 StelObjectMgr::~StelObjectMgr()
@@ -322,6 +321,7 @@ QMap<QString, QString> StelObjectMgr::objectModulesMap() const
 			result["SolarSystem:dwarf planet"] = "Dwarf planets";
 			result["SolarSystem:scattered disc object"] = "Scattered disc objects";
 			result["SolarSystem:Oort cloud object"] = "Oort cloud objects";
+			result["SolarSystem:sednoid"] = "Sednoids";
 		}
 		// Deep-sky objects by type + amateur catalogues
 		if (m->objectName()=="NebulaMgr")
@@ -373,4 +373,20 @@ QMap<QString, QString> StelObjectMgr::objectModulesMap() const
 		}
 	}
 	return result;
+}
+
+QVariantMap StelObjectMgr::getObjectInfo(const StelObjectP obj)
+{
+	QVariantMap map;
+	if (!obj)
+	{
+		qDebug() << "getObjectInfo WARNING - object not found";
+		map.insert("found", false);
+	}
+	else
+	{
+		map=obj->getInfoMap(StelApp::getInstance().getCore());
+		map.insert("found", true);
+	}
+	return map;
 }

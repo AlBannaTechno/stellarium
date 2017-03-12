@@ -48,14 +48,14 @@
 #include "StelUtils.hpp"
 
 SatellitesDialog::SatellitesDialog()
-	: satelliteModified(false)
+	: StelDialog("Satellites")
+	, satelliteModified(false)
 	, updateTimer(0)
 	, importWindow(0)
 	, filterModel(0)
 	, checkStateRole(Qt::UserRole)
 {
 	ui = new Ui_satellitesDialog;
-	dialogName = "Satellites";
 }
 
 SatellitesDialog::~SatellitesDialog()
@@ -992,12 +992,14 @@ void SatellitesDialog::predictIridiumFlares()
 
 void SatellitesDialog::selectCurrentIridiumFlare(const QModelIndex &modelIndex)
 {
+	StelCore* core = StelApp::getInstance().getCore();
 	// Find the object
 	QString name = modelIndex.sibling(modelIndex.row(), IridiumFlaresSatellite).data().toString();
 	QString date = modelIndex.sibling(modelIndex.row(), IridiumFlaresDate).data().toString();
 	bool ok;
 	double JD  = StelUtils::getJulianDayFromISO8601String(date.left(10) + "T" + date.right(8), &ok);
-	JD -= StelApp::getInstance().getCore()->getUTCOffset(JD)/24.;
+	JD -= core->getUTCOffset(JD)/24.;
+	JD -= core->JD_SECOND*15; // Set start point on 15 seconds before flash (TODO: should be an option in the GUI?)
 
 	StelObjectMgr* objectMgr = GETSTELMODULE(StelObjectMgr);
 	if (objectMgr->findAndSelectI18n(name) || objectMgr->findAndSelect(name))

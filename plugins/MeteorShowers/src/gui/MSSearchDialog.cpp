@@ -27,11 +27,10 @@
 #include "ui_MSSearchDialog.h"
 
 MSSearchDialog::MSSearchDialog(MeteorShowersMgr* mgr)
-	: m_mgr(mgr)
+	: StelDialog("MeteorShowersSearch")
+	, m_mgr(mgr)
 	, m_ui(new Ui_MSSearchDialog)
-{
-	dialogName = "MeteorShowersSearch";
-}
+{}
 
 MSSearchDialog::~MSSearchDialog()
 {
@@ -75,6 +74,11 @@ void MSSearchDialog::createDialogContent()
 	// bug #1350669 (https://bugs.launchpad.net/stellarium/+bug/1350669)
 	connect(m_ui->listEvents, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
 		m_ui->listEvents, SLOT(repaint()));
+
+	// TODO: Switch a QDateTimeEdit to StelDateTimeEdit widget to apply wide range of dates
+	QDate min = QDate(100,1,1);
+	m_ui->dateFrom->setMinimumDate(min);
+	m_ui->dateTo->setMinimumDate(min);
 
 	refreshRangeDates();
 	initListEvents();

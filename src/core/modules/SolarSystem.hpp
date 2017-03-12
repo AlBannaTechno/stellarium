@@ -67,10 +67,10 @@ class SolarSystem : public StelObjectModule
 		   READ getFlagPointer
 		   WRITE setFlagPointer
 		   NOTIFY flagPointerChanged)
-	Q_PROPERTY(bool flagNativeNames // was bool nativeNamesDisplayed
-		   READ getFlagNativeNames
-		   WRITE setFlagNativeNames
-		   NOTIFY flagNativeNamesChanged)
+	Q_PROPERTY(bool flagNativePlanetNames // was bool nativeNamesDisplayed
+		   READ getFlagNativePlanetNames
+		   WRITE setFlagNativePlanetNames
+		   NOTIFY flagNativePlanetNamesChanged)
 	Q_PROPERTY(bool flagTranslatedNames
 		   READ getFlagTranslatedNames
 		   WRITE setFlagTranslatedNames
@@ -194,6 +194,11 @@ class SolarSystem : public StelObjectModule
 		   READ getCometsOrbitsColor
 		   WRITE setCometsOrbitsColor
 		   NOTIFY cometsOrbitsColorChanged
+		   )
+	Q_PROPERTY(Vec3f sednoidsOrbitsColor
+		   READ getSednoidsOrbitsColor
+		   WRITE setSednoidsOrbitsColor
+		   NOTIFY sednoidsOrbitsColorChanged
 		   )
 	Q_PROPERTY(Vec3f mercuryOrbitColor
 		   READ getMercuryOrbitColor
@@ -470,6 +475,17 @@ public slots:
 	//! @return current color
 	Vec3f getCometsOrbitsColor(void) const;
 
+	//! Set the color used to draw sednoid orbit lines.
+	//! @param c The color of the sednoid orbit lines (R,G,B)
+	//! @code
+	//! // example of usage in scripts
+	//! SolarSystem.setSednoidsOrbitsColor(Vec3f(1.0,0.0,0.0));
+	//! @endcode
+	void setSednoidsOrbitsColor(const Vec3f& c);
+	//! Get the current color used to draw sednoid orbit lines.
+	//! @return current color
+	Vec3f getSednoidsOrbitsColor(void) const;
+
 	//! Set the color used to draw Mercury orbit line.
 	//! @param c The color of Mercury orbit line (R,G,B)
 	//! @code
@@ -644,9 +660,9 @@ public slots:
 	QString getApparentMagnitudeAlgorithmOnEarth() const;
 
 	//! Set flag which enable use native names for planets or not.
-	void setFlagNativeNames(bool b);
+	void setFlagNativePlanetNames(bool b);
 	//! Get the current value of the flag which enables showing native names for planets or not.
-	bool getFlagNativeNames(void) const;
+	bool getFlagNativePlanetNames(void) const;
 
 	//! Set flag which enable use translated names for planets or not.
 	void setFlagTranslatedNames(bool b);
@@ -703,7 +719,7 @@ signals:
 	void flagHintsChanged(bool b);
 	void trailsDisplayedChanged(bool b);
 	void flagPointerChanged(bool b);
-	void flagNativeNamesChanged(bool b);
+	void flagNativePlanetNamesChanged(bool b);
 	void flagTranslatedNamesChanged(bool b);
 	void flagPlanetsDisplayedChanged(bool b);
 	void flagIsolatedOrbitsChanged(bool b);
@@ -729,6 +745,7 @@ signals:
 	void scatteredDiskObjectsOrbitsColorChanged(const Vec3f & color) const;
 	void oortCloudObjectsOrbitsColorChanged(const Vec3f & color) const;
 	void cometsOrbitsColorChanged(const Vec3f & color) const;
+	void sednoidsOrbitsColorChanged(const Vec3f & color) const;
 	void mercuryOrbitColorChanged(const Vec3f & color) const;
 	void venusOrbitColorChanged(const Vec3f & color) const;
 	void earthOrbitColorChanged(const Vec3f & color) const;
@@ -739,6 +756,8 @@ signals:
 	void neptuneOrbitColorChanged(const Vec3f & color) const;
 
 	void orbitColorStyleChanged(QString style) const;
+
+	void solarSystemDataReloaded();
 
 public:
 	///////////////////////////////////////////////////////////////////////////
@@ -862,7 +881,7 @@ private:
 
 	bool flagShow;
 	bool flagPointer;                           // show red cross selection pointer?
-	bool flagNativeNames;                       // show native names?
+	bool flagNativePlanetNames;                 // show native names for planets?
 	bool flagTranslatedNames;                   // show translated names?
 	bool flagIsolatedTrails;
 	bool flagIsolatedOrbits;

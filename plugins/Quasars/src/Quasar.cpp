@@ -73,7 +73,7 @@ Quasar::~Quasar()
 	//
 }
 
-QVariantMap Quasar::getMap(void)
+QVariantMap Quasar::getMap(void) const
 {
 	QVariantMap map;
 	map["designation"] = designation;
@@ -137,6 +137,17 @@ QString Quasar::getInfoString(const StelCore* core, const InfoStringGroup& flags
 	return str;
 }
 
+QVariantMap Quasar::getInfoMap(const StelCore *core) const
+{
+	QVariantMap map = StelObject::getInfoMap(core);
+
+	map["amag"] = AMagnitude;
+	map["bV"] = bV;
+	map["redshift"] = redshift;
+
+	return map;
+}
+
 Vec3f Quasar::getInfoColor(void) const
 {
 	return Vec3f(1.0, 1.0, 1.0);
@@ -180,8 +191,7 @@ void Quasar::draw(StelCore* core, StelPainter& painter)
 
 	if (distributionMode)
 	{
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_ONE, GL_ONE);
+		painter.setBlending(true, GL_ONE, GL_ONE);
 		painter.setColor(markerColor[0], markerColor[1], markerColor[2], 1);
 
 		Quasar::markerTexture->bind();

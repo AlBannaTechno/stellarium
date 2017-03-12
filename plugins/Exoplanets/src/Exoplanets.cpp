@@ -252,9 +252,7 @@ void Exoplanets::drawPointer(StelCore* core, StelPainter& painter)
 		const Vec3f& c(obj->getInfoColor());
 		painter.setColor(c[0],c[1],c[2]);
 		texPointer->bind();
-		painter.enableTexture2d(true);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
+		painter.setBlending(true);
 		painter.drawSprite2dMode(screenpos[0], screenpos[1], 13.f, StelApp::getInstance().getTotalRunTime()*40.);
 	}
 }
@@ -694,7 +692,7 @@ int Exoplanets::getSecondsToUpdate(void)
 
 void Exoplanets::checkForUpdate(void)
 {
-	if (updatesEnabled && lastUpdate.addSecs(updateFrequencyHours * 3600) <= QDateTime::currentDateTime())
+	if (updatesEnabled && lastUpdate.addSecs(updateFrequencyHours * 3600) <= QDateTime::currentDateTime() && downloadMgr->networkAccessible()==QNetworkAccessManager::Accessible)
 		updateJSON();
 }
 

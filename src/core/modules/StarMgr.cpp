@@ -463,9 +463,7 @@ void StarMgr::drawPointer(StelPainter& sPainter, const StelCore* core)
 		Vec3f c(obj->getInfoColor());
 		sPainter.setColor(c[0], c[1], c[2]);
 		texPointer->bind();
-		sPainter.enableTexture2d(true);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
+		sPainter.setBlending(true);
 		sPainter.drawSprite2dMode(screenpos[0], screenpos[1], 13.f, StelApp::getInstance().getAnimationTime()*40.);
 	}
 }
@@ -721,13 +719,10 @@ int StarMgr::loadCommonNames(const QString& commonNameFile)
 				if (additionalNamesMap.find(hip)!=additionalNamesMap.end())
 				{
 					QString sname = additionalNamesMap[hip].append(" - " + englishCommonName);
-					QString snamecap = sname.toUpper();
 					additionalNamesMap[hip] = sname;
 					additionalNamesMapI18n[hip] = sname;
-					additionalNamesIndex.remove(englishNameCap);
-					additionalNamesIndexI18n.remove(englishNameCap);
-					additionalNamesIndex[snamecap] = hip;
-					additionalNamesIndexI18n[snamecap] = hip;
+					additionalNamesIndex[englishNameCap] = hip;
+					additionalNamesIndexI18n[englishNameCap] = hip;
 				}
 				else
 				{
@@ -1252,11 +1247,12 @@ void StarMgr::updateI18n()
 		QStringList tn;
 		foreach(const QString &str, a)
 		{
-			tn << trans.qtranslate(str);
+			QString tns = trans.qtranslate(str);
+			tn << tns;
+			additionalNamesIndexI18n[tns.toUpper()] = i;
 		}
 		const QString r = tn.join(" - ");
 		additionalNamesMapI18n[i] = r;
-		additionalNamesIndexI18n[r.toUpper()] = i;
 	}
 }
 
@@ -1327,12 +1323,11 @@ StelObjectP StarMgr::searchByNameI18n(const QString& nameI18n) const
 		return searchHP(it.value());
 	}
 
-	// Search by I18n additional common names	
-	QMap<QString, int>::iterator ita;
-	for (ita = additionalNamesIndexI18n.begin(); ita != additionalNamesIndexI18n.end(); ++ita)
+	// Search by I18n additional common names
+	QMap<QString,int>::const_iterator ita(additionalNamesIndexI18n.find(objw));
+	if (ita!=additionalNamesIndexI18n.end())
 	{
-		if (ita.key().contains(objw, Qt::CaseInsensitive))
-			return searchHP(ita.value());
+		return searchHP(ita.value());
 	}
 
 	// Search by sci name
@@ -1420,11 +1415,10 @@ StelObjectP StarMgr::searchByName(const QString& name) const
 	}
 
 	// Search by English additional common names
-	QMap<QString, int>::iterator ita;
-	for (ita = additionalNamesIndex.begin(); ita != additionalNamesIndex.end(); ++ita)
+	QMap<QString,int>::const_iterator ita(additionalNamesIndex.find(objw));
+	if (ita!=additionalNamesIndex.end())
 	{
-		if (ita.key().contains(objw, Qt::CaseInsensitive))
-			return searchHP(ita.value());
+		return searchHP(ita.value());
 	}
 
 	// Search by sci name
@@ -1527,7 +1521,6 @@ QStringList StarMgr::listMatchingObjects(const QString& objPrefix, int maxNbItem
 				}
 			}
 		}
-
 	}
 
 	// Search for sci names

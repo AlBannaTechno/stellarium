@@ -38,7 +38,7 @@ template <class T> class QFuture;
 //! @class StelTexture
 //! Base texture class. For creating an instance, use StelTextureMgr::createTexture() and StelTextureMgr::createTextureThread()
 //! @sa StelTextureSP
-class StelTexture: public QObject
+class StelTexture: public QObject, protected QOpenGLFunctions
 {
 	Q_OBJECT
 
@@ -90,6 +90,9 @@ public:
 
 	//! Return whether the image is currently being loaded
 	bool isLoading() const {return (loader || networkReply) && !canBind();}
+
+	//! Return texture memory size
+	unsigned int getGlSize() const {return glSize;}
 
 signals:
 	//! Emitted when the texture is ready to be bind(), i.e. when downloaded, imageLoading and	glLoading is over
@@ -171,7 +174,7 @@ private:
 	GLsizei height;	//! Texture image height
 
 	//! Size in GL memory
-	int glSize;
+	unsigned int glSize;
 };
 
 

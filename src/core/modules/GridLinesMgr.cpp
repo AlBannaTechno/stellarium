@@ -76,7 +76,9 @@ public:
 		GALACTICPOLES,
 		SUPERGALACTICPOLES,
 		EQUINOXES_J2000,
-		EQUINOXES_OF_DATE
+		EQUINOXES_OF_DATE,
+		SOLSTICES_J2000,
+		SOLSTICES_OF_DATE
 	};
 	// Create and precompute positions of a SkyGrid
 	SkyPoint(SKY_POINT_TYPE _point_type = CELESTIALPOLES_J2000);
@@ -353,9 +355,7 @@ void viewportEdgeIntersectCallback(const Vec3d& screenPos, const Vec3d& directio
 
 	d->sPainter->drawText(screenPos[0], screenPos[1], text, angleDeg, xshift, 3);
 	d->sPainter->setColor(tmpColor[0], tmpColor[1], tmpColor[2], tmpColor[3]);
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	d->sPainter->setBlending(true);
 }
 
 //! Draw the sky grid in the current frame
@@ -407,13 +407,8 @@ void SkyGrid::draw(const StelCore* core) const
 
 	// Initialize a painter and set OpenGL state
 	StelPainter sPainter(prj);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
-	// OpenGL ES 2.0 doesn't have GL_LINE_SMOOTH
-	#ifdef GL_LINE_SMOOTH
-	if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-		glEnable(GL_LINE_SMOOTH);
-	#endif
+	sPainter.setBlending(true);
+	sPainter.setLineSmooth(true);
 
 	// make text colors just a bit brighter. (But if >1, QColor::setRgb fails and makes text invisible.)
 	Vec4f textColor(qMin(1.0f, 1.25f*color[0]), qMin(1.0f, 1.25f*color[1]), qMin(1.0f, 1.25f*color[2]), fader.getInterstate());
@@ -610,11 +605,8 @@ void SkyGrid::draw(const StelCore* core) const
 			fpt.transfo4d(rotLon);
 		}
 	}
-	// OpenGL ES 2.0 doesn't have GL_LINE_SMOOTH
-	#ifdef GL_LINE_SMOOTH
-	if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-		glDisable(GL_LINE_SMOOTH);
-	#endif
+
+	sPainter.setLineSmooth(false);
 }
 
 
@@ -716,12 +708,9 @@ void SkyLine::draw(StelCore *core) const
 	// Initialize a painter and set openGL state
 	StelPainter sPainter(prj);
 	sPainter.setColor(color[0], color[1], color[2], fader.getInterstate());
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
-	#ifdef GL_LINE_SMOOTH
-	if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-		glEnable(GL_LINE_SMOOTH);
-	#endif
+	sPainter.setBlending(true);
+	sPainter.setLineSmooth(true);
+
 	Vec4f textColor(color[0], color[1], color[2], 0);		
 	textColor[3]=fader.getInterstate();
 
@@ -775,22 +764,11 @@ void SkyLine::draw(StelCore *core) const
 				sPainter.drawSmallCircleArc(pt1, pt2, rotCenter, viewportEdgeIntersectCallback, &userData);
 				sPainter.drawSmallCircleArc(pt2, pt3, rotCenter, viewportEdgeIntersectCallback, &userData);
 				sPainter.drawSmallCircleArc(pt3, pt1, rotCenter, viewportEdgeIntersectCallback, &userData);
-				#ifdef GL_LINE_SMOOTH
-				if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-					glDisable(GL_LINE_SMOOTH);
-				#endif
-				glDisable(GL_BLEND);
-				return;
 			}
-			else
-			{
-				#ifdef GL_LINE_SMOOTH
-				if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-					glDisable(GL_LINE_SMOOTH);
-				#endif
-				glDisable(GL_BLEND);
-				return;
-			}
+
+			sPainter.setLineSmooth(false);
+			sPainter.setBlending(false);
+			return;
 		}
 		// Draw the arc in 2 sub-arcs to avoid lengths > 180 deg
 		Vec3d middlePoint = p1-rotCenter+p2-rotCenter;
@@ -807,14 +785,8 @@ void SkyLine::draw(StelCore *core) const
 		sPainter.drawSmallCircleArc(p1, middlePoint, rotCenter,viewportEdgeIntersectCallback, &userData);
 		sPainter.drawSmallCircleArc(p2, middlePoint, rotCenter, viewportEdgeIntersectCallback, &userData);
 
-		// OpenGL ES 2.0 doesn't have GL_LINE_SMOOTH
-		#ifdef GL_LINE_SMOOTH
-		if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-			glDisable(GL_LINE_SMOOTH);
-		#endif
-
-		glDisable(GL_BLEND);
-
+		sPainter.setLineSmooth(false);
+		sPainter.setBlending(false);
 
 		return;
 	}
@@ -872,13 +844,8 @@ void SkyLine::draw(StelCore *core) const
 	sPainter.drawGreatCircleArc(p1, middlePoint, NULL, viewportEdgeIntersectCallback, &userData);
 	sPainter.drawGreatCircleArc(p2, middlePoint, NULL, viewportEdgeIntersectCallback, &userData);
 
-	// OpenGL ES 2.0 doesn't have GL_LINE_SMOOTH
-	#ifdef GL_LINE_SMOOTH
-	if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-		glDisable(GL_LINE_SMOOTH);
-	#endif
-
-	glDisable(GL_BLEND);
+	sPainter.setLineSmooth(false);
+	sPainter.setBlending(false);
 
 // 	// Johannes: use a big radius as a dirty workaround for the bug that the
 // 	// ecliptic line is not drawn around the observer, but around the sun:
@@ -985,6 +952,20 @@ void SkyPoint::updateLabel()
 			southernLabel = QChar(0x264E); // Autumnal equinox
 			break;
 		}
+		case SOLSTICES_J2000:
+		{
+			frameType = StelCore::FrameObservercentricEclipticJ2000;
+			northernLabel = QChar(0x264B); // Summer solstice
+			southernLabel = QChar(0x2651); // Winter solstice
+			break;
+		}
+		case SOLSTICES_OF_DATE:
+		{
+			frameType = StelCore::FrameObservercentricEclipticOfDate;
+			northernLabel = QChar(0x264B); // Summer solstice
+			southernLabel = QChar(0x2651); // Winter solstice
+			break;
+		}
 		default:
 			Q_ASSERT(0);
 	}
@@ -1011,6 +992,8 @@ void SkyPoint::draw(StelCore *core) const
 	float size = 0.00001*M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
 	float shift = 4.f + size/1.8f;
 
+	sPainter.setBlending(true, GL_ONE, GL_ONE);
+
 	switch (point_type)
 	{
 		case CELESTIALPOLES_J2000:
@@ -1022,14 +1005,10 @@ void SkyPoint::draw(StelCore *core) const
 		case SUPERGALACTICPOLES:
 		{
 			// North Pole
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_ONE, GL_ONE);
 			sPainter.drawSprite2dMode(Vec3d(0,0,1), 5.f);
 			sPainter.drawText(Vec3d(0,0,1), northernLabel, 0, shift, shift, false);
 
 			// South Pole
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_ONE, GL_ONE);
 			sPainter.drawSprite2dMode(Vec3d(0,0,-1), 5.f);
 			sPainter.drawText(Vec3d(0,0,-1), southernLabel, 0, shift, shift, false);
 			break;
@@ -1038,16 +1017,24 @@ void SkyPoint::draw(StelCore *core) const
 		case EQUINOXES_OF_DATE:
 		{
 			// Vernal equinox
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_ONE, GL_ONE);
 			sPainter.drawSprite2dMode(Vec3d(1,0,0), 5.f);
 			sPainter.drawText(Vec3d(1,0,0), northernLabel, 0, shift, shift, false);
 
 			// Autumnal equinox
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_ONE, GL_ONE);
 			sPainter.drawSprite2dMode(Vec3d(-1,0,0), 5.f);
 			sPainter.drawText(Vec3d(-1,0,0), southernLabel, 0, shift, shift, false);
+			break;
+		}
+		case SOLSTICES_J2000:
+		case SOLSTICES_OF_DATE:
+		{
+			// Summer solstice
+			sPainter.drawSprite2dMode(Vec3d(0,1,0), 5.f);
+			sPainter.drawText(Vec3d(0,1,0), northernLabel, 0, shift, shift, false);
+
+			// Winter solstice
+			sPainter.drawSprite2dMode(Vec3d(0,-1,0), 5.f);
+			sPainter.drawText(Vec3d(0,-1,0), southernLabel, 0, shift, shift, false);
 			break;
 		}
 		default:
@@ -1091,6 +1078,8 @@ GridLinesMgr::GridLinesMgr()
 	supergalacticPoles = new SkyPoint(SkyPoint::SUPERGALACTICPOLES);
 	equinoxJ2000Points = new SkyPoint(SkyPoint::EQUINOXES_J2000);
 	equinoxPoints = new SkyPoint(SkyPoint::EQUINOXES_OF_DATE);
+	solsticeJ2000Points = new SkyPoint(SkyPoint::SOLSTICES_J2000);
+	solsticePoints = new SkyPoint(SkyPoint::SOLSTICES_OF_DATE);
 }
 
 GridLinesMgr::~GridLinesMgr()
@@ -1127,6 +1116,8 @@ GridLinesMgr::~GridLinesMgr()
 	delete supergalacticPoles;
 	delete equinoxJ2000Points;
 	delete equinoxPoints;
+	delete solsticeJ2000Points;
+	delete solsticePoints;
 }
 
 /*************************************************************************
@@ -1173,6 +1164,8 @@ void GridLinesMgr::init()
 	setFlagSupergalacticPoles(conf->value("viewing/flag_supergalactic_poles").toBool());
 	setFlagEquinoxJ2000Points(conf->value("viewing/flag_equinox_J2000_points").toBool());
 	setFlagEquinoxPoints(conf->value("viewing/flag_equinox_points").toBool());
+	setFlagSolsticeJ2000Points(conf->value("viewing/flag_solstice_J2000_points").toBool());
+	setFlagSolsticePoints(conf->value("viewing/flag_solstice_points").toBool());
 
 	// Load colors from config file
 	QString defaultColor = conf->value("color/default_color").toString();
@@ -1205,6 +1198,8 @@ void GridLinesMgr::init()
 	setColorSupergalacticPoles(StelUtils::strToVec3f(conf->value("color/supergalactic_poles_color", defaultColor).toString()));
 	setColorEquinoxJ2000Points(StelUtils::strToVec3f(conf->value("color/equinox_J2000_points_color", defaultColor).toString()));
 	setColorEquinoxPoints(StelUtils::strToVec3f(conf->value("color/equinox_points_color", defaultColor).toString()));
+	setColorSolsticeJ2000Points(StelUtils::strToVec3f(conf->value("color/solstice_J2000_points_color", defaultColor).toString()));
+	setColorSolsticePoints(StelUtils::strToVec3f(conf->value("color/solstice_points_color", defaultColor).toString()));
 
 	StelApp& app = StelApp::getInstance();
 	connect(&app, SIGNAL(languageChanged()), this, SLOT(updateLineLabels()));
@@ -1239,6 +1234,8 @@ void GridLinesMgr::init()
 	addAction("actionShow_Supergalactic_Poles", displayGroup, N_("Supergalactic poles"), "supergalacticPolesDisplayed");
 	addAction("actionShow_Equinox_J2000_Points", displayGroup, N_("Equinox J2000 points"), "equinoxJ2000PointsDisplayed");
 	addAction("actionShow_Equinox_Points", displayGroup, N_("Equinox points"), "equinoxPointsDisplayed");
+	addAction("actionShow_Solstice_J2000_Points", displayGroup, N_("Solstice J2000 points"), "solsticeJ2000PointsDisplayed");
+	addAction("actionShow_Solstice_Points", displayGroup, N_("Solstice points"), "solsticePointsDisplayed");
 }
 
 void GridLinesMgr::update(double deltaTime)
@@ -1276,6 +1273,8 @@ void GridLinesMgr::update(double deltaTime)
 	supergalacticPoles->update(deltaTime);
 	equinoxJ2000Points->update(deltaTime);
 	equinoxPoints->update(deltaTime);
+	solsticeJ2000Points->update(deltaTime);
+	solsticePoints->update(deltaTime);
 }
 
 void GridLinesMgr::draw(StelCore* core)
@@ -1320,6 +1319,8 @@ void GridLinesMgr::draw(StelCore* core)
 	supergalacticPoles->draw(core);
 	equinoxJ2000Points->draw(core);
 	equinoxPoints->draw(core);
+	solsticeJ2000Points->draw(core);
+	solsticePoints->draw(core);
 }
 
 void GridLinesMgr::updateLineLabels()
@@ -1349,6 +1350,8 @@ void GridLinesMgr::updateLineLabels()
 	supergalacticPoles->updateLabel();
 	equinoxJ2000Points->updateLabel();
 	equinoxPoints->updateLabel();
+	solsticeJ2000Points->updateLabel();
+	solsticePoints->updateLabel();
 }
 
 //! Set flag for displaying Azimuthal Grid
@@ -2099,5 +2102,59 @@ void GridLinesMgr::setColorEquinoxPoints(const Vec3f& newColor)
 	if(newColor != equinoxPoints->getColor()) {
 		equinoxPoints->setColor(newColor);
 		emit equinoxPointsColorChanged(newColor);
+	}
+}
+
+//! Set flag for displaying solstice points of J2000
+void GridLinesMgr::setFlagSolsticeJ2000Points(const bool displayed)
+{
+	if(displayed != solsticeJ2000Points->isDisplayed()) {
+		solsticeJ2000Points->setDisplayed(displayed);
+		emit solsticeJ2000PointsDisplayedChanged(displayed);
+	}
+}
+//! Get flag for displaying solstice points of J2000
+bool GridLinesMgr::getFlagSolsticeJ2000Points(void) const
+{
+	return solsticeJ2000Points->isDisplayed();
+}
+
+Vec3f GridLinesMgr::getColorSolsticeJ2000Points(void) const
+{
+	return solsticeJ2000Points->getColor();
+}
+
+void GridLinesMgr::setColorSolsticeJ2000Points(const Vec3f& newColor)
+{
+	if(newColor != solsticeJ2000Points->getColor()) {
+		solsticeJ2000Points->setColor(newColor);
+		emit solsticeJ2000PointsColorChanged(newColor);
+	}
+}
+
+//! Set flag for displaying solstice points
+void GridLinesMgr::setFlagSolsticePoints(const bool displayed)
+{
+	if(displayed != solsticePoints->isDisplayed()) {
+		solsticePoints->setDisplayed(displayed);
+		emit solsticePointsDisplayedChanged(displayed);
+	}
+}
+//! Get flag for displaying solstice points
+bool GridLinesMgr::getFlagSolsticePoints(void) const
+{
+	return solsticePoints->isDisplayed();
+}
+
+Vec3f GridLinesMgr::getColorSolsticePoints(void) const
+{
+	return solsticePoints->getColor();
+}
+
+void GridLinesMgr::setColorSolsticePoints(const Vec3f& newColor)
+{
+	if(newColor != solsticePoints->getColor()) {
+		solsticePoints->setColor(newColor);
+		emit solsticePointsColorChanged(newColor);
 	}
 }

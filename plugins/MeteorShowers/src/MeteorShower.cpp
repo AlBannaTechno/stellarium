@@ -55,6 +55,8 @@ MeteorShower::MeteorShower(MeteorShowersMgr* mgr, const QVariantMap& map)
 	m_speed = map.value("speed").toInt();
 	m_radiantAlpha = StelUtils::getDecAngle(map.value("radiantAlpha").toString());
 	m_radiantDelta = StelUtils::getDecAngle(map.value("radiantDelta").toString());
+	// initialize position to keep valgrind happy
+	StelUtils::spheToRect(m_radiantAlpha, m_radiantDelta, m_position);
 	m_parentObj = map.value("parentObj").toString();
 	m_pidx = map.value("pidx").toFloat();
 
@@ -194,6 +196,7 @@ MeteorShower::~MeteorShower()
 {
 	qDeleteAll(m_activeMeteors);
 	m_activeMeteors.clear();
+	m_colors.clear();
 }
 
 bool MeteorShower::enabled() const
@@ -265,6 +268,8 @@ void MeteorShower::update(StelCore* core, double deltaTime)
 	{
 		if (!m->update(deltaTime))
 		{
+			//important to delete when no longer active
+			delete m;
 			m_activeMeteors.removeOne(m);
 		}
 	}
@@ -328,9 +333,7 @@ void MeteorShower::drawRadiant(StelCore *core)
 	StelUtils::spheToRect(m_radiantAlpha, m_radiantDelta, m_position);
 	painter.getProjector()->project(m_position, XY);
 
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	painter.setBlending(true, GL_SRC_ALPHA, GL_ONE);
 
 	Vec3f rgb;
 	float alpha = 0.85f + ((float) qrand() / (float) RAND_MAX) / 10.f;
@@ -473,7 +476,7 @@ int MeteorShower::calculateZHR(const double& currentJD)
 	return qRound(gaussian);
 }
 
-QString MeteorShower::getSolarLongitude(QDate date) const
+QString MeteorShower::getSolarLongitude(QDate date)
 {
 	//The number of days (positive or negative) since Greenwich noon,
 	//Terrestrial Time, on 1 January 2000 (J2000.0)
@@ -628,4 +631,59 @@ QString MeteorShower::getInfoString(const StelCore* core, const InfoStringGroup&
 	postProcessInfoString(str, flags);
 
 	return str;
+}
+
+QVariantMap MeteorShower::getInfoMap(const StelCore *core) const
+{
+	QVariantMap map = StelObject::getInfoMap(core);
+
+	if (enabled())
+	{
+		QString mstdata;
+		if (m_status == ACTIVE_GENERIC)
+		{
+			mstdata = "generic-data";
+		}
+		else if (m_status == ACTIVE_CONFIRMED)
+		{
+			mstdata = "confirmed-data";
+		}
+		else if (m_status == INACTIVE)
+		{
+			mstdata = "inactive";
+		}
+		map.insert("status", mstdata);
+
+		if (!m_showerID.toInt())
+		{
+			map.insert("id", m_showerID);
+		}
+		else
+		{
+			map.insert("id", "?");
+		}
+
+		map.insert("velocity", m_speed);
+		map.insert("population-index", m_pidx);
+		map.insert("parent", m_parentObj);
+
+		if(m_activity.zhr > 0)
+		{
+			map.insert("zhr-max", m_activity.zhr);
+		}
+		else
+		{
+			QString varStr="variable";
+			if(m_activity.variable.size() == 2)
+			{
+				 varStr=QString("%1; %2-%3")
+					.arg("variable")
+					.arg(m_activity.variable.at(0))
+					.arg(m_activity.variable.at(1));
+			}
+			map.insert("zhr-max", varStr);
+		}
+	}
+
+	return map;
 }

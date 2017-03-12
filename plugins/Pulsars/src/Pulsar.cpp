@@ -111,7 +111,7 @@ Pulsar::~Pulsar()
 	//
 }
 
-QVariantMap Pulsar::getMap(void)
+QVariantMap Pulsar::getMap(void) const
 {
 	QVariantMap map;
 	map["designation"] = designation;
@@ -268,6 +268,28 @@ QString Pulsar::getInfoString(const StelCore* core, const InfoStringGroup& flags
 	return str;
 }
 
+QVariantMap Pulsar::getInfoMap(const StelCore *core) const
+{
+	QVariantMap map = StelObject::getInfoMap(core);
+
+	map["parallax"] = parallax;
+	map["bperiod"] = bperiod;
+	map["frequency"] = frequency;
+	map["pfrequency"] = pfrequency;
+	map["pderivative"] = pderivative;
+	map["dmeasure"] = dmeasure;
+	map["eccentricity"] = eccentricity;
+	map["period"] = period;
+	map["w50"] = w50;
+	map["s400"] = s400;
+	map["s600"] = s600;
+	map["s1400"] = s1400;
+	map["distance"] = distance;
+	map["glitch"] = glitch;
+	map["notes"] = notes;
+	return map;
+}
+
 Vec3f Pulsar::getInfoColor(void) const
 {
 	return Vec3f(1.0, 1.0, 1.0);
@@ -384,8 +406,8 @@ void Pulsar::draw(StelCore* core, StelPainter *painter)
 	if (!(painter->getProjector()->projectCheck(XYZ, win)))
 		return;
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
+	painter->setBlending(true, GL_ONE, GL_ONE);
+
 	if (glitch>0 && glitchFlag)
 		painter->setColor(glitchColor[0], glitchColor[1], glitchColor[2], 1.f);
 	else

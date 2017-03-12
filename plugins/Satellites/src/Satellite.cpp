@@ -172,12 +172,12 @@ Satellite::~Satellite()
 {
 	if (pSatWrapper != NULL)
 	{
-
 		delete pSatWrapper;
 		pSatWrapper = NULL;
 	}
 }
 
+// TODO: REMOVE THIS FUNCTION! It is used for string formatting only.
 double Satellite::roundToDp(float n, int dp)
 {
 	// round n to dp decimal places
@@ -279,7 +279,13 @@ QString Satellite::getInfoString(const StelCore *core, const InfoStringGroup& fl
 	
 	if ((flags & Magnitude) && (stdMag!=99.f))
 	{
-		oss << q_("Approx. magnitude: <b>%1</b>").arg(QString::number(getVMagnitude(core), 'f', 2)) << "<br/>";
+		float mag = getVMagnitude(core);
+		if (core->getSkyDrawer()->getFlagHasAtmosphere())
+			oss << q_("Approx. magnitude: <b>%1</b> (extincted to: <b>%2</b>)").arg(QString::number(mag, 'f', 2),
+												QString::number(getVMagnitudeWithExtinction(core), 'f', 2)) << "<br>";
+		else
+			oss << q_("Approx. magnitude: <b>%1</b>").arg(QString::number(mag, 'f', 2)) << "<br/>";
+
 #ifdef IRIDIUM_SAT_TEXT_DEBUG
 		oss << myText << "<br/>";
 #endif
@@ -389,9 +395,94 @@ QString Satellite::getInfoString(const StelCore *core, const InfoStringGroup& fl
 	return str;
 }
 
+QVariantMap Satellite::getInfoMap(const StelCore *core) const
+{
+	QVariantMap map = StelObject::getInfoMap(core);
+
+	map.insert("description", QString(description).replace("\n", " - "));
+	map.insert("catalog", id);
+	if (!internationalDesignator.isEmpty())
+		map.insert("international-designator", internationalDesignator);
+
+	if (stdMag==99.f) // replace whatever has been computed
+	{
+		map.insert("vmag", "?");
+		map.insert("vmage", "?");
+	}
+
+	map.insert("range", range);
+	map.insert("rangerate", rangeRate);
+	map.insert("height", height);
+	map.insert("subpoint-lat", latLongSubPointPosition[0]);
+	map.insert("subpoint-long", latLongSubPointPosition[1]);
+	map.insert("TEME-km-X", position[0]);
+	map.insert("TEME-km-Y", position[1]);
+	map.insert("TEME-km-Z", position[2]);
+	map.insert("TEME-speed-X", velocity[0]);
+	map.insert("TEME-speed-Y", velocity[1]);
+	map.insert("TEME-speed-Z", velocity[2]);
+	if (sunReflAngle>0)
+	{  // Iridium
+		map.insert("sun-reflection-angle", sunReflAngle);
+	}
+	map.insert("operational-status", getOperationalStatus());
+
+	//TODO: Move to a more prominent place.
+	QString visibilityState;
+	switch (visibility)
+	{
+		case RADAR_SUN:
+			visibilityState = "The satellite and the observer are in sunlight.";
+			break;
+		case VISIBLE:
+			visibilityState =  "The satellite is visible.";
+			break;
+		case RADAR_NIGHT:
+			visibilityState =  "The satellite is eclipsed.";
+			break;
+		case NOT_VISIBLE:
+			visibilityState =  "The satellite is not visible";
+			break;
+		default:
+			break;
+	}
+	map.insert("visibility", visibilityState);
+	if (comms.size() > 0)
+	{
+		foreach(const CommLink &c, comms)
+		{
+			double dop = getDoppler(c.frequency);
+			double ddop = dop;
+			char sign;
+			if (dop<0.)
+			{
+				sign='-';
+				ddop*=-1;
+			}
+			else
+				sign='+';
+
+			QString commModDesc;
+			if (!c.modulation.isEmpty() && c.modulation != "") commModDesc=c.modulation;
+			if ((!c.modulation.isEmpty() && c.modulation != "") || (!c.description.isEmpty() && c.description != "")) commModDesc.append(" ");
+			if (!c.description.isEmpty() && c.description != "") commModDesc.append(c.description);
+			if ((!c.modulation.isEmpty() && c.modulation != "") || (!c.description.isEmpty() && c.description != "")) commModDesc.append(": ");
+			map.insertMulti("comm", QString("%1%2 MHz (%3%4 kHz)")
+				.arg(commModDesc)
+				.arg(c.frequency, 8, 'f', 5)
+				.arg(sign)
+				.arg(ddop, 6, 'f', 3));
+		}
+	}
+
+	return map;
+}
+
+
 Vec3d Satellite::getJ2000EquatorialPos(const StelCore* core) const
 {
-	return core->altAzToJ2000(elAzPosition);;
+	// Bugfix LP:1654331. I assume the elAzPosition has been computed without refraction! We must say this definitely.
+	return core->altAzToJ2000(elAzPosition, StelCore::RefractionOff);
 }
 
 Vec3f Satellite::getInfoColor(void) const
@@ -588,7 +679,7 @@ float Satellite::getVMagnitude(const StelCore* core) const
 // Calculate illumination fraction of artifical satellite
 float Satellite::calculateIlluminatedFraction() const
 {
-	return (1 + cos(phaseAngle))/2;
+	return (1.f + cos(phaseAngle))*0.5f;
 }
 
 QString Satellite::getOperationalStatus() const
@@ -662,22 +753,22 @@ void Satellite::update(double)
 		position                 = pSatWrapper->getTEMEPos();
 		velocity                 = pSatWrapper->getTEMEVel();
 		latLongSubPointPosition  = pSatWrapper->getSubPoint();
-		height                   = latLongSubPointPosition[2];
-		if (height <= 0.0)
+		height                   = latLongSubPointPosition[2]; // km
+		if (height <= 50.0)
 		{
 			// The orbit is no longer valid.  Causes include very out of date
 			// TLE, system date and time out of a reasonable range, and orbital
 			// degradation and re-entry of a satellite.  In any of these cases
 			// we might end up with a problem - usually a crash of Stellarium
 			// because of a div/0 or something.  To prevent this, we turn off
-			// the satellite.
+			// the satellite when the computed height is 50km. (We can assume bogus at 250km or so...)
 			qWarning() << "Satellite has invalid orbit:" << name << id;
 			orbitValid = false;
-			displayed = false; // He shouldn't be displayed!
+			displayed = false; // It shouldn't be displayed!
 			return;
 		}
 
-		elAzPosition             = pSatWrapper->getAltAz();
+		elAzPosition = pSatWrapper->getAltAz();
 		elAzPosition.normalize();
 
 		pSatWrapper->getSlantRange(range, rangeRate);
@@ -783,7 +874,7 @@ void Satellite::draw(StelCore* core, StelPainter& painter, float)
 		drawColor = hintColor;
 	painter.setColor(drawColor[0], drawColor[1], drawColor[2], hintBrightness);
 
-	StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
+	StelProjectorP prj = core->getProjection(StelCore::FrameJ2000, StelCore::RefractionAuto);
 
 	Vec3d xy;
 	if (prj->projectCheck(XYZ,xy))
@@ -827,8 +918,7 @@ void Satellite::draw(StelCore* core, StelPainter& painter, float)
 			if (Satellite::showLabels)
 				painter.drawText(xy[0], xy[1], name, 0, 10, 10, false);
 
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_ONE, GL_ONE);
+			painter.setBlending(true, GL_ONE, GL_ONE);
 
 			Satellite::hintTexture->bind();
 			painter.drawSprite2dMode(xy[0], xy[1], 11);			
@@ -843,8 +933,6 @@ void Satellite::drawOrbit(StelPainter& painter)
 	Vec3d position, onscreen;
 	Vec3f drawColor;
 	int size = orbitPoints.size();
-
-	glDisable(GL_TEXTURE_2D);
 
 	QList<Vec3d>::iterator it= orbitPoints.begin();
 	it++;
@@ -874,8 +962,6 @@ void Satellite::drawOrbit(StelPainter& painter)
 		}
 	}
 	painter.drawPath(vertexArray, colorArray);
-
-	glEnable(GL_TEXTURE_2D);
 	painter.enableClientStates(false);
 }
 
