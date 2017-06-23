@@ -42,6 +42,7 @@ class SearchDialog;
 class ViewDialog;
 class ShortcutsDialog;
 class AstroCalcDialog;
+class BookmarksDialog;
 #ifdef ENABLE_SCRIPT_CONSOLE
 class ScriptConsole;
 #endif
@@ -52,9 +53,9 @@ class ScriptConsole;
 class StelGui : public QObject, public StelGuiBase
 {
 	Q_OBJECT
-	Q_PROPERTY(bool visible READ getVisible WRITE setVisible)
-	Q_PROPERTY(bool autoHideHorizontalButtonBar READ getAutoHideHorizontalButtonBar WRITE setAutoHideHorizontalButtonBar)
-	Q_PROPERTY(bool autoHideVerticalButtonBar READ getAutoHideVerticalButtonBar WRITE setAutoHideVerticalButtonBar)
+	Q_PROPERTY(bool visible READ getVisible WRITE setVisible NOTIFY visibleChanged)
+	Q_PROPERTY(bool autoHideHorizontalButtonBar READ getAutoHideHorizontalButtonBar WRITE setAutoHideHorizontalButtonBar NOTIFY autoHideHorizontalButtonBarChanged)
+	Q_PROPERTY(bool autoHideVerticalButtonBar READ getAutoHideVerticalButtonBar WRITE setAutoHideVerticalButtonBar NOTIFY autoHideVerticalButtonBarChanged)
 
 public:
 	friend class ViewDialog;
@@ -91,6 +92,24 @@ public:
 	//! Get whether the button toggling nebulae background is visible
 	bool getFlagShowNebulaBackgroundButton() const;
 
+	//! Get whether the button toggling TOAST survey is visible
+	bool getFlagShowToastSurveyButton() const;
+
+	//! Get whether the button toggling bookmarks is visible
+	bool getFlagShowBookmarksButton() const;
+
+	//! Get whether the button toggling ICRS grid is visible
+	bool getFlagShowICRSGridButton() const;
+
+	//! Get whether the button toggling galactic grid is visible
+	bool getFlagShowGalacticGridButton() const;
+
+	//! Get whether the button toggling ecliptic grid is visible
+	bool getFlagShowEclipticGridButton() const;
+
+	//! Get whether the button toggling constellation boundaries is visible
+	bool getFlagShowConstellationBoundariesButton() const;
+
 	//! returns true if the gui has completed init process.
 	bool initComplete(void) const;
 
@@ -105,6 +124,8 @@ public:
 
 	virtual bool getVisible() const;
 
+	virtual bool getAstroCalcVisible();
+
 	virtual bool isCurrentlyUsed() const;
 	
 	virtual void setInfoTextFilters(const StelObject::InfoStringGroup& aflags);
@@ -116,6 +137,24 @@ public slots:
 	
 	//! Define whether the button toggling nebulae background should be visible
 	void setFlagShowNebulaBackgroundButton(bool b);
+
+	//! Define whether the button toggling TOAST survey should be visible
+	void setFlagShowToastSurveyButton(bool b);
+
+	//! Define whether the button toggling bookmarks should be visible
+	void setFlagShowBookmarksButton(bool b);
+
+	//! Define whether the button toggling ICRS grid should be visible
+	void setFlagShowICRSGridButton(bool b);
+
+	//! Define whether the button toggling galactic grid should be visible
+	void setFlagShowGalacticGridButton(bool b);
+
+	//! Define whether the button toggling ecliptic grid should be visible
+	void setFlagShowEclipticGridButton(bool b);
+
+	//! Define whether the button toggling constellation boundaries should be visible
+	void setFlagShowConstellationBoundariesButton(bool b);
 
 	void setFlagShowDecimalDegrees(bool b);
 
@@ -150,6 +189,11 @@ public slots:
 
 	//! Hide or show the GUI.  Public so it can be called from scripts.
 	void setGuiVisible(bool);	
+
+signals:
+	void visibleChanged(bool b);
+	void autoHideHorizontalButtonBarChanged(bool b);
+	void autoHideVerticalButtonBarChanged(bool b);
 
 private slots:
 	void reloadStyle();
@@ -189,6 +233,7 @@ private:
 	ScriptConsole* scriptConsole;
 #endif
 	AstroCalcDialog* astroCalcDialog;
+	BookmarksDialog* bookmarksDialog;
 
 	bool flagShowFlipButtons;
 	StelButton* flipVert;
@@ -196,6 +241,24 @@ private:
 
 	bool flagShowNebulaBackgroundButton;
 	StelButton* btShowNebulaeBackground;
+
+	bool flagShowToastSurveyButton;
+	StelButton* btShowToastSurvey;
+
+	bool flagShowBookmarksButton;
+	StelButton* btShowBookmarks;
+
+	bool flagShowICRSGridButton;
+	StelButton* btShowICRSGrid;
+
+	bool flagShowGalacticGridButton;
+	StelButton* btShowGalacticGrid;
+
+	bool flagShowEclipticGridButton;
+	StelButton* btShowEclipticGrid;
+
+	bool flagShowConstellationBoundariesButton;
+	StelButton* btShowConstellationBoundaries;
 
 	bool initDone;
 
@@ -226,7 +289,7 @@ public:
 	virtual void setInfoTextFilters(const StelObject::InfoStringGroup& aflags) {dummyInfoTextFilter=aflags;}
 	virtual const StelObject::InfoStringGroup& getInfoTextFilters() const {return dummyInfoTextFilter;}
 	virtual QProgressBar* addProgressBar() {return new QProgressBar;}
-	virtual QAction* addGuiActions(const QString& actionName, const QString& text, const QString& shortCut, const QString& helpGroup, bool checkable=true, bool autoRepeat=false) {return NULL;}
+	virtual QAction* addGuiActions(const QString& actionName, const QString& text, const QString& shortCut, const QString& helpGroup, bool checkable=true, bool autoRepeat=false) {return Q_NULLPTR;}
 	virtual void forceRefreshGui() {;}
 	virtual void setVisible(bool b) {visible=b;}
 	virtual bool getVisible() const {return visible;}

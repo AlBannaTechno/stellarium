@@ -295,9 +295,7 @@ bool SkyLabel::draw(StelCore* core, StelPainter& sPainter)
 
 	if (labelStyle == SkyLabel::Line)
 	{
-		sPainter.enableTexture2d(false);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		sPainter.setBlending(true);
 
 		// screen coordinates of object
 		Vec3d objXY;
@@ -398,7 +396,7 @@ void LabelMgr::draw(StelCore* core)
 {
 	StelPainter sPainter(core->getProjection(StelCore::FrameJ2000));
 	foreach(StelLabel* l, allLabels) 
-		if (l!=NULL)
+		if (l!=Q_NULLPTR)
 			l->draw(core, sPainter);
 }
 	
@@ -421,7 +419,7 @@ int LabelMgr::labelObject(const QString& text,
 	}
 	
 	StelLabel* l = new SkyLabel(text, obj, font, StelUtils::htmlColorToVec3f(fontColor), side, labelDistance, SkyLabel::stringToStyle(style));
-	if (l==NULL)
+	if (l==Q_NULLPTR)
 		return -1;
 
 	if (visible)
@@ -441,7 +439,7 @@ int LabelMgr::labelHorizon(const QString& text,
 	QFont font;
 	font.setPixelSize(fontSize);
 	HorizonLabel* l = new HorizonLabel(text, az, alt, font, StelUtils::htmlColorToVec3f(fontColor));
-	if (l==NULL)
+	if (l==Q_NULLPTR)
 		return -1;
 
 	if (visible)
@@ -461,7 +459,7 @@ int LabelMgr::labelScreen(const QString& text,
 	QFont font;
 	font.setPixelSize(fontSize);
 	ScreenLabel* l = new ScreenLabel(text, x, y, font, StelUtils::htmlColorToVec3f(fontColor));
-	if (l==NULL)
+	if (l==Q_NULLPTR)
 		return -1;
 
 	if (visible)
@@ -473,7 +471,7 @@ int LabelMgr::labelScreen(const QString& text,
 
 bool LabelMgr::getLabelShow(int id)
 {
-	if (allLabels.at(id)!=NULL)
+	if (allLabels.at(id)!=Q_NULLPTR)
 		return allLabels.at(id)->getFlagShow();
 	else
 		return false;
@@ -481,22 +479,25 @@ bool LabelMgr::getLabelShow(int id)
 	
 void LabelMgr::setLabelShow(int id, bool show)
 {
-	if (allLabels.at(id)!=NULL)
+	if (allLabels.at(id)!=Q_NULLPTR)
 		allLabels.at(id)->setFlagShow(show);
 }
 
 void LabelMgr::setLabelText(int id, const QString& newText)
 {
-	if (allLabels.at(id)!=NULL)
+	if (allLabels.at(id)!=Q_NULLPTR)
 		allLabels.at(id)->setText(newText);
 }
 	
 bool LabelMgr::deleteLabel(int id)
 {
-	if (allLabels.at(id)!=NULL)
+    if (id<0)
+        return false;
+
+    if (allLabels.at(id)!=Q_NULLPTR)
 	{
 		delete allLabels.at(id);
-		allLabels[id] = NULL;
+		allLabels[id] = Q_NULLPTR;
 		return true;
 	}
 	else
@@ -506,7 +507,7 @@ bool LabelMgr::deleteLabel(int id)
 void LabelMgr::update(double deltaTime)
 {
 	foreach(StelLabel* l, allLabels) 
-		if (l!=NULL)
+		if (l!=Q_NULLPTR)
 			l->update(deltaTime);
 }
 	
@@ -522,10 +523,10 @@ int LabelMgr::deleteAllLabels(void)
 	int count=0;
 	foreach(StelLabel* l, allLabels) 
 	{
-		if (l!=NULL)
+		if (l!=Q_NULLPTR)
 		{
 			delete l;
-			l=NULL;
+			l=Q_NULLPTR;
 			count++;
 		}
 	}

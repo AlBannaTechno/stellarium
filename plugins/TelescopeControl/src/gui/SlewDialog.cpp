@@ -35,18 +35,19 @@ using namespace TelescopeControlGlobals;
 
 
 SlewDialog::SlewDialog()
+	: StelDialog("TelescopeControlSlew")
+	, storedPointsDialog(Q_NULLPTR)
 {
-	ui = new Ui_slewDialog;
+	ui = new Ui_slewDialog();
 	
 	//TODO: Fix this - it's in the same plugin
-	telescopeManager = GETSTELMODULE(TelescopeControl);
-	storedPointsDialog = NULL;
+	telescopeManager = GETSTELMODULE(TelescopeControl);	
 }
 
 SlewDialog::~SlewDialog()
 {	
 	delete ui;
-	storedPointsDialog = NULL;
+	storedPointsDialog = Q_NULLPTR;
 }
 
 void SlewDialog::retranslate()
@@ -62,6 +63,7 @@ void SlewDialog::createDialogContent()
 	//Inherited connect
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 
 	connect(ui->radioButtonHMS, SIGNAL(toggled(bool)), this, SLOT(setFormatHMS(bool)));
 	connect(ui->radioButtonDMS, SIGNAL(toggled(bool)), this, SLOT(setFormatDMS(bool)));
@@ -84,11 +86,12 @@ void SlewDialog::createDialogContent()
 
 	storedPointsDialog = new StoredPointsDialog;
 	// add point and remove
-	connect(storedPointsDialog, SIGNAL(addStoredPoint(int, QString, double, double)),
-		this, SLOT(addStoredPointToComboBox(int, QString, double, double)));
+	connect(storedPointsDialog, SIGNAL(addStoredPoint(int, QString, double, double)), this, SLOT(addStoredPointToComboBox(int, QString, double, double)));
 	// remove point
-	connect(storedPointsDialog, SIGNAL(removeStoredPoint(int)),
-		this, SLOT(removeStoredPointFromComboBox(int)));
+	connect(storedPointsDialog, SIGNAL(removeStoredPoint(int)), this, SLOT(removeStoredPointFromComboBox(int)));
+	// clean points
+	connect(storedPointsDialog, SIGNAL(clearStoredPoints()), this, SLOT(clearStoredPointsFromComboBox()));
+
 
 	updateTelescopeList();
 	updateStoredPointsList();
@@ -228,7 +231,7 @@ void SlewDialog::getCenterInfo()
 	projector->unProject(center[0], center[1], centerPosition);
 	double dec_j2000 = 0;
 	double ra_j2000 = 0;
-	StelUtils::rectToSphe(&ra_j2000,&dec_j2000,core->equinoxEquToJ2000(centerPosition));
+	StelUtils::rectToSphe(&ra_j2000,&dec_j2000,core->equinoxEquToJ2000(centerPosition, StelCore::RefractionOff));
 	ui->spinBoxRA->setRadians(ra_j2000);
 	ui->spinBoxDec->setRadians(dec_j2000);
 }
@@ -278,7 +281,16 @@ void SlewDialog::removeStoredPointFromComboBox(int number)
 	{
 		ui->comboBoxStoredPoints->removeItem(0);
 	}
-	this->savePointsToFile();
+	savePointsToFile();
+}
+
+void SlewDialog::clearStoredPointsFromComboBox()
+{
+	ui->comboBoxStoredPoints->blockSignals(true);
+	ui->comboBoxStoredPoints->clear();
+	ui->comboBoxStoredPoints->addItem(q_("Select one"));
+	ui->comboBoxStoredPoints->blockSignals(false);
+	savePointsToFile();
 }
 
 void SlewDialog::getStoredPointInfo()

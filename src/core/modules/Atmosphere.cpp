@@ -39,10 +39,10 @@ Atmosphere::Atmosphere(void)
 	: viewport(0,0,0,0)
 	, skyResolutionY(44)
 	, skyResolutionX(44)
-	, posGrid(NULL)
+	, posGrid(Q_NULLPTR)
 	, posGridBuffer(QOpenGLBuffer::VertexBuffer)
 	, indicesBuffer(QOpenGLBuffer::IndexBuffer)
-	, colorGrid(NULL)
+	, colorGrid(Q_NULLPTR)
 	, colorGridBuffer(QOpenGLBuffer::VertexBuffer)
 	, averageLuminance(0.f)
 	, overrideAverageLuminance(false)
@@ -106,14 +106,14 @@ Atmosphere::Atmosphere(void)
 Atmosphere::~Atmosphere(void)
 {
 	delete [] posGrid;
-	posGrid = NULL;
+	posGrid = Q_NULLPTR;
 	delete[] colorGrid;
-	colorGrid = NULL;
+	colorGrid = Q_NULLPTR;
 	delete atmoShaderProgram;
-	atmoShaderProgram = NULL;
+	atmoShaderProgram = Q_NULLPTR;
 }
 
-void Atmosphere::computeColor(double JD, Vec3d _sunPos, Vec3d moonPos, float moonPhase,
+void Atmosphere::computeColor(double JD, Vec3d _sunPos, Vec3d moonPos, float moonPhase, float moonMagnitude,
 							   StelCore* core, float latitude, float altitude, float temperature, float relativeHumidity)
 {
 	const StelProjectorP prj = core->getProjection(StelCore::FrameAltAz, StelCore::RefractionOff);
@@ -172,7 +172,7 @@ void Atmosphere::computeColor(double JD, Vec3d _sunPos, Vec3d moonPos, float moo
 		indicesBuffer.allocate(indices, (skyResolutionX+1)*skyResolutionY*2*2);
 		indicesBuffer.release();
 		delete[] indices;
-		indices=NULL;
+		indices=Q_NULLPTR;
 		
 		colorGridBuffer.destroy();
 		colorGridBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
@@ -202,7 +202,8 @@ void Atmosphere::computeColor(double JD, Vec3d _sunPos, Vec3d moonPos, float moo
 	// TODO: correct for atmospheric diffusion
 	// TODO: use better coverage function (non-linear)
 	// because of above issues, this algorithm darkens more quickly than reality
-	if (separation_angle < touch_angle)
+	// Note: On Earth only, else moon would brighten other planets' atmospheres (LP:1673283)
+	if ((core->getCurrentLocation().planetName=="Earth") && (separation_angle < touch_angle))
 	{
 		float dark_angle = moon_angular_size - sun_angular_size;
 		float min = 0.0001f;  // so bright stars show up at total eclipse
@@ -249,7 +250,7 @@ void Atmosphere::computeColor(double JD, Vec3d _sunPos, Vec3d moonPos, float moo
 	// Calculate the date from the julian day.
 	int year, month, day;
 	StelUtils::getDateFromJulianDay(JD, &year, &month, &day);
-	skyb.setDate(year, month, moonPhase);
+	skyb.setDate(year, month, moonPhase, moonMagnitude);
 
 	// Variables used to compute the average sky luminance
 	float sum_lum = 0.f;
@@ -339,9 +340,7 @@ void Atmosphere::draw(StelCore* core)
 		return;
 
 	StelPainter sPainter(core->getProjection2d());
-	glBlendFunc(GL_ONE, GL_ONE);
-	sPainter.enableTexture2d(false);
-	glEnable(GL_BLEND);
+	sPainter.setBlending(true, GL_ONE, GL_ONE);
 
 	const float atm_intensity = fader.getInterstate();
 
@@ -383,10 +382,10 @@ void Atmosphere::draw(StelCore* core)
 
 	// And draw everything at once
 	indicesBuffer.bind();
-	int shift=0;
+	std::size_t shift=0;
 	for (int y=0;y<skyResolutionY;++y)
 	{
-		glDrawElements(GL_TRIANGLE_STRIP, (skyResolutionX+1)*2, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(shift));
+		sPainter.glFuncs()->glDrawElements(GL_TRIANGLE_STRIP, (skyResolutionX+1)*2, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(shift));
 		shift += (skyResolutionX+1)*2*2;
 	}
 	indicesBuffer.release();

@@ -35,7 +35,6 @@
 #include <QPixmap>
 #include <QSettings>
 #include <QKeyEvent>
-#include <QtNetwork>
 #include <cmath>
 
 StelModule* CompassMarksStelPluginInterface::getStelModule() const
@@ -61,7 +60,7 @@ StelPluginInfo CompassMarksStelPluginInterface::getPluginInfo() const
 CompassMarks::CompassMarks()
 	: displayedAtStartup(false)
 	, markColor(1,1,1)
-	, toolbarButton(NULL)
+	, toolbarButton(Q_NULLPTR)
 	, cardinalPointsState(false)
 {
 	setObjectName("CompassMarks");
@@ -96,9 +95,9 @@ void CompassMarks::init()
 		addAction("actionShow_Compass_Marks", N_("Compass Marks"), N_("Compass marks"), "marksVisible");
 
 		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-		if (gui != NULL)
+		if (gui != Q_NULLPTR)
 		{
-			toolbarButton = new StelButton(NULL,
+			toolbarButton = new StelButton(Q_NULLPTR,
 						       QPixmap(":/compassMarks/bt_compass_on.png"),
 						       QPixmap(":/compassMarks/bt_compass_off.png"),
 						       QPixmap(":/graphicGui/glow32x32.png"),
@@ -129,14 +128,8 @@ void CompassMarks::draw(StelCore* core)
 	painter.setFont(font);
 
 	painter.setColor(markColor[0], markColor[1], markColor[2], markFader.getInterstate());
-	glDisable(GL_TEXTURE_2D);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-	// OpenGL ES 2.0 doesn't have GL_LINE_SMOOTH. But it looks much better.
-	#ifdef GL_LINE_SMOOTH
-	if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-		glEnable(GL_LINE_SMOOTH);
-	#endif
+	painter.setBlending(true);
+	painter.setLineSmooth(true);
 
 	for(int i=0; i<360; i++)
 	{
@@ -161,20 +154,11 @@ void CompassMarks::draw(StelCore* core)
 		// Limit arcs to those that are visible for improved performance
 		if (prj->project(pos, screenPos) && 
 		     screenPos[0]>prj->getViewportPosX() && screenPos[0] < prj->getViewportPosX() + prj->getViewportWidth()) {
-			// This has been disabled above already...
-			//glDisable(GL_TEXTURE_2D);
-			painter.drawGreatCircleArc(pos, Vec3d(pos[0], pos[1], h), NULL);
-			//glEnable(GL_TEXTURE_2D);
+			painter.drawGreatCircleArc(pos, Vec3d(pos[0], pos[1], h), Q_NULLPTR);
 		}
 	}
-	// OpenGL ES 2.0 doesn't have GL_LINE_SMOOTH
-	#ifdef GL_LINE_SMOOTH
-	if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-		glDisable(GL_LINE_SMOOTH);
-	#endif
-	glDisable(GL_BLEND);
-	glEnable(GL_TEXTURE_2D);
-
+	painter.setBlending(false);
+	painter.setLineSmooth(false);
 }
 
 void CompassMarks::update(double deltaTime)

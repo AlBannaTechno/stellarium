@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 #include <unistd.h>
 #endif
 
-#include <string.h> // memset
+#include <cstring> // memset
 
 using namespace std;
 
@@ -160,6 +160,7 @@ SerialPort::~SerialPort(void)
 		// restore original settings
 		tcsetattr(fd, TCSANOW, &termios_original);
 		close(fd);
+		fd=INVALID_SOCKET; // fix Coverity 48939?
 	}
 #endif
 }

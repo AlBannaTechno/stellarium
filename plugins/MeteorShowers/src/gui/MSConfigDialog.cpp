@@ -25,7 +25,8 @@
 #include "ui_MSConfigDialog.h"
 
 MSConfigDialog::MSConfigDialog(MeteorShowersMgr* mgr)
-	: m_mgr(mgr)
+	: StelDialog("MeteorShowers")
+	, m_mgr(mgr)
 	, m_ui(new Ui_MSConfigDialog)
 {
 }
@@ -58,6 +59,7 @@ void MSConfigDialog::createDialogContent()
 
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(m_ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(m_ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 	connect(m_ui->bRestoreDefaults, SIGNAL(clicked()), m_mgr, SLOT(restoreDefaultSettings()));
 
 	// General tab

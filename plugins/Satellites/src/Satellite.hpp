@@ -93,8 +93,24 @@ class Satellite : public StelObject
 	friend class Satellites;
 	friend class SatellitesDialog;
 	friend class SatellitesListModel;
-	
+
+	Q_ENUMS(OptStatus)
 public:
+	static const QString SATELLITE_TYPE;
+
+	//! @enum OptStatus operational statuses
+	enum OptStatus
+	{
+		StatusOperational		= 1,
+		StatusNonoperational		= 2,
+		StatusPartiallyOperational	= 3,
+		StatusStandby			= 4,
+		StatusSpare			= 5,
+		StatusExtendedMission		= 6,
+		StatusDecayed			= 7,
+		StatusUnknown			= 0
+	};
+
 	//! \param identifier unique identifier (currently the Catalog Number)
 	//! \param data a QMap which contains the details of the satellite
 	//! (TLE set, description etc.)
@@ -107,8 +123,14 @@ public:
 
 	virtual QString getType(void) const
 	{
-		return "Satellite";
+		return SATELLITE_TYPE;
 	}
+
+	virtual QString getID(void) const
+	{
+		return id;
+	}
+
 	virtual float getSelectPriority(const StelCore* core) const;
 
 	//! Get an HTML string to describe the object
@@ -117,16 +139,34 @@ public:
 	//! Supported types for Satellite objects:
 	//! - Name: designation in large type with the description underneath
 	//! - RaDecJ2000, RaDecOfDate, HourAngle, AltAzi
-	//! - Extra: range, rage rate and altitude of satellite above the Earth, comms frequencies, modulation types and so on.
+	//! - Extra: range, range rate and altitude of satellite above the Earth, comms frequencies, modulation types and so on.
 	virtual QString getInfoString(const StelCore *core, const InfoStringGroup& flags) const;
+	//! Return a map like StelObject::getInfoMap(), but with a few extra tags also available in getInfoString().
+	//! - description
+	//! - catalog
+	//! - international-designator
+	//! - type
+	//! - range (distance in km)
+	//! - rangerate (distance change in km/s)
+	//! - height (height in km)
+	//! - subpoint-lat (latitude of subpoint, decimal degrees)
+	//! - subpoint-long (longitude of subpoint, decimal degrees)
+	//! - TEME-km-X
+	//! - TEME-km-Y
+	//! - TEME-km-Z
+	//! - TEME-speed-X
+	//! - TEME-speed-Y
+	//! - TEME-speed-Z
+	//! - sun-reflection-angle (if available)
+	//! - operational-status
+	//! - visibility (descriptive string)
+	//! - comm (Radio information, optional, if available. There may be several comm entries!)
+	virtual QVariantMap getInfoMap(const StelCore *core) const;
 	virtual Vec3f getInfoColor(void) const;
 	virtual Vec3d getJ2000EquatorialPos(const StelCore*) const;
 	virtual float getVMagnitude(const StelCore* core) const;
 	virtual double getAngularSize(const StelCore* core) const;
-	virtual QString getNameI18n(void) const
-	{
-		return name;
-	}
+	virtual QString getNameI18n(void) const;
 	virtual QString getEnglishName(void) const
 	{
 		return name;
@@ -142,7 +182,7 @@ public:
 	void update(double deltaTime);
 
 	double getDoppler(double freq) const;
-	static float showLabels;
+	static bool showLabels;
 	static double roundToDp(float n, int dp);
 
 	// when the observer location changes we need to
@@ -152,7 +192,7 @@ public:
 	bool isNew() const {return newlyAdded;}
 	
 	//! Get internal flags as a single value.
-	SatFlags getFlags();
+	SatFlags getFlags() const;
 	//! Sets the internal flags in one operation (only display flags)!
 	void setFlags(const SatFlags& flags);
 	
@@ -167,10 +207,13 @@ public:
 	//! Calculation of illuminated fraction of the satellite.
 	float calculateIlluminatedFraction() const;
 
+	//! Get operational status of satellite
+	QString getOperationalStatus() const;
+
 private:
 	//draw orbits methods
 	void computeOrbitPoints();
-	void drawOrbit(StelPainter& painter);
+	void drawOrbit(StelCore* core, StelPainter& painter);
 	//! returns 0 - 1.0 for the DRAWORBIT_FADE_NUMBER segments at
 	//! each end of an orbit, with 1 in the middle.
 	float calculateOrbitSegmentIntensity(int segNum);
@@ -209,6 +252,8 @@ private:
 	double jdLaunchYearJan1;
 	//! Standard visual magnitude of the satellite.
 	double stdMag;
+	//! Operational status code
+	int status;
 	//! Contains the J2000 position.
 	Vec3d XYZ;
 	QPair< QByteArray, QByteArray > tleElements;
@@ -233,7 +278,9 @@ private:
 	static StelObject::InfoStringGroupFlags flagsMask;
 	static Vec3f invisibleSatelliteColor;
 
-	void draw(StelCore *core, StelPainter& painter, float maxMagHints);
+	static double timeRateLimit;
+
+	void draw(StelCore *core, StelPainter& painter);
 
 	//Satellite Orbit Position calculation
 	gSatWrapper *pSatWrapper;
@@ -246,10 +293,10 @@ private:
 	static QString myText;
 #endif
 
-	int	visibility;
+	gSatWrapper::Visibility	visibility;
 	double	phaseAngle; // phase angle for the satellite
 	static double sunReflAngle; // for Iridium satellites
-	static double timeShift; // for Iridium satellites
+	//static double timeShift; // for Iridium satellites UNUSED
 
 	//Satellite Orbit Draw
 	QFont     font;
@@ -257,7 +304,7 @@ private:
 	double    lastEpochCompForOrbit; //measured in Julian Days
 	double    epochTime;  //measured in Julian Days
 	QList<Vec3d> orbitPoints; //orbit points represented by ElAzPos vectors
-	QList<int> visibilityPoints; //orbit visibility points
+	QList<gSatWrapper::Visibility> visibilityPoints; //orbit visibility points
 };
 
 typedef QSharedPointer<Satellite> SatelliteP;

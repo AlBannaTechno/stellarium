@@ -34,8 +34,7 @@ static QVector<Vec3d> vertexArray;
 static QVector<Vec4f> colorArray;
 void TrailGroup::draw(StelCore* core, StelPainter* sPainter)
 {
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	sPainter->setBlending(true);
 	float currentTime = core->getJDE();
 	StelProjector::ModelViewTranformP transfo = core->getJ2000ModelViewTransform();
 	transfo->combine(j2000ToTrailNativeInverted);
@@ -43,7 +42,7 @@ void TrailGroup::draw(StelCore* core, StelPainter* sPainter)
 	foreach (const Trail& trail, allTrails)
 	{
 		Planet* hpl = dynamic_cast<Planet*>(trail.stelObject.data());
-		if (hpl!=NULL)
+		if (hpl!=Q_NULLPTR)
 		{
 			// Avoid drawing the trails if the object is the home planet
 			QString homePlanetName = hpl->getEnglishName();
@@ -90,7 +89,7 @@ void TrailGroup::setJ2000ToTrailNative(const Mat4d& m)
 
 void TrailGroup::addObject(const StelObjectP& obj, const Vec3f* col)
 {
-	allTrails.append(TrailGroup::Trail(obj, col==NULL ? obj->getInfoColor() : *col));
+	allTrails.append(TrailGroup::Trail(obj, col==Q_NULLPTR ? obj->getInfoColor() : *col));
 }
 
 void TrailGroup::reset()

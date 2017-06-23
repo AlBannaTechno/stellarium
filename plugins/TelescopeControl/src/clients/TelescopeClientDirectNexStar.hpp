@@ -65,10 +65,10 @@ public:
 private:
 	//======================================================================
 	// Methods inherited from TelescopeClient
-	Vec3d getJ2000EquatorialPos(const StelCore* core=0) const;
+	Vec3d getJ2000EquatorialPos(const StelCore* core=Q_NULLPTR) const;
 	bool prepareCommunication();
 	void performCommunication();
-	void telescopeGoto(const Vec3d &j2000Pos);
+	void telescopeGoto(const Vec3d &j2000Pos, StelObjectP selectObject);
 	bool isInitialized(void) const;
 	
 	//======================================================================

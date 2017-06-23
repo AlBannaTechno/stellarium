@@ -1,7 +1,8 @@
 /*
  * Stellarium
  * This file Copyright (C) 2008 Matthew Gates
- * 
+ * Parts copyright (C) 2016 Georg Zotti (added size transitions)
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -42,10 +43,10 @@
 // ScreenImage class //
 ///////////////////////
 ScreenImage::ScreenImage(const QString& filename, float x, float y, bool show, float scale, float alpha, float fadeDuration)
-	: tex(NULL), maxAlpha(alpha)
+	: tex(Q_NULLPTR), maxAlpha(alpha)
 {
-	QPixmap pm(filename);
-	tex = StelMainView::getInstance().scene()->addPixmap(pm.scaled(pm.size()*scale));
+	QPixmap pixmap(filename);
+	tex = StelMainView::getInstance().scene()->addPixmap(pixmap.scaled(pixmap.size()*scale));
 	tex->setPos(x, y);
 
 	anim = new QGraphicsItemAnimation();
@@ -53,6 +54,15 @@ ScreenImage::ScreenImage(const QString& filename, float x, float y, bool show, f
 	moveTimer->setCurveShape(QTimeLine::LinearCurve);
 	anim->setTimeLine(moveTimer);
 	anim->setItem(tex);
+
+	scaleAnim = new QGraphicsItemAnimation();
+	scaleTimer = new QTimeLine();
+	scaleTimer->setCurveShape(QTimeLine::LinearCurve);
+	scaleAnim->setTimeLine(scaleTimer);
+	scaleAnim->setItem(tex);
+	// we must configure the end for proper rescaling
+	scaleAnim->setScaleAt(0., 1., 1.);
+	scaleAnim->setScaleAt(1., 1., 1.);
 
 	fadeTimer = new QTimeLine();
 	fadeTimer->setCurveShape(QTimeLine::LinearCurve);
@@ -68,14 +78,19 @@ ScreenImage::ScreenImage(const QString& filename, float x, float y, bool show, f
 
 ScreenImage::~ScreenImage()
 {
-	if (tex!=NULL)
+	moveTimer->stop();
+	scaleTimer->stop();
+	fadeTimer->stop();
+	delete anim; anim = Q_NULLPTR;
+	delete scaleAnim; scaleAnim = Q_NULLPTR;
+	delete moveTimer; moveTimer = Q_NULLPTR;
+	delete scaleTimer; scaleTimer = Q_NULLPTR;
+	delete fadeTimer; fadeTimer = Q_NULLPTR;
+	if (tex!=Q_NULLPTR)
 	{
 		delete tex;
-		tex = NULL;
+		tex = Q_NULLPTR;
 	}
-	moveTimer->stop();
-	delete anim; anim = NULL;
-	delete moveTimer; moveTimer = NULL;
 }
 
 bool ScreenImage::draw(const StelCore*)
@@ -89,9 +104,7 @@ void ScreenImage::update(double)
 
 void ScreenImage::setFadeDuration(float duration)
 {
-	int fadeMs = duration * 1000;
-	if (fadeMs<=0) fadeMs=1;
-	fadeTimer->setDuration(fadeMs);
+	fadeTimer->setDuration(qMax(1, (int)(duration*1000)));
 }
 
 void ScreenImage::setFlagShow(bool b)
@@ -170,6 +183,33 @@ void ScreenImage::setOpacity(qreal alpha)
 	tex->setOpacity(alpha*maxAlpha);
 }
 
+void ScreenImage::setScale(float scaleX, float scaleY, float duration)
+{
+	scaleTimer->stop();
+
+	// Set a least a tiny duration to allow running the "animation"
+	scaleTimer->setDuration(qMax(0.001f, duration)*1000);
+	scaleTimer->setFrameRange(0,100);
+
+	tex->setTransformationMode(Qt::SmoothTransformation);
+
+	// reconfigure the animation which may have halted at 1 after a previous run, so the current scale is at position 1.
+	scaleAnim->setScaleAt(0., scaleAnim->horizontalScaleAt(1.), scaleAnim->verticalScaleAt(1.));
+	scaleAnim->setScaleAt(1., scaleX, scaleY);
+	scaleTimer->start();
+}
+
+float ScreenImage::imageScaleX()
+{
+	return scaleAnim->horizontalScaleAt(1.);
+}
+
+float ScreenImage::imageScaleY()
+{
+	return scaleAnim->verticalScaleAt(1.);
+}
+
+
 //////////////////////////
 // ScreenImageMgr class //
 //////////////////////////
@@ -189,7 +229,7 @@ void ScreenImageMgr::init()
 void ScreenImageMgr::draw(StelCore* core)
 {
 	foreach(ScreenImage* m, allScreenImages)
-		if (m!=NULL)
+		if (m!=Q_NULLPTR)
 			m->draw(core);
 }
 
@@ -205,14 +245,14 @@ void ScreenImageMgr::createScreenImage(const QString& id, const QString& filenam
 	if (!path.isEmpty())
 	{
 		ScreenImage* i = new ScreenImage(path, x, y, visible, scale, alpha, fadeDuration);
-		if (i==NULL)
+		if (i==Q_NULLPTR)
 			return;
 
 		allScreenImages[id] = i;
 	}
 	else
 	{
-		qWarning() << "Failed to create ScreenImage: file not exists";
+		qWarning() << "Failed to create ScreenImage" << id << ": file not found: " << filename;
 	}
 }
 
@@ -220,10 +260,10 @@ void ScreenImageMgr::deleteImage(const QString& id)
 {
 	if (allScreenImages.contains(id))
 	{
-		if (allScreenImages[id]!=NULL)
+		if (allScreenImages[id]!=Q_NULLPTR)
 		{
 			delete allScreenImages[id];
-			allScreenImages[id] = NULL;
+			allScreenImages[id] = Q_NULLPTR;
 		}
 		allScreenImages.remove(id);
 	}
@@ -233,10 +273,10 @@ void ScreenImageMgr::deleteAllImages()
 {
 	foreach(ScreenImage* m, allScreenImages)
 	{
-		if (m!=NULL)
+		if (m!=Q_NULLPTR)
 		{
 			delete m;
-			m = NULL;
+			m = Q_NULLPTR;
 		}
 	}
 	allScreenImages.clear();
@@ -250,7 +290,7 @@ QStringList ScreenImageMgr::getAllImageIDs(void)
 bool ScreenImageMgr::getShowImage(const QString& id)
 {
 	if (allScreenImages.contains(id))
-		if (allScreenImages[id]!=NULL)
+		if (allScreenImages[id]!=Q_NULLPTR)
 			return allScreenImages[id]->getFlagShow();
 	return false;
 }
@@ -258,7 +298,7 @@ bool ScreenImageMgr::getShowImage(const QString& id)
 int ScreenImageMgr::getImageWidth(const QString& id)
 {
 	if (allScreenImages.contains(id))
-		if (allScreenImages[id]!=NULL)
+		if (allScreenImages[id]!=Q_NULLPTR)
 			return allScreenImages[id]->imageWidth();
 	return 0;
 }
@@ -266,36 +306,67 @@ int ScreenImageMgr::getImageWidth(const QString& id)
 int ScreenImageMgr::getImageHeight(const QString& id)
 {
 	if (allScreenImages.contains(id))
-		if (allScreenImages[id]!=NULL)
+		if (allScreenImages[id]!=Q_NULLPTR)
 			return allScreenImages[id]->imageHeight();
 	return 0;
 }
-	
+
+float ScreenImageMgr::getImageScaleX(const QString& id)
+{
+	if (allScreenImages.contains(id))
+		if (allScreenImages[id]!=Q_NULLPTR)
+			return allScreenImages[id]->imageScaleX();
+	return 0;
+}
+
+float ScreenImageMgr::getImageScaleY(const QString& id)
+{
+	if (allScreenImages.contains(id))
+		if (allScreenImages[id]!=Q_NULLPTR)
+			return allScreenImages[id]->imageScaleY();
+	return 0;
+}
+
 void ScreenImageMgr::showImage(const QString& id, bool show)
 {
 	if (allScreenImages.contains(id))
-		if (allScreenImages[id]!=NULL)
+		if (allScreenImages[id]!=Q_NULLPTR)
 			allScreenImages[id]->setFlagShow(show);
 }
 
 void ScreenImageMgr::setImageAlpha(const QString& id, float alpha)
 {
 	if (allScreenImages.contains(id))
-		if (allScreenImages[id]!=NULL)
+		if (allScreenImages[id]!=Q_NULLPTR)
 			allScreenImages[id]->setAlpha(alpha);
 }
 
 void ScreenImageMgr::setImageXY(const QString& id, float x, float y, float duration)
 {
 	if (allScreenImages.contains(id))
-		if (allScreenImages[id]!=NULL)
-			allScreenImages[id]->setXY(x,y, duration);
+		if (allScreenImages[id]!=Q_NULLPTR)
+			allScreenImages[id]->setXY(x, y, duration);
 }
+
+void ScreenImageMgr::addImageXY(const QString& id, float x, float y, float duration)
+{
+	if (allScreenImages.contains(id))
+		if (allScreenImages[id]!=Q_NULLPTR)
+			allScreenImages[id]->addXY(x, y, duration);
+}
+
+void ScreenImageMgr::setImageScale(const QString& id, float scaleX, float scaleY, float duration)
+{
+	if (allScreenImages.contains(id))
+		if (allScreenImages[id]!=Q_NULLPTR)
+			allScreenImages[id]->setScale(scaleX, scaleY, duration);
+}
+
 
 void ScreenImageMgr::update(double deltaTime)
 {
 	foreach(ScreenImage* m, allScreenImages)
-		if (m!=NULL)
+		if (m!=Q_NULLPTR)
 			m->update(deltaTime);
 }
 	

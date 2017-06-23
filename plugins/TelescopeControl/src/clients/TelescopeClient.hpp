@@ -54,6 +54,7 @@ class TelescopeClient : public QObject, public StelObject
 {
 	Q_OBJECT
 public:
+	static const QString TELESCOPECLIENT_TYPE;
 	static TelescopeClient *create(const QString &url);
 	virtual ~TelescopeClient(void) {}
 	
@@ -73,11 +74,12 @@ public:
 	//! @param flags a set of InfoStringGroup items to include in the return value.
 	//! @return a QString containing an HMTL encoded description of the Telescope.
 	QString getInfoString(const StelCore* core, const InfoStringGroup& flags) const;
-	QString getType(void) const {return "Telescope";}
+	QString getType(void) const {return TELESCOPECLIENT_TYPE;}
+	QString getID() const {return name;}
 	virtual double getAngularSize(const StelCore*) const {Q_ASSERT(0); return 0;}	// TODO
 		
 	// Methods specific to telescope
-	virtual void telescopeGoto(const Vec3d &j2000Pos) = 0;
+	virtual void telescopeGoto(const Vec3d &j2000Pos, StelObjectP selectObject) = 0;
 	virtual bool isConnected(void) const = 0;
 	virtual bool hasKnownPosition(void) const = 0;
 	void addOcular(double fov) {if (fov>=0.0) oculars.push_back(fov);}
@@ -90,6 +92,13 @@ protected:
 	TelescopeClient(const QString &name);
 	QString nameI18n;
 	const QString name;
+
+	virtual QString getTelescopeInfoString(const StelCore* core, const InfoStringGroup& flags) const
+	{
+		Q_UNUSED(core);
+		Q_UNUSED(flags);
+		return QString();
+	}
 private:
 	virtual bool isInitialized(void) const {return true;}
 	float getSelectPriority(const StelCore* core) const {Q_UNUSED(core); return -10.f;}
@@ -127,7 +136,7 @@ public:
 			XYZ = desired_pos;
 		return true;
 	}
-	void telescopeGoto(const Vec3d &j2000Pos)
+	void telescopeGoto(const Vec3d &j2000Pos, StelObjectP selectObject)
 	{
 		desired_pos = j2000Pos;
 		desired_pos.normalize();
@@ -167,10 +176,10 @@ public:
 	}
 	
 private:
-	Vec3d getJ2000EquatorialPos(const StelCore* core=0) const;
+	Vec3d getJ2000EquatorialPos(const StelCore* core=Q_NULLPTR) const;
 	bool prepareCommunication();
 	void performCommunication();
-	void telescopeGoto(const Vec3d &j2000Pos);
+	void telescopeGoto(const Vec3d &j2000Pos, StelObjectP selectObject);
 	bool isInitialized(void) const
 	{
 		return (!address.isNull());

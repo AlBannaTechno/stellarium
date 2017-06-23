@@ -1,6 +1,7 @@
 /*
  * Stellarium
  * Copyright (C) 2007 Fabien Chereau
+ * Copyright (C) 2016 Marcos Cardinot
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,10 +34,9 @@
 #include <QDebug>
 #include <QStringList>
 
-StelObjectMgr::StelObjectMgr() : searchRadiusPixel(25.f), distanceWeight(1.f)
+StelObjectMgr::StelObjectMgr() : objectPointerVisibility(true), searchRadiusPixel(25.f), distanceWeight(1.f)
 {
 	setObjectName("StelObjectMgr");
-	objectPointerVisibility = true;
 }
 
 StelObjectMgr::~StelObjectMgr()
@@ -46,9 +46,91 @@ StelObjectMgr::~StelObjectMgr()
 /*************************************************************************
  Add a new StelObject manager into the list of supported modules.
 *************************************************************************/
-void StelObjectMgr::registerStelObjectMgr(StelObjectModule* mgr)
+void StelObjectMgr::registerStelObjectMgr(StelObjectModule* m)
 {
-	objectsModule.push_back(mgr);
+	objectsModule.push_back(m);
+	typeToModuleMap.insert(m->getStelObjectType(),m);
+
+	objModulesMap.insert(m->objectName(), m->getName());
+
+	//TODO: there should probably be a better way to specify the sub-types
+	// instead of hardcoding them here
+
+	// Celestial objects from Solar system by type
+	if (m->objectName()=="SolarSystem")
+	{
+		objModulesMap["SolarSystem:planet"] = "Planets";
+		objModulesMap["SolarSystem:moon"] = "Moons";
+		objModulesMap["SolarSystem:asteroid"] = "Asteroids";
+		objModulesMap["SolarSystem:comet"] = "Comets";
+		objModulesMap["SolarSystem:plutino"] = "Plutinos";
+		objModulesMap["SolarSystem:cubewano"] = "Cubewanos";
+		objModulesMap["SolarSystem:dwarf planet"] = "Dwarf planets";
+		objModulesMap["SolarSystem:scattered disc object"] = "Scattered disc objects";
+		objModulesMap["SolarSystem:Oort cloud object"] = "Oort cloud objects";
+		objModulesMap["SolarSystem:sednoid"] = "Sednoids";
+	}
+	// Deep-sky objects by type + amateur catalogues
+	if (m->objectName()=="NebulaMgr")
+	{
+		objModulesMap["NebulaMgr:0"] = "Bright galaxies";
+		objModulesMap["NebulaMgr:1"] = "Active galaxies";
+		objModulesMap["NebulaMgr:2"] = "Radio galaxies";
+		objModulesMap["NebulaMgr:3"] = "Interacting galaxies";
+		objModulesMap["NebulaMgr:4"] = "Bright quasars";
+		objModulesMap["NebulaMgr:5"] = "Star clusters";
+		objModulesMap["NebulaMgr:6"] = "Open star clusters";
+		objModulesMap["NebulaMgr:7"] = "Globular star clusters";
+		objModulesMap["NebulaMgr:8"] = "Stellar associations";
+		objModulesMap["NebulaMgr:9"] = "Star clouds";
+		objModulesMap["NebulaMgr:10"] = "Nebulae";
+		objModulesMap["NebulaMgr:11"] = "Planetary nebulae";
+		objModulesMap["NebulaMgr:12"] = "Dark nebulae";
+		objModulesMap["NebulaMgr:13"] = "Reflection nebulae";
+		objModulesMap["NebulaMgr:14"] = "Bipolar nebulae";
+		objModulesMap["NebulaMgr:15"] = "Emission nebulae";
+		objModulesMap["NebulaMgr:16"] = "Clusters associated with nebulosity";
+		objModulesMap["NebulaMgr:17"] = "HII regions";
+		objModulesMap["NebulaMgr:18"] = "Supernova remnants";
+		objModulesMap["NebulaMgr:19"] = "Interstellar matter";
+		objModulesMap["NebulaMgr:20"] = "Emission objects";
+		objModulesMap["NebulaMgr:21"] = "BL Lac objects";
+		objModulesMap["NebulaMgr:22"] = "Blazars";
+		objModulesMap["NebulaMgr:23"] = "Molecular Clouds";
+		objModulesMap["NebulaMgr:24"] = "Young Stellar Objects";
+		objModulesMap["NebulaMgr:25"] = "Possible Quasars";
+		objModulesMap["NebulaMgr:26"] = "Possible Planetary Nebulae";
+		objModulesMap["NebulaMgr:27"] = "Protoplanetary Nebulae";
+		objModulesMap["NebulaMgr:100"] = "Messier Catalogue";
+		objModulesMap["NebulaMgr:101"] = "Caldwell Catalogue";
+		objModulesMap["NebulaMgr:102"] = "Barnard Catalogue";
+		objModulesMap["NebulaMgr:103"] = "Sharpless Catalogue";
+		objModulesMap["NebulaMgr:104"] = "Van den Bergh Catalogue";
+		objModulesMap["NebulaMgr:105"] = "The Catalogue of Rodgers, Campbell, and Whiteoak";
+		objModulesMap["NebulaMgr:106"] = "Collinder Catalogue";
+		objModulesMap["NebulaMgr:107"] = "Melotte Catalogue";
+		objModulesMap["NebulaMgr:108"] = "New General Catalogue";
+		objModulesMap["NebulaMgr:109"] = "Index Catalogue";
+		objModulesMap["NebulaMgr:110"] = "Lynds' Catalogue of Bright Nebulae";
+		objModulesMap["NebulaMgr:111"] = "Lynds' Catalogue of Dark Nebulae";
+		objModulesMap["NebulaMgr:112"] = "Principal Galaxy Catalog";
+		objModulesMap["NebulaMgr:113"] = "The Uppsala General Catalogue of Galaxies";
+		objModulesMap["NebulaMgr:114"] = "Cederblad Catalog";
+		objModulesMap["NebulaMgr:115"] = "The Catalogue of Peculiar Galaxies";
+		objModulesMap["NebulaMgr:116"] = "The Catalogue of Interacting Galaxies";
+		objModulesMap["NebulaMgr:117"] = "The Catalogue of Galactic Planetary Nebulae";
+		objModulesMap["NebulaMgr:150"] = "Dwarf galaxies";
+		objModulesMap["NebulaMgr:151"] = "Herschel 400 Catalogue";
+	}
+	// Interesting stars
+	if (m->objectName()=="StarMgr")
+	{
+		objModulesMap["StarMgr:0"] = "Interesting double stars";
+		objModulesMap["StarMgr:1"] = "Interesting variable stars";
+		objModulesMap["StarMgr:2"] = "Bright double stars";
+		objModulesMap["StarMgr:3"] = "Bright variable stars";
+		objModulesMap["StarMgr:4"] = "Bright stars with high proper motion";
+	}
 }
 
 
@@ -77,6 +159,16 @@ StelObjectP StelObjectMgr::searchByName(const QString &name) const
 	return rval;
 }
 
+StelObjectP StelObjectMgr::searchByID(const QString &type, const QString &id) const
+{
+	QMap<QString, StelObjectModule*>::const_iterator it = typeToModuleMap.constFind(type);
+	if(it!=typeToModuleMap.constEnd())
+	{
+		return (*it)->searchByID(id);;
+	}
+	qWarning()<<"StelObject type"<<type<<"unknown";
+	return Q_NULLPTR;
+}
 
 //! Find and select an object from its translated name
 //! @param nameI18n the case sensitive object translated name
@@ -193,8 +285,11 @@ StelObjectP StelObjectMgr::cleverFind(const StelCore* core, int x, int y) const
 *************************************************************************/
 void StelObjectMgr::unSelect(void)
 {
-	lastSelectedObjects.clear();
-	emit(selectedObjectChanged(StelModule::RemoveFromSelection));
+	if(!lastSelectedObjects.isEmpty())
+	{
+		lastSelectedObjects.clear();
+		emit(selectedObjectChanged(StelModule::RemoveFromSelection));
+	}
 }
 
 /*************************************************************************
@@ -242,41 +337,22 @@ QList<StelObjectP> StelObjectMgr::getSelectedObject(const QString& type)
 	return result;
 }
 
-
-/*************************************************************************
- Find and return the list of at most maxNbItem objects auto-completing
- passed object I18 name
-*************************************************************************/
-QStringList StelObjectMgr::listMatchingObjectsI18n(const QString& objPrefix, unsigned int maxNbItem, bool useStartOfWords) const
+/*****************************************************************************************
+ Find and return the list of at most maxNbItem objects auto-completing passed object name
+*******************************************************************************************/
+QStringList StelObjectMgr::listMatchingObjects(const QString& objPrefix, unsigned int maxNbItem, bool useStartOfWords, bool inEnglish) const
 {
 	QStringList result;
-
-	// For all StelObjectmodules..
-	foreach (const StelObjectModule* m, objectsModule)
+	if (maxNbItem <= 0)
 	{
-		// Get matching object for this module
-		QStringList matchingObj = m->listMatchingObjectsI18n(objPrefix, maxNbItem, useStartOfWords);
-		result += matchingObj;
-		maxNbItem-=matchingObj.size();
+		return result;
 	}
 
-	result.sort();
-	return result;
-}
-
-/*************************************************************************
- Find and return the list of at most maxNbItem objects auto-completing
- passed object English name
-*************************************************************************/
-QStringList StelObjectMgr::listMatchingObjects(const QString& objPrefix, unsigned int maxNbItem, bool useStartOfWords) const
-{
-	QStringList result;
-
 	// For all StelObjectmodules..
 	foreach (const StelObjectModule* m, objectsModule)
 	{
 		// Get matching object for this module
-		QStringList matchingObj = m->listMatchingObjects(objPrefix, maxNbItem, useStartOfWords);
+		QStringList matchingObj = m->listMatchingObjects(objPrefix, maxNbItem, useStartOfWords, inEnglish);
 		result += matchingObj;
 		maxNbItem-=matchingObj.size();
 	}
@@ -288,7 +364,7 @@ QStringList StelObjectMgr::listMatchingObjects(const QString& objPrefix, unsigne
 QStringList StelObjectMgr::listAllModuleObjects(const QString &moduleId, bool inEnglish) const
 {
 	// search for module
-	StelObjectModule* module = NULL;
+	StelObjectModule* module = Q_NULLPTR;
 	QStringList result, list;
 	QString objModule, objType;
 	bool subSet = false;
@@ -309,7 +385,7 @@ QStringList StelObjectMgr::listAllModuleObjects(const QString &moduleId, bool in
 			break;
 		}
 	}
-	if (module == NULL)
+	if (module == Q_NULLPTR)
 	{
 		qWarning() << "Can't find module with id " << objModule;
 		return QStringList();
@@ -324,70 +400,21 @@ QStringList StelObjectMgr::listAllModuleObjects(const QString &moduleId, bool in
 
 QMap<QString, QString> StelObjectMgr::objectModulesMap() const
 {
-	QMap<QString, QString> result;
-	foreach(const StelObjectModule* m, objectsModule)
+	return objModulesMap;
+}
+
+QVariantMap StelObjectMgr::getObjectInfo(const StelObjectP obj)
+{
+	QVariantMap map;
+	if (!obj)
 	{
-		result[m->objectName()] = m->getName();
-		// Celestial objects from Solar system by type
-		if (m->objectName()=="SolarSystem")
-		{
-			result["SolarSystem:planet"] = "Planets";
-			result["SolarSystem:moon"] = "Moons";
-			result["SolarSystem:asteroid"] = "Asteroids";
-			result["SolarSystem:comet"] = "Comets";
-			result["SolarSystem:plutino"] = "Plutinos";
-			result["SolarSystem:cubewano"] = "Cubewanos";
-			result["SolarSystem:dwarf planet"] = "Dwarf planets";
-			result["SolarSystem:scattered disc object"] = "Scattered disc objects";
-			result["SolarSystem:Oort cloud object"] = "Oort cloud objects";
-		}
-		// Deep-sky objects by type + amateur catalogues
-		if (m->objectName()=="NebulaMgr")
-		{
-			result["NebulaMgr:0"] = "Bright galaxies";
-			result["NebulaMgr:1"] = "Active galaxies";
-			result["NebulaMgr:2"] = "Radio galaxies";
-			result["NebulaMgr:3"] = "Interacting galaxies";
-			result["NebulaMgr:4"] = "Bright quasars";
-			result["NebulaMgr:5"] = "Star clusters";
-			result["NebulaMgr:6"] = "Open star clusters";
-			result["NebulaMgr:7"] = "Globular star clusters";
-			result["NebulaMgr:8"] = "Stellar associations";
-			result["NebulaMgr:9"] = "Star clouds";
-			result["NebulaMgr:10"] = "Nebulae";
-			result["NebulaMgr:11"] = "Planetary nebulae";
-			result["NebulaMgr:12"] = "Dark nebulae";
-			result["NebulaMgr:13"] = "Reflection nebulae";
-			result["NebulaMgr:14"] = "Bipolar nebulae";
-			result["NebulaMgr:15"] = "Emission nebulae";
-			result["NebulaMgr:16"] = "Clusters associated with nebulosity";
-			result["NebulaMgr:17"] = "HII regions";			
-			result["NebulaMgr:18"] = "Supernova remnants";
-			result["NebulaMgr:19"] = "Interstellar matter";
-			result["NebulaMgr:20"] = "Emission objects";
-			result["NebulaMgr:21"] = "BL Lac objects";
-			result["NebulaMgr:22"] = "Blazars";
-			result["NebulaMgr:23"] = "Molecular Clouds";
-			result["NebulaMgr:24"] = "Young Stellar Objects";
-			result["NebulaMgr:25"] = "Possible Quasars";
-			result["NebulaMgr:26"] = "Possible Planetary Nebulae";
-			result["NebulaMgr:27"] = "Protoplanetary Nebulae";
-			result["NebulaMgr:100"] = "Messier Catalogue";
-			result["NebulaMgr:101"] = "Caldwell Catalogue";
-			result["NebulaMgr:102"] = "Barnard Catalogue";
-			result["NebulaMgr:103"] = "Sharpless Catalogue";
-			result["NebulaMgr:104"] = "Van den Bergh Catalogue";
-			result["NebulaMgr:105"] = "The Catalogue of Rodgers, Campbell, and Whiteoak";
-			result["NebulaMgr:106"] = "Collinder Catalogue";
-			result["NebulaMgr:107"] = "Melotte Catalogue";
-			result["NebulaMgr:150"] = "Dwarf galaxies";
-		}
-		// Interesting stars
-		if (m->objectName()=="StarMgr")
-		{
-			result["StarMgr:0"] = "Interesting double stars";
-			result["StarMgr:1"] = "Interesting variable stars";
-		}
+		qDebug() << "getObjectInfo WARNING - object not found";
+		map.insert("found", false);
 	}
-	return result;
+	else
+	{
+		map=obj->getInfoMap(StelApp::getInstance().getCore());
+		map.insert("found", true);
+	}
+	return map;
 }

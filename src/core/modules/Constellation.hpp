@@ -39,11 +39,11 @@ class StelPainter;
 //! @class Constellation
 //! The Constellation class models a grouping of stars in a Sky Culture.
 //! Each Constellation consists of a list of stars identified by their
-//! @var abbreviation and Hipparcos catalogue numbers (taken from @file: constellationship.fab),
-//! another entry in @file constellation_names.eng.fab with the defining abbreviated name,
-//! @var nativeName, and translatable @var englishName (translation goes into @var nameI18),
-//! boundary shape from @file constellations_boundaries.dat and an (optional) artistic pictorial representation.
-//! GZ NEW: The @var nativeName should be accessible in a GUI option, so that e.g. original names as written in a
+//! abbreviation and Hipparcos catalogue numbers (taken from file: constellationship.fab),
+//! another entry in file constellation_names.eng.fab with the defining abbreviated name,
+//! nativeName, and translatable englishName (translation goes into nameI18),
+//! boundary shape from file constellations_boundaries.dat and an (optional) artistic pictorial representation.
+//! GZ NEW: The nativeName should be accessible in a GUI option, so that e.g. original names as written in a
 //! concrete book where a skyculture has been taken from can be assured even when translation is available.
 //! TODO: There should be a distinction between constellations and asterisms, which are "inofficial" figures within a sky culture.
 //! For example, Western sky culture has a "Big Dipper", "Coathanger", etc. These would be nice to see, but in different style.
@@ -51,6 +51,7 @@ class Constellation : public StelObject
 {
 	friend class ConstellationMgr;
 private:
+	static const QString CONSTELLATION_TYPE;
 	Constellation();
 	~Constellation();
 
@@ -61,20 +62,17 @@ private:
 	//! @param core the StelCore object
 	//! @param flags a set of InfoStringGroup items to include in the return value.
 	//! @return a QString a description of the constellation.
-	virtual QString getInfoString(const StelCore*, const InfoStringGroup& flags) const
-	{
-		if (flags&Name) return getNameI18n() + "(" + getShortName() + ")";
-		else return "";
-	}
+	virtual QString getInfoString(const StelCore*, const InfoStringGroup& flags) const;
 
 	//! Get the module/object type string.
 	//! @return "Constellation"
-	virtual QString getType() const {return "Constellation";}
+	virtual QString getType() const {return CONSTELLATION_TYPE;}
+	virtual QString getID() const { return abbreviation; }
 
 	//! observer centered J2000 coordinates.
 	virtual Vec3d getJ2000EquatorialPos(const StelCore*) const {return XYZname;}
 
-	virtual double getAngularSize(const StelCore*) const {Q_ASSERT(0); return 0;} // TODO
+	virtual double getAngularSize(const StelCore*) const {Q_ASSERT(0); return 0.;} // TODO
 
 	//! @param record string containing the following whitespace
 	//! separated fields: abbreviation - a three character abbreviation
@@ -96,7 +94,7 @@ private:
 	//! This member tests to see if a star is one of those which make up
 	//! the lines of a Constellation.
 	//! @return a pointer to the constellation which the star is a part of,
-	//! or NULL if the star is not part of a constellation
+	//! or Q_NULLPTR if the star is not part of a constellation
 	const Constellation* isStarIn(const StelObject*) const;
 
 	//! Get the brightest star in a Constellation.
@@ -107,8 +105,8 @@ private:
 
 	//! Get the translated name for the Constellation.
 	QString getNameI18n() const {return nameI18;}
-	//! Get the English name for the Constellation (returns the abbreviation).
-	QString getEnglishName() const {return abbreviation;}
+	//! Get the English name for the Constellation.
+	QString getEnglishName() const {return englishName;}
 	//! Get the short name for the Constellation (returns the abbreviation).
 	QString getShortName() const {return abbreviation;}
 	//! Draw the lines for the Constellation.
@@ -160,17 +158,18 @@ private:
 	//! For non-western, a skyculture designer must invent it. (usually 2-5 letters)
 	//! This MUST be filled and be unique within a sky culture.
 	QString abbreviation;
+	QString context;
 	//! Direction vector pointing on constellation name drawing position
 	Vec3d XYZname;
 	Vec3d XYname;
 	//! Number of segments in the lines
 	unsigned int numberOfSegments;
-	//! Month of start visibility of constellation (seasonal rules)
+	//! Month [1..12] of start visibility of constellation (seasonal rules)
 	int beginSeason;
-	//! Month of end visibility of constellation (seasonal rules)
+	//! Month [1..12] of end visibility of constellation (seasonal rules)
 	int endSeason;
 	//! List of stars forming the segments
-	StelObjectP* asterism;
+	StelObjectP* constellation;
 
 	StelTextureSP artTexture;
 	StelVertexArray artPolygon;
@@ -188,6 +187,9 @@ private:
 
 	static bool singleSelected;	
 	static bool seasonalRuleEnabled;
+	// set by ConstellationMgr to fade out art on small FOV values
+	// see LP:#1294483
+	static float artIntensityFovScale;
 };
 
 #endif // _CONSTELLATION_HPP_

@@ -1,6 +1,7 @@
 /*
  * Stellarium
  * Copyright (C) 2007 Fabien Chereau
+ * Copyright (C) 2016 Marcos Cardinot
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,7 +50,7 @@ public:
 	///////////////////////////////////////////////////////////////////////////
 	//! Add a new StelObject manager into the list of supported modules.
 	//! Registered modules can have selected objects
-	void registerStelObjectMgr(StelObjectModule* mgr);
+	void registerStelObjectMgr(StelObjectModule* m);
 
 	//! Find and select an object near given equatorial J2000 position.
 	//! @param core the StelCore instance to use for computations
@@ -78,19 +79,12 @@ public:
 	//! @return true if a object with the passed name was found
 	bool findAndSelect(const QString &name, StelModule::StelModuleSelectAction action=StelModule::ReplaceSelection);
 
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object I18n name.
+	//! Find and return the list of at most maxNbItem objects auto-completing the passed object name.
 	//! @param objPrefix the case insensitive first letters of the searched object
 	//! @param maxNbItem the maximum number of returned object names.
 	//! @param useStartOfWords the autofill mode for returned objects names
 	//! @return a list of matching object names by order of relevance, or an empty list if nothing match
-	QStringList listMatchingObjectsI18n(const QString& objPrefix, unsigned int maxNbItem=5, bool useStartOfWords=false) const;
-
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object English name.
-	//! @param objPrefix the case insensitive first letters of the searched object
-	//! @param maxNbItem the maximum number of returned object names.
-	//! @param useStartOfWords the autofill mode for returned objects names
-	//! @return a list of matching object names by order of relevance, or an empty list if nothing match
-	QStringList listMatchingObjects(const QString& objPrefix, unsigned int maxNbItem=5, bool useStartOfWords=false) const;
+	QStringList listMatchingObjects(const QString& objPrefix, unsigned int maxNbItem=5, bool useStartOfWords=false, bool inEnglish=true) const;
 
 	QStringList listAllModuleObjects(const QString& moduleId, bool inEnglish) const;
 	QMap<QString, QString> objectModulesMap() const;
@@ -113,7 +107,7 @@ public:
 	//! @return true if at least 1 object was sucessfully selected
 	bool setSelectedObject(const QList<StelObjectP>& objs, StelModule::StelModuleSelectAction action=StelModule::ReplaceSelection);
 
-	//! Get the list objects which was recently selected by the user.
+	//! Get the list of objects which was recently selected by the user.
 	const QList<StelObjectP>& getSelectedObject() const {return lastSelectedObjects;}
 
 	//! Return the list objects of type "withType" which was recently selected by the user.
@@ -131,12 +125,26 @@ public:
 	//! Find any kind of object by its standard program name.
 	StelObjectP searchByName(const QString &name) const;
 
+	//! Find an object of the given type and ID
+	//! @param type the type of the object as given by StelObject::getType()
+	//! @param id the ID of the object as given by StelObject::getID()
+	//! @return an null/invalid pointer when nothing is found, the given object otherwise.
+	//! @note
+	//! a StelObject may be found by multiple IDs (different catalog numbers, etc),
+	//! so StelObject::getID() of the returned object may not be the same as the query parameter \p id.
+	StelObjectP searchByID(const QString& type, const QString& id) const;
+
 	//! Set the radius in pixel in which objects will be searched when clicking on a point in sky.
 	void setObjectSearchRadius(float radius) {searchRadiusPixel=radius;}
 
 	//! Set the weight of the distance factor when choosing the best object to select.
 	//! Default to 1.
 	void setDistanceWeight(float newDistanceWeight) {distanceWeight=newDistanceWeight;}
+
+	//! Return a QMap of data about the object (calls obj->getInfoMap()).
+	//! If obj is valid, add an element ["found", true].
+	//! If obj is Q_NULLPTR, returns a 1-element map [["found", false]]
+	static QVariantMap getObjectInfo(const StelObjectP obj);
 
 signals:
 	//! Indicate that the selected StelObjects has changed.
@@ -146,6 +154,9 @@ signals:
 private:
 	// The list of StelObjectModule that are referenced in Stellarium
 	QList<StelObjectModule*> objectsModule;
+	QMap<QString, StelObjectModule*> typeToModuleMap;
+	QMap<QString, QString> objModulesMap;
+
 	// The last selected object in stellarium
 	QList<StelObjectP> lastSelectedObjects;
 	// Should selected object pointer be drawn

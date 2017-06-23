@@ -72,8 +72,6 @@ private:
 	QFile* currentDownloadFile;
 	class StelProgressController* progressBar;
 
-	QString userAgent;
-
 private slots:
 	void setNoSelectedInfo();
 	void setAllSelectedInfo();
@@ -94,6 +92,7 @@ private slots:
 	void setSphericMirror(bool);
 	void cursorTimeOutChanged();
 	void cursorTimeOutChanged(double) {cursorTimeOutChanged();}
+	void usageButtonsBackgroundChanged(bool b);
 
 	void updateStartPointForAzimuth(bool b);
 
@@ -102,6 +101,7 @@ private slots:
 	void cancelDownload();
 	void downloadFinished();
 	void downloadError(QNetworkReply::NetworkError);
+	void resetEphemControls();
 
 	//! Update the labels displaying the current default state
 	void updateConfigLabels();
@@ -115,7 +115,9 @@ private slots:
 	//! Save the current viewing option including landscape, location and sky culture
 	//! This doesn't include the current viewing direction, time and FOV since those
 	//! have specific controls
-	void saveCurrentViewOptions();
+	void saveAllSettings();
+	//! Save the current view direction and field of view.
+	void saveCurrentViewDirSettings();
 
 	//! Reset all stellarium options.
 	//! This basically replaces the config.ini by the default one
@@ -130,6 +132,14 @@ private slots:
 	void setDeltaTAlgorithm(int algorithmID);
 	void setDeltaTAlgorithmDescription();
 	void showCustomDeltaTEquationDialog();
+
+	void populateDateFormatsList();
+	void setDateFormat();
+
+	void populateTimeFormatsList();
+	void setTimeFormat();
+
+	void setButtonBarDTFormat();
 
 	#ifndef DISABLE_SCRIPTING
 	//! The selection of script in the script list has changed
@@ -147,6 +157,9 @@ private slots:
 	void populateScriptsList();
 	#endif
 	void setFixedDateTimeToCurrent();
+
+	void de430ButtonClicked();
+	void de431ButtonClicked();
 
 private:
 	StelGui* gui;

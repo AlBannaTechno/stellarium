@@ -60,7 +60,7 @@ bool ShortcutsFilterModel::filterAcceptsRow(int source_row, const QModelIndex &s
 
 
 ShortcutsDialog::ShortcutsDialog(QObject* parent) :
-	StelDialog(parent),
+	StelDialog("Shortcuts", parent),
 	ui(new Ui_shortcutsDialogForm),
 	filterModel(new ShortcutsFilterModel(this)),
 	mainModel(new QStandardItemModel(this))
@@ -72,7 +72,7 @@ ShortcutsDialog::~ShortcutsDialog()
 {
 	collisionItems.clear();
 	delete ui;
-	ui = NULL;
+	ui = Q_NULLPTR;
 }
 
 void ShortcutsDialog::drawCollisions()
@@ -280,7 +280,8 @@ void ShortcutsDialog::switchToEditors(const QModelIndex& index)
 void ShortcutsDialog::createDialogContent()
 {
 	ui->setupUi(dialog);
-	
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
+
 	resetModel();
 	filterModel->setSourceModel(mainModel);
 	filterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
@@ -412,19 +413,19 @@ void ShortcutsDialog::updateShortcutsItem(StelAction *action,
                                           QStandardItem *shortcutItem)
 {
 	QVariant shortcutId(action->getId());
-	if (shortcutItem == NULL)
+	if (shortcutItem == Q_NULLPTR)
 	{
 		// search for item
 		shortcutItem = findItemByData(shortcutId, Qt::UserRole, 0);
 	}
 	// we didn't find item, create and add new
-	QStandardItem* groupItem = NULL;
-	if (shortcutItem == NULL)
+	QStandardItem* groupItem = Q_NULLPTR;
+	if (shortcutItem == Q_NULLPTR)
 	{
 		// firstly search for group
 		QVariant groupId(action->getGroup());
 		groupItem = findItemByData(groupId, Qt::UserRole, 0);
-		if (groupItem == NULL)
+		if (groupItem == Q_NULLPTR)
 		{
 			// create and add new group to treeWidget
 			groupItem = updateGroup(action->getGroup());
@@ -478,7 +479,7 @@ void ShortcutsDialog::updateTreeData()
 
 bool ShortcutsDialog::itemIsEditable(QStandardItem *item)
 {
-	if (item == NULL) return false;
+	if (item == Q_NULLPTR) return false;
 	// non-editable items(not group items) have no Qt::ItemIsSelectable flag
 	return (Qt::ItemIsSelectable & item->flags());
 }

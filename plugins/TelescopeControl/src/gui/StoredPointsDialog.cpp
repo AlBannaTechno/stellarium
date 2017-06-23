@@ -21,7 +21,7 @@
 #include "StoredPointsDialog.hpp"
 #include "ui_storedPointsDialog.h"
 
-StoredPointsDialog::StoredPointsDialog()
+StoredPointsDialog::StoredPointsDialog(): StelDialog("TelescopeControlStoredPoints")
 {
 	ui = new Ui_StoredPoints;
 	storedPointsListModel = new QStandardItemModel(0, ColumnCount);
@@ -45,9 +45,11 @@ void StoredPointsDialog::createDialogContent()
 	//Inherited connect
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 
 	connect(ui->pushButtonAddPoint,   SIGNAL(clicked()), this, SLOT(buttonAddPressed()));
 	connect(ui->pushButtonRemovePoint,SIGNAL(clicked()), this, SLOT(buttonRemovePressed()));
+	connect(ui->pushButtonClearList,  SIGNAL(clicked()), this, SLOT(buttonClearPressed()));
 
 	connect(ui->pushButtonCurrent, SIGNAL(clicked()), this, SLOT(getCurrentObjectInfo()));
 	connect(ui->pushButtonCenter, SIGNAL(clicked()), this, SLOT(getCenterInfo()));
@@ -123,9 +125,16 @@ void StoredPointsDialog::buttonRemovePressed()
 	emit removeStoredPoint(number);
 }
 
+void StoredPointsDialog::buttonClearPressed()
+{
+	storedPointsListModel->clear();
+
+	emit clearStoredPoints();
+}
+
 void StoredPointsDialog::addModelRow(int number, QString name, QString RA, QString Dec)
 {
-	QStandardItem* tempItem = 0;
+	QStandardItem* tempItem = Q_NULLPTR;
 
 	tempItem = new QStandardItem(QString::number(number+1));
 	tempItem->setEditable(false);
@@ -167,7 +176,7 @@ void StoredPointsDialog::getCenterInfo()
 	projector->unProject(center[0], center[1], centerPosition);
 	double dec_j2000 = 0;
 	double ra_j2000 = 0;
-	StelUtils::rectToSphe(&ra_j2000,&dec_j2000,core->equinoxEquToJ2000(centerPosition));
+	StelUtils::rectToSphe(&ra_j2000,&dec_j2000,core->equinoxEquToJ2000(centerPosition, StelCore::RefractionOff)); // GZ for 0.15.2: Not sure about RefractionOff. This just keeps old behaviour.
 	ui->spinBoxRA->setRadians(ra_j2000);
 	ui->spinBoxDec->setRadians(dec_j2000);
 

@@ -35,26 +35,31 @@
 #include <QVariant>
 #include <QList>
 
+const QString Nova::NOVA_TYPE = QStringLiteral("Nova");
+
 Nova::Nova(const QVariantMap& map)
-		: initialized(false),
-		  designation(""),
-		  novaName(""),
-		  novaType(""),
-		  maxMagnitude(21.),
-		  minMagnitude(21.),
-		  peakJD(0.),
-		  m2(-1),
-		  m3(-1),
-		  m6(-1),
-		  m9(-1),
-		  RA(0.),
-		  Dec(0.),
-		  distance(0.)
+	: initialized(false)
+	, designation("")
+	, novaName("")
+	, novaType("")
+	, maxMagnitude(21.)
+	, minMagnitude(21.)
+	, peakJD(0.)
+	, m2(-1)
+	, m3(-1)
+	, m6(-1)
+	, m9(-1)
+	, RA(0.)
+	, Dec(0.)
+	, distance(0.)
 {
-	// return initialized if the mandatory fields are not present
-	if (!map.contains("designation"))
+	if (!map.contains("designation") || !map.contains("RA") || !map.contains("Dec"))
+	{
+		qWarning() << "Nova: INVALID nova!" << map.value("designation").toString();
+		qWarning() << "Nova: Please, check your 'novae.json' catalog!";
 		return;
-		
+	}
+
 	designation  = map.value("designation").toString();
 	novaName = map.value("name").toString();
 	novaType = map.value("type").toString();
@@ -77,7 +82,7 @@ Nova::~Nova()
 	//
 }
 
-QVariantMap Nova::getMap(void)
+QVariantMap Nova::getMap(void) const
 {
 	QVariantMap map;
 	map["designation"] = designation;
@@ -104,7 +109,16 @@ QString Nova::getEnglishName() const
 
 QString Nova::getNameI18n() const
 {
-	return novaName;
+	const StelTranslator& trans = StelApp::getInstance().getLocaleMgr().getSkyTranslator();
+	// Parse the nova name to get parts to translation
+	QRegExp nn("^Nova\\s+(\\w+|\\w+\\s+\\w+)\\s+(\\d+|\\d+\\s+#\\d+)$");
+	QString nameI18n = novaName;
+	if (nn.exactMatch(novaName))
+		nameI18n = QString("%1 %2 %3").arg(trans.qtranslate("Nova", "Nova template"), trans.qtranslate(nn.capturedTexts().at(1).trimmed(), "Genitive name of constellation"), nn.capturedTexts().at(2).trimmed());
+	else
+		nameI18n = trans.qtranslate(novaName);
+
+	return nameI18n;
 }
 
 QString Nova::getDesignation() const
@@ -125,7 +139,7 @@ QString Nova::getInfoString(const StelCore* core, const InfoStringGroup& flags) 
 
 	if (flags&Name)
 	{
-		QString name = novaName.isEmpty() ? QString("<h2>%1</h2>").arg(designation) : QString("<h2>%1 (%2)</h2>").arg(novaName).arg(designation);
+		QString name = novaName.isEmpty() ? QString("<h2>%1</h2>").arg(designation) : QString("<h2>%1 (%2)</h2>").arg(getNameI18n()).arg(designation);
 		oss << name;
 	}
 
@@ -156,6 +170,26 @@ QString Nova::getInfoString(const StelCore* core, const InfoStringGroup& flags) 
 
 	postProcessInfoString(str, flags);
 	return str;
+}
+
+
+QVariantMap Nova::getInfoMap(const StelCore *core) const
+{
+	QVariantMap map = StelObject::getInfoMap(core);
+
+	map["designation"] = designation;
+	map["name"] = novaName;
+	map["nova-type"] = novaType;
+	map["max-magnitude"] = maxMagnitude;
+	map["min-magnitude"] = minMagnitude;
+	map["peakJD"] = peakJD;
+	map["m2"] = m2;
+	map["m3"] = m3;
+	map["m6"] = m6;
+	map["m9"] = m9;
+	map["distance"] = distance;
+
+	return map;
 }
 
 Vec3f Nova::getInfoColor(void) const
@@ -308,8 +342,8 @@ void Nova::draw(StelCore* core, StelPainter* painter)
 	{
 		sd->computeRCMag(mag, &rcMag);
 		sd->drawPointSource(painter, Vec3f(XYZ[0],XYZ[1],XYZ[2]), rcMag, color, false);
-		painter->setColor(color[0], color[1], color[2], 1);
-		size = getAngularSize(NULL)*M_PI/180.*painter->getProjector()->getPixelPerRadAtCenter();
+		painter->setColor(color[0], color[1], color[2], 1.f);
+		size = getAngularSize(Q_NULLPTR)*M_PI/180.*painter->getProjector()->getPixelPerRadAtCenter();
 		shift = 6.f + size/1.8f;
 		if (labelsFader.getInterstate()<=0.f && (mag+5.f)<mlimit && smgr->getFlagLabels())
 		{

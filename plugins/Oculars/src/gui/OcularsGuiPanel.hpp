@@ -38,7 +38,7 @@ class OcularsGuiPanel : public QGraphicsWidget
 
 public:
 	OcularsGuiPanel(Oculars* ocularsPlugin,
-	                QGraphicsWidget * parent = 0,
+			QGraphicsWidget * parent = Q_NULLPTR,
 	                Qt::WindowFlags wFlags = 0);
 	~OcularsGuiPanel();
 
@@ -107,9 +107,12 @@ private:
 	QGraphicsTextItem* fieldOcularAfov;
 	QGraphicsTextItem* fieldCcdName;
 	QGraphicsTextItem* fieldCcdDimensions;
+	QGraphicsTextItem* fieldCcdHScale;
+	QGraphicsTextItem* fieldCcdVScale;
 	QGraphicsTextItem* fieldCcdRotation;
 	QGraphicsTextItem* fieldTelescopeName;
 	QGraphicsTextItem* fieldMagnification;
+	QGraphicsTextItem* fieldExitPupil;
 	QGraphicsTextItem* fieldFov;
 
 	//Sensor frame rotation controls

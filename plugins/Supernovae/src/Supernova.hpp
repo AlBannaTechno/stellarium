@@ -42,23 +42,44 @@ class Supernova : public StelObject
 {
 	friend class Supernovae;
 public:
+	static const QString SUPERNOVA_TYPE;
+
 	//! @param id The official designation for a supernova, e.g. "SN 1054A"
 	Supernova(const QVariantMap& map);
 	~Supernova();
 
-	//! Get a QVariantMap which describes the supernova.  Could be used to
-	//! create a duplicate.
-	QVariantMap getMap(void);
+	//! Get a QVariantMap which describes the supernova.  Could be used to create a duplicate.
+	//! - designation
+	//! - sntype
+	//! - maxMagnitude
+	//! - peakJD
+	//! - snra
+	//! - snde
+	//! - note
+	//! - distance
+	QVariantMap getMap(void) const;
 
 	virtual QString getType(void) const
 	{
-		return "Supernova";
+		return SUPERNOVA_TYPE;
+	}
+
+	virtual QString getID(void) const
+	{
+		return designation;
 	}
 
 	//! Get an HTML string to describe the object
 	//! @param core A pointer to the core
 	//! @flags a set of flags with information types to include.
 	virtual QString getInfoString(const StelCore* core, const InfoStringGroup& flags) const;
+	//! Return a map like StelObject::getInfoMap(), but with a few extra tags also available in getMap().
+	//! - sntype
+	//! - max-magnitude
+	//! - peakJD
+	//! - note
+	//! - distance
+	virtual QVariantMap getInfoMap(const StelCore *core) const;
 	virtual Vec3f getInfoColor(void) const;
 	virtual Vec3d getJ2000EquatorialPos(const StelCore*) const
 	{

@@ -8,13 +8,9 @@ INCLUDE_DIRECTORIES(
 LINK_DIRECTORIES(${BUILD_DIR}/src)
 
 SET(Scenery3d_SRCS
-     AABB.hpp
-     AABB.cpp
      Frustum.hpp
      Frustum.cpp
      GLFuncs.hpp
-     Line.hpp
-     Line.cpp
      Plane.hpp
      Plane.cpp
      SPolygon.hpp
@@ -24,10 +20,14 @@ SET(Scenery3d_SRCS
      S3DEnum.hpp
      SceneInfo.hpp
      SceneInfo.cpp
+     S3DScene.hpp
+     S3DScene.cpp
      Scenery3d.hpp
      Scenery3d.cpp
-     Scenery3dMgr.hpp
-     Scenery3dMgr.cpp
+     Scenery3dRemoteControlService.hpp
+     Scenery3dRemoteControlService.cpp
+     S3DRenderer.hpp
+     S3DRenderer.cpp
      gui/Scenery3dDialog.hpp
      gui/Scenery3dDialog_p.hpp
      gui/Scenery3dDialog.cpp
@@ -36,8 +36,6 @@ SET(Scenery3d_SRCS
      gui/StoredViewDialog.cpp
      ShaderManager.hpp
      ShaderManager.cpp
-     OBJ.hpp
-     OBJ.cpp
      Heightmap.hpp
      Heightmap.cpp
 )
@@ -60,14 +58,9 @@ SET(Scenery3d_UIS
 )
 QT5_WRAP_UI(Scenery3d_UIS_H ${Scenery3d_UIS})
 
-SET(extLinkerOption  ${QT_LIBRARIES} ${JPEG_LIBRARIES} ${PNG_LIBRARIES} ${OPENGL_LIBRARIES}  )
-
 ############### For building the static library ######################
 ADD_LIBRARY(Scenery3d-static STATIC ${Scenery3d_SRCS} ${Scenery3d_RES_CXX} ${Scenery3d_UIS_H} ${Scenery3d_MOC_SRCS} )
-QT5_USE_MODULES(Scenery3d-static Core Concurrent Gui Widgets)
+TARGET_LINK_LIBRARIES(Scenery3d-static Qt5::Core Qt5::Concurrent Qt5::Gui ${STEL_GLES_LIBS} Qt5::Widgets)
 SET_TARGET_PROPERTIES(Scenery3d-static PROPERTIES OUTPUT_NAME "Scenery3d")
-TARGET_LINK_LIBRARIES(Scenery3d-static ${extLinkerOption})
 SET_TARGET_PROPERTIES(Scenery3d-static PROPERTIES COMPILE_FLAGS "-DQT_STATICPLUGIN")
 ADD_DEPENDENCIES(AllStaticPlugins Scenery3d-static)
-
-

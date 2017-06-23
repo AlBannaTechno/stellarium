@@ -20,12 +20,15 @@
 #include "StelApp.hpp"
 
 #include "StelCore.hpp"
+#include "StelMainView.hpp"
 #include "StelUtils.hpp"
 #include "StelTextureMgr.hpp"
 #include "StelObjectMgr.hpp"
 #include "ConstellationMgr.hpp"
+#include "AsterismMgr.hpp"
 #include "NebulaMgr.hpp"
 #include "LandscapeMgr.hpp"
+#include "CustomObjectMgr.hpp"
 #include "GridLinesMgr.hpp"
 #include "MilkyWay.hpp"
 #include "ZodiacalLight.hpp"
@@ -36,8 +39,9 @@
 #include "StelIniParser.hpp"
 #include "StelProjector.hpp"
 #include "StelLocationMgr.hpp"
+#include "ToastMgr.hpp"
 #include "StelActionMgr.hpp"
-
+#include "StelPropertyMgr.hpp"
 #include "StelProgressController.hpp"
 #include "StelModuleMgr.hpp"
 #include "StelLocaleMgr.hpp"
@@ -77,6 +81,10 @@
 #include <QCoreApplication>
 #include <QScreen>
 #include <QDateTime>
+#ifdef ENABLE_SPOUT
+#include <QMessageBox>
+#include "SpoutSender.hpp"
+#endif
 
 #ifdef USE_STATIC_PLUGIN_HELLOSTELMODULE
 Q_IMPORT_PLUGIN(HelloStelModuleStelPluginInterface)
@@ -120,10 +128,6 @@ Q_IMPORT_PLUGIN(TelescopeControlStelPluginInterface)
 
 #ifdef USE_STATIC_PLUGIN_SOLARSYSTEMEDITOR
 Q_IMPORT_PLUGIN(SolarSystemEditorStelPluginInterface)
-#endif
-
-#ifdef USE_STATIC_PLUGIN_TIMEZONECONFIGURATION
-Q_IMPORT_PLUGIN(TimeZoneConfigurationStelPluginInterface)
 #endif
 
 #ifdef USE_STATIC_PLUGIN_METEORSHOWERS
@@ -174,9 +178,18 @@ Q_IMPORT_PLUGIN(ObservabilityStelPluginInterface)
 Q_IMPORT_PLUGIN(Scenery3dStelPluginInterface)
 #endif
 
+#ifdef USE_STATIC_PLUGIN_REMOTECONTROL
+Q_IMPORT_PLUGIN(RemoteControlStelPluginInterface)
+#endif
+
+#ifdef USE_STATIC_PLUGIN_REMOTESYNC
+Q_IMPORT_PLUGIN(RemoteSyncStelPluginInterface)
+#endif
+
 // Initialize static variables
-StelApp* StelApp::singleton = NULL;
+StelApp* StelApp::singleton = Q_NULLPTR;
 qint64 StelApp::startMSecs = 0;
+float StelApp::animationScale = 1.f;
 
 void StelApp::initStatic()
 {
@@ -191,50 +204,53 @@ void StelApp::deinitStatic()
 /*************************************************************************
  Create and initialize the main Stellarium application.
 *************************************************************************/
-StelApp::StelApp(QObject* parent)
+StelApp::StelApp(StelMainView *parent)
 	: QObject(parent)
-	, core(NULL)
-	, planetLocationMgr(NULL)
-	, audioMgr(NULL)
-	, videoMgr(NULL)
-	, skyImageMgr(NULL)
+	, mainWin(parent)
+	, core(Q_NULLPTR)
+	, moduleMgr(Q_NULLPTR)
+	, localeMgr(Q_NULLPTR)
+	, skyCultureMgr(Q_NULLPTR)
+	, actionMgr(Q_NULLPTR)
+	, propMgr(Q_NULLPTR)
+	, textureMgr(Q_NULLPTR)
+	, stelObjectMgr(Q_NULLPTR)
+	, planetLocationMgr(Q_NULLPTR)
+	, networkAccessManager(Q_NULLPTR)
+	, audioMgr(Q_NULLPTR)
+	, videoMgr(Q_NULLPTR)
+	, skyImageMgr(Q_NULLPTR)
 #ifndef DISABLE_SCRIPTING
-	, scriptAPIProxy(NULL)
-	, scriptMgr(NULL)
+	, scriptAPIProxy(Q_NULLPTR)
+	, scriptMgr(Q_NULLPTR)
 #endif
-	, stelGui(NULL)
+	, stelGui(Q_NULLPTR)
 	, devicePixelsPerPixel(1.f)
 	, globalScalingRatio(1.f)
 	, fps(0)
 	, frame(0)
-	, timefr(0.)
-	, timeBase(0.)
+	, frameTimeAccum(0.)
 	, flagNightVision(false)
-	, confSettings(NULL)
+	, confSettings(Q_NULLPTR)
 	, initialized(false)
 	, saveProjW(-1)
 	, saveProjH(-1)
+	, nbDownloadedFiles(0)
+	, totalDownloadedSize(0)
+	, nbUsedCache(0)
+	, totalUsedCacheSize(0)
 	, baseFontSize(13)
-	, renderBuffer(NULL)
-	, viewportEffect(NULL)
+	, renderBuffer(Q_NULLPTR)
+	, viewportEffect(Q_NULLPTR)
+	, gl(Q_NULLPTR)
 	, flagShowDecimalDegrees(false)
 	, flagUseAzimuthFromSouth(false)
+	#ifdef ENABLE_SPOUT
+	, spoutSender(Q_NULLPTR)
+	#endif
+	, currentFbo(0)
 {
-	// Stat variables
-	nbDownloadedFiles=0;
-	totalDownloadedSize=0;
-	nbUsedCache=0;
-	totalUsedCacheSize=0;
-
 	setObjectName("StelApp");
-
-	skyCultureMgr=NULL;
-	localeMgr=NULL;
-	stelObjectMgr=NULL;
-	textureMgr=NULL;
-	moduleMgr=NULL;
-	networkAccessManager=NULL;
-	actionMgr = NULL;
 
 	// Can't create 2 StelApp instances
 	Q_ASSERT(!singleton);
@@ -263,21 +279,22 @@ StelApp::~StelApp()
 	moduleMgr->unloadModule("StelObjectMgr", false);// We need to delete it afterward
 	StelModuleMgr* tmp = moduleMgr;
 	moduleMgr = new StelModuleMgr(); // Create a secondary instance to avoid crashes at other deinit
-	delete tmp; tmp=NULL;
-	delete skyImageMgr; skyImageMgr=NULL;
-	delete core; core=NULL;
-	delete skyCultureMgr; skyCultureMgr=NULL;
-	delete localeMgr; localeMgr=NULL;
-	delete audioMgr; audioMgr=NULL;
-	delete videoMgr; videoMgr=NULL;
-	delete stelObjectMgr; stelObjectMgr=NULL; // Delete the module by hand afterward
-	delete textureMgr; textureMgr=NULL;
-	delete planetLocationMgr; planetLocationMgr=NULL;
-	delete moduleMgr; moduleMgr=NULL; // Delete the secondary instance
-	delete actionMgr; actionMgr = NULL;
+	delete tmp; tmp=Q_NULLPTR;
+	delete skyImageMgr; skyImageMgr=Q_NULLPTR;
+	delete core; core=Q_NULLPTR;
+	delete skyCultureMgr; skyCultureMgr=Q_NULLPTR;
+	delete localeMgr; localeMgr=Q_NULLPTR;
+	delete audioMgr; audioMgr=Q_NULLPTR;
+	delete videoMgr; videoMgr=Q_NULLPTR;
+	delete stelObjectMgr; stelObjectMgr=Q_NULLPTR; // Delete the module by hand afterward
+	delete textureMgr; textureMgr=Q_NULLPTR;
+	delete planetLocationMgr; planetLocationMgr=Q_NULLPTR;
+	delete moduleMgr; moduleMgr=Q_NULLPTR; // Delete the secondary instance
+	delete actionMgr; actionMgr = Q_NULLPTR;
+	delete propMgr; propMgr = Q_NULLPTR;
 
 	Q_ASSERT(singleton);
-	singleton = NULL;
+	singleton = Q_NULLPTR;
 }
 
 void StelApp::setupNetworkProxy()
@@ -375,8 +392,14 @@ void StelApp::initScriptMgr()
 void StelApp::initScriptMgr() {}
 #endif
 
+QStringList StelApp::getCommandlineArguments()
+{
+	return qApp->property("stelCommandLine").toStringList();
+}
+
 void StelApp::init(QSettings* conf)
 {
+	gl = QOpenGLContext::currentContext()->functions();
 	confSettings = conf;
 
 	devicePixelsPerPixel = QOpenGLContext::currentContext()->screen()->devicePixelRatio();
@@ -389,11 +412,13 @@ void StelApp::init(QSettings* conf)
 
 	// Initialize AFTER creation of openGL context
 	textureMgr = new StelTextureMgr();
-	textureMgr->init();
 
 	networkAccessManager = new QNetworkAccessManager(this);
 	// Activate http cache if Qt version >= 4.5
 	QNetworkDiskCache* cache = new QNetworkDiskCache(networkAccessManager);
+	//make maximum cache size configurable (in MB)
+	//the default Qt value (50 MB) is quite low, especially for DSS
+	cache->setMaximumCacheSize(confSettings->value("main/network_cache_size",300).toInt() * 1024 * 1024);
 	QString cachePath = StelFileMgr::getCacheDir();
 
 	qDebug() << "Cache directory is: " << QDir::toNativeSeparators(cachePath);
@@ -401,15 +426,18 @@ void StelApp::init(QSettings* conf)
 	networkAccessManager->setCache(cache);
 	connect(networkAccessManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(reportFileDownloadFinished(QNetworkReply*)));
 
+	//create non-StelModule managers
+	propMgr = new StelPropertyMgr();
+	localeMgr = new StelLocaleMgr();
+	skyCultureMgr = new StelSkyCultureMgr();
+	propMgr->registerObject(skyCultureMgr);
+	planetLocationMgr = new StelLocationMgr();
+	actionMgr = new StelActionMgr();
+
 	// Stel Object Data Base manager
 	stelObjectMgr = new StelObjectMgr();
 	stelObjectMgr->init();
-	getModuleMgr().registerModule(stelObjectMgr);
-
-	localeMgr = new StelLocaleMgr();
-	skyCultureMgr = new StelSkyCultureMgr();
-	planetLocationMgr = new StelLocationMgr();
-	actionMgr = new StelActionMgr();
+	getModuleMgr().registerModule(stelObjectMgr);	
 
 	localeMgr->init();
 
@@ -445,6 +473,11 @@ void StelApp::init(QSettings* conf)
 	skyImageMgr->init();
 	getModuleMgr().registerModule(skyImageMgr);
 
+	// Toast surveys
+	ToastMgr* toasts = new ToastMgr();
+	toasts->init();
+	getModuleMgr().registerModule(toasts);
+
 	// Init audio manager
 	audioMgr = new StelAudioMgr();
 
@@ -454,7 +487,12 @@ void StelApp::init(QSettings* conf)
 	getModuleMgr().registerModule(videoMgr);
 
 	// Constellations
-	ConstellationMgr* asterisms = new ConstellationMgr(hip_stars);
+	ConstellationMgr* constellations = new ConstellationMgr(hip_stars);
+	constellations->init();
+	getModuleMgr().registerModule(constellations);
+
+	// Asterisms
+	AsterismMgr* asterisms = new AsterismMgr(hip_stars);
 	asterisms->init();
 	getModuleMgr().registerModule(asterisms);
 
@@ -479,6 +517,11 @@ void StelApp::init(QSettings* conf)
 
 	skyCultureMgr->init();
 
+	// Init custom objects
+	CustomObjectMgr* custObj = new CustomObjectMgr();
+	custObj->init();
+	getModuleMgr().registerModule(custObj);
+
 	//Create the script manager here, maybe some modules/plugins may want to connect to it
 	//It has to be initialized later after all modules have been loaded by calling initScriptMgr
 #ifndef DISABLE_SCRIPTING
@@ -501,8 +544,48 @@ void StelApp::init(QSettings* conf)
 	actionMgr->addAction("actionShow_Night_Mode", N_("Display Options"), N_("Night mode"), this, "nightMode", "Ctrl+N");
 
 	setFlagShowDecimalDegrees(confSettings->value("gui/flag_show_decimal_degrees", false).toBool());
-	setFlagOldAzimuthUsage(confSettings->value("gui/flag_use_azimuth_from_south", false).toBool());
+	setFlagSouthAzimuthUsage(confSettings->value("gui/flag_use_azimuth_from_south", false).toBool());
+
+	// Animation
+	animationScale = confSettings->value("gui/pointer_animation_speed", 1.f).toFloat();
 	
+#ifdef ENABLE_SPOUT
+	//qDebug() << "Property spout is" << qApp->property("spout").toString();
+	//qDebug() << "Property spoutName is" << qApp->property("spoutName").toString();
+	if (qApp->property("spout").toString() != "none")
+	{
+		//if we are on windows and we have GLES, we are most likely on ANGLE
+		bool isANGLE=QOpenGLContext::currentContext()->isOpenGLES();
+
+		if (isANGLE)
+		{
+			qCritical() << "SPOUT: Does not run in ANGLE/OpenGL ES mode!";
+		}
+		else
+		{
+			// Create the SpoutSender object.
+			QString spoutName = qApp->property("spoutName").toString();
+			if(spoutName.isEmpty())
+				spoutName = "stellarium";
+
+			spoutSender = new SpoutSender(spoutName);
+
+			if (!spoutSender->isValid())
+			{
+				QMessageBox::warning(0, "Stellarium SPOUT", q_("Cannot create Spout sender. See log for details."), QMessageBox::Ok);
+				delete spoutSender;
+				spoutSender = Q_NULLPTR;
+				qApp->setProperty("spout", "");
+			}
+		}
+
+	}
+	else
+	{
+		qApp->setProperty("spout", "");
+	}
+#endif
+
 	initialized = true;
 }
 
@@ -516,9 +599,11 @@ void StelApp::initPlugIns()
 		if (i.loadAtStartup==false)
 			continue;
 		StelModule* m = moduleMgr->loadPlugin(i.info.id);
-		if (m!=NULL)
+		if (m!=Q_NULLPTR)
 		{
 			moduleMgr->registerModule(m, true);
+			//load extensions after the module is registered
+			moduleMgr->loadExtensions(i.info.id);
 			m->init();
 		}
 	}
@@ -526,6 +611,10 @@ void StelApp::initPlugIns()
 
 void StelApp::deinit()
 {
+#ifdef 	ENABLE_SPOUT
+	delete spoutSender;
+	spoutSender = Q_NULLPTR;
+#endif
 #ifndef DISABLE_SCRIPTING
 	if (scriptMgr->scriptIsRunning())
 		scriptMgr->stopScript();
@@ -533,14 +622,13 @@ void StelApp::deinit()
 	QCoreApplication::processEvents();
 	getModuleMgr().unloadAllPlugins();
 	QCoreApplication::processEvents();
-	
 	StelPainter::deinitGLShaders();
 }
 
 
 StelProgressController* StelApp::addProgressBar()
 {
-	StelProgressController* p = new StelProgressController();
+	StelProgressController* p = new StelProgressController(this);
 	progressControllers.append(p);
 	emit(progressBarAdded(p));
 	return p;
@@ -560,13 +648,13 @@ void StelApp::update(double deltaTime)
 		return;
 
 	++frame;
-	timefr+=deltaTime;
-	if (timefr-timeBase > 1.)
+	frameTimeAccum+=deltaTime;
+	if (frameTimeAccum > 1.)
 	{
 		// Calc the FPS rate every seconds
-		fps=(double)frame/(timefr-timeBase);
+		fps=(double)frame/frameTimeAccum;
 		frame = 0;
-		timeBase+=1.;
+		frameTimeAccum=0.;
 	}
 		
 	core->update(deltaTime);
@@ -590,16 +678,15 @@ void StelApp::prepareRenderBuffer()
 		StelProjector::StelProjectorParams params = core->getCurrentStelProjectorParams();
 		int w = params.viewportXywh[2];
 		int h = params.viewportXywh[3];
-		viewportEffect = new StelViewportDistorterFisheyeToSphericMirror(w, h);
-		renderBuffer = new QOpenGLFramebufferObject(w, h, QOpenGLFramebufferObject::CombinedDepthStencil);
+		renderBuffer = new QOpenGLFramebufferObject(w, h, QOpenGLFramebufferObject::Depth); // we only need depth here
 	}
 	renderBuffer->bind();
 }
 
-void StelApp::applyRenderBuffer()
+void StelApp::applyRenderBuffer(GLuint drawFbo)
 {
 	if (!renderBuffer) return;
-	renderBuffer->release();
+	GL(gl->glBindFramebuffer(GL_FRAMEBUFFER, drawFbo));
 	viewportEffect->paintViewportBuffer(renderBuffer);
 }
 
@@ -608,7 +695,15 @@ void StelApp::draw()
 {
 	if (!initialized)
 		return;
+
+	//find out which framebuffer is the current one
+	//this is usually NOT the "zero" FBO, but one provided by QOpenGLWidget
+	GLint drawFbo;
+	GL(gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &drawFbo));
+
 	prepareRenderBuffer();
+	currentFbo = renderBuffer ? renderBuffer->handle() : drawFbo;
+
 	core->preDraw();
 
 	const QList<StelModule*> modules = moduleMgr->getCallOrders(StelModule::ActionDraw);
@@ -617,26 +712,37 @@ void StelApp::draw()
 		module->draw(core);
 	}
 	core->postDraw();
-	applyRenderBuffer();
+#ifdef ENABLE_SPOUT
+	// At this point, the sky scene has been drawn, but no GUI panels.
+	if(spoutSender)
+		spoutSender->captureAndSendFrame(drawFbo);
+#endif
+	applyRenderBuffer(drawFbo);
+
 }
 
 /*************************************************************************
  Call this when the size of the GL window has changed
 *************************************************************************/
-void StelApp::glWindowHasBeenResized(float x, float y, float w, float h)
+void StelApp::glWindowHasBeenResized(const QRectF& rect)
 {
 	if (core)
-		core->windowHasBeenResized(x, y, w, h);
+		core->windowHasBeenResized(rect.x(), rect.y(), rect.width(), rect.height());
 	else
 	{
-		saveProjW = w;
-		saveProjH = h;
+		saveProjW = rect.width();
+		saveProjH = rect.height();
 	}
 	if (renderBuffer)
 	{
+		ensureGLContextCurrent();
 		delete renderBuffer;
-		renderBuffer = NULL;
+		renderBuffer = Q_NULLPTR;
 	}
+#ifdef ENABLE_SPOUT
+	if (spoutSender)
+		spoutSender->resize(rect.width(),rect.height());
+#endif
 }
 
 // Handle mouse clics
@@ -701,7 +807,7 @@ void StelApp::handleWheel(QWheelEvent* event)
 }
 
 // Handle mouse move
-void StelApp::handleMove(float x, float y, Qt::MouseButtons b)
+bool StelApp::handleMove(float x, float y, Qt::MouseButtons b)
 {
 	if (viewportEffect)
 		viewportEffect->distortXY(x, y);
@@ -709,8 +815,9 @@ void StelApp::handleMove(float x, float y, Qt::MouseButtons b)
 	foreach (StelModule* i, moduleMgr->getCallOrders(StelModule::ActionHandleMouseMoves))
 	{
 		if (i->handleMouseMoves(x*devicePixelsPerPixel, y*devicePixelsPerPixel, b))
-			return;
+			return true;
 	}
+	return false;
 }
 
 // Handle key press and release
@@ -770,11 +877,9 @@ void StelApp::updateI18n()
 #endif
 }
 
-// Update and reload sky culture informations everywhere in the program
-void StelApp::updateSkyCulture()
+void StelApp::ensureGLContextCurrent()
 {
-	QString skyCultureDir = getSkyCultureMgr().getCurrentSkyCultureID();
-	emit(skyCultureChanged(skyCultureDir));
+	mainWin->glContextMakeCurrent();
 }
 
 // Return the time since when stellarium is running in second.
@@ -783,6 +888,11 @@ double StelApp::getTotalRunTime()
 	return (double)(QDateTime::currentMSecsSinceEpoch() - StelApp::startMSecs)/1000.;
 }
 
+// Return the scaled time since when stellarium is running in second.
+double StelApp::getAnimationTime()
+{
+	return (double)(QDateTime::currentMSecsSinceEpoch() - StelApp::startMSecs)*StelApp::animationScale/1000.;
+}
 
 void StelApp::reportFileDownloadFinished(QNetworkReply* reply)
 {
@@ -822,13 +932,14 @@ void StelApp::setViewportEffect(const QString& name)
 	if (name == getViewportEffect()) return;
 	if (renderBuffer)
 	{
+		ensureGLContextCurrent();
 		delete renderBuffer;
-		renderBuffer = NULL;
+		renderBuffer = Q_NULLPTR;
 	}
 	if (viewportEffect)
 	{
 		delete viewportEffect;
-		viewportEffect = NULL;
+		viewportEffect = Q_NULLPTR;
 	}
 	if (name == "none") return;
 
@@ -851,4 +962,22 @@ QString StelApp::getViewportEffect() const
 	if (viewportEffect)
 		return viewportEffect->getName();
 	return "none";
+}
+
+// Diagnostics
+void StelApp::dumpModuleActionPriorities(StelModule::StelModuleActionName actionName)
+{
+	const QList<StelModule*> modules = moduleMgr->getCallOrders(actionName);
+#if QT_VERSION >= 0x050500
+	QMetaEnum me = QMetaEnum::fromType<StelModule::StelModuleActionName>();
+	qDebug() << "Module Priorities for action named" << me.valueToKey(actionName);
+#else
+	qDebug() << "Module Priorities for action named" << actionName;
+#endif
+
+	foreach(StelModule* module, modules)
+	{
+		module->draw(core);
+		qDebug() << " -- " << module->getCallOrder(actionName) << "Module: " << module->objectName();
+	}
 }

@@ -24,6 +24,7 @@
  */
 
 #include "TelescopeClient.hpp"
+#include "TelescopeClientJsonRts2.hpp"
 #include "TelescopeClientDirectLx200.hpp"
 #include "TelescopeClientDirectNexStar.hpp"
 #include "StelUtils.hpp"
@@ -46,6 +47,7 @@
 	#include <sys/time.h>
 #endif
 
+const QString TelescopeClient::TELESCOPECLIENT_TYPE = QStringLiteral("Telescope");
 
 TelescopeClient *TelescopeClient::create(const QString &url)
 {
@@ -73,7 +75,7 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 	else
 	{
 		qWarning() << "WARNING - telescope definition" << url << "not recognised";
-		return NULL;
+		return Q_NULLPTR;
 	}
 
 	Equinox eq = EquinoxJ2000;
@@ -82,7 +84,7 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 
 	qDebug() << "Creating telescope" << url << "; name/type/equinox/params:" << name << type << ((eq == EquinoxJNow) ? "JNow" : "J2000") << params;
 
-	TelescopeClient * newTelescope = 0;
+	TelescopeClient * newTelescope = Q_NULLPTR;
 	
 	//if (type == "Dummy")
 	if (type == "TelescopeServerDummy")
@@ -92,6 +94,10 @@ TelescopeClient *TelescopeClient::create(const QString &url)
 	else if (type == "TCP")
 	{
 		newTelescope = new TelescopeTCP(name, params, eq);
+	}
+	else if (type == "RTS2")
+	{
+		newTelescope = new TelescopeClientJsonRts2(name, params, eq);
 	}
 	else if (type == "TelescopeServerLx200") //BM: One of the rare occasions of painless extension
 	{
@@ -131,6 +137,8 @@ QString TelescopeClient::getInfoString(const StelCore* core, const InfoStringGro
 	}
 
 	oss << getPositionInfoString(core, flags);
+
+	oss << getTelescopeInfoString(core, flags);
 
 	postProcessInfoString(str, flags);
 
@@ -258,8 +266,10 @@ void TelescopeTCP::hangup(void)
 //! queues a GOTO command with the specified position to the write buffer.
 //! For the data format of the command see the
 //! "Stellarium telescope control protocol" text file
-void TelescopeTCP::telescopeGoto(const Vec3d &j2000Pos)
+void TelescopeTCP::telescopeGoto(const Vec3d &j2000Pos, StelObjectP selectObject)
 {
+	Q_UNUSED(selectObject);
+
 	if (!isConnected())
 		return;
 
@@ -267,7 +277,7 @@ void TelescopeTCP::telescopeGoto(const Vec3d &j2000Pos)
 	if (equinox == EquinoxJNow)
 	{
 		const StelCore* core = StelApp::getInstance().getCore();
-		position = core->j2000ToEquinoxEqu(j2000Pos);
+		position = core->j2000ToEquinoxEqu(j2000Pos, StelCore::RefractionOff);
 	}
 
 	if (writeBufferEnd - writeBuffer + 20 < (int)sizeof(writeBuffer))
@@ -434,7 +444,7 @@ void TelescopeTCP::performReading(void)
 					if (equinox == EquinoxJNow)
 					{
 						const StelCore* core = StelApp::getInstance().getCore();
-						j2000Position = core->equinoxEquToJ2000(position);
+						j2000Position = core->equinoxEquToJ2000(position, StelCore::RefractionOff);
 					}
 					interpolatedPosition.add(j2000Position, getNow(), server_micros, status);
 				}

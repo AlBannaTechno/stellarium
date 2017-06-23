@@ -84,13 +84,7 @@ public:
 	void readSettingsFromConfig(void);
 
 	//! Save the settings to the main configuration file.
-	void saveSettingsToConfig(void);
-
-	//! Get solution of equation of time
-	//! Source: J. Meeus "Astronomical Algorithms" (2nd ed., with corrections as of August 10, 2009) p.183-187.
-	//! @param JDE JD in Dynamical Time (previously called Ephemeris Time)
-	//! @return time in minutes
-	double getSolutionEquationOfTime(const double JDE) const;
+	void saveSettingsToConfig(void) const;
 
 	//! Is plugin enabled?
 	bool isEnabled() const
@@ -99,7 +93,7 @@ public:
 	}
 
 	//! Get font size for messages
-	int getFontSize(void)
+	int getFontSize(void) const
 	{
 		return fontSize;
 	}
@@ -177,6 +171,7 @@ class EquationOfTimeStelPluginInterface : public QObject, public StelPluginInter
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /* _EQUATIONOFTIME_HPP_ */

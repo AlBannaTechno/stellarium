@@ -97,6 +97,7 @@ struct TleData
 	QString name;
 	QString first;
 	QString second;
+	int status;
 	//! Flag indicating whether this satellite should be added.
 	//! See Satellites::autoAddEnabled.
 	bool addThis;
@@ -145,10 +146,12 @@ class Satellites : public StelObjectModule
 	Q_OBJECT
 	Q_PROPERTY(bool hintsVisible
 	           READ getFlagHints
-		   WRITE setFlagHints)
+		   WRITE setFlagHints
+		   NOTIFY hintsVisibleChanged)
 	Q_PROPERTY(bool labelsVisible
 	           READ getFlagLabels
-		   WRITE setFlagLabels)
+		   WRITE setFlagLabels
+		   NOTIFY labelsVisibleChanged)
 	Q_PROPERTY(bool autoAddEnabled
 	           READ isAutoAddEnabled
 	           WRITE enableAutoAdd
@@ -204,13 +207,15 @@ public:
 	//! @return an list containing the satellites located inside the limitFov circle around position v.
 	virtual QList<StelObjectP> searchAround(const Vec3d& v, double limitFov, const StelCore* core) const;
 
-	//! Return the matching satellite object's pointer if exists or NULL.
+	//! Return the matching satellite object's pointer if exists or Q_NULLPTR.
 	//! @param nameI18n The case in-sensistive satellite name
 	virtual StelObjectP searchByNameI18n(const QString& nameI18n) const;
 
-	//! Return the matching satellite if exists or NULL.
+	//! Return the matching satellite if exists or Q_NULLPTR.
 	//! @param name The case in-sensistive standard program name
 	virtual StelObjectP searchByName(const QString& name) const;
+
+	virtual StelObjectP searchByID(const QString &id) const;
 	
 	//! Return the satellite with the given catalog number.
 	//! Used as a helper function by searchByName() and
@@ -219,24 +224,17 @@ public:
 	//! @returns a null pointer if no such satellite is found.
 	StelObjectP searchByNoradNumber(const QString& noradNumber) const;
 
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object I18n name.
+	//! Find and return the list of at most maxNbItem objects auto-completing the passed object name.
 	//! @param objPrefix the case insensitive first letters of the searched object
 	//! @param maxNbItem the maximum number of returned object names
 	//! @param useStartOfWords the autofill mode for returned objects names
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
-
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object English name.
-	//! @param objPrefix the case insensitive first letters of the searched object
-	//! @param maxNbItem the maximum number of returned object names
-	//! @param useStartOfWords the autofill mode for returned objects names
-	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
+	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false, bool inEnglish=false) const;
 
 	virtual QStringList listAllObjects(bool inEnglish) const;
-	virtual QStringList listAllObjectsByType(const QString& objType, bool inEnglish) const { Q_UNUSED(objType) Q_UNUSED(inEnglish) return QStringList(); }
 
 	virtual QString getName() const { return "Satellites"; }
+	virtual QString getStelObjectType() const { return Satellite::SATELLITE_TYPE; }
 
 	//! Implment this to tell the main Stellarium GUi that there is a GUI element to configure this
 	//! plugin. 
@@ -266,15 +264,15 @@ public:
 
 	//! get satellite objects filtered by group.  If an empty string is used for the
 	//! group name, return all satallites
-	QHash<QString,QString> getSatellites(const QString& group=QString(), Status vis=Both);
+	QHash<QString,QString> getSatellites(const QString& group=QString(), Status vis=Both) const;
 	//! Get a model representing the list of satellites.
 	SatellitesListModel* getSatellitesListModel();
 
 	//! Get a satellite object by its identifier (i.e. NORAD number).
-	SatelliteP getById(const QString& id);
+	SatelliteP getById(const QString& id) const;
 	
 	//! Returns a list of all satellite IDs.
-	QStringList listAllIds();
+	QStringList listAllIds() const;
 	
 	//! Add to the current collection the satellites described by the data list.
 	//! The changes are not saved to file.
@@ -287,13 +285,13 @@ public:
 
 	//! get whether or not the plugin will try to update TLE data from the internet
 	//! @return true if updates are set to be done, false otherwise
-	bool getUpdatesEnabled(void) {return updatesEnabled;}
+	bool getUpdatesEnabled(void) const {return updatesEnabled;}
 
 	//! get the date and time the TLE elements were updated
-	QDateTime getLastUpdate(void) {return lastUpdate;}
+	QDateTime getLastUpdate(void) const {return lastUpdate;}
 
 	//! get the update frequency in hours
-	int getUpdateFrequencyHours(void) {return updateFrequencyHours;}
+	int getUpdateFrequencyHours(void) const {return updateFrequencyHours;}
 
 	//! get the number of seconds till the next update
 	int getSecondsToUpdate(void);
@@ -302,12 +300,12 @@ public:
 	//void setUpdateFrequencyHours(int hours);
 
 	//! Get the current updateState
-	UpdateState getUpdateState(void) {return updateState;}
+	UpdateState getUpdateState(void) const {return updateState;}
 
 	//! Get a list of URLs which are sources of TLE data.
 	//! @returns a list of URL strings, some with prefixes - see #updateUrls
 	//! for details.
-	QStringList getTleSources(void) {return updateUrls;}
+	QStringList getTleSources(void) const {return updateUrls;}
 
 	//! Set the list of URLs which are sources of TLE data.
 	//! In addition to replacing the current list of sources, it also
@@ -363,20 +361,26 @@ public:
 	//! @param name of file
 	void parseQSMagFile(QString qsMagFile);
 	
-	bool getFlagHints() {return hintFader;}
+	bool getFlagHints() const {return hintFader;}
 	//! get the label font size.
 	//! @return the pixel size of the font
-	int getLabelFontSize() {return labelFont.pixelSize();}
-	bool getFlagLabels();
-	bool getFlagRealisticMode();
+	int getLabelFontSize() const {return labelFont.pixelSize();}
+	bool getFlagLabels() const;
+	bool getFlagRealisticMode() const;
 	//! Get the current status of the orbit line rendering flag.
-	bool getOrbitLinesFlag();
+	bool getOrbitLinesFlag() const;
 	bool isAutoAddEnabled() const { return autoAddEnabled; }
 	bool isAutoRemoveEnabled() const { return autoRemoveEnabled; }	
+
+	//! Get depth of prediction for Iridium flares
+	int getIridiumFlaresPredictionDepth(void) const { return iridiumFlaresPredictionDepth; }
 
 	IridiumFlaresPredictionList getIridiumFlaresPrediction();
 
 signals:
+	void hintsVisibleChanged(bool b);
+	void labelsVisibleChanged(bool b);
+
 	//! Emitted when some of the plugin settings have been changed.
 	//! Used to communicate with the configuration window.
 	void settingsChanged();
@@ -464,6 +468,10 @@ public slots:
 	//! Save the current satellite catalog to disk.
 	void saveCatalog(QString path=QString());
 
+	//! Set depth of prediction for Iridium flares
+	//! @param depth in days
+	void setIridiumFlaresPredictionDepth(int depth) { iridiumFlaresPredictionDepth=depth; }
+
 private slots:
 
 private:
@@ -493,7 +501,7 @@ private:
 	void restoreDefaultQSMagFile();
 
 	//! Checks valid range dates of life of satellites
-	bool isValidRangeDates() const;
+	bool isValidRangeDates(const StelCore* core) const;
 
 	//! Save a structure representing a satellite catalog to a JSON file.
 	//! If no path is specified, catalogPath is used.
@@ -594,8 +602,10 @@ private:
 	QList<int> messageIDs;
 	//@}
 
+	int iridiumFlaresPredictionDepth;
+
 	// GUI
-	SatellitesDialog* configDialog;	
+	SatellitesDialog* configDialog;
 
 private slots:
 	//! check to see if an update is required.  This is called periodically by a timer
@@ -628,6 +638,7 @@ class SatellitesStelPluginInterface : public QObject, public StelPluginInterface
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /*_SATELLITES_HPP_*/

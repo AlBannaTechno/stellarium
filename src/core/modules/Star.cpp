@@ -26,6 +26,8 @@
 #include <QDebug>
 #include <QString>
 
+const QString STAR_TYPE = QStringLiteral("Star");
+
 QString Star1::getNameI18n(void) const
 {
 	if (getHip())
@@ -37,7 +39,7 @@ QString Star1::getNameI18n(void) const
 			const QString sciName = StarMgr::getSciName(getHip());
 			if (!sciName.isEmpty()) return sciName;
 			const QString varSciName = StarMgr::getGcvsName(getHip());
-			if (!varSciName.isEmpty() && varSciName!=sciName) return varSciName;
+			if (!varSciName.isEmpty() && varSciName!=sciName) return varSciName;			
 			return QString("HIP %1").arg(getHip());
 		}
 	}
@@ -53,7 +55,7 @@ int Star1::hasComponentID(void) const
 	return 0;
 }
 
-void Star1::print(void)
+void Star1::print(void) const
 {
 	qDebug() << "hip: " << getHip()
 		 << ", componentIds: " << getComponentIds()
@@ -67,7 +69,7 @@ void Star1::print(void)
 		 << ", plx: " << getPlx();
 }
 
-void Star2::print(void)
+void Star2::print(void) const
 {
 	qDebug() << "x0: " << getX0()
 		 << ", x1: " << getX1()

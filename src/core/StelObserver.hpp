@@ -44,12 +44,18 @@ public:
 	~StelObserver();
 
 	//! Update StelObserver info if needed. Default implementation does nothing.
-	virtual void update(double) {;}
+	//! returns whether we actually changed the position.
+	virtual bool update(double) {return false;}
 
 	//! Get the position of the home planet center in the heliocentric VSOP87 frame in AU
 	Vec3d getCenterVsop87Pos(void) const;
-	//! Get the distance between observer and home planet center in AU
+	//! Get the distance between observer and home planet center in AU.
+	//! This is distance &rho; from Meeus, Astron. Algorithms, 2nd edition 1998, ch.11, p.81f.
 	double getDistanceFromCenter(void) const;
+	//! Get the geocentric rectangular coordinates of the observer in AU, plus geocentric latitude &phi;'.
+	//! This is vector &rho; from Meeus, Astron. Algorithms, 2nd edition 1998, ch.11, p.81f.
+	//! The first component is &rho; cos &phi;' [AU], the second component is &rho; sin &phi&' [AU], the third is &phi;' [radians].
+	Vec3d getTopographicOffsetFromCenter(void) const;
 
 	//! returns rotation matrix for conversion of alt-azimuthal to equatorial coordinates
 	//! For Earth we need JD(UT), for other planets JDE! To be general, just have both in here!
@@ -80,16 +86,24 @@ protected:
 //! An observer which moves from from one position to another one and/or from one planet to another one
 class SpaceShipObserver : public StelObserver
 {
+	Q_OBJECT
 public:
-	SpaceShipObserver(const StelLocation& startLoc, const StelLocation& target, double transitSeconds=1.f);
+	SpaceShipObserver(const StelLocation& startLoc, const StelLocation& target, double transitSeconds=1.f, double timeToGo=-1.0);
 	~SpaceShipObserver();
 
 	//! Update StelObserver info if needed. Default implementation does nothing.
-	virtual void update(double deltaTime);
+	virtual bool update(double deltaTime);
 	virtual const QSharedPointer<Planet> getHomePlanet() const;
 	virtual bool isObserverLifeOver() const {return timeToGo <= 0.;}
 	virtual bool isTraveling() const {return !isObserverLifeOver();}
 	virtual StelObserver* getNextObserver() const {return new StelObserver(moveTargetLocation);}
+
+	//! Returns the target location
+	StelLocation getTargetLocation() const { return moveTargetLocation; }
+	//! Returns the remaining movement time
+	double getRemainingTime() const { return timeToGo; }
+	//! Returns the total movement time
+	double getTransitTime() const { return transitSeconds; }
 
 private:
 	StelLocation moveStartLocation;

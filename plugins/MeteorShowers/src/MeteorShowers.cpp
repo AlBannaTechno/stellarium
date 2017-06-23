@@ -81,9 +81,8 @@ void MeteorShowers::drawPointer(StelCore* core)
 	const Vec3f& c(obj->getInfoColor());
 	painter.setColor(c[0],c[1],c[2]);
 	m_mgr->getPointerTexture()->bind();
-	painter.enableTexture2d(true);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
+
+	painter.setBlending(true);
 
 	float size = obj->getAngularSize(core) * M_PI / 180. * painter.getProjector()->getPixelPerRadAtCenter();
 	size += 20.f + 10.f * qSin(2.f * StelApp::getInstance().getTotalRunTime());
@@ -164,7 +163,7 @@ QList<StelObjectP> MeteorShowers::searchAround(const Vec3d& av, double limitFov,
 	{
 		if (ms->enabled())
 		{
-			equPos = ms->getJ2000EquatorialPos(NULL);
+			equPos = ms->getJ2000EquatorialPos(Q_NULLPTR);
 			equPos.normalize();
 			if (equPos[0]*v[0] + equPos[1]*v[1] + equPos[2]*v[2] >= cosLimFov)
 			{
@@ -179,7 +178,7 @@ StelObjectP MeteorShowers::searchByName(const QString& englishName) const
 {
 	if (!m_mgr->getEnablePlugin())
 	{
-		return NULL;
+		return Q_NULLPTR;
 	}
 
 	foreach(const MeteorShowerP& ms, m_meteorShowers)
@@ -195,14 +194,24 @@ StelObjectP MeteorShowers::searchByName(const QString& englishName) const
 			}
 		}
 	}
-	return NULL;
+	return Q_NULLPTR;
+}
+
+StelObjectP MeteorShowers::searchByID(const QString &id) const
+{
+	foreach(const MeteorShowerP& ms, m_meteorShowers)
+	{
+		if (ms->getID() == id)
+			return qSharedPointerCast<StelObject>(ms);
+	}
+	return Q_NULLPTR;
 }
 
 StelObjectP MeteorShowers::searchByNameI18n(const QString& nameI18n) const
 {
 	if (!m_mgr->getEnablePlugin())
 	{
-		return NULL;
+		return Q_NULLPTR;
 	}
 
 	foreach(const MeteorShowerP& ms, m_meteorShowers)
@@ -215,98 +224,33 @@ StelObjectP MeteorShowers::searchByNameI18n(const QString& nameI18n) const
 			}
 		}
 	}
-	return NULL;
+	return Q_NULLPTR;
 }
 
-QStringList MeteorShowers::listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem, bool useStartOfWords) const
+QStringList MeteorShowers::listMatchingObjects(const QString& objPrefix, int maxNbItem, bool useStartOfWords, bool inEnglish) const
 {
 	QStringList result;
-	if (!m_mgr->getEnablePlugin() || maxNbItem == 0)
+	if (!m_mgr->getEnablePlugin() || maxNbItem <= 0)
 	{
 		return result;
 	}
 
-	QString sn;
-	bool found = false;
 	foreach(const MeteorShowerP& ms, m_meteorShowers)
 	{
-		if (ms->enabled())
+		QString name = inEnglish ? ms->getEnglishName() : ms->getNameI18n();
+		if (!ms->enabled() || !matchObjectName(name, objPrefix, useStartOfWords))
 		{
-			sn = ms->getNameI18n();
-			if (useStartOfWords)
-			{
-				found = sn.toUpper().left(objPrefix.length()) == objPrefix.toUpper();
-			}
-			else
-			{
-				found = sn.contains(objPrefix, Qt::CaseInsensitive);
-			}
+			continue;
+		}
 
-			if (found)
-			{
-				result.append(sn);
-			}
+		result.append(name);
+		if (result.size() >= maxNbItem)
+		{
+			break;
 		}
 	}
 
 	result.sort();
-	if (result.size() > maxNbItem)
-	{
-		result.erase(result.begin() + maxNbItem, result.end());
-	}
-
-	return result;
-}
-
-QStringList MeteorShowers::listMatchingObjects(const QString& objPrefix, int maxNbItem, bool useStartOfWords) const
-{
-	QStringList result;
-	if (!m_mgr->getEnablePlugin() || maxNbItem == 0)
-	{
-		return result;
-	}
-
-	QString sn;
-	bool found = false;
-	foreach(const MeteorShowerP& ms, m_meteorShowers)
-	{
-		if (ms->enabled())
-		{
-			sn = ms->getEnglishName();
-			if (useStartOfWords)
-			{
-				found = objPrefix.toUpper()==sn.toUpper().left(objPrefix.length());
-			}
-			else
-			{
-				found = sn.contains(objPrefix, Qt::CaseInsensitive);
-			}
-			if (found)
-			{
-				result.append(sn);
-			}
-
-			sn = ms->getDesignation();
-			if (useStartOfWords)
-			{
-				found = objPrefix.toUpper()==sn.toUpper().left(objPrefix.length());
-			}
-			else
-			{
-				found = sn.contains(objPrefix, Qt::CaseInsensitive);
-			}
-			if (found)
-			{
-				result.append(sn);
-			}
-		}
-	}
-
-	result.sort();
-	if (result.size() > maxNbItem)
-	{
-		result.erase(result.begin() + maxNbItem, result.end());
-	}
 	return result;
 }
 

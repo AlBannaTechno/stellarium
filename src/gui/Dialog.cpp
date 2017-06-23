@@ -31,6 +31,8 @@ void BarFrame::mousePressEvent(QMouseEvent *event)
 void BarFrame::mouseReleaseEvent(QMouseEvent *)
 {
 	moving = false;
+	QWidget* p = dynamic_cast<QWidget*>(QFrame::parent());
+	emit movedTo(p->pos());
 }
 
 void BarFrame::mouseMoveEvent(QMouseEvent *event)
@@ -56,13 +58,14 @@ void BarFrame::mouseMoveEvent(QMouseEvent *event)
 		targetPos.setY(lowerBoundY);
 	
 	p->move(targetPos);
+	//emit movedTo(targetPos);
 }
 
 void ResizeFrame::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint dpos = event->pos() - mousePos;
 	QWidget* p = dynamic_cast<QWidget*>(QFrame::parent()->parent());
-	if (p!=NULL)
+	if (p!=Q_NULLPTR)
 	{
 		int w = p->size().width();
 		int h = p->size().height();

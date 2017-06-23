@@ -20,13 +20,15 @@
 
 #ifndef _SHADERMANAGER_HPP_
 #define _SHADERMANAGER_HPP_
-#include "OBJ.hpp"
-#include "StelOpenGL.hpp"
+#include "S3DScene.hpp"
+#include "StelTexture.hpp"
 #include "S3DEnum.hpp"
 
 #include <QMap>
 
 class QOpenGLShaderProgram;
+
+Q_DECLARE_LOGGING_CATEGORY(shaderMgr)
 
 //! A structure for global shader parameters
 struct GlobalShaderParameters
@@ -42,6 +44,7 @@ struct GlobalShaderParameters
 	bool torchLight;
 	//for now, only 1 or 4 really supported
 	int frustumSplits;
+	bool hwShadowSamplers;
 };
 
 //! A simple shader cache class that gives us the correct shader depending on desired configuration.
@@ -51,21 +54,6 @@ class ShaderMgr
 public:
 	ShaderMgr();
 	~ShaderMgr();
-
-	//! Enum for OpenGL shader attribute locations
-	enum ATTLOC
-	{
-		//! This is the OpenGL attribute location where vertex positions are mapped to
-		ATTLOC_VERTEX,
-		//! This is the OpenGL attribute location where vertex normals are mapped to
-		ATTLOC_NORMAL,
-		//! This is the OpenGL attribute location where vertex texture coordinates are mapped to
-		ATTLOC_TEXCOORD,
-		//! This is the OpenGL attribute location where vertex tangents are mapped to
-		ATTLOC_TANGENT,
-		//! This is the OpenGL attribute location where vertex bitangents are mapped to
-		ATTLOC_BITANGENT
-	};
 
 	//! Enum for OpenGL shader uniform locations (faster than accessing by string each time)
 	enum UNIFORM
@@ -132,7 +120,7 @@ public:
 	};
 
 	//! Returns a shader that supports the specified operations. Must be called within a GL context.
-	inline QOpenGLShaderProgram* getShader(const GlobalShaderParameters &globals, const OBJ::Material *mat = NULL);
+	inline QOpenGLShaderProgram* getShader(const GlobalShaderParameters &globals, const S3DScene::Material *mat = Q_NULLPTR);
 
 	//! Returns the Frustum/Boundingbox Debug shader
 	inline QOpenGLShaderProgram* getDebugShader();
@@ -199,6 +187,8 @@ private:
 		SINGLE_SHADOW_FRUSTUM  = (1<<18),
 		//set if opengl es2
 		OGL_ES2		= (1<<19),
+		//true if shadow samplers (shadow2d) should be used for shadow maps instead of normal samplers (texture2d)
+		HW_SHADOW_SAMPLERS = (1<<20)
 	};
 
 	typedef QMap<QString,FeatureFlags> t_FeatureFlagStrings;
@@ -225,7 +215,7 @@ private:
 	t_UniformCache m_uniformCache;
 };
 
-QOpenGLShaderProgram* ShaderMgr::getShader(const GlobalShaderParameters& globals,const OBJ::Material* mat)
+QOpenGLShaderProgram* ShaderMgr::getShader(const GlobalShaderParameters& globals,const S3DScene::Material* mat)
 {
 	//Build bitflags from bools. Some stuff requires pixelLighting to be enabled, so check it too.
 
@@ -238,7 +228,8 @@ QOpenGLShaderProgram* ShaderMgr::getShader(const GlobalShaderParameters& globals
 		if(globals.pixelLighting && globals.shadows) flags|= SHADOWS;
 		if(globals.pixelLighting && globals.shadows && globals.shadowFilterQuality>S3DEnum::SFQ_HARDWARE) flags|= SHADOW_FILTER;
 		if(globals.pixelLighting && globals.shadows && globals.shadowFilterQuality>S3DEnum::SFQ_LOW_HARDWARE) flags|= SHADOW_FILTER_HQ;
-		if(globals.pixelLighting && globals.shadows && (globals.shadowFilterQuality == S3DEnum::SFQ_LOW || globals.shadowFilterQuality == S3DEnum::SFQ_HIGH) && globals.pcss) flags|= PCSS;
+		if(globals.pixelLighting && globals.shadows && !globals.hwShadowSamplers && (globals.shadowFilterQuality == S3DEnum::SFQ_LOW || globals.shadowFilterQuality == S3DEnum::SFQ_HIGH) && globals.pcss) flags|= PCSS;
+		if(globals.hwShadowSamplers) flags|=HW_SHADOW_SAMPLERS;
 		if(globals.geometryShader) flags|= GEOMETRY_SHADER;
 		if(globals.torchLight) flags|= TORCH;
 		if(globals.frustumSplits == 1) flags|= SINGLE_SHADOW_FRUSTUM;
@@ -250,19 +241,19 @@ QOpenGLShaderProgram* ShaderMgr::getShader(const GlobalShaderParameters& globals
 
 	if(mat)
 	{
-		if(mat->alphatest && mat->texture && mat->texture->hasAlphaChannel()) //alpha test needs diffuse texture, otherwise it would not make sense
+		if(mat->bAlphatest && mat->tex_Kd && mat->tex_Kd->hasAlphaChannel()) //alpha test needs diffuse texture, otherwise it would not make sense
 			flags|= ALPHATEST;
-		if(mat->hasSpecularity)
+		if(mat->traits.hasSpecularity)
 			flags|= MAT_SPECULAR;
-		if(mat->hasTransparency)
+		if(mat->traits.hasTransparency || mat->traits.isFading)
 			flags|= BLENDING;
-		if(mat->texture)
+		if(mat->traits.hasDiffuseTexture)
 			flags|= MAT_DIFFUSETEX;
-		if(mat->emissive_texture)
+		if(mat->traits.hasEmissiveTexture)
 			flags|= MAT_EMISSIVETEX;
-		if(mat->bump_texture && globals.bump && globals.pixelLighting)
+		if(mat->traits.hasBumpTexture && globals.bump && globals.pixelLighting)
 			flags|= BUMP;
-		if(mat->height_texture && globals.bump && globals.pixelLighting)
+		if(mat->traits.hasHeightTexture && globals.bump && globals.pixelLighting)
 			flags|= HEIGHT;
 	}
 

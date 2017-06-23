@@ -33,14 +33,13 @@
 #include "StelGui.hpp"
 #include "StelModuleMgr.hpp"
 #include "StelProgressController.hpp"
-#include "StelTextureMgr.hpp"
 #include "StelUtils.hpp"
 #include "SporadicMeteorMgr.hpp"
 
 MeteorShowersMgr::MeteorShowersMgr()
-	: m_meteorShowers(NULL)
-	, m_configDialog(NULL)
-	, m_searchDialog(NULL)
+	: m_meteorShowers(Q_NULLPTR)
+	, m_configDialog(Q_NULLPTR)
+	, m_searchDialog(Q_NULLPTR)
 	, m_conf(StelApp::getInstance().getSettings())
 	, m_onEarth(false)
 	, m_enablePlugin(false)
@@ -50,16 +49,15 @@ MeteorShowersMgr::MeteorShowersMgr()
 	, m_enableMarker(true)
 	, m_showEnableButton(true)
 	, m_showSearchButton(true)
-	, m_messageTimer(NULL)
+	, m_messageTimer(Q_NULLPTR)
 	, m_isUpdating(false)
 	, m_enableAutoUpdates(true)
 	, m_updateFrequencyHours(0)
 	, m_statusOfLastUpdate(OUTDATED)
-	, m_downloadMgr(NULL)
-	, m_progressBar(NULL)
+	, m_downloadMgr(Q_NULLPTR)
+	, m_progressBar(Q_NULLPTR)
 {
 	setObjectName("MeteorShowers");
-	qsrand(QDateTime::currentMSecsSinceEpoch());
 }
 
 MeteorShowersMgr::~MeteorShowersMgr()
@@ -125,6 +123,12 @@ void MeteorShowersMgr::deinit()
 	m_bolideTexture.clear();
 	m_radiantTexture.clear();
 	m_pointerTexture.clear();
+	delete m_meteorShowers;
+	m_meteorShowers = Q_NULLPTR;
+	delete m_configDialog;
+	m_configDialog = Q_NULLPTR;
+	delete m_searchDialog;
+	m_searchDialog = Q_NULLPTR;
 }
 
 double MeteorShowersMgr::getCallOrder(StelModuleActionName actionName) const
@@ -269,12 +273,6 @@ void MeteorShowersMgr::update(double deltaTime)
 		return;
 	}
 
-	// is paused?
-	// freeze meteors at the current position
-	if (!StelApp::getInstance().getCore()->getTimeRate()) {
-		return;
-	}
-
 	m_meteorShowers->update(deltaTime);
 }
 
@@ -294,7 +292,7 @@ void MeteorShowersMgr::repaint()
 
 void MeteorShowersMgr::checkForUpdates()
 {
-	if (m_enableAutoUpdates && m_lastUpdate.addSecs(m_updateFrequencyHours * 3600.) <= QDateTime::currentDateTime())
+	if (m_enableAutoUpdates && m_lastUpdate.addSecs(m_updateFrequencyHours * 3600.) <= QDateTime::currentDateTime() && m_downloadMgr->networkAccessible()==QNetworkAccessManager::Accessible)
 	{
 		updateCatalog();
 	}
@@ -330,7 +328,7 @@ void MeteorShowersMgr::updateFinished(QNetworkReply* reply)
 	{
 		m_progressBar->setValue(100);
 		StelApp::getInstance().removeProgressBar(m_progressBar);
-		m_progressBar = NULL;
+		m_progressBar = Q_NULLPTR;
 	}
 
 	if (reply->error() != QNetworkReply::NoError)
@@ -394,7 +392,7 @@ void MeteorShowersMgr::setShowEnableButton(const bool& show)
 
 		if (show)
 		{
-			StelButton* enablePlugin = new StelButton(NULL,
+			StelButton* enablePlugin = new StelButton(Q_NULLPTR,
 								  QPixmap(":/MeteorShowers/btMS-on.png"),
 								  QPixmap(":/MeteorShowers/btMS-off.png"),
 								  QPixmap(":/graphicGui/glow32x32.png"),
@@ -427,7 +425,7 @@ void MeteorShowersMgr::setShowSearchButton(const bool& show)
 
 		if (show)
 		{
-			StelButton* searchMS = new StelButton(NULL,
+			StelButton* searchMS = new StelButton(Q_NULLPTR,
 							      QPixmap(":/MeteorShowers/btMS-search-on.png"),
 							      QPixmap(":/MeteorShowers/btMS-search-off.png"),
 							      QPixmap(":/graphicGui/glow32x32.png"),
@@ -450,23 +448,20 @@ void MeteorShowersMgr::setShowSearchButton(const bool& show)
 
 void MeteorShowersMgr::setColorARG(const Vec3f& rgb)
 {
-	m_colorARG = rgb;
-	QString rgbStr = QString("%1,%2,%3").arg(rgb[0]).arg(rgb[1]).arg(rgb[2]);
-	m_conf->setValue(MS_CONFIG_PREFIX + "/colorARG", rgbStr);
+	m_colorARG = rgb;	
+	m_conf->setValue(MS_CONFIG_PREFIX + "/colorARG", StelUtils::vec3fToStr(rgb));
 }
 
 void MeteorShowersMgr::setColorARC(const Vec3f& rgb)
 {
-	m_colorARC = rgb;
-	QString rgbStr = QString("%1,%2,%3").arg(rgb[0]).arg(rgb[1]).arg(rgb[2]);
-	m_conf->setValue(MS_CONFIG_PREFIX + "/colorARC", rgbStr);
+	m_colorARC = rgb;	
+	m_conf->setValue(MS_CONFIG_PREFIX + "/colorARC", StelUtils::vec3fToStr(rgb));
 }
 
 void MeteorShowersMgr::setColorIR(const Vec3f& rgb)
 {
-	m_colorIR = rgb;
-	QString rgbStr = QString("%1,%2,%3").arg(rgb[0]).arg(rgb[1]).arg(rgb[2]);
-	m_conf->setValue(MS_CONFIG_PREFIX + "/colorIR", rgbStr);
+	m_colorIR = rgb;	
+	m_conf->setValue(MS_CONFIG_PREFIX + "/colorIR", StelUtils::vec3fToStr(rgb));
 }
 
 void MeteorShowersMgr::setEnableAtStartup(const bool& b)
@@ -484,8 +479,12 @@ void MeteorShowersMgr::setFontSize(int pixelSize)
 
 void MeteorShowersMgr::setEnableLabels(const bool& b)
 {
-	m_enableLabels = b;
-	m_conf->setValue(MS_CONFIG_PREFIX + "/flag_radiant_labels", b);
+	if (m_enableLabels != b)
+	{
+		m_enableLabels = b;
+		m_conf->setValue(MS_CONFIG_PREFIX + "/flag_radiant_labels", b);
+		emit enableLabelsChanged(b);
+	}
 }
 
 void MeteorShowersMgr::setEnableMarker(const bool& b)

@@ -17,12 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
-#ifndef GL_POINT_SPRITE
- #define GL_POINT_SPRITE 0x8861
-#endif
-#ifndef GL_VERTEX_PROGRAM_POINT_SIZE
- #define GL_VERTEX_PROGRAM_POINT_SIZE 0x8642
-#endif
 
 #include "StelSkyDrawer.hpp"
 #include "StelProjector.hpp"
@@ -35,6 +29,10 @@
 #include "StelUtils.hpp"
 #include "StelMovementMgr.hpp"
 #include "StelPainter.hpp"
+
+#include "StelModuleMgr.hpp"
+#include "LandscapeMgr.hpp"
+#include "Landscape.hpp"
 
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
@@ -53,26 +51,39 @@ StelSkyDrawer::StelSkyDrawer(StelCore* acore) :
 	maxAdaptFov(180.f),
 	minAdaptFov(0.1f),
 	lnfovFactor(0.f),
+	flagStarTwinkle(false),
+	flagForcedTwinkle(false),
+	twinkleAmount(0.0),
+	flagStarMagnitudeLimit(false),
+	flagNebulaMagnitudeLimit(false),
+	flagPlanetMagnitudeLimit(false),
 	starRelativeScale(1.f),
 	starAbsoluteScaleF(1.f),
 	starLinearScale(19.569f),
 	limitMagnitude(-100.f),
 	limitLuminance(0.f),
+	customStarMagLimit(0.0),
+	customNebulaMagLimit(0.0),
+	customPlanetMagLimit(0.0),
 	bortleScaleIndex(3),
 	inScale(1.f),
-	starShaderProgram(NULL),
+	starShaderProgram(Q_NULLPTR),
 	starShaderVars(StarShaderVars()),
+	nbPointSources(0),
+	maxPointSources(1000),
 	maxLum(0.f),
 	oldLum(-1.f),
+	flagLuminanceAdaptation(false),
 	big3dModelHaloRadius(150.f)
 {
-	qsrand (QDateTime::currentMSecsSinceEpoch());
+	setObjectName("StelSkyDrawer");
 	QSettings* conf = StelApp::getInstance().getSettings();
 	initColorTableFromConfigFile(conf);
 
 	setFlagHasAtmosphere(conf->value("landscape/flag_atmosphere", true).toBool());
 	setTwinkleAmount(conf->value("stars/star_twinkle_amount",0.3).toFloat());
 	setFlagTwinkle(conf->value("stars/flag_star_twinkle",true).toBool());
+	setFlagForcedTwinkle(conf->value("stars/flag_forced_twinkle",false).toBool());
 	setMaxAdaptFov(conf->value("stars/mag_converter_max_fov",70.0).toFloat());
 	setMinAdaptFov(conf->value("stars/mag_converter_min_fov",0.1).toFloat());
 	setFlagLuminanceAdaptation(conf->value("viewing/use_luminance_adaptation",true).toBool());
@@ -85,14 +96,14 @@ StelSkyDrawer::StelSkyDrawer(StelCore* acore) :
 
 	bool ok=true;
 
-	setBortleScaleIndex(conf->value("stars/init_bortle_scale",2).toInt(&ok));
+	setBortleScaleIndex(conf->value("stars/init_bortle_scale",3).toInt(&ok));
 	if (!ok)
-		setBortleScaleIndex(2);
+		setBortleScaleIndex(3);
 
 	setRelativeStarScale(conf->value("stars/relative_scale",1.0).toFloat(&ok));
 	if (!ok)
 		setRelativeStarScale(1.0);
-	
+
 	setAbsoluteStarScale(conf->value("stars/absolute_scale",1.0).toFloat(&ok));
 	if (!ok)
 		setAbsoluteStarScale(1.0);
@@ -107,7 +118,7 @@ StelSkyDrawer::StelSkyDrawer(StelCore* acore) :
 		extinction.setUndergroundExtinctionMode(Extinction::UndergroundExtinctionMirror);
 	else if (extinctionMode=="max")
 		extinction.setUndergroundExtinctionMode(Extinction::UndergroundExtinctionMax);
-	
+
 	setAtmosphereTemperature(conf->value("landscape/temperature_C",15.0).toDouble(&ok));
 	if (!ok)
 		setAtmosphereTemperature(15.0);
@@ -116,10 +127,7 @@ StelSkyDrawer::StelSkyDrawer(StelCore* acore) :
 	if (!ok)
 		setAtmospherePressure(1013.0);
 
-	// Initialize buffers for use by gl vertex array
-	nbPointSources = 0;
-	maxPointSources = 1000;
-	
+	// Initialize buffers for use by gl vertex array	
 	
 	vertexArray = new StarVertex[maxPointSources*6];
 	
@@ -135,17 +143,19 @@ StelSkyDrawer::StelSkyDrawer(StelCore* acore) :
 StelSkyDrawer::~StelSkyDrawer()
 {
 	delete[] vertexArray;
-	vertexArray = NULL;
+	vertexArray = Q_NULLPTR;
 	delete[] textureCoordArray;
-	textureCoordArray = NULL;
+	textureCoordArray = Q_NULLPTR;
 	
 	delete starShaderProgram;
-	starShaderProgram = NULL;
+	starShaderProgram = Q_NULLPTR;
 }
 
 // Init parameters from config file
 void StelSkyDrawer::init()
 {
+	initializeOpenGLFunctions();
+
 	// Load star texture no mipmap:
 	texHalo = StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/star16x16.png");
 	texBigHalo = StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/haloLune.png");
@@ -191,7 +201,7 @@ void StelSkyDrawer::init()
 	starShaderVars.pos = starShaderProgram->attributeLocation("pos");
 	starShaderVars.color = starShaderProgram->attributeLocation("color");
 	starShaderVars.texture = starShaderProgram->uniformLocation("tex");
-			
+
 	update(0);
 }
 
@@ -212,8 +222,8 @@ void StelSkyDrawer::update(double)
 	// moved parts from setBortleScale() here
 	// These value have been calibrated by hand, looking at the faintest star in stellarium at around 40 deg FOV
 	// They should roughly match the scale described at http://en.wikipedia.org/wiki/Bortle_Dark-Sky_Scale
-	static const float bortleToInScale[9] = {2.45, 1.55, 1.0, 0.63, 0.40, 0.24, 0.23, 0.145, 0.09};
-	if (getFlagHasAtmosphere())
+	static const float bortleToInScale[9] = {2.45f, 1.55f, 1.0f, 0.63f, 0.40f, 0.24f, 0.23f, 0.145f, 0.09f};
+	if (getFlagHasAtmosphere() && core->getJD()>2387627.5) // JD given is J1825.0; ignore Bortle scale index before that.
 	    setInputScale(bortleToInScale[bortleScaleIndex-1]);
 	else
 	    setInputScale(bortleToInScale[0]);
@@ -316,7 +326,7 @@ float StelSkyDrawer::pointSourceLuminanceToMag(float lum)
 }
 
 // Compute the luminance for an extended source with the given surface brightness in Vmag/arcmin^2
-float StelSkyDrawer::surfacebrightnessToLuminance(float sb)
+float StelSkyDrawer::surfaceBrightnessToLuminance(float sb)
 {
 	return 2.f*2025000.f*std::exp(-0.92103f*(sb + 12.12331f))/(1.f/60.f*1.f/60.f);
 }
@@ -372,9 +382,7 @@ void StelSkyDrawer::preDrawPointSource(StelPainter* p)
 
 	// Blending is really important. Otherwise faint stars in the vicinity of
 	// bright star will cause tiny black squares on the bright star, e.g. see Procyon.
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-	p->enableTexture2d(true);
+	p->setBlending(true, GL_ONE, GL_ONE);
 }
 
 // Finalize the drawing of point sources
@@ -385,9 +393,7 @@ void StelSkyDrawer::postDrawPointSource(StelPainter* sPainter)
 	if (nbPointSources==0)
 		return;
 	texHalo->bind();
-	sPainter->enableTexture2d(true);
-	glBlendFunc(GL_ONE, GL_ONE);
-	glEnable(GL_BLEND);
+	sPainter->setBlending(true, GL_ONE, GL_ONE);
 
 	const Mat4f& m = sPainter->getProjector()->getProjectionMatrix();
 	const QMatrix4x4 qMat(m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3], m[7], m[11], m[15]);
@@ -414,20 +420,20 @@ void StelSkyDrawer::postDrawPointSource(StelPainter* sPainter)
 }
 
 // Draw a point source halo.
-bool StelSkyDrawer::drawPointSource(StelPainter* sPainter, const Vec3f& v, const RCMag& rcMag, const Vec3f& color, bool checkInScreen)
+bool StelSkyDrawer::drawPointSource(StelPainter* sPainter, const Vec3f& v, const RCMag& rcMag, const Vec3f& color, bool checkInScreen, float twinkleFactor)
 {
 	Q_ASSERT(sPainter);
 
 	if (rcMag.radius<=0.f)
 		return false;
 
-	Vec3d win;
-	if (!(checkInScreen ? sPainter->getProjector()->projectCheck(Vec3d(v[0],v[1],v[2]), win) : sPainter->getProjector()->project(Vec3d(v[0],v[1],v[2]), win)))
+	Vec3f win;
+	if (!(checkInScreen ? sPainter->getProjector()->projectCheck(v, win) : sPainter->getProjector()->project(v, win)))
 		return false;
 
 	const float radius = rcMag.radius;
-	// Random coef for star twinkling
-	const float tw = (flagStarTwinkle && flagHasAtmosphere) ? (1.f-twinkleAmount*qrand()/RAND_MAX)*rcMag.luminance : rcMag.luminance;
+	// Random coef for star twinkling. twinkleFactor can introduce height-dependent twinkling.
+	const float tw = (flagStarTwinkle && (flagHasAtmosphere || flagForcedTwinkle)) ? (1.f-twinkleFactor*twinkleAmount*qrand()/RAND_MAX)*rcMag.luminance : rcMag.luminance;
 
 	// If the rmag is big, draw a big halo
 	if (radius>MAX_LINEAR_RADIUS+5.f)
@@ -438,9 +444,7 @@ bool StelSkyDrawer::drawPointSource(StelPainter* sPainter, const Vec3f& v, const
 			cmag = 1.f;
 
 		texBigHalo->bind();
-		sPainter->enableTexture2d(true);
-		glBlendFunc(GL_ONE, GL_ONE);
-		glEnable(GL_BLEND);				
+		sPainter->setBlending(true, GL_ONE, GL_ONE);
 		sPainter->setColor(color[0]*cmag, color[1]*cmag, color[2]*cmag);
 		sPainter->drawSprite2dModeNoDeviceScale(win[0], win[1], rmag);
 	}
@@ -472,9 +476,7 @@ bool StelSkyDrawer::drawPointSource(StelPainter* sPainter, const Vec3f& v, const
 void StelSkyDrawer::drawSunCorona(StelPainter* painter, const Vec3f& v, float radius, const Vec3f& color, const float alpha)
 {
 	texSunCorona->bind();
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-	painter->enableTexture2d(true);
+	painter->setBlending(true, GL_ONE, GL_ONE);
 
 	Vec3f win;
 	painter->getProjector()->project(v, win);
@@ -499,9 +501,8 @@ void StelSkyDrawer::postDrawSky3dModel(StelPainter* painter, const Vec3f& v, flo
 		// Sun, halo size varies in function of the magnitude because sun as seen from pluto should look dimmer
 		// as the sun as seen from earth
 		texSunHalo->bind();
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_ONE, GL_ONE);
-		painter->enableTexture2d(true);
+		painter->setBlending(true, GL_ONE, GL_ONE);
+
 		float rmag = big3dModelHaloRadius*(mag+15.f)/-11.f;
 		float cmag = 1.f;
 		if (rmag<pixRadius*3.f+100.)
@@ -516,6 +517,8 @@ void StelSkyDrawer::postDrawSky3dModel(StelPainter* painter, const Vec3f& v, flo
 	// Now draw the halo according the object brightness
 	bool save = flagStarTwinkle;
 	flagStarTwinkle = false;
+	bool saveP = flagForcedTwinkle;
+	flagForcedTwinkle = false;
 
 	RCMag rcm;
 	computeRCMag(mag, &rcm);
@@ -524,7 +527,8 @@ void StelSkyDrawer::postDrawSky3dModel(StelPainter* painter, const Vec3f& v, flo
 	// If the disk of the planet is big enough to be visible, we should adjust the eye adaptation luminance
 	// so that the radius of the halo is small enough to be not visible (so that we see the disk)
 
-	float tStart = 2.f;
+	// TODO: Change drawing halo to more realistic view of stars and planets
+	float tStart = 3.f; // Was 2.f: planet's halo is too dim
 	float tStop = 6.f;
 	bool truncated=false;
 
@@ -551,7 +555,16 @@ void StelSkyDrawer::postDrawSky3dModel(StelPainter* painter, const Vec3f& v, flo
 		if (wl>0)
 		{
 			const float f = core->getMovementMgr()->getCurrentFov();
-			reportLuminanceInFov(qMin(700.f, qMin(wl/50, (60.f*60.f)/(f*f)*6.f)));
+			// Report to the SkyDrawer that a very bright object (most notably Sun, Moon, bright planet)
+			// is in view. LP:1138533 correctly wants no such effect if object is hidden by landscape horizon.
+			LandscapeMgr* lmgr=GETSTELMODULE(LandscapeMgr);
+			Q_ASSERT(lmgr);
+			Landscape *landscape=lmgr->getCurrentLandscape();
+			Q_ASSERT(landscape);
+			// Preliminary: create new Vec3d here. Later: consider replacing to vec3d in the arguments!
+			Vec3d vec(v[0], v[1], v[2]);
+			float opacity=(landscape->getFlagShow() ? landscape->getOpacity(core->j2000ToAltAz(vec, StelCore::RefractionAuto)) : 0.0f);
+			reportLuminanceInFov(qMin(700.f, qMin(wl/50, (60.f*60.f)/(f*f)*6.f))*(1.0f-opacity));
 		}
 	}
 
@@ -562,6 +575,7 @@ void StelSkyDrawer::postDrawSky3dModel(StelPainter* painter, const Vec3f& v, flo
 		postDrawPointSource(painter);
 	}
 	flagStarTwinkle=save;
+	flagForcedTwinkle=saveP;
 }
 
 float StelSkyDrawer::findWorldLumForMag(float mag, float targetRadius)
@@ -644,26 +658,64 @@ void StelSkyDrawer::preDraw()
 // See http://en.wikipedia.org/wiki/Bortle_Dark-Sky_Scale
 void StelSkyDrawer::setBortleScaleIndex(int bIndex)
 {
-	// Associate the Bortle index (1 to 9) to inScale value
-	if (bIndex<1)
+	if(bortleScaleIndex!=bIndex)
 	{
-		qWarning() << "WARNING: Bortle scale index range is [1;9], given" << bIndex;
-		bIndex = 1;
-	}
-	if (bIndex>9)
-	{
-		qWarning() << "WARNING: Bortle scale index range is [1;9], given" << bIndex;
-		bIndex = 9;
-	}
+		// Associate the Bortle index (1 to 9) to inScale value
+		if (bIndex<1)
+		{
+			qWarning() << "WARNING: Bortle scale index range is [1;9], given" << bIndex;
+			bIndex = 1;
+		}
+		if (bIndex>9)
+		{
+			qWarning() << "WARNING: Bortle scale index range is [1;9], given" << bIndex;
+			bIndex = 9;
+		}
 
-	bortleScaleIndex = bIndex;
-	// GZ: I moved this block to update()
-	// These value have been calibrated by hand, looking at the faintest star in stellarium at around 40 deg FOV
-	// They should roughly match the scale described at http://en.wikipedia.org/wiki/Bortle_Dark-Sky_Scale
-	// static const float bortleToInScale[9] = {2.45, 1.55, 1.0, 0.63, 0.40, 0.24, 0.23, 0.145, 0.09};
-	// setInputScale(bortleToInScale[bIndex-1]);
+		bortleScaleIndex = bIndex;
+		emit bortleScaleIndexChanged(bortleScaleIndex);
+		// GZ: I moved this block to update()
+		// These value have been calibrated by hand, looking at the faintest star in stellarium at around 40 deg FOV
+		// They should roughly match the scale described at http://en.wikipedia.org/wiki/Bortle_Dark-Sky_Scale
+		// static const float bortleToInScale[9] = {2.45, 1.55, 1.0, 0.63, 0.40, 0.24, 0.23, 0.145, 0.09};
+		// setInputScale(bortleToInScale[bIndex-1]);
+	}
 }
 
+float StelSkyDrawer::getNELMFromBortleScale() const
+{
+	float nelm = 0.f;
+	switch (getBortleScaleIndex()) {
+		case 1:
+			nelm = 7.8f; // Class 1 = NELM 7.6–8.0; average NELM is 7.8
+			break;
+		case 2:
+			nelm = 7.3f; // Class 2 = NELM 7.1–7.5; average NELM is 7.3
+			break;
+		case 3:
+			nelm = 6.8f; // Class 3 = NELM 6.6–7.0; average NELM is 6.8
+			break;
+		case 4:
+			nelm = 6.3f; // Class 4 = NELM 6.1–6.5; average NELM is 6.3
+			break;
+		case 5:
+			nelm = 5.8f; // Class 5 = NELM 5.6–6.0; average NELM is 5.8
+			break;
+		case 6:
+			nelm = 5.3f; // Class 6 = NELM 5.1-5.5; average NELM is 5.3
+			break;
+		case 7:
+			nelm = 4.8f; // Class 7 = NELM 4.6–5.0; average NELM is 4.8
+			break;
+		case 8:
+			nelm = 4.3f; // Class 8 = NELM 4.1–4.5; average NELM is 4.3
+			break;
+		case 9:
+			nelm = 4.0f; // Class 8 = NELM 4.0
+			break;
+	}
+	return nelm;
+}
 
 // New colors
 Vec3f StelSkyDrawer::colorTable[128] = {

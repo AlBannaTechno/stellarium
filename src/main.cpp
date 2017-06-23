@@ -56,11 +56,9 @@
 
 #ifdef Q_OS_WIN
 	#include <windows.h>
-	#ifdef _MSC_BUILD
-		#include <MMSystem.h>
-		#pragma comment(lib,"Winmm.lib")
-		#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup") // Hide console
-	#endif
+	//we use WIN32_LEAN_AND_MEAN so this needs to be included
+	//to use timeBeginPeriod/timeEndPeriod
+	#include <mmsystem.h>
 #endif //Q_OS_WIN
 
 //! @class CustomQTranslator
@@ -126,6 +124,9 @@ int main(int argc, char **argv)
 	}
 #endif
 
+	// Seed the PRNG
+	qsrand(QDateTime::currentMSecsSinceEpoch());
+
 	QCoreApplication::setApplicationName("stellarium");
 	QCoreApplication::setApplicationVersion(StelUtils::getApplicationVersion());
 	QCoreApplication::setOrganizationDomain("stellarium.org");
@@ -151,10 +152,6 @@ int main(int argc, char **argv)
 	QGuiApplication::setDesktopSettingsAware(false);
 	QGuiApplication app(argc, argv);
 #endif
-	QPixmap pixmap(":/splash.png");
-	QSplashScreen splash(pixmap);
-	splash.show();
-	app.processEvents();
 
 	// QApplication sets current locale, but
 	// we need scanf()/printf() and friends to always work in the C locale,
@@ -164,7 +161,13 @@ int main(int argc, char **argv)
 	// Init the file manager
 	StelFileMgr::init();
 
-	// Log command line arguments
+	QPixmap pixmap(StelFileMgr::findFile("data/splash.png"));
+	QSplashScreen splash(pixmap);
+	splash.show();
+	splash.showMessage(StelUtils::getApplicationVersion() , Qt::AlignLeft, Qt::white);
+	app.processEvents();
+
+	// Log command line arguments.
 	QString argStr;
 	QStringList argList;
 	for (int i=0; i<argc; ++i)
@@ -172,6 +175,16 @@ int main(int argc, char **argv)
 		argList << argv[i];
 		argStr += QString("%1 ").arg(argv[i]);
 	}
+	// add contents of STEL_OPTS environment variable.
+	QString envStelOpts(qgetenv("STEL_OPTS").constData());
+	if (envStelOpts.length()>0)
+	{
+		argList+= envStelOpts.split(" ");
+		argStr += " " + envStelOpts;
+	}
+	//save the modified arg list as an app property for later use
+	qApp->setProperty("stelCommandLine", argList);
+
 	// Parse for first set of CLI arguments - stuff we want to process before other
 	// output, such as --help and --version
 	CLIProcessor::parseCLIArgsPreConfig(argList);
@@ -233,7 +246,7 @@ int main(int argc, char **argv)
 			qFatal("Could not create configuration file %s.", qPrintable(configName));
 	}
 
-	QSettings* confSettings = NULL;
+	QSettings* confSettings = Q_NULLPTR;
 	if (StelFileMgr::exists(configFileFullPath))
 	{
 		// Implement "restore default settings" feature.
@@ -244,7 +257,7 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			confSettings = new QSettings(configFileFullPath, StelIniFormat, NULL);
+			confSettings = new QSettings(configFileFullPath, StelIniFormat, Q_NULLPTR);
 			restoreDefaultConfigFile = confSettings->value("main/restore_defaults", false).toBool();
 		}
 		if (!restoreDefaultConfigFile)
@@ -311,7 +324,7 @@ int main(int argc, char **argv)
 	CLIProcessor::parseCLIArgsPostConfig(argList, confSettings);
 
 	// Support hi-dpi pixmaps
-	app.setAttribute(Qt::AA_UseHighDpiPixmaps);
+	app.setAttribute(Qt::AA_UseHighDpiPixmaps, true);	
 
 	// Add the DejaVu font that we use everywhere in the program
 	const QString& fName = StelFileMgr::findFile("data/DejaVuSans.ttf");
@@ -350,8 +363,8 @@ int main(int argc, char **argv)
 	CustomQTranslator trans;
 	app.installTranslator(&trans);
 
-	StelMainView mainWin;
-	mainWin.init(confSettings); // May exit(0) when OpenGL subsystem insufficient
+	StelMainView mainWin(confSettings);
+	mainWin.show();
 	splash.finish(&mainWin);
 	app.exec();
 	mainWin.deinit();

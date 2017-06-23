@@ -53,8 +53,8 @@ class CornerButtons : public QObject, public QGraphicsItem
 	Q_OBJECT
 	Q_INTERFACES(QGraphicsItem)
 public:
-	CornerButtons(QGraphicsItem* parent=NULL);
-	virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
+	CornerButtons(QGraphicsItem* parent=Q_NULLPTR);
+	virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = Q_NULLPTR);
 	virtual QRectF boundingRect() const;
 	void setOpacity(double opacity);
 private:
@@ -76,12 +76,19 @@ public:
 	//! @param action the associated action. Connections are automatically done with the signals if relevant.
 	//! @param noBackground define whether the button background image have to be used
 	StelButton(QGraphicsItem* parent, const QPixmap& pixOn, const QPixmap& pixOff,
-			   const QPixmap& pixHover=QPixmap(),
-			   class StelAction* action=NULL, bool noBackground=false);
+		   const QPixmap& pixHover=QPixmap(),
+		   class StelAction* action=Q_NULLPTR, bool noBackground=false);
 	
+	//! Constructor
+	//! @param parent the parent item
+	//! @param pixOn the pixmap to display when the button is toggled
+	//! @param pixOff the pixmap to display when the button is not toggled
+	//! @param pixHover a pixmap slowly blended when mouse is over the button
+	//! @param actionId the id of the associated action. Connections are automatically done with the signals if relevant.
+	//! @param noBackground define whether the button background image have to be used
 	StelButton(QGraphicsItem* parent, const QPixmap& pixOn, const QPixmap& pixOff,
-			   const QPixmap& pixHover=QPixmap(),
-			   const QString& actionId=QString(), bool noBackground=false);
+		   const QPixmap& pixHover,
+		   const QString& actionId, bool noBackground=false);
 	//! Constructor
 	//! @param parent the parent item
 	//! @param pixOn the pixmap to display when the button is toggled
@@ -92,8 +99,8 @@ public:
 	//! @param noBackground define whether the button background image have to be used
 	//! @param isTristate define whether the button is a tristate or an on/off button
 	StelButton(QGraphicsItem* parent, const QPixmap& pixOn, const QPixmap& pixOff, const QPixmap& pixNoChange,
-			   const QPixmap& pixHover=QPixmap(),
-			   const QString& actionId=QString(), bool noBackground=false, bool isTristate=true);
+		   const QPixmap& pixHover,
+		   const QString& actionId=QString(), bool noBackground=false, bool isTristate=true);
 	
 	//! Button states
 	enum {ButtonStateOff = 0, ButtonStateOn = 1, ButtonStateNoChange = 2};
@@ -110,6 +117,11 @@ public:
 
 	//! Set the background pixmap of the button.
 	void setBackgroundPixmap(const QPixmap& newBackground);
+
+	//! While configuring buttons, call this with true when after key release
+	//! focus should go back to the sky (typical for bottom buttons;
+	//! left buttons call panels which receive focus after button press, so those should be configured with b=false)
+	void setFocusOnSky(bool b) { flagChangeFocus=b; }
 
 signals:
 	//! Triggered when the button state changes
@@ -132,15 +144,15 @@ protected:
 	virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
 private slots:
 	void animValueChanged(qreal value);
+	void updateIcon();
 private:
 	void initCtor(const QPixmap& apixOn,
                   const QPixmap& apixOff,
                   const QPixmap& apixNoChange,
                   const QPixmap& apixHover,
                   StelAction* aaction,
-                  bool noBackground,
-                  bool isTristate);
-	void updateIcon();
+		  bool noBackground,
+		  bool isTristate);
 	int toggleChecked(int);
 
 	QPixmap pixOn;
@@ -150,6 +162,7 @@ private:
 	QPixmap pixBackground;
 
 	int checked;
+	bool flagChangeFocus;
 
 	QTimeLine* timeLine;
 	class StelAction* action;
@@ -167,7 +180,7 @@ class LeftStelBar : public QObject, public QGraphicsItem
 public:
 	LeftStelBar(QGraphicsItem* parent);
 	~LeftStelBar();
-	virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
+	virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = Q_NULLPTR);
 	virtual QRectF boundingRect() const;
 	void addButton(StelButton* button);
 	QRectF boundingRectNoHelpLabel() const;
@@ -179,6 +192,7 @@ private slots:
 private:
 	QTimeLine* hideTimeLine;
 	QGraphicsSimpleTextItem* helpLabel;
+	QGraphicsPixmapItem* helpLabelPixmap; // bad-graphics replacement.
 };
 
 // The button bar on the bottom containing actions toggle buttons
@@ -189,7 +203,7 @@ class BottomStelBar : public QObject, public QGraphicsItem
 public:
 	BottomStelBar(QGraphicsItem* parent, const QPixmap& pixLeft=QPixmap(), const QPixmap& pixRight=QPixmap(), const QPixmap& pixMiddle=QPixmap(), const QPixmap& pixSingle=QPixmap());
 	virtual ~BottomStelBar();
-	virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = 0);
+	virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = Q_NULLPTR);
 	virtual QRectF boundingRect() const;
 	QRectF boundingRectNoHelpLabel() const;
 
@@ -245,16 +259,25 @@ private:
 	void updateText(bool forceUpdatePos=false);
 	void updateButtonsGroups();
 	QRectF getButtonsBoundingRect() const;
+	// Elements which get displayed above the buttons:
 	QGraphicsSimpleTextItem* location;
 	QGraphicsSimpleTextItem* datetime;
 	QGraphicsSimpleTextItem* fov;
 	QGraphicsSimpleTextItem* fps;
+	// For bad graphics, show these instead. We can use location etc for font info.
+	// We use ad-hoc pixmaps instead if command-line arg. -t (--text-fix) is given.
+	QGraphicsPixmapItem* locationPixmap;
+	QGraphicsPixmapItem* datetimePixmap;
+	QGraphicsPixmapItem* fovPixmap;
+	QGraphicsPixmapItem* fpsPixmap;
+
+
 
 	struct ButtonGroup
 	{
 		ButtonGroup() : leftMargin(0), rightMargin(0),
-						pixBackgroundLeft(NULL), pixBackgroundRight(NULL),
-						pixBackgroundMiddle(NULL), pixBackgroundSingle(NULL) {;}
+						pixBackgroundLeft(Q_NULLPTR), pixBackgroundRight(Q_NULLPTR),
+						pixBackgroundMiddle(Q_NULLPTR), pixBackgroundSingle(Q_NULLPTR) {;}
 		//! Elements of the group
 		QList<StelButton*> elems;
 		//! Left margin size in pixel
@@ -283,6 +306,7 @@ private:
 	bool flagShowTZ;
 
 	QGraphicsSimpleTextItem* helpLabel;
+	QGraphicsPixmapItem* helpLabelPixmap; // bad-graphics replacement.
 };
 
 // The path around the bottom left button bars

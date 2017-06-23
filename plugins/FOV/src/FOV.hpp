@@ -73,8 +73,8 @@ public:
 	void setQuickFOV(const double value, const int item);
 	double getQuickFOV(const int item) const;
 
-public slots:
-	void setFOV();
+private slots:
+	void setFOV(const int idx) const;
 
 private:
 	// if existing, delete Satellites section in main config.ini, then create with default values
@@ -83,7 +83,7 @@ private:
 	QList<double> FOVitem, FOVdefault;
 
 	FOVWindow* mainWindow;
-	QSettings* conf;	
+	QSettings* conf;
 };
 
 
@@ -99,6 +99,7 @@ class FOVStelPluginInterface : public QObject, public StelPluginInterface
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /* _FOV_HPP_ */

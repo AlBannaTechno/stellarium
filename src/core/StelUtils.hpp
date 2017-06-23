@@ -49,6 +49,9 @@ namespace StelUtils
 	//! Return the name and the version of operating system, i.e. "Mac OS X 10.7"
 	QString getOperatingSystemInfo();
 
+	//! Return the user agent name, i.e. "Stellarium/0.15.0 (Linux)"
+	QString getUserAgentString();
+
 	//! Convert an angle in hms format to radian.
 	//! @param h hour component
 	//! @param m minute component
@@ -129,6 +132,13 @@ namespace StelUtils
 	//! @param s The input string
 	double dmsStrToRad(const QString& s);
 
+	//TODO these Vector-String converters should be removed, and missing functionality added to
+	//the VecMath classes and QVariant-based conversion
+
+	//! Reads a Vec2f from a string list
+	Vec2f strToVec2f(const QStringList& s);
+	//! Reads a Vec2f from a string, separated by commas. Example: 1.0,2.0
+	Vec2f strToVec2f(const QString& s);
 	//! Obtains a Vec3f from a string.
 	//! @param s the string describing the Vector with the form "x,y,z"
 	//! @return The corresponding vector
@@ -141,6 +151,8 @@ namespace StelUtils
 	//! Like StelUtils::strToVec3f, but with 4 components and with double precision
 	Vec4d strToVec4d(const QString& s);
 
+	// Converts a Vec2f to a string in the same format that can be read by strToVec2f
+	QString vec2fToStr(const Vec2f& v);
 	//! Converts a Vec3f to a string in the same format that can be read by strToVec3f
 	QString vec3fToStr(const Vec3f& v);
 	//! Converts a Vec4d to a string in the same format that can be read by strToVec4d
@@ -222,13 +234,16 @@ namespace StelUtils
 	//! Return the inverse sinus hyperbolic of z.
 	double asinh(const double z);
 
+	//! Integer modulo where the result is always positive.
+	int imod(const int a, const int b);
+
 	///////////////////////////////////////////////////
 	// New Qt based General Calendar Functions.
 	//! Make from julianDay a year, month, day for the Julian Date julianDay represents.
 	void getDateFromJulianDay(const double julianDay, int *year, int *month, int *day);
 
 	//! Make from julianDay an hour, minute, second.
-	void getTimeFromJulianDay(const double julianDay, int *hour, int *minute, int *second);
+	void getTimeFromJulianDay(const double julianDay, int *hour, int *minute, int *second, int *millis=Q_NULLPTR);
 
 	//! Parse an ISO8601 date string.
 	//! Also handles negative and distant years.
@@ -236,7 +251,7 @@ namespace StelUtils
 	
 	//! Format the given Julian Day in (UTC) ISO8601 date string.
 	//! Also handles negative and distant years.
-	QString julianDayToISO8601String(const double jd);
+	QString julianDayToISO8601String(const double jd, bool addMS = false);
 
 	//! Return the Julian Date matching the ISO8601 date string.
 	//! Also handles negative and distant years.
@@ -257,6 +272,11 @@ namespace StelUtils
 	//! @return the current Julian Date
 	double getJDFromSystem();
 
+	//! Get the Julian Day Number (JD) from Besselian epoch.
+	//! @param epoch Besselian epoch, expressed as year
+	//! @return Julian Day number (JD) for B<Year>
+	double getJDFromBesselianEpoch(const float epoch);
+
 	//! Convert a time of day to the fraction of a Julian Day.
 	//! Note that a Julian Day starts at 12:00, not 0:00, and
 	//! so 12:00 == 0.0 and 0:00 == 0.5
@@ -264,9 +284,6 @@ namespace StelUtils
 
 	//! Convert a fraction of a Julian Day to a QTime
 	QTime jdFractionToQTime(const double jd);
-
-	//! Return number of hours offset from GMT, using Qt functions.
-	float getGMTShiftFromQT(const double jd);
 
 	//! Convert a QT QDateTime class to julian day.
 	//! @param dateTime the UTC QDateTime to convert
@@ -292,8 +309,16 @@ namespace StelUtils
 	bool getJDFromDate(double* newjd, const int y, const int m, const int d, const int h, const int min, const int s);
 
 	int numberOfDaysInMonthInYear(const int month, const int year);
+	//! @result true if year is a leap year. Observes 1582 switch from Julian to Gregorian Calendar.
+	bool isLeapYear(const int year);
+	//! Find day number for date in year.
+	//! Meeus, Astronomical Algorithms 2nd ed., 1998, ch.7, p.65
+	int dayInYear(const int year, const int month, const int day);
+	//! Return a fractional year like YYYY.ddddd. For negative years, the year number is decreased. E.g. -500.5 occurs in -501.
+	double yearFraction(const int year, const int month, const double day);
+
 	bool changeDateTimeForRollover(int oy, int om, int od, int oh, int omin, int os,
-					int* ry, int* rm, int* rd, int* rh, int* rmin, int* rs);
+				       int* ry, int* rm, int* rd, int* rh, int* rmin, int* rs);
 
 	//! Output a QVariantMap to qDebug().  Formats like a tree where there are nested objects.
 	void debugQVariantMap(const QVariant& m, const QString& indent="", const QString& key="");
@@ -342,11 +367,14 @@ namespace StelUtils
 	long double secondsSinceStart();
 
 	//! Get Delta-T estimation for a given date.
-	//! Note that this method is valid for the year range:
-	//! -1999 to +3000, outside of which "0" will be returned.
-	// GZ: I don't see this returning 0. There is always a rough estimate beyond that.
+	//! This is just an "empty" correction functino, returning 0.
+	double getDeltaTwithoutCorrection(const double jDay);
+
+	//! Get Delta-T estimation for a given date.
+	//! Note that this method is recommended for the year range:
+	//! -1999 to +3000. It gives details for -500...+2150.
 	//! Implementation of algorithm by Espenak & Meeus (2006) for DeltaT computation
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByEspenakMeeus(const double jDay);
 
@@ -356,7 +384,7 @@ namespace StelUtils
 	//! Source: Schoch, C. (1931). Die sekulare Accelaration des Mondes und der Sonne.
 	//! Astronomische Abhandlungen, Ergnzungshefte zu den Astronomischen Nachrichten,
 	//! Band 8, B2. Kiel.
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTBySchoch(const double jDay);
 
@@ -367,7 +395,7 @@ namespace StelUtils
 	//! Clemence, G. M.
 	//! Astronomical Journal, Vol. 53, p. 169
 	//! 1948AJ.....53..169C [http://adsabs.harvard.edu/abs/1948AJ.....53..169C]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByClemence(const double jDay);
 
@@ -377,7 +405,7 @@ namespace StelUtils
 	//! Source: Spencer Jones, H., "The Rotation of the Earth, and the Secular Accelerations of the Sun, Moon and Planets",
 	//! Monthly Notices of the Royal Astronomical Society, 99 (1939), 541-558
 	//! http://adsabs.harvard.edu/abs/1939MNRAS..99..541S
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByIAU(const double jDay);
 
@@ -388,13 +416,13 @@ namespace StelUtils
 	//! http://adsabs.harvard.edu/abs/1939MNRAS..99..541S
 	//! or Explanatory Supplement to the Astr. Ephemeris, 1961, p.87.
 	//! Also used by Mucke&Meeus, Canon of Solar Eclipses, Vienna 1983.
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByAstronomicalEphemeris(const double jDay);
 
 	//! Get Delta-T estimation for a given date.
 	//! Implementation of algorithm by Tuckerman (1962, 1964) & Goldstine (1973) for DeltaT computation
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByTuckermanGoldstine(const double jDay);
 
@@ -407,7 +435,7 @@ namespace StelUtils
 	//! Astronomical Consequences, Newcastle-upon-Tyne, England, January 8-10, 1974. (A76-18126 06-46)
 	//! London, Wiley-Interscience, 1975, p. 459-533; Discussion, p. 534.
 	//! 1975grhe.conf..459M [http://adsabs.harvard.edu/abs/1975grhe.conf..459M]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByMullerStephenson(const double jDay);
 
@@ -418,7 +446,7 @@ namespace StelUtils
 	//! Tidal Friction and the Earth's Rotation, Proceedings of a Workshop, held in Bielefeld,
 	//! September 26-30, 1977, Edited by P. Brosche, and J. Sundermann. Berlin: Springer-Verlag, 1978, p.5
 	//! 1978tfer.conf....5S [http://adsabs.harvard.edu/abs/1978tfer.conf....5S]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByStephenson1978(const double jDay);
 
@@ -426,7 +454,7 @@ namespace StelUtils
 	//! Implementation of algorithm by Stephenson (1997) for DeltaT computation.
 	//! Source: Book "Historical Eclipses and Earth's Rotation" by F. R. Stephenson (1997)
 	//! http://ebooks.cambridge.org/ebook.jsf?bid=CBO9780511525186
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByStephenson1997(const double jDay);
 
@@ -437,13 +465,14 @@ namespace StelUtils
 	//! Schmadel, L. D.; Zech, G.
 	//! Acta Astronomica, vol. 29, no. 1, 1979, p. 101-104.
 	//! 1979AcA....29..101S [http://adsabs.harvard.edu/abs/1979AcA....29..101S]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
+	//! @note The polynome is strictly applicable 1800...1975 only! Delivers values for the nearer edge (1800/1989) if jDay is outside.
 	double getDeltaTBySchmadelZech1979(const double jDay);
 
 	//! Get Delta-T estimation for a given date.
 	//! Implementation of algorithm by Morrison & Stephenson (1982) for DeltaT computation
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByMorrisonStephenson1982(const double jDay);
 
@@ -453,7 +482,7 @@ namespace StelUtils
 	//! Stephenson, F. R.; Morrison, L. V.
 	//! Philosophical Transactions, Series A (ISSN 0080-4614), vol. 313, no. 1524, Nov. 27, 1984, p. 47-70.
 	//! 1984RSPTA.313...47S [http://adsabs.harvard.edu/abs/1984RSPTA.313...47S]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds or Zero if date outside years -391..1600
 	double getDeltaTByStephensonMorrison1984(const double jDay);
 
@@ -463,20 +492,20 @@ namespace StelUtils
 	//! Stephenson, F. R.; Morrison, L. V.
 	//! Philosophical Transactions: Physical Sciences and Engineering, Volume 351, Issue 1695, pp. 165-202
 	//! 1995RSPTA.351..165S [http://adsabs.harvard.edu/abs/1995RSPTA.351..165S]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByStephensonMorrison1995(const double jDay);
 
 	//! Get Delta-T estimation for a given date.
 	//! Implementation of algorithm by Stephenson & Houlden (1986) for DeltaT computation
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds or 0 if year > 1600
 	double getDeltaTByStephensonHoulden(const double jDay);
 
 	//! Get Delta-T estimation for a given date.
 	//! Implementation of algorithm by Espenak (1987, 1989) for DeltaT computation.
 	//! This relation should not be used before around 1950 or after around 2100 (Espenak, pers. comm.).
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByEspenak(const double jDay);
 
@@ -486,7 +515,7 @@ namespace StelUtils
 	//! Borkowski, K. M.
 	//! Astronomy and Astrophysics (ISSN 0004-6361), vol. 205, no. 1-2, Oct. 1988, p. L8-L10.
 	//! 1988A&A...205L...8B [http://adsabs.harvard.edu/abs/1988A&A...205L...8B]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByBorkowski(const double jDay);
 
@@ -496,19 +525,20 @@ namespace StelUtils
 	//! Schmadel, L. D.; Zech, G.
 	//! Astronomische Nachrichten 309, 219-221
 	//! 1988AN....309..219S [http://adsabs.harvard.edu/abs/1988AN....309..219S]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
+	//! @note The polynome is strictly applicable 1800...1988 only! Delivers values for the nearer edge (1800/1989) if jDay is outside.
 	double getDeltaTBySchmadelZech1988(const double jDay);
 
 	//! Get Delta-T estimation for a given date.
 	//! Implementation of algorithm by Chapront-Touzé & Chapront (1991) for DeltaT computation
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds or 0 if year not in -391..1600
 	double getDeltaTByChaprontTouze(const double jDay);	
 
 	//! Get Delta-T estimation for a given date.
 	//! Implementation of the "historical" part of the algorithm by JPL Horizons for DeltaT computation.
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds or 0 if year not in -2999..1620 (!)
 	double getDeltaTByJPLHorizons(const double jDay);
 
@@ -522,20 +552,20 @@ namespace StelUtils
 	//! Morrison, L. V.; Stephenson, F. R.
 	//! Journal for the History of Astronomy (ISSN 0021-8286), Vol. 36, Part 3, No. 124, p. 339 (2005)
 	//! 2005JHA....36..339M [http://adsabs.harvard.edu/abs/2005JHA....36..339M]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByMorrisonStephenson2004(const double jDay);
 
 	//! Get Delta-T estimation for a given date.
 	//! Implementation of algorithm by Reijs (2006) for DeltaT computation
 	//! Details: http://www.iol.ie/~geniet/eng/DeltaTeval.htm
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByReijs(const double jDay);
 
 	//! Get Delta-T estimation for a given date.
 	//! Implementation of algorithm by Chapront, Chapront-Touze & Francou (1997) & Meeus (1998) for DeltaT computation
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByChaprontMeeus(const double jDay);
 
@@ -545,7 +575,7 @@ namespace StelUtils
 	//! Meeus, J.; Simons, L.
 	//! Journal of the British Astronomical Association, vol.110, no.6, 323
 	//! 2000JBAA..110..323M [http://adsabs.harvard.edu/abs/2000JBAA..110..323M]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds or 0 if year not in 1620..2000
 	double getDeltaTByMeeusSimons(const double jDay);
 
@@ -553,7 +583,7 @@ namespace StelUtils
 	//! Implementation of algorithm by Montenbruck & Pfleger (2000) for DeltaT computation,
 	//! a data fit through the table of values found in Meeus, Astronomical algorithms (1991).
 	//! Book "Astronomy on the Personal Computer" by O. Montenbruck & T. Pfleger (4th ed., 2000)
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds or 0 if not 1825<=year<2005
 	double getDeltaTByMontenbruckPfleger(const double jDay);
 
@@ -561,7 +591,7 @@ namespace StelUtils
 	//! Implementation of algorithm by Reingold & Dershowitz (1997, 2001, 2002, 2007) for DeltaT computation.
 	//! This is again mostly a data fit based on the table in Meeus, Astronomical Algorithms (1991).
 	//! This is the version given in the 3rd edition (2007) which added the fit for 1700..1799 omitted from previous editions.
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByReingoldDershowitz(const double jDay);
 
@@ -571,7 +601,7 @@ namespace StelUtils
 	//! Banjevic, B.
 	//! Publications of the Astronomical Observatory of Belgrade, Vol. 80, p. 251-257 (2006)
 	//! 2006POBeo..80..251B [http://adsabs.harvard.edu/abs/2006POBeo..80..251B]
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByBanjevic(const double jDay);
 
@@ -585,7 +615,7 @@ namespace StelUtils
 	//! ndot = -26.0 arcsec/cy^2. Meeus & Simons (2000) corrected the deltaT table for years before 1955.5 using
 	//! ndot = -25.7376 arcsec/cy^2. Therefore the accuracies stated by Meeus & Simons are correct and cannot be
 	//! compared with accuracies from Islam & Sadiq & Qureshi.
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByIslamSadiqQureshi(const double jDay);
 
@@ -594,19 +624,29 @@ namespace StelUtils
 	//! Source: Delta T: Polynomial Approximation of Time Period 1620-2013
 	//! Journal of Astrophysics, Vol. 2014, Article ID 480964
 	//! http://dx.doi.org/10.1155/2014/480964
-	//! @param jDay the date and time expressed as a julian day
+	//! @param jDay the date and time expressed as a Julian day
 	//! @return Delta-T in seconds
 	double getDeltaTByKhalidSultanaZaidi(const double jDay);
+
+	//! Get Delta-T estimation for a given date.
+	//! Implementation of a spline approximation for time period -720-2016.0 for DeltaT by Stephenson, Morrison and Hohenkerk (2016).
+	//! Source: Measurement of the Earth’s rotation: 720 BC to AD 2015
+	//! Proc. R. Soc. A 472: 20160404.
+	//! http://dx.doi.org/10.1098/rspa.2016.0404
+	//! @param jDay the date and time expressed as a Julian day
+	//! @return Delta-T in seconds. For times outside the limits, return result from the fitting parabola.
+	double getDeltaTByStephensonMorrisonHohenkerk2016(const double jDay);
 
 	//! Get Secular Acceleration estimation for a given year.
 	//! Method described is here: http://eclipse.gsfc.nasa.gov/SEcat5/secular.html
 	//! For adapting from -26 to -25.858, use -0.91072 * (-25.858 + 26.0) = -0.12932224
 	//! For adapting from -26 to -23.895, use -0.91072 * (-23.895 + 26.0) = -1.9170656
 	//! @param jDay the JD
-	//! @param ndot value n-dot which use in the algorithm
+	//! @param ndot value of n-dot (secular acceleration of the Moon) which should be used in the lunar ephemeris instead of the default values.
+	//! @param useDE43x true if function should adapt calculation of the secular acceleration of the Moon to the DE43x ephemeris
 	//! @return SecularAcceleration in seconds
-	//! @note n-dot for secular acceleration of the Moon in ELP2000-82B is -23.8946 "/cy/cy
-	double getMoonSecularAcceleration(const double jDay, const double ndot);
+	//! @note n-dot for secular acceleration of the Moon in ELP2000-82B is -23.8946 "/cy/cy and for DE43x is -25.8 "/cy/cy
+	double getMoonSecularAcceleration(const double jDay, const double ndot, const bool useDE43x);
 
 	//! Get the standard error (sigma) for the value of DeltaT
 	//! @param jDay the JD
@@ -655,6 +695,12 @@ namespace StelUtils
 	//! @param day
 	//! @return decimal year
 	double getDecYear(const int year, const int month, const int day);
+
+	//! Comparison two string versions and return a result in range -1,0,1
+	//! @param v1 string for version 1
+	//! @param v2 string for version 2
+	//! @return result (-1: v1<v2; 0: v1==v2; 1: v1>v2)
+	int compareVersions(const QString v1, const QString v2);
 
 	//! Uncompress gzip or zlib compressed data.
 	QByteArray uncompress(const QByteArray& data);

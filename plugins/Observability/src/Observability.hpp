@@ -54,7 +54,11 @@ the configuration window; if using flags, implement them properly w Qt.
 class Observability : public StelModule
 {
 	Q_OBJECT
-	Q_PROPERTY(bool flagShowReport READ isShownReport WRITE showReport)
+	Q_PROPERTY(bool flagShowReport
+		   READ isShownReport
+		   WRITE showReport
+		   NOTIFY flagReportVisibilityChanged
+		   )
 public:
 	Observability();
 	virtual ~Observability();
@@ -89,6 +93,10 @@ public:
 	int getHorizonAltitude();
 
 	bool isShownReport() const {return flagShowReport;}
+
+signals:
+	void flagReportVisibilityChanged(bool b);
+
 public slots:
 	//! Restore and reload the default plug-in settings.
 	void resetConfiguration();
@@ -412,6 +420,7 @@ class ObservabilityStelPluginInterface : public QObject, public StelPluginInterf
 public:
        virtual StelModule* getStelModule() const;
        virtual StelPluginInfo getPluginInfo() const;
+       virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /*OBSERVABILITY_HPP_*/

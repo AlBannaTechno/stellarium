@@ -100,32 +100,26 @@ public:
 	//! @return an list containing the satellites located inside the limitFov circle around position v.
 	virtual QList<StelObjectP> searchAround(const Vec3d& v, double limitFov, const StelCore* core) const;
 
-	//! Return the matching satellite object's pointer if exists or NULL.
+	//! Return the matching satellite object's pointer if exists or Q_NULLPTR.
 	//! @param nameI18n The case in-sensistive satellite name
 	virtual StelObjectP searchByNameI18n(const QString& nameI18n) const;
 
-	//! Return the matching satellite if exists or NULL.
+	//! Return the matching satellite if exists or Q_NULLPTR.
 	//! @param name The case in-sensistive standard program name
 	virtual StelObjectP searchByName(const QString& name) const;
 
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object I18n name.
-	//! @param objPrefix the case insensitive first letters of the searched object
-	//! @param maxNbItem the maximum number of returned object names
-	//! @param useStartOfWords the autofill mode for returned objects names
-	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object English name.
-	//! @param objPrefix the case insensitive first letters of the searched object
-	//! @param maxNbItem the maximum number of returned object names
-	//! @param useStartOfWords the autofill mode for returned objects names
-	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
+	virtual StelObjectP searchByID(const QString &id) const
+	{
+		return qSharedPointerCast<StelObject>(getByID(id));
+	}
+
 	virtual QStringList listAllObjects(bool inEnglish) const;
-	virtual QStringList listAllObjectsByType(const QString& objType, bool inEnglish) const { Q_UNUSED(objType) Q_UNUSED(inEnglish) return QStringList(); }
+
 	virtual QString getName() const { return "Historical Supernovae"; }
+	virtual QString getStelObjectType() const { return Supernova::SUPERNOVA_TYPE; }
 
 	//! get a supernova object by identifier
-	SupernovaP getByID(const QString& id);
+	SupernovaP getByID(const QString& id) const;
 
 	//! Implement this to tell the main Stellarium GUI that there is a GUI element to configure this
 	//! plugin.
@@ -164,13 +158,13 @@ public:
 	UpdateState getUpdateState(void) {return updateState;}
 
 	//! Get list of supernovae
-	QString getSupernovaeList();
+	QString getSupernovaeList() const;
 
 	//! Get lower limit of  brightness for displayed supernovae
-	float getLowerLimitBrightness();
+	float getLowerLimitBrightness() const;
 
 	//! Get count of supernovae from catalog
-	int getCountSupernovae(void) {return SNCount;}
+	int getCountSupernovae(void) const {return SNCount;}
 
 signals:
 	//! @param state the new update state.
@@ -189,6 +183,8 @@ public slots:
 	//! Display a message. This is used for plugin-specific warnings and such
 	void displayMessage(const QString& message, const QString hexColor="#999999");
 	void messageTimeout(void);
+
+	void reloadCatalog(void);
 
 private:
 	// Font used for displaying our text
@@ -210,11 +206,11 @@ private:
 
 	//! Get the version from the "version" value in the supernovas.json file
 	//! @return version string, e.g. "1"
-	int getJsonFileVersion(void);
+	int getJsonFileVersion(void) const;
 
 	//! Check format of the catalog of supernovae
 	//! @return valid boolean, e.g. "true"
-	bool checkJsonFileFormat(void);
+	bool checkJsonFileFormat(void) const;
 
 	//! Parse JSON file and load supernovaes to map
 	QVariantMap loadSNeMap(QString path=QString());
@@ -270,6 +266,7 @@ class SupernovaeStelPluginInterface : public QObject, public StelPluginInterface
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /*_SUPERNOVAE_HPP_*/

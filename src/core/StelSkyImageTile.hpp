@@ -72,7 +72,7 @@ public:
 	StelSkyImageTile();
 
 	//! Constructor
-	StelSkyImageTile(const QString& url, StelSkyImageTile* parent=NULL);
+	StelSkyImageTile(const QString& url, StelSkyImageTile* parent=Q_NULLPTR);
 	//! Constructor
 	StelSkyImageTile(const QVariantMap& map, StelSkyImageTile* parent);
 
@@ -132,6 +132,9 @@ protected:
 
 	//! Minimum resolution of the data of the texture in degree/pixel
 	float minResolution;
+
+	//! Allow some images to be shown only after this date, e.g. Supernova remnants.
+	double birthJD;
 
 private:
 	//! init the StelSkyImageTile

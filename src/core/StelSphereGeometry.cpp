@@ -136,8 +136,8 @@ bool SphericalRegion::contains(const SphericalRegion* r) const
 		default:
 			return containsDefault(r);
 	}
-	Q_ASSERT(0);
-	return false;
+	//Q_ASSERT(0);
+	//return false;
 }
 
 bool SphericalRegion::intersects(const SphericalPolygon& r) const {return intersectsDefault(&r);}
@@ -164,8 +164,8 @@ bool SphericalRegion::intersects(const SphericalRegion* r) const
 		default:
 			return intersectsDefault(r);
 	}
-	Q_ASSERT(0);
-	return false;
+	//Q_ASSERT(0);
+	//return false;
 }
 
 SphericalRegionP SphericalRegion::getIntersection(const SphericalRegion* r) const
@@ -443,8 +443,8 @@ bool SphericalCap::clipGreatCircle(Vec3d& v1, Vec3d& v2) const
 			return false;
 		}
 	}
-	Q_ASSERT(0);
-	return false;
+	//Q_ASSERT(0);
+	//return false;
 }
 
 //! Compute the intersection of the circles defined by the 2 caps on the sphere (usually on 2 points) and return it in p1 and p2.
@@ -479,7 +479,7 @@ bool SphericalCap::intersectionPoints(const SphericalCap& h1, const SphericalCap
 	// u gives the direction of the line, still need to find a suitable start point p0
 	// Find the axis on which the line varies the fastest, and solve the system for value == 0 on this axis
 	int maxI = (fabs(u[0])>=fabs(u[1])) ? (fabs(u[0])>=fabs(u[2]) ? 0 : 2) : (fabs(u[2])>fabs(u[1]) ? 2 : 1);
-	Vec3d p0(0);
+	Vec3d p0(0.);
 	switch (maxI)
 	{
 		case 0:
@@ -1125,8 +1125,7 @@ Vec3d greatCircleIntersection(const Vec3d& p1, const Vec3d& p2, const Vec3d& n2,
 ///////////////////////////////////////////////////////////////////////////////
 SphericalRegionP SphericalRegionP::loadFromJson(QIODevice* in)
 {
-	StelJsonParser parser;
-	return loadFromQVariant(parser.parse(in).toMap());
+    return loadFromQVariant(StelJsonParser::parse(in).toMap());
 }
 
 SphericalRegionP SphericalRegionP::loadFromJson(const QByteArray& a)
@@ -1314,6 +1313,11 @@ SphericalRegionP SphericalRegionP::loadFromQVariant(const QVariantList& l)
 	{
 		return SphericalRegionP(new SphericalPolygon(pathFromQVariantList(l)));
 	}
+	else if (code=="CONVEX_POLYGON")
+	{
+		return SphericalRegionP(new SphericalConvexPolygon(singleContourFromQVariantList(l.at(1).toList())));
+	}
+
 	Q_ASSERT(0);
 	return EmptySphericalRegion::staticInstance;
 }

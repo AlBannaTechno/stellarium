@@ -34,7 +34,6 @@
 #include <QDebug>
 #include <QTimer>
 #include <QPixmap>
-#include <QtNetwork>
 #include <QSettings>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -75,7 +74,7 @@ AngleMeasure::AngleMeasure()
 	, flagShowHorizontalStartSkylinked(false)
 	, flagShowHorizontalEndSkylinked(false)
 	, angleHor(0.)
-	, toolbarButton(NULL)
+	, toolbarButton(Q_NULLPTR)
 {
 	startPoint.set(0.,0.,0.);
 	endPoint.set(0.,0.,0.);
@@ -146,9 +145,9 @@ void AngleMeasure::init()
 	try
 	{
 		StelGui* gui = dynamic_cast<StelGui*>(app.getGui());
-		if (gui!=NULL)
+		if (gui!=Q_NULLPTR)
 		{
-			toolbarButton = new StelButton(NULL,
+			toolbarButton = new StelButton(Q_NULLPTR,
 						       QPixmap(":/angleMeasure/bt_anglemeasure_on.png"),
 						       QPixmap(":/angleMeasure/bt_anglemeasure_off.png"),
 						       QPixmap(":/graphicGui/glow32x32.png"),
@@ -188,9 +187,8 @@ void AngleMeasure::drawOne(StelCore *core, const StelCore::FrameType frameType, 
 	const StelProjectorP prj = core->getProjection(frameType, refractionMode);
 	StelPainter painter(prj);
 	painter.setFont(font);
+	painter.setBlending(true);
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
 	if (lineVisible.getInterstate() > 0.000001f)
 	{
 		Vec3d xy;
@@ -220,35 +218,28 @@ void AngleMeasure::drawOne(StelCore *core, const StelCore::FrameType frameType, 
 			}
 		}
 
-		glDisable(GL_TEXTURE_2D);
-		// OpenGL ES 2.0 doesn't have GL_LINE_SMOOTH. But it looks much better.
-		#ifdef GL_LINE_SMOOTH
-		if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-			glEnable(GL_LINE_SMOOTH);
-		#endif
+		painter.setLineSmooth(true);
 
 		// main line is a great circle
 		painter.setColor(lineColor[0], lineColor[1], lineColor[2], lineVisible.getInterstate());
 		if (frameType==StelCore::FrameEquinoxEqu)
 		{
-			painter.drawGreatCircleArc(startPoint, endPoint, NULL);
+			painter.drawGreatCircleArc(startPoint, endPoint, Q_NULLPTR);
 
 			// End lines
-			painter.drawGreatCircleArc(perp1StartPoint, perp1EndPoint, NULL);
-			painter.drawGreatCircleArc(perp2StartPoint, perp2EndPoint, NULL);
+			painter.drawGreatCircleArc(perp1StartPoint, perp1EndPoint, Q_NULLPTR);
+			painter.drawGreatCircleArc(perp2StartPoint, perp2EndPoint, Q_NULLPTR);
 		}
 		else
 		{
-			painter.drawGreatCircleArc(startPointHor, endPointHor, NULL);
+			painter.drawGreatCircleArc(startPointHor, endPointHor, Q_NULLPTR);
 
 			// End lines
-			painter.drawGreatCircleArc(perp1StartPointHor, perp1EndPointHor, NULL);
-			painter.drawGreatCircleArc(perp2StartPointHor, perp2EndPointHor, NULL);
+			painter.drawGreatCircleArc(perp1StartPointHor, perp1EndPointHor, Q_NULLPTR);
+			painter.drawGreatCircleArc(perp2StartPointHor, perp2EndPointHor, Q_NULLPTR);
 		}
-		#ifdef GL_LINE_SMOOTH
-		if (QOpenGLContext::currentContext()->format().renderableType()==QSurfaceFormat::OpenGL)
-			glDisable(GL_LINE_SMOOTH);
-		#endif
+
+		painter.setLineSmooth(false);
 	}
 	if (messageFader.getInterstate() > 0.000001f)
 	{
@@ -262,7 +253,7 @@ void AngleMeasure::drawOne(StelCore *core, const StelCore::FrameType frameType, 
 		y -= ls;
 		painter.drawText(x, y, messageRightButton);
 	}
-	glDisable(GL_BLEND);
+	painter.setBlending(false);
 }
 
 //! Draw any parts on the screen which are for our module
@@ -328,7 +319,7 @@ void AngleMeasure::handleMouseClicks(class QMouseEvent* event)
 	if (event->type()==QEvent::MouseButtonPress && event->button()==Qt::LeftButton)
 	{
 		const StelProjectorP prj = StelApp::getInstance().getCore()->getProjection(StelCore::FrameEquinoxEqu);
-		prj->unProject(event->x(),event->y(),startPoint);
+		if (prj->unProject(event->x(),event->y(),startPoint))
 		{ // Nick Fedoseev patch: improve click match
 			Vec3d win;
 			prj->project(startPoint,win);
@@ -365,7 +356,7 @@ void AngleMeasure::handleMouseClicks(class QMouseEvent* event)
 	else if (event->type()==QEvent::MouseButtonPress && event->button()==Qt::RightButton)
 	{
 		const StelProjectorP prj = StelApp::getInstance().getCore()->getProjection(StelCore::FrameEquinoxEqu);
-		prj->unProject(event->x(),event->y(),endPoint);
+		if (prj->unProject(event->x(),event->y(),endPoint))
 		{ // Nick Fedoseev patch: improve click match
 			Vec3d win;
 			prj->project(endPoint,win);
@@ -387,7 +378,7 @@ bool AngleMeasure::handleMouseMoves(int x, int y, Qt::MouseButtons)
 	if (dragging)
 	{
 		const StelProjectorP prj = StelApp::getInstance().getCore()->getProjection(StelCore::FrameEquinoxEqu);
-		prj->unProject(x,y,endPoint);
+		if (prj->unProject(x,y,endPoint))
 		{ // Nick Fedoseev patch: improve click match
 		   Vec3d win;
 		   prj->project(endPoint,win);
@@ -465,16 +456,21 @@ QString AngleMeasure::calculateAngle(bool horizontal) const
 
 void AngleMeasure::enableAngleMeasure(bool b)
 {
-	flagShowAngleMeasure = b;
-	lineVisible = b;
-	messageFader = b;
-	if (b)
+	if (b!=flagShowAngleMeasure)
 	{
-		//qDebug() << "AngleMeasure::enableAngleMeasure starting timer";
-		messageTimer->start();
+		flagShowAngleMeasure = b;
+		lineVisible = b;
+		messageFader = b;
+		if (b)
+		{
+			//qDebug() << "AngleMeasure::enableAngleMeasure starting timer";
+			messageTimer->start();
+		}
+		// Immediate saving of settings
+		conf->setValue("AngleMeasure/enable_at_startup", flagShowAngleMeasure);
+
+		emit flagAngleMeasureChanged(b);
 	}
-	// Immediate saving of settings
-	conf->setValue("AngleMeasure/enable_at_startup", flagShowAngleMeasure);
 }
 
 void AngleMeasure::showPositionAngle(bool b)
